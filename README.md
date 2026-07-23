@@ -29,7 +29,10 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 
 ## 🍄 Funciones estilo Super Mario Bros 3
 
-- 3 mundos: Pradera del Pichunguito, Cielos de Santi y Castillo de Tío Juan
+- **8 mundos**, uno por personaje: Pradera del Pichunguito, Cielos de Santi, Bosque de Georgie, Playa de Penny, Cueva de Sheldon, Nubes de Cucú, Desierto de Abu y el Castillo de Tío Juan
+- Gráficos estilo SMB3: nubes con contorno, colinas rayadas, arbustos, palmeras, cactus, estalactitas y torres según el mundo
+- Todo está a altura de salto: bloques, estrella y personajes siempre alcanzables; huecos cruzables y tubos saltables
+- Los diálogos hacen fila: una voz espera a que termine la otra, sin cortarse
 - Correr con **medidor P**, saltos con impulso, aplastar enemigos
 - Bloques **?**, bloques de estrella, ladrillos rompibles, monedas
 - Hongo, **flor de fuego** (lanza bolas de fuego), estrella
