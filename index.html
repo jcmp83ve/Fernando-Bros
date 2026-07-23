@@ -40,22 +40,40 @@ let voces = [];
 function cargarVoces(){ voces = speechSynthesis.getVoices(); }
 cargarVoces();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = cargarVoces;
+/* iOS/Safari bloquea la voz hasta que un toque del usuario "desbloquea"
+   la síntesis: decimos una frase vacía dentro del primer gesto táctil. */
+let vozLista = false;
+function activarVoz(){
+  if (vozLista || typeof speechSynthesis === 'undefined') return;
+  vozLista = true;
+  try{
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function vozEspanola(){
+  const es = voces.filter(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
+  /* preferir español de América si existe */
+  return es.find(v=>/es[-_](419|MX|US|CO|VE|AR|CL)/i.test(v.lang)) || es[0] || null;
+}
 function hablar(texto){
   /* todos los diálogos con voz de niño en español */
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     u.lang = 'es-ES';
-    const v = voces.find(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
-    if (v) u.voice = v;
-    u.pitch = 1.9; u.rate = 1.05;
-    speechSynthesis.speak(u);
+    const v = vozEspanola();
+    if (v){ u.voice = v; u.lang = v.lang; }
+    u.pitch = 1.9; u.rate = 1.05; u.volume = 1;
+    /* en iOS, hablar justo después de cancel() se pierde: pequeña espera */
+    setTimeout(()=>{ try{ speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} }, 80);
   }catch(e){}
 }
 
 /* ---------------- Sonido (Web Audio) ---------------- */
 let AC = null;
-function audio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
+function audio(){ activarVoz(); if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
 function beep(freq, dur, tipo, vol, t0){
   if(!AC) return;
   const o = AC.createOscillator(), g = AC.createGain();
@@ -991,6 +1009,8 @@ function dibMenu(){
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
   ctx.fillText('← → mover · MAYÚS/X correr y fuego · ESPACIO/Z saltar · ↓ bajarse de Abu', W/2, 480);
   ctx.fillText('VIDAS INFINITAS ∞ — ¡aquí nunca se pierde!', W/2, 508);
+  ctx.fillStyle='#ffe36e';
+  ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
