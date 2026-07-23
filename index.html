@@ -41,6 +41,46 @@ let voces = [];
 function cargarVoces(){ voces = speechSynthesis.getVoices(); }
 cargarVoces();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = cargarVoces;
+/* Diálogos grabados con voz de niño en español (archivos mp3 del juego).
+   Los archivos de audio SÍ suenan siempre en iPhone (incluso en modo
+   silencio), a diferencia de la voz sintética de Safari. */
+const AUDIO_BASE = 'https://d8j0ntlcm91z4.cloudfront.net/user_3Fiy4A0M4MKixWlklbu10QS1hAQ/';
+const CLIPS = {
+  '¡Fernando Bros! ¡Vamos Penny y Sheldon!': AUDIO_BASE+'hf_20260723_012534_764eb403-ec7c-4525-98b3-fe9279e1f5bd.mp3',
+  '¡Soy el pichunguito de tío Juan!': AUDIO_BASE+'hf_20260723_012908_e05aff6a-0007-4311-95d3-0801192290eb.mp3',
+  '¡Fuego pichunguito!': AUDIO_BASE+'hf_20260723_012551_1363e049-071a-4ceb-a14e-40b6e982be2b.mp3',
+  '¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!': AUDIO_BASE+'hf_20260723_012554_625f20e6-b89b-4b18-a093-142ed057bc4a.mp3',
+  '¡Gracias tío Juan!': AUDIO_BASE+'hf_20260723_012608_929fae4a-9b1c-4956-861a-7612a607c4ce.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260723_012610_08cbccb0-f429-4558-b07d-7f4f1842407c.mp3',
+  'Te amo Santi, mi hermanito': AUDIO_BASE+'hf_20260723_012628_95118c02-94dd-470d-9398-81b005d60971.mp3',
+  'Hola Cucú, acompáñame': AUDIO_BASE+'hf_20260723_012630_78e89598-441f-48c5-8897-67d6c328d973.mp3',
+  'Te amo Abu': AUDIO_BASE+'hf_20260723_012646_44cb1dd9-1508-4a18-9453-de5423046d3c.mp3',
+  '¡Gracias Abu!': AUDIO_BASE+'hf_20260723_012650_4be322e4-56f9-487e-82ab-7e72d921b6e0.mp3',
+  '¡Cuídate Abu!': AUDIO_BASE+'hf_20260723_012703_38a6ee7b-bd1f-452e-8cc3-2c78fe57b38f.mp3',
+  'Te amo tío Juan, yo soy tu pichunguito': AUDIO_BASE+'hf_20260723_012707_b0548f16-aebc-4bad-bfae-c99ae2a96dd9.mp3',
+  '¡Muy bien, mi pichunguito! ¡Eres un campeón!': AUDIO_BASE+'hf_20260723_012723_88b63e0b-12cf-4864-af96-107eb5583692.mp3',
+  '¡Ganaste! ¡Te amo tío Juan!': AUDIO_BASE+'hf_20260723_012727_e67288ef-8540-4b30-95ff-5d500c6237e4.mp3',
+};
+const elementosAudio = {};
+let clipsListos = false;
+function prepararClips(){
+  /* iOS: "calentar" cada clip dentro del primer toque del usuario para
+     poder reproducirlos después desde cualquier parte del juego */
+  if (clipsListos || typeof Audio === 'undefined') return;
+  clipsListos = true;
+  for(const src of Object.values(CLIPS)){
+    try{
+      const a = new Audio(src);
+      a.preload = 'auto';
+      elementosAudio[src] = a;
+      a.muted = true;
+      const p = a.play();
+      if (p && p.then) p.then(()=>{ if(!a._activo){ a.pause(); a.currentTime=0; } a.muted=false; })
+                        .catch(()=>{ a.muted=false; });
+      else a.muted = false;
+    }catch(e){}
+  }
+}
 function vozEspanola(){
   if (!voces.length) cargarVoces();
   const es = voces.filter(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
@@ -48,11 +88,25 @@ function vozEspanola(){
   return es.find(v=>/es[-_](419|MX|US|CO|VE|AR|CL)/i.test(v.lang)) || es[0] || null;
 }
 function hablar(texto){
-  /* todos los diálogos con voz de niño en español.
+  const src = CLIPS[texto];
+  if (src){
+    try{
+      /* detener cualquier frase anterior */
+      for(const k in elementosAudio){ const o=elementosAudio[k]; if(o && !o.paused){ o.pause(); try{o.currentTime=0;}catch(e){} } }
+      const a = elementosAudio[src] || (elementosAudio[src] = new Audio(src));
+      a._activo = true; a.muted = false;
+      try{ a.currentTime = 0; }catch(e){}
+      const p = a.play();
+      if (p && p.catch) p.catch(()=>hablarTTS(texto));
+      return;
+    }catch(e){}
+  }
+  hablarTTS(texto);
+}
+function hablarTTS(texto){
+  /* respaldo: voz sintética del navegador, con tono de niño.
      iOS exige que la PRIMERA frase suene dentro del toque del usuario:
-     por eso, si no hay nada sonando, hablamos de inmediato (sin retraso).
-     Solo esperamos cuando hay que interrumpir una frase anterior, porque
-     en iOS hablar justo después de cancel() se pierde. */
+     si no hay nada sonando, hablamos de inmediato (sin retraso). */
   if (typeof speechSynthesis === 'undefined') return;
   try{
     const u = new SpeechSynthesisUtterance(texto);
@@ -72,7 +126,7 @@ function hablar(texto){
 
 /* ---------------- Sonido (Web Audio) ---------------- */
 let AC = null;
-function audio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
+function audio(){ prepararClips(); if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
 function beep(freq, dur, tipo, vol, t0){
   if(!AC) return;
   const o = AC.createOscillator(), g = AC.createGain();
@@ -633,6 +687,17 @@ function iniciarMeta(n){
    ============================================================ */
 function rect(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
 
+function letrero(x, y, txt, color){
+  /* nombre flotante con flecha, para encontrar fácil a los personajes */
+  const f = Math.sin(tick/12)*3;
+  ctx.font='bold 12px monospace'; ctx.textAlign='center';
+  ctx.fillStyle='#000'; ctx.fillText(txt, x+1, y+f+1);
+  ctx.fillStyle=color||'#fff'; ctx.fillText(txt, x, y+f);
+  ctx.fillStyle='#000'; ctx.fillText('▼', x+1, y+f+14);
+  ctx.fillStyle=color||'#fff'; ctx.fillText('▼', x, y+f+13);
+  ctx.textAlign='left';
+}
+
 function dibFernando(x,y,cara,grande,fuego,corriendo,t){
   const h = grande?56:28, esc = grande?2:1.4;
   if (J.invul>0 && (tick>>2)%2) return;
@@ -733,8 +798,7 @@ function dibSanti(x,y,t){
   rect(11,4,2,2,'#222'); rect(16,4,2,2,'#222');// ojos
   rect(12,8,4,2,'#e07a7a');                    // chupón
   ctx.restore();
-  ctx.fillStyle='#fff'; ctx.font='10px monospace';
-  ctx.fillText('SANTI', x-1, y+f-6);
+  letrero(x+14, y-24, 'SANTI', '#8ecbff');
 }
 function dibHuevo(x,y,t){
   ctx.save(); ctx.translate(Math.round(x),Math.round(y));
@@ -798,6 +862,7 @@ function dibTile(tx,ty){
     const s = c==='S' ? '★' : '?';
     if ((tick>>4)%2===0 || c!=='?') ctx.fillText(s, x+9, y+24);
     else ctx.fillText('?', x+9, y+23);
+    if (c==='S') letrero(x+16, y-30, '★ TÍO JUAN ★', '#ffe36e');
   } else if (c==='X'){
     rect(x,y,TILE,TILE,'#9c5a1c');
     ctx.strokeStyle='#5a2c00'; ctx.lineWidth=2; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
@@ -897,8 +962,8 @@ function draw(){
     if (!n.activo) continue;
     const nx = n.x-camX; if (nx<-80||nx>W+80) continue;
     if (n.tipo==='santi') dibSanti(nx, n.y+HUD_H, n.t);
-    else if (n.tipo==='huevo') dibHuevo(nx, n.y+HUD_H, n.t);
-    else if (n.tipo==='abu') dibAbu(nx, n.y+HUD_H, n.vx>0?1:-1, n.t, true);
+    else if (n.tipo==='huevo'){ dibHuevo(nx, n.y+HUD_H, n.t); letrero(nx+15, n.y+HUD_H-48, 'HUEVO DE GEORGIE', '#ff9ed6'); }
+    else if (n.tipo==='abu'){ dibAbu(nx, n.y+HUD_H, n.vx>0?1:-1, n.t, true); if(!n.huye) letrero(nx+14, n.y+HUD_H-26, 'ABU', '#d9b3ff'); }
     else if (n.tipo==='meta'){
       /* tarjeta de meta estilo SMB3 */
       const my = n.y+HUD_H;
@@ -1028,7 +1093,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v5', W-30, 18);
+  ctx.fillText('v6', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
