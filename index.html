@@ -40,22 +40,40 @@ let voces = [];
 function cargarVoces(){ voces = speechSynthesis.getVoices(); }
 cargarVoces();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = cargarVoces;
+/* iOS/Safari bloquea la voz hasta que un toque del usuario "desbloquea"
+   la síntesis: decimos una frase vacía dentro del primer gesto táctil. */
+let vozLista = false;
+function activarVoz(){
+  if (vozLista || typeof speechSynthesis === 'undefined') return;
+  vozLista = true;
+  try{
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function vozEspanola(){
+  const es = voces.filter(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
+  /* preferir español de América si existe */
+  return es.find(v=>/es[-_](419|MX|US|CO|VE|AR|CL)/i.test(v.lang)) || es[0] || null;
+}
 function hablar(texto){
   /* todos los diálogos con voz de niño en español */
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     u.lang = 'es-ES';
-    const v = voces.find(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
-    if (v) u.voice = v;
-    u.pitch = 1.9; u.rate = 1.05;
-    speechSynthesis.speak(u);
+    const v = vozEspanola();
+    if (v){ u.voice = v; u.lang = v.lang; }
+    u.pitch = 1.9; u.rate = 1.05; u.volume = 1;
+    /* en iOS, hablar justo después de cancel() se pierde: pequeña espera */
+    setTimeout(()=>{ try{ speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} }, 80);
   }catch(e){}
 }
 
 /* ---------------- Sonido (Web Audio) ---------------- */
 let AC = null;
-function audio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
+function audio(){ activarVoz(); if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
 function beep(freq, dur, tipo, vol, t0){
   if(!AC) return;
   const o = AC.createOscillator(), g = AC.createGain();
@@ -142,7 +160,7 @@ function nivel1(){
   ent('goomba',26,12); ent('goomba',48,12); ent('goomba',64,12);
   ent('koopa',96,12); ent('goomba',108,12); ent('goomba',116,12);
   ent('koopa',136,12); ent('goomba',150,12); ent('goomba',162,12);
-  ent('santi',43,3.6); ent('huevo',60,12); ent('abu',105,12);
+  ent('santi',36,11.4); ent('huevo',60,12); ent('abu',105,12);
   ent('meta',172,9);
   return {nombre:'MUNDO 1 · PRADERA DEL PICHUNGUITO', cielo:'#5c94fc', spawn:{x:3,y:11}};
 }
@@ -165,7 +183,7 @@ function nivel2(){
   ent('goomba',62,12); ent('koopa',90,12); ent('goomba',101,12);
   ent('goomba',115,12); ent('koopa',126,12); ent('goomba',144,12);
   ent('goomba',157,12); ent('koopa',170,12);
-  ent('santi',99,3.6); ent('huevo',89,12); ent('abu',124,12);
+  ent('santi',101,11.4); ent('huevo',89,12); ent('abu',124,12);
   ent('meta',192,9);
   return {nombre:'MUNDO 2 · CIELOS DE SANTI', cielo:'#48b0e8', spawn:{x:3,y:11}};
 }
@@ -191,7 +209,7 @@ function nivel3(){
   ent('goomba',84,12); ent('koopa',100,12); ent('goomba',107,12);
   ent('goomba',128,12); ent('koopa',136,7); ent('goomba',148,12);
   ent('koopa',156,12); ent('goomba',168,12); ent('goomba',186,12); ent('koopa',196,12);
-  ent('santi',59,4.6); ent('huevo',82,12); ent('abu',112,12);
+  ent('santi',64,11.4); ent('huevo',82,12); ent('abu',112,12);
   ent('meta',210,9);
   return {nombre:'MUNDO 3 · CASTILLO DE TÍO JUAN', cielo:'#3a6ec8', spawn:{x:3,y:11}};
 }
@@ -991,6 +1009,8 @@ function dibMenu(){
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
   ctx.fillText('← → mover · MAYÚS/X correr y fuego · ESPACIO/Z saltar · ↓ bajarse de Abu', W/2, 480);
   ctx.fillText('VIDAS INFINITAS ∞ — ¡aquí nunca se pierde!', W/2, 508);
+  ctx.fillStyle='#ffe36e';
+  ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
