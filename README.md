@@ -26,6 +26,11 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 - **Abu 👵** — una señora que aparece en cada nivel; Fernando se monta arriba de ella (*«Te amo Abu»*) y juntos derrotan enemigos.
 - **Cucú 👧** — del **huevo de Georgie** no sale Yoshi: ¡sale una niña llamada Cucú! *«Hola Cucú, acompáñame»*, y ella se une al grupo.
 - **Letreros flotantes** — SANTI, ABU, HUEVO DE GEORGIE y ★ TÍO JUAN ★ tienen carteles con flecha para encontrarlos facilito en todos los niveles.
+- **Luca y Salomón 🧒🧒** — los amigos de Fernando; al tocarlos se unen al grupo y lo siguen a todas partes.
+- **Tío Fran 💨** — al acercarse suelta un pedo enorme (¡con nube verde que espanta a los enemigos!) y Fernando dice: *«¡Qué pedo tan grande, tío Fran!»*
+- **Mamá 💋** — su beso hace crecer a Fernando y lo protege un buen rato: *«¡Te amo mamá!»*
+- **Papá 🦘** — le enseña el súper salto por el resto del nivel: *«¡Papá, mira cómo salto de alto!»*
+- **Más frases pichunguito** — «¡Toma, pichungazo!» al vencer enemigos y «¡Pichunguito al ataque!» al empezar cada mundo.
 
 ## 🍄 Funciones estilo Super Mario Bros 3
 
