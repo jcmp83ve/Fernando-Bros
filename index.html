@@ -2,14 +2,15 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Fernando Bros</title>
 <style>
   html,body{margin:0;padding:0;background:#111;height:100%;overflow:hidden;
     font-family:'Courier New',monospace;-webkit-user-select:none;user-select:none;touch-action:none}
   #wrap{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column}
   canvas{image-rendering:pixelated;background:#5c94fc;max-width:100vw;max-height:100vh;
-    box-shadow:0 0 40px #000}
+    box-shadow:0 0 40px #000;touch-action:none}
+  .tbtn{touch-action:none}
   .tbtn{position:fixed;bottom:18px;width:64px;height:64px;border-radius:50%;
     background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.45);
     color:#fff;font-size:22px;font-weight:bold;display:none;align-items:center;justify-content:center;
@@ -96,6 +97,15 @@ const sfx = {
 };
 
 /* ---------------- Entrada ---------------- */
+/* Bloquear el zoom de Safari en iPhone: el doble toque rápido (al saltar
+   una y otra vez) y el pellizco agrandan la página y esconden los
+   controles; Safari ignora user-scalable=no, así que se frena aquí. */
+for (const ev of ['gesturestart','gesturechange','gestureend'])
+  document.addEventListener(ev, e=>e.preventDefault());
+document.addEventListener('dblclick', e=>e.preventDefault());
+document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
+document.addEventListener('touchend', e=>e.preventDefault(), {passive:false});
+
 const keys = {};
 addEventListener('keydown', e=>{
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
@@ -1018,7 +1028,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v4', W-30, 18);
+  ctx.fillText('v5', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
