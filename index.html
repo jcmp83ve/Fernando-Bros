@@ -40,16 +40,15 @@ let voces = [];
 function cargarVoces(){ voces = speechSynthesis.getVoices(); }
 cargarVoces();
 if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = cargarVoces;
-function hablar(texto, tipo){
+function hablar(texto){
+  /* todos los diálogos con voz de niño en español */
   try{
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     u.lang = 'es-ES';
     const v = voces.find(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
     if (v) u.voice = v;
-    if (tipo === 'nino'){ u.pitch = 1.9; u.rate = 1.05; }        // voz de niño (Fernando)
-    else if (tipo === 'heroe'){ u.pitch = 0.6; u.rate = 0.95; }  // voz de Tío Juan
-    else { u.pitch = 1.4; u.rate = 1.0; }
+    u.pitch = 1.9; u.rate = 1.05;
     speechSynthesis.speak(u);
   }catch(e){}
 }
@@ -226,7 +225,8 @@ function empezarJuego(){
   nivelIdx = 0; puntos = 0; monedas = 0; muertes = 0;
   cargarNivel(0);
   estado = 'juego';
-  hablar('¡Fernando Bros!', 'nino');
+  burbuja('¡Vamos Penny y Sheldon!');
+  hablar('¡Fernando Bros! ¡Vamos Penny y Sheldon!');
 }
 
 function cargarNivel(i){
@@ -306,6 +306,7 @@ function dano(){
   if (J.montaAbu){
     J.montaAbu=false; J.invul=90; sfx.dano();
     burbuja('¡Cuídate Abu!');
+    hablar('¡Cuídate Abu!');
     npcs.push({tipo:'abu', x:J.x, y:J.y+altoJ()-48, vx:2.2, vy:-3, t:0, activo:true, huye:true});
     return;
   }
@@ -371,6 +372,7 @@ function update(){
     J.montaAbu=false;
     npcs.push({tipo:'abu', x:J.x-10, y:J.y+altoJ()-48, vx:-0.5, vy:0, t:0, activo:true});
     burbuja('¡Gracias Abu!');
+    hablar('¡Gracias Abu!');
   }
 
   /* bolas de fuego */
@@ -408,7 +410,7 @@ function update(){
     if (getT(tx,ty)==='C'){ setT(tx,ty,'.'); monedas++; puntos+=100; sfx.moneda(); }
 
   if (J.invul>0) J.invul--;
-  if (J.burger>0){ J.burger--; if(J.burger===0) burbuja('¡Qué rica hamburguesa!'); }
+  if (J.burger>0){ J.burger--; if(J.burger===0){ burbuja('¡Qué rica hamburguesa!'); hablar('¡Qué rica hamburguesa!'); } }
 
   /* rastro para seguidores */
   historia.unshift({x:J.x, y:J.y+h-28, cara:J.cara});
@@ -423,11 +425,12 @@ function update(){
         if(!J.grande){ J.grande=true; J.y-=28; }
         puntos+=1000; sfx.poder();
         burbuja('¡Soy el pichunguito de tío Juan!');
-        hablar('¡Soy el pichunguito de tío Juan!', 'nino');
+        hablar('¡Soy el pichunguito de tío Juan!');
       } else if (it.tipo==='flor'){
         if(!J.grande){ J.grande=true; J.y-=28; }
         J.fuego=true; puntos+=1000; sfx.poder();
         burbuja('¡Fuego pichunguito!');
+        hablar('¡Fuego pichunguito!');
       } else if (it.tipo==='estrella'){
         puntos+=1000;
         lanzarTioJuanEstrella();
@@ -484,7 +487,7 @@ function update(){
       if (solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:28})){
         n.activo=false; J.cargaSanti=true; puntos+=2000; sfx.poder();
         burbuja('¡Te amo Santi, mi hermanito!');
-        hablar('Te amo Santi, mi hermanito', 'nino');
+        hablar('Te amo Santi, mi hermanito');
       }
     } else if (n.tipo==='huevo'){
       if (solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y-24,w:30,h:40})){
@@ -492,7 +495,7 @@ function update(){
         for(let i=0;i<8;i++) parts.push({tipo:'cascara', x:n.x+15, y:n.y-6,
           vx:(Math.random()-0.5)*5, vy:-3-Math.random()*4, t:45});
         burbuja('¡Hola Cucú, acompáñame!');
-        hablar('Hola Cucú, acompáñame', 'nino');
+        hablar('Hola Cucú, acompáñame');
       }
     } else if (n.tipo==='abu'){
       const ea = {x:n.x, y:n.y, vx:n.vx, vy:n.vy||0, w:28, h:48};
@@ -501,7 +504,7 @@ function update(){
       if (!n.huye && !J.montaAbu && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:48})){
         n.activo=false; J.montaAbu=true; J.y-=40; puntos+=2000; sfx.poder();
         burbuja('¡Te amo Abu!');
-        hablar('Te amo Abu', 'nino');
+        hablar('Te amo Abu');
       }
     } else if (n.tipo==='meta'){
       if (estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:40,h:13*TILE-n.y})){
@@ -519,14 +522,14 @@ function update(){
     J.vx*=0.9;
     if (secMeta===70){
       burbuja('¡Te amo tío Juan, yo soy tu pichunguito!');
-      hablar('Te amo tío Juan, yo soy tu pichunguito', 'nino');
+      hablar('Te amo tío Juan, yo soy tu pichunguito');
     }
     if (secMeta===200){
-      hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!', 'heroe');
+      hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!');
     }
     if (secMeta>=340){
       if (nivelIdx+1 < NIVELES.length){ cargarNivel(nivelIdx+1); estado='juego'; }
-      else { estado='fin'; sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!', 'nino'); }
+      else { estado='fin'; sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!'); }
     }
   }
 
@@ -557,7 +560,7 @@ function matarEnemigo(e, lanzado){
 function lanzarTioJuanEstrella(){
   sfx.heroe();
   evTioJuan = {fase:'entra', x:camX-60, y:40, t:0, burger:null};
-  hablar('¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!', 'heroe');
+  hablar('¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!');
 }
 function actualizarTioJuan(){
   const ev = evTioJuan; ev.t++;
@@ -576,6 +579,7 @@ function actualizarTioJuan(){
     if (ev.t>45){
       J.burger = 600; sfx.poder();
       burbuja('¡Gracias tío Juan!');
+      hablar('¡Gracias tío Juan!');
       ev.fase='sale'; ev.t=0; ev.burger=null;
     }
   } else if (ev.fase==='sale'){
@@ -822,7 +826,7 @@ function dibHUD(){
   if (J.pmetro>=95 && (tick>>3)%2){ ctx.fillStyle='#ff5050'; ctx.fillText('¡¡PP!!', 590, 50); }
   /* estado de compañía (alineado a la derecha) */
   ctx.font='14px monospace'; ctx.fillStyle='#8ecbff'; ctx.textAlign='right';
-  let comp = 'Negro + Marrón';
+  let comp = 'Penny + Sheldon';
   if (J.cucu) comp += ' + Cucú';
   if (J.cargaSanti) comp += ' + Santi';
   if (J.montaAbu) comp += ' + Abu';
@@ -981,7 +985,7 @@ function dibMenu(){
   ctx.save(); ctx.translate(W/2+160, cy-45); ctx.scale(1.3,1.3); dibTioJuan(0,0,tick); ctx.restore();
   dibBurger(W/2+240, cy-15);
   ctx.fillStyle='#ffe36e'; ctx.font='16px monospace';
-  ctx.fillText('Fernando · Negro · Marrón · Santi · Abu · Cucú · Tío Juan · 🍔', W/2, cy+70);
+  ctx.fillText('Fernando · Penny · Sheldon · Santi · Abu · Cucú · Tío Juan · 🍔', W/2, cy+70);
   ctx.fillStyle='#fff'; ctx.font='bold 24px monospace';
   if ((tick>>4)%2===0) ctx.fillText('PULSA ENTER (o toca) PARA JUGAR', W/2, 440);
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
@@ -1020,7 +1024,7 @@ function dibFin(){
   ctx.fillStyle='#222'; ctx.font='bold 24px monospace';
   ctx.fillText('«Te amo tío Juan, yo soy tu pichunguito»', W/2, 180);
   ctx.font='20px monospace';
-  ctx.fillText('— Fernando, con Santi, Cucú, Abu y los perritos', W/2, 215);
+  ctx.fillText('— Fernando, con Penny, Sheldon, Santi, Cucú y Abu', W/2, 215);
   const cy=330;
   ctx.save(); ctx.translate(W/2-40, cy-90); ctx.scale(1.6,1.6); dibTioJuan(0,0,tick); ctx.restore();
   dibFernandoMenu(W/2-140, cy-60);

@@ -1,7 +1,7 @@
 # Fernando Bros 🎮
 
 ¡Un juego de plataformas al estilo **Super Mario Bros 3**, pero con **vidas infinitas ∞**!
-La aventura de Fernando, el pichunguito de tío Juan, junto a sus dos perritos: **Negro** y **Marrón**.
+La aventura de Fernando, el pichunguito de tío Juan, junto a sus dos perritos: **Penny** (la perrita negra) y **Sheldon** (el perrito marrón).
 
 ## 🕹️ Cómo jugar
 
@@ -18,7 +18,7 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 ## ⭐ Particularidades del juego
 
 - **Vidas infinitas ∞** — aquí nunca se pierde: si te caes, vuelves a empezar el nivel sin castigo.
-- **Los perritos** — un perrito negro y uno marrón acompañan a Fernando a todas partes.
+- **Los perritos** — **Penny** (negra) y **Sheldon** (marrón) acompañan a Fernando a todas partes.
 - **El hongo 🍄** — al comerlo, Fernando crece y dice con voz de niño: *«¡Soy el pichunguito de tío Juan!»*
 - **La estrella ★** — aparece el superhéroe **Tío Juan**, que le da una **hamburguesa** a Fernando para que corra a súper velocidad (y sea invencible).
 - **Fin de nivel** — Tío Juan vuelve a aparecer y Fernando le dice: *«Te amo tío Juan, yo soy tu pichunguito»*.
@@ -35,8 +35,8 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 - Goombas y koopas con caparazón pateable
 - Tuberías, plataformas, colinas, huecos, temporizador y puntuación
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
-- Voces en español (Web Speech API) y efectos de sonido retro (Web Audio)
+- Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
 ## 🗣️ Voces
 
-El juego usa la síntesis de voz del navegador en español. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
+Todos los diálogos se hablan con **voz de niño en español** usando la síntesis de voz del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
