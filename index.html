@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fernando Bros</title>
+<style>
+  html,body{margin:0;padding:0;background:#111;height:100%;overflow:hidden;
+    font-family:'Courier New',monospace;-webkit-user-select:none;user-select:none;touch-action:none}
+  #wrap{display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column}
+  canvas{image-rendering:pixelated;background:#5c94fc;max-width:100vw;max-height:100vh;
+    box-shadow:0 0 40px #000}
+  .tbtn{position:fixed;bottom:18px;width:64px;height:64px;border-radius:50%;
+    background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.45);
+    color:#fff;font-size:22px;font-weight:bold;display:none;align-items:center;justify-content:center;
+    z-index:10}
+  @media (pointer:coarse){ .tbtn{display:flex} }
+  #bL{left:16px} #bR{left:92px} #bDown{left:54px;bottom:92px;width:56px;height:56px}
+  #bB{right:96px} #bA{right:16px;bottom:44px}
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="cv" width="960" height="540"></canvas></div>
+<div class="tbtn" id="bL">◀</div><div class="tbtn" id="bR">▶</div><div class="tbtn" id="bDown">▼</div>
+<div class="tbtn" id="bB">B</div><div class="tbtn" id="bA">A</div>
+<script>
+'use strict';
+/* ============================================================
+   FERNANDO BROS — un plataformas estilo Super Mario Bros 3
+   Vidas infinitas · Perritos Negro y Marrón · Tío Juan · Santi
+   Abu · Cucú · ¡Hamburguesas de súper velocidad!
+   ============================================================ */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const TILE = 32, ROWS = 15, HUD_H = 60;
+const GRAV = 0.55, MAXFALL = 12;
+
+/* ---------------- Voz (Web Speech API) ---------------- */
+let voces = [];
+function cargarVoces(){ voces = speechSynthesis.getVoices(); }
+cargarVoces();
+if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = cargarVoces;
+function hablar(texto){
+  /* todos los diálogos con voz de niño en español */
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(texto);
+    u.lang = 'es-ES';
+    const v = voces.find(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
+    if (v) u.voice = v;
+    u.pitch = 1.9; u.rate = 1.05;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ---------------- Sonido (Web Audio) ---------------- */
+let AC = null;
+function audio(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); }
+function beep(freq, dur, tipo, vol, t0){
+  if(!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.type = tipo||'square'; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol||0.08, AC.currentTime+(t0||0));
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime+(t0||0)+dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(AC.currentTime+(t0||0)); o.stop(AC.currentTime+(t0||0)+dur+0.02);
+}
+const sfx = {
+  salto(){ beep(320,0.12,'square',0.06); beep(520,0.12,'square',0.05,0.05); },
+  moneda(){ beep(988,0.08,'square',0.07); beep(1319,0.25,'square',0.07,0.08); },
+  pisoton(){ beep(200,0.1,'triangle',0.1); beep(120,0.12,'triangle',0.08,0.06); },
+  poder(){ [523,659,784,1047,1319].forEach((f,i)=>beep(f,0.1,'square',0.06,i*0.07)); },
+  dano(){ [400,300,200].forEach((f,i)=>beep(f,0.12,'sawtooth',0.07,i*0.09)); },
+  romper(){ beep(150,0.15,'sawtooth',0.1); },
+  fuego(){ beep(700,0.08,'sawtooth',0.05); },
+  heroe(){ [392,523,659,784,1047].forEach((f,i)=>beep(f,0.14,'triangle',0.08,i*0.09)); },
+  meta(){ [523,587,659,784,880,1047,1319].forEach((f,i)=>beep(f,0.18,'square',0.07,i*0.11)); },
+  muerte(){ [660,494,392,330,262].forEach((f,i)=>beep(f,0.14,'square',0.06,i*0.1)); },
+  huevo(){ beep(600,0.06,'square',0.07); beep(800,0.06,'square',0.07,0.07); beep(1000,0.15,'square',0.07,0.14); },
+};
+
+/* ---------------- Entrada ---------------- */
+const keys = {};
+addEventListener('keydown', e=>{
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
+  keys[e.key.toLowerCase()] = true; keys[e.key] = true;
+  audio();
+  if (estado==='menu' && (e.key==='Enter'||e.key===' ')) empezarJuego();
+  if (estado==='fin' && (e.key==='Enter')) { estado='menu'; }
+});
+addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; keys[e.key] = false; });
+function tocar(id, k){
+  const el = document.getElementById(id);
+  const on = ev=>{ ev.preventDefault(); keys[k]=true; audio(); if(estado==='menu') empezarJuego(); };
+  const off= ev=>{ ev.preventDefault(); keys[k]=false; };
+  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off);
+  el.addEventListener('pointerleave', off); el.addEventListener('pointercancel', off);
+}
+tocar('bL','arrowleft'); tocar('bR','arrowright'); tocar('bDown','arrowdown');
+tocar('bA',' '); tocar('bB','shift');
+cv.addEventListener('pointerdown', ()=>{ audio(); if(estado==='menu') empezarJuego(); if(estado==='fin') estado='menu'; });
+const izq   = ()=> keys['arrowleft']||keys['a'];
+const der   = ()=> keys['arrowright']||keys['d'];
+const abajo = ()=> keys['arrowdown']||keys['s'];
+const kSalto= ()=> keys[' ']||keys['z']||keys['arrowup']||keys['w'];
+const kCorre= ()=> keys['shift']||keys['x'];
+
+/* ---------------- Nivel: constructor de mapas ---------------- */
+let grid=[], LEVW=0, entidadesNivel=[];
+function nuevoMapa(w){
+  LEVW = w;
+  grid = Array.from({length:ROWS}, ()=>Array(w).fill('.'));
+  for(let x=0;x<w;x++){ grid[13][x]='#'; grid[14][x]='#'; }
+}
+const setT=(x,y,c)=>{ if(y>=0&&y<ROWS&&x>=0&&x<LEVW) grid[y][x]=c; };
+const getT=(x,y)=>{ if(y<0||x<0||x>=LEVW) return '.'; if(y>=ROWS) return '#'; return grid[y][x]; };
+function hueco(x0,x1){ for(let x=x0;x<=x1;x++){ setT(x,13,'.'); setT(x,14,'.'); } }
+function fila(x0,x1,y,c){ for(let x=x0;x<=x1;x++) setT(x,y,c); }
+function colina(x,w,h){ for(let i=0;i<h;i++) fila(x+i, x+w-1-i, 12-i, 'W'); }
+function tubo(x,h){ for(let i=0;i<h;i++){ setT(x,12-i,'l'); setT(x+1,12-i,'l'); } }
+function arco(x0,y,n){ for(let i=0;i<n;i++) setT(x0+i, y - Math.round(Math.sin(i/(n-1)*Math.PI)*2), 'C'); }
+const SOLIDOS = '#BW?MSXl=';
+const esSolido = c => SOLIDOS.includes(c);
+
+function ent(tipo,x,y){ entidadesNivel.push({tipo, x:x*TILE, y:y*TILE}); }
+
+/* ---- Nivel 1: Pradera del Pichunguito ---- */
+function nivel1(){
+  nuevoMapa(180); entidadesNivel=[];
+  hueco(30,32); hueco(70,73); hueco(121,123);
+  colina(10,7,2); colina(85,9,3); colina(140,7,2);
+  fila(18,21,9,'B'); setT(19,9,'?'); setT(21,9,'M');
+  setT(25,6,'?');
+  fila(40,44,9,'B'); setT(42,9,'?'); setT(40,9,'?');
+  fila(41,43,5,'B'); setT(42,5,'M');
+  setT(90,9,'S');
+  fila(100,103,9,'B'); setT(101,9,'?'); setT(103,9,'?');
+  fila(110,113,6,'='); fila(126,129,9,'=');
+  arco(58,8,5); arco(95,7,6); arco(133,7,5);
+  fila(155,158,9,'B'); setT(156,9,'M'); setT(158,9,'?');
+  tubo(52,2); tubo(78,3); tubo(146,2);
+  ent('goomba',26,12); ent('goomba',48,12); ent('goomba',64,12);
+  ent('koopa',96,12); ent('goomba',108,12); ent('goomba',116,12);
+  ent('koopa',136,12); ent('goomba',150,12); ent('goomba',162,12);
+  ent('santi',43,3.6); ent('huevo',60,12); ent('abu',105,12);
+  ent('meta',172,9);
+  return {nombre:'MUNDO 1 · PRADERA DEL PICHUNGUITO', cielo:'#5c94fc', spawn:{x:3,y:11}};
+}
+/* ---- Nivel 2: Cielos de Santi ---- */
+function nivel2(){
+  nuevoMapa(200); entidadesNivel=[];
+  hueco(24,27); hueco(46,50); hueco(74,79); hueco(105,109); hueco(138,141); hueco(160,163);
+  fila(25,27,10,'='); fila(47,49,9,'='); fila(75,77,8,'='); fila(78,79,10,'=');
+  fila(106,108,9,'='); fila(139,140,8,'='); fila(161,162,10,'=');
+  fila(14,17,9,'B'); setT(15,9,'M'); setT(17,9,'?');
+  fila(34,36,7,'B'); setT(35,7,'?');
+  setT(56,8,'?'); setT(58,8,'M'); setT(60,8,'?');
+  fila(84,88,9,'B'); setT(86,9,'S');
+  fila(92,94,6,'='); fila(98,100,5,'=');
+  setT(118,8,'?'); fila(120,123,8,'B'); setT(122,8,'M');
+  fila(146,149,9,'='); fila(152,155,7,'=');
+  arco(38,6,5); arco(66,7,6); arco(112,7,5); arco(129,6,6); arco(168,7,5);
+  colina(128,8,2); tubo(42,2); tubo(70,3); tubo(132,4); tubo(174,2);
+  ent('goomba',20,12); ent('koopa',32,12); ent('goomba',54,12);
+  ent('goomba',62,12); ent('koopa',90,12); ent('goomba',101,12);
+  ent('goomba',115,12); ent('koopa',126,12); ent('goomba',144,12);
+  ent('goomba',157,12); ent('koopa',170,12);
+  ent('santi',99,3.6); ent('huevo',89,12); ent('abu',124,12);
+  ent('meta',192,9);
+  return {nombre:'MUNDO 2 · CIELOS DE SANTI', cielo:'#48b0e8', spawn:{x:3,y:11}};
+}
+/* ---- Nivel 3: Castillo de Tío Juan ---- */
+function nivel3(){
+  nuevoMapa(220); entidadesNivel=[];
+  hueco(20,22); hueco(40,44); hueco(66,69); hueco(92,96); hueco(120,124); hueco(150,153); hueco(176,179);
+  fila(41,43,9,'='); fila(93,95,8,'='); fila(121,123,9,'='); fila(151,152,8,'=');
+  fila(12,15,9,'B'); setT(13,9,'M'); setT(15,9,'?');
+  fila(28,31,9,'B'); setT(29,9,'?'); setT(31,9,'?');
+  fila(50,54,9,'B'); setT(52,9,'S');
+  fila(58,60,6,'B'); setT(59,6,'M');
+  colina(74,10,4); fila(86,88,7,'=');
+  setT(100,8,'?'); setT(102,8,'?'); setT(104,8,'M');
+  fila(110,114,9,'B'); arco(110,6,5);
+  colina(130,12,5);
+  fila(144,147,8,'B'); setT(145,8,'?'); setT(147,8,'M');
+  fila(158,161,9,'='); fila(164,167,7,'='); fila(170,173,5,'=');
+  arco(34,7,5); arco(63,7,5); arco(87,4,4); arco(117,7,6); arco(155,7,5); arco(184,7,6);
+  tubo(38,2); tubo(48,3); tubo(90,2); tubo(116,3); tubo(140,5); tubo(190,3);
+  ent('goomba',18,12); ent('goomba',26,12); ent('koopa',36,12);
+  ent('goomba',56,12); ent('goomba',62,12); ent('koopa',72,8);
+  ent('goomba',84,12); ent('koopa',100,12); ent('goomba',107,12);
+  ent('goomba',128,12); ent('koopa',136,7); ent('goomba',148,12);
+  ent('koopa',156,12); ent('goomba',168,12); ent('goomba',186,12); ent('koopa',196,12);
+  ent('santi',59,4.6); ent('huevo',82,12); ent('abu',112,12);
+  ent('meta',210,9);
+  return {nombre:'MUNDO 3 · CASTILLO DE TÍO JUAN', cielo:'#3a6ec8', spawn:{x:3,y:11}};
+}
+const NIVELES = [nivel1, nivel2, nivel3];
+
+/* ---------------- Estado del juego ---------------- */
+let estado = 'menu';   // menu | juego | meta | fin
+let nivelIdx = 0, infoNivel = null;
+let camX = 0, tick = 0;
+let puntos = 0, monedas = 0, tiempo = 300, tiempoAcum = 0, muertes = 0;
+let enemigos = [], items = [], fuegos = [], parts = [], npcs = [], burbujas = [], bumps = [];
+let historia = [];    // rastro del jugador para los seguidores
+let evTioJuan = null; // evento estrella / meta
+let secMeta = 0;
+
+/* ---------------- Jugador ---------------- */
+const J = {
+  x:0, y:0, vx:0, vy:0, w:24, h:28,
+  grande:false, fuego:false, cara:1, enSuelo:false,
+  invul:0, burger:0, pmetro:0, muerto:0,
+  cargaSanti:false, montaAbu:false, cucu:false,
+  animT:0
+};
+function altoJ(){ return J.grande ? 56 : 28; }
+
+function burbuja(txt, quien){
+  burbujas.push({txt, quien:quien||'J', t:150});
+}
+
+function empezarJuego(){
+  nivelIdx = 0; puntos = 0; monedas = 0; muertes = 0;
+  cargarNivel(0);
+  estado = 'juego';
+  burbuja('¡Vamos Penny y Sheldon!');
+  hablar('¡Fernando Bros! ¡Vamos Penny y Sheldon!');
+}
+
+function cargarNivel(i){
+  nivelIdx = i;
+  infoNivel = NIVELES[i]();
+  enemigos=[]; items=[]; fuegos=[]; parts=[]; npcs=[]; burbujas=[]; bumps=[];
+  evTioJuan=null; secMeta=0; tiempo=300; tiempoAcum=0;
+  J.x = infoNivel.spawn.x*TILE; J.y = infoNivel.spawn.y*TILE;
+  J.vx=0; J.vy=0; J.cara=1; J.invul=0; J.burger=0; J.pmetro=0; J.muerto=0;
+  J.cargaSanti=false; J.montaAbu=false; J.cucu=false;
+  historia = [];
+  for(const e of entidadesNivel){
+    if (e.tipo==='goomba') enemigos.push({tipo:'goomba', x:e.x, y:e.y, vx:-0.8, vy:0, w:26, h:24, vivo:true});
+    else if (e.tipo==='koopa') enemigos.push({tipo:'koopa', x:e.x, y:e.y, vx:-0.7, vy:0, w:26, h:36, vivo:true, caparazon:false, girando:false});
+    else if (e.tipo==='santi') npcs.push({tipo:'santi', x:e.x, y:e.y, t:0, activo:true});
+    else if (e.tipo==='huevo') npcs.push({tipo:'huevo', x:e.x, y:e.y+8, t:0, activo:true});
+    else if (e.tipo==='abu')   npcs.push({tipo:'abu', x:e.x, y:e.y-16, vx:-0.5, vy:0, t:0, activo:true});
+    else if (e.tipo==='meta')  npcs.push({tipo:'meta', x:e.x, y:e.y, t:0, activo:true});
+  }
+  camX = 0;
+}
+
+/* ---------------- Física / colisiones ---------------- */
+function chocaMapa(px,py,pw,ph){
+  const x0=Math.floor(px/TILE), x1=Math.floor((px+pw-1)/TILE);
+  const y0=Math.floor(py/TILE), y1=Math.floor((py+ph-1)/TILE);
+  for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++)
+    if (esSolido(getT(tx,ty))) return {tx,ty};
+  return null;
+}
+function moverEnte(e){
+  e.vy = Math.min(e.vy + GRAV, MAXFALL);
+  e.x += e.vx;
+  let c = chocaMapa(e.x, e.y, e.w, e.h);
+  if (c){ if (e.vx>0) e.x = c.tx*TILE - e.w; else if (e.vx<0) e.x = (c.tx+1)*TILE; e.vx = -e.vx; e.choco=true; }
+  else e.choco=false;
+  e.y += e.vy;
+  c = chocaMapa(e.x, e.y, e.w, e.h);
+  e.enSuelo=false;
+  if (c){
+    if (e.vy>0){ e.y = c.ty*TILE - e.h; e.enSuelo=true; }
+    else { e.y = (c.ty+1)*TILE; }
+    e.vy = 0;
+  }
+}
+const solapa=(a,b)=> a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+
+/* ---------------- Bloques golpeados ---------------- */
+function golpeaBloque(tx,ty){
+  const c = getT(tx,ty);
+  if (c==='?'){
+    setT(tx,ty,'X'); monedas++; puntos+=100; sfx.moneda();
+    parts.push({tipo:'moneda', x:tx*TILE+8, y:ty*TILE-20, vy:-6, t:30});
+    bumps.push({tx,ty,t:10});
+  } else if (c==='M'){
+    setT(tx,ty,'X'); sfx.poder();
+    items.push(J.grande
+      ? {tipo:'flor', x:tx*TILE+3, y:(ty-1)*TILE+6, vx:0, vy:0, w:26, h:26}
+      : {tipo:'hongo', x:tx*TILE+3, y:(ty-1)*TILE+4, vx:1.2, vy:0, w:26, h:26});
+    bumps.push({tx,ty,t:10});
+  } else if (c==='S'){
+    setT(tx,ty,'X'); sfx.poder();
+    items.push({tipo:'estrella', x:tx*TILE+3, y:(ty-1)*TILE+4, vx:1.6, vy:-4, w:26, h:26});
+    bumps.push({tx,ty,t:10});
+  } else if (c==='B'){
+    if (J.grande){
+      setT(tx,ty,'.'); puntos+=50; sfx.romper();
+      for(let i=0;i<4;i++) parts.push({tipo:'ladrillo', x:tx*TILE+16, y:ty*TILE+16,
+        vx:(i%2?2:-2)*(0.6+Math.random()), vy:-5-Math.random()*3, t:50});
+    } else { bumps.push({tx,ty,t:10}); beep(180,0.08,'square',0.06); }
+  }
+}
+
+/* ---------------- Daño / muerte (¡vidas infinitas!) ---------------- */
+function dano(){
+  if (J.invul>0 || J.burger>0 || J.muerto>0) return;
+  if (J.montaAbu){
+    J.montaAbu=false; J.invul=90; sfx.dano();
+    burbuja('¡Cuídate Abu!');
+    hablar('¡Cuídate Abu!');
+    npcs.push({tipo:'abu', x:J.x, y:J.y+altoJ()-48, vx:2.2, vy:-3, t:0, activo:true, huye:true});
+    return;
+  }
+  if (J.fuego){ J.fuego=false; J.invul=110; sfx.dano(); }
+  else if (J.grande){ J.grande=false; J.invul=110; sfx.dano(); }
+  else morir();
+}
+function morir(){
+  if (J.muerto>0) return;
+  J.muerto = 110; J.vy = -10; muertes++; sfx.muerte();
+}
+function respawn(){
+  const s = infoNivel.spawn;
+  J.x=s.x*TILE; J.y=s.y*TILE; J.vx=0; J.vy=0; J.muerto=0;
+  J.grande=false; J.fuego=false; J.burger=0; J.invul=120;
+  J.montaAbu=false; tiempo=300; tiempoAcum=0;
+  historia=[];
+}
+
+/* ---------------- Actualización ---------------- */
+function update(){
+  tick++;
+  if (estado!=='juego' && estado!=='meta') return;
+
+  /* tiempo */
+  if (estado==='juego' && J.muerto===0){
+    tiempoAcum++;
+    if (tiempoAcum>=60){ tiempoAcum=0; tiempo--; if(tiempo<=0) morir(); }
+  }
+
+  /* --- muerte animada --- */
+  if (J.muerto>0){
+    J.muerto--; J.y += J.vy; J.vy += 0.4;
+    if (J.muerto===0) respawn();
+    actualizarExtras();
+    return;
+  }
+
+  /* --- controles --- */
+  const enMeta = estado==='meta';
+  const corre = kCorre();
+  const velTope = (J.burger>0 ? 7.2 : (corre && J.pmetro>=70 ? 5.8 : corre ? 4.6 : 3.1)) * (J.montaAbu?1.15:1);
+  const acc = J.enSuelo ? 0.5 : 0.35;
+  if (!enMeta && izq()){ J.vx = Math.max(J.vx-acc, -velTope); J.cara=-1; }
+  else if (!enMeta && der()){ J.vx = Math.min(J.vx+acc, velTope); J.cara=1; }
+  else J.vx *= J.enSuelo ? 0.82 : 0.95;
+  if (Math.abs(J.vx)<0.05) J.vx=0;
+
+  /* medidor P */
+  if (Math.abs(J.vx)>4.4 && J.enSuelo) J.pmetro=Math.min(J.pmetro+1.2,100);
+  else if (J.pmetro>0 && !(Math.abs(J.vx)>4.4)) J.pmetro=Math.max(J.pmetro-0.8,0);
+
+  /* salto */
+  if (!enMeta && kSalto()){
+    if (J.enSuelo && !J.saltando){
+      J.vy = -(11 + Math.min(Math.abs(J.vx)*0.35,2.2));
+      J.saltando=true; J.enSuelo=false; sfx.salto();
+    }
+  } else { J.saltando=false; if (J.vy<-4 && !kSalto()) J.vy=-4; }
+
+  /* desmontar a Abu */
+  if (J.montaAbu && abajo() && J.enSuelo){
+    J.montaAbu=false;
+    npcs.push({tipo:'abu', x:J.x-10, y:J.y+altoJ()-48, vx:-0.5, vy:0, t:0, activo:true});
+    burbuja('¡Gracias Abu!');
+    hablar('¡Gracias Abu!');
+  }
+
+  /* bolas de fuego */
+  if (!enMeta && J.fuego && kCorre() && !J.fuegoPrev && fuegos.length<2){
+    fuegos.push({x:J.x+(J.cara>0?J.w:-10), y:J.y+10, vx:7*J.cara, vy:2, w:12, h:12, t:120});
+    sfx.fuego();
+  }
+  J.fuegoPrev = kCorre();
+
+  /* --- física del jugador --- */
+  const h = altoJ() + (J.montaAbu?40:0);
+  J.vy = Math.min(J.vy + GRAV, MAXFALL);
+  J.x += J.vx;
+  if (J.x<0) J.x=0;
+  if (J.x>LEVW*TILE-J.w) J.x=LEVW*TILE-J.w;
+  let c = chocaMapa(J.x, J.y, J.w, h);
+  if (c){ if(J.vx>0) J.x=c.tx*TILE-J.w; else if(J.vx<0) J.x=(c.tx+1)*TILE; J.vx=0; }
+  J.y += J.vy;
+  c = chocaMapa(J.x, J.y, J.w, h);
+  J.enSuelo=false;
+  if (c){
+    if (J.vy>0){ J.y=c.ty*TILE-h; J.enSuelo=true; J.vy=0; }
+    else if (J.vy<0){
+      J.y=(c.ty+1)*TILE; J.vy=0;
+      const txc = Math.floor((J.x+J.w/2)/TILE);
+      golpeaBloque(esSolido(getT(txc,c.ty)) ? txc : c.tx, c.ty);
+    }
+  }
+  if (J.y > ROWS*TILE+60) morir();
+
+  /* monedas del mapa */
+  const cx0=Math.floor(J.x/TILE), cx1=Math.floor((J.x+J.w)/TILE);
+  const cy0=Math.floor(J.y/TILE), cy1=Math.floor((J.y+h)/TILE);
+  for(let ty=cy0;ty<=cy1;ty++) for(let tx=cx0;tx<=cx1;tx++)
+    if (getT(tx,ty)==='C'){ setT(tx,ty,'.'); monedas++; puntos+=100; sfx.moneda(); }
+
+  if (J.invul>0) J.invul--;
+  if (J.burger>0){ J.burger--; if(J.burger===0){ burbuja('¡Qué rica hamburguesa!'); hablar('¡Qué rica hamburguesa!'); } }
+
+  /* rastro para seguidores */
+  historia.unshift({x:J.x, y:J.y+h-28, cara:J.cara});
+  if (historia.length>90) historia.pop();
+
+  /* --- items --- */
+  for(const it of items){
+    if (it.tipo!=='flor'){ moverEnte(it); if(it.tipo==='estrella'&&it.enSuelo) it.vy=-6; }
+    if (solapa({x:J.x,y:J.y,w:J.w,h}, it)){
+      it.usado=true;
+      if (it.tipo==='hongo'){
+        if(!J.grande){ J.grande=true; J.y-=28; }
+        puntos+=1000; sfx.poder();
+        burbuja('¡Soy el pichunguito de tío Juan!');
+        hablar('¡Soy el pichunguito de tío Juan!');
+      } else if (it.tipo==='flor'){
+        if(!J.grande){ J.grande=true; J.y-=28; }
+        J.fuego=true; puntos+=1000; sfx.poder();
+        burbuja('¡Fuego pichunguito!');
+        hablar('¡Fuego pichunguito!');
+      } else if (it.tipo==='estrella'){
+        puntos+=1000;
+        lanzarTioJuanEstrella();
+      }
+    }
+  }
+  items = items.filter(i=>!i.usado && i.y<ROWS*TILE+80);
+
+  /* --- bolas de fuego --- */
+  for(const f of fuegos){
+    f.vy=Math.min(f.vy+GRAV,9); f.x+=f.vx; f.y+=f.vy; f.t--;
+    const cc = chocaMapa(f.x,f.y,f.w,f.h);
+    if (cc){ if(f.vy>0&&f.y+f.h-f.vy<=cc.ty*TILE+4){ f.y=cc.ty*TILE-f.h; f.vy=-6; } else f.t=0; }
+    for(const e of enemigos) if(e.vivo && solapa(f,e)){ matarEnemigo(e,true); f.t=0; }
+  }
+  fuegos = fuegos.filter(f=>f.t>0);
+
+  /* --- enemigos --- */
+  for(const e of enemigos){
+    if (!e.vivo) continue;
+    if (e.x-camX > W+120) continue;             // aún fuera de pantalla
+    if (e.tipo==='koopa' && e.caparazon && !e.girando){ e.vx=0; }
+    moverEnte(e);
+    if (e.y>ROWS*TILE+60){ e.vivo=false; continue; }
+    /* caparazón girando mata a otros */
+    if (e.tipo==='koopa' && e.girando){
+      for(const o of enemigos) if(o!==e && o.vivo && solapa(e,o)) matarEnemigo(o,true);
+    }
+    if (enMeta || J.muerto>0 || !solapa({x:J.x,y:J.y,w:J.w,h}, e)) continue;
+    const pisando = J.vy>0 && (J.y+h) - e.y < 20;
+    if (J.burger>0){ matarEnemigo(e,true); continue; }
+    if (J.montaAbu){ matarEnemigo(e,true); puntos+=200; continue; }
+    if (e.tipo==='goomba'){
+      if (pisando){ matarEnemigo(e,false); J.vy=-8; }
+      else dano();
+    } else if (e.tipo==='koopa'){
+      if (e.caparazon && !e.girando){
+        e.girando=true; e.vx = (J.x+J.w/2 < e.x+e.w/2) ? 6 : -6; sfx.pisoton(); puntos+=100;
+        if (pisando) J.vy=-8;
+      } else if (pisando){
+        if (e.girando){ e.girando=false; e.vx=0; }
+        else { e.caparazon=true; e.h=22; e.y+=14; e.vx=0; }
+        sfx.pisoton(); puntos+=100; J.vy=-8;
+      } else dano();
+    }
+  }
+
+  /* --- NPCs --- */
+  for(const n of npcs){
+    if (!n.activo) continue;
+    n.t++;
+    if (n.tipo==='santi'){
+      n.y += Math.sin(n.t/20)*0.4;
+      if (solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:28})){
+        n.activo=false; J.cargaSanti=true; puntos+=2000; sfx.poder();
+        burbuja('¡Te amo Santi, mi hermanito!');
+        hablar('Te amo Santi, mi hermanito');
+      }
+    } else if (n.tipo==='huevo'){
+      if (solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y-24,w:30,h:40})){
+        n.activo=false; J.cucu=true; puntos+=1500; sfx.huevo();
+        for(let i=0;i<8;i++) parts.push({tipo:'cascara', x:n.x+15, y:n.y-6,
+          vx:(Math.random()-0.5)*5, vy:-3-Math.random()*4, t:45});
+        burbuja('¡Hola Cucú, acompáñame!');
+        hablar('Hola Cucú, acompáñame');
+      }
+    } else if (n.tipo==='abu'){
+      const ea = {x:n.x, y:n.y, vx:n.vx, vy:n.vy||0, w:28, h:48};
+      moverEnte(ea); n.x=ea.x; n.y=ea.y; n.vx=ea.vx; n.vy=ea.vy;
+      if (n.huye && n.t>140){ n.activo=false; continue; }
+      if (!n.huye && !J.montaAbu && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:48})){
+        n.activo=false; J.montaAbu=true; J.y-=40; puntos+=2000; sfx.poder();
+        burbuja('¡Te amo Abu!');
+        hablar('Te amo Abu');
+      }
+    } else if (n.tipo==='meta'){
+      if (estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:40,h:13*TILE-n.y})){
+        iniciarMeta(n);
+      }
+    }
+  }
+
+  /* --- evento Tío Juan --- */
+  if (evTioJuan) actualizarTioJuan();
+
+  /* --- secuencia de meta --- */
+  if (estado==='meta'){
+    secMeta++;
+    J.vx*=0.9;
+    if (secMeta===70){
+      burbuja('¡Te amo tío Juan, yo soy tu pichunguito!');
+      hablar('Te amo tío Juan, yo soy tu pichunguito');
+    }
+    if (secMeta===200){
+      hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!');
+    }
+    if (secMeta>=340){
+      if (nivelIdx+1 < NIVELES.length){ cargarNivel(nivelIdx+1); estado='juego'; }
+      else { estado='fin'; sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!'); }
+    }
+  }
+
+  actualizarExtras();
+
+  /* cámara */
+  const objetivo = J.x - W*0.38;
+  camX += (objetivo-camX)*0.12;
+  camX = Math.max(0, Math.min(camX, LEVW*TILE - W));
+}
+
+function actualizarExtras(){
+  for(const p of parts){ p.t--; if(p.vy!==undefined){ p.x+=p.vx||0; p.y+=p.vy; p.vy+=0.3; } }
+  parts = parts.filter(p=>p.t>0);
+  for(const b of burbujas) b.t--;
+  burbujas = burbujas.filter(b=>b.t>0);
+  for(const b of bumps) b.t--;
+  bumps = bumps.filter(b=>b.t>0);
+}
+
+function matarEnemigo(e, lanzado){
+  e.vivo=false; puntos+=100; sfx.pisoton();
+  parts.push({tipo:'puntos', x:e.x, y:e.y-10, vy:-1.5, t:40, txt:'100'});
+  if (lanzado) parts.push({tipo:'estrellita', x:e.x+10, y:e.y, vx:0, vy:-4, t:30});
+}
+
+/* ---------------- Evento estrella: ¡Tío Juan al rescate! ---------------- */
+function lanzarTioJuanEstrella(){
+  sfx.heroe();
+  evTioJuan = {fase:'entra', x:camX-60, y:40, t:0, burger:null};
+  hablar('¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!');
+}
+function actualizarTioJuan(){
+  const ev = evTioJuan; ev.t++;
+  const dx = (J.x - 90) - ev.x, dy = (J.y - 100) - ev.y;
+  if (ev.fase==='entra'){
+    ev.x += dx*0.06; ev.y += dy*0.06;
+    if (Math.abs(dx)<30 && Math.abs(dy)<40){
+      ev.fase='da'; ev.t=0;
+      ev.burger = {x:ev.x+40, y:ev.y+20};
+      burbuja('¡Corre pichunguito!', 'TJ');
+    }
+  } else if (ev.fase==='da'){
+    ev.x += dx*0.04; ev.y += dy*0.04;
+    const b = ev.burger;
+    b.x += (J.x+J.w/2 - b.x)*0.15; b.y += (J.y+10 - b.y)*0.15;
+    if (ev.t>45){
+      J.burger = 600; sfx.poder();
+      burbuja('¡Gracias tío Juan!');
+      hablar('¡Gracias tío Juan!');
+      ev.fase='sale'; ev.t=0; ev.burger=null;
+    }
+  } else if (ev.fase==='sale'){
+    ev.x -= 5; ev.y -= 3;
+    if (ev.t>90) evTioJuan=null;
+  } else if (ev.fase==='meta'){
+    /* aparece en la meta y se queda celebrando */
+    const mx = ev.destX, my = ev.destY;
+    ev.x += (mx-ev.x)*0.08; ev.y += (my-ev.y)*0.08 + Math.sin(ev.t/15)*0.5;
+  }
+}
+
+/* ---------------- Meta ---------------- */
+function iniciarMeta(n){
+  estado='meta'; secMeta=0; n.activo=false;
+  puntos += 5000 + (J.cargaSanti?2000:0) + (J.cucu?1500:0) + tiempo*10;
+  sfx.meta();
+  evTioJuan = {fase:'meta', x:camX+W, y:-60, t:0, destX:n.x+60, destY:n.y-3*TILE, burger:null};
+}
+
+/* ============================================================
+   DIBUJO
+   ============================================================ */
+function rect(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(Math.round(x),Math.round(y),w,h); }
+
+function dibFernando(x,y,cara,grande,fuego,corriendo,t){
+  const h = grande?56:28, esc = grande?2:1.4;
+  if (J.invul>0 && (tick>>2)%2) return;
+  const arco = J.burger>0 ? `hsl(${(tick*12)%360},90%,60%)` : null;
+  const ropa = arco || (fuego ? '#fff' : '#d82800');
+  const overol = arco || (fuego ? '#d82800' : '#2038ec');
+  const piel = '#ffc8a0', pelo = '#5a3418';
+  ctx.save(); ctx.translate(Math.round(x), Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-24,0); }
+  /* gorra */
+  rect(2,0,20,5*(grande?1.6:1),ropa); rect(14,4*(grande?1.6:1),12,3,ropa);
+  /* cara */
+  rect(4,5*esc,16,7*esc,piel);
+  rect(15,6*esc,3,2,'#222');                 // ojo
+  rect(2,5*esc,3,4,pelo);                    // pelo
+  /* cuerpo */
+  rect(3,12*esc,18,7*esc,ropa);
+  rect(5,(12+5)*esc,14,(grande?9:5)*esc,overol);
+  rect(7,13*esc,2,3,'#ffe36e'); rect(15,13*esc,2,3,'#ffe36e'); // botones
+  /* piernas */
+  const paso = corriendo ? Math.sin(t/3)*3 : 0;
+  rect(4,h-6,7,6,'#6b3410'); rect(13+paso*0.5,h-6,7,6,'#6b3410');
+  /* Santi en brazos */
+  if (J.cargaSanti){
+    rect(16,10*esc,14,12,'#8ecbff'); rect(19,7*esc,9,8,piel);
+    rect(21,9*esc,2,2,'#222'); rect(19,6*esc,9,3,'#4a2f10');
+  }
+  ctx.restore();
+}
+function dibPerro(x,y,cara,color,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-26,0); }
+  rect(2,8,18,10,color);                       // cuerpo
+  rect(16,2,9,8,color);                        // cabeza
+  rect(17,0,3,4,color); rect(22,0,3,4,color);  // orejas
+  rect(23,4,2,2,'#fff');                       // ojo
+  rect(25,7,2,2,'#3b241a');                    // nariz
+  const paso=Math.sin(t/4)*2;
+  rect(4,16+paso*0.4,3,5,color); rect(14,16-paso*0.4,3,5,color); // patas
+  const cola=Math.sin(t/5)*3;
+  rect(-2,6+cola,5,3,color);                   // cola
+  ctx.restore();
+}
+function dibCucu(x,y,cara,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-22,0); }
+  rect(4,0,14,10,'#ffc8a0');                   // cara
+  rect(4,-3,14,4,'#3b2410');                   // pelo
+  rect(1,-2,4,9,'#3b2410'); rect(17,-2,4,9,'#3b2410'); // coletas
+  rect(0,2,3,3,'#ff6ec0'); rect(19,2,3,3,'#ff6ec0');   // lazos
+  rect(12,3,3,2,'#222');                       // ojo
+  rect(3,10,16,12,'#ff6ec0');                  // vestido
+  const paso=Math.sin(t/4)*2;
+  rect(6,22+paso*0.4,4,5,'#ffc8a0'); rect(13,22-paso*0.4,4,5,'#ffc8a0');
+  ctx.restore();
+}
+function dibAbu(x,y,cara,t,sola){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-28,0); }
+  rect(6,4,16,12,'#ffc8a0');                   // cara
+  rect(6,0,16,5,'#cfcfcf'); rect(10,-4,8,5,'#cfcfcf'); // pelo moño
+  rect(16,7,3,2,'#222');                       // ojo
+  rect(8,8,4,1,'#c88');                        // lentes? mejilla
+  rect(4,16,20,22,'#7b4fa8');                  // vestido
+  rect(2,20,4,10,'#7b4fa8'); rect(22,20,4,10,'#7b4fa8'); // brazos
+  const paso=sola?Math.sin(t/6)*2:0;
+  rect(7,38+paso*0.4,5,10,'#ffc8a0'); rect(16,38-paso*0.4,5,10,'#ffc8a0');
+  rect(6,46,7,3,'#3b241a'); rect(15,46,7,3,'#3b241a');
+  ctx.restore();
+}
+function dibTioJuan(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  /* capa */
+  ctx.fillStyle='#d82800';
+  ctx.beginPath(); ctx.moveTo(4,10);
+  ctx.lineTo(-8+Math.sin(t/8)*4, 44); ctx.lineTo(30, 40); ctx.lineTo(28,10); ctx.closePath(); ctx.fill();
+  rect(6,0,20,12,'#ffc8a0');                   // cara
+  rect(6,-3,20,4,'#222');                      // pelo
+  rect(19,3,4,3,'#222');                       // ojo
+  rect(8,9,14,2,'#7a4');                       // sonrisa
+  rect(4,12,24,20,'#1560d0');                  // traje
+  ctx.fillStyle='#ffe36e'; ctx.font='bold 12px monospace'; ctx.fillText('TJ',10,26); // emblema
+  rect(4,32,10,12,'#1560d0'); rect(18,32,10,12,'#1560d0');
+  rect(2,42,12,4,'#d82800'); rect(18,42,12,4,'#d82800'); // botas
+  ctx.restore();
+}
+function dibBurger(x,y){
+  rect(x,y,22,5,'#e8a33d'); rect(x+2,y+5,18,3,'#4a7a2a');
+  rect(x+1,y+8,20,5,'#7a4020'); rect(x+2,y+13,18,3,'#ffdd57');
+  rect(x,y+16,22,6,'#e8a33d');
+}
+function dibSanti(x,y,t){
+  const f = Math.sin(t/20)*3;
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y+f));
+  rect(2,8,24,16,'#8ecbff');                   // manta
+  rect(7,0,14,11,'#ffc8a0');                   // cara
+  rect(7,-2,14,4,'#4a2f10');                   // pelito
+  rect(11,4,2,2,'#222'); rect(16,4,2,2,'#222');// ojos
+  rect(12,8,4,2,'#e07a7a');                    // chupón
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.font='10px monospace';
+  ctx.fillText('SANTI', x-1, y+f-6);
+}
+function dibHuevo(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  const w = Math.sin(t/9)*2;
+  ctx.rotate(w*0.02);
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(15,-4,14,19,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#ff6ec0';
+  for(const [px,py] of [[8,-12],[20,-8],[12,2],[22,-16]]) { ctx.beginPath(); ctx.arc(px,py,3,0,Math.PI*2); ctx.fill(); }
+  ctx.restore();
+}
+function dibGoomba(e,t){
+  const x=e.x-camX, y=e.y+HUD_H;
+  rect(x,y+4,26,14,'#9c5a1c');
+  rect(x+2,y,22,8,'#b06a24');
+  rect(x+5,y+5,4,5,'#fff'); rect(x+17,y+5,4,5,'#fff');
+  rect(x+7,y+7,2,3,'#222'); rect(x+18,y+7,2,3,'#222');
+  const paso=Math.sin(t/5)*2;
+  rect(x+2,y+18+paso*0.3,9,6,'#222'); rect(x+15,y+18-paso*0.3,9,6,'#222');
+}
+function dibKoopa(e,t){
+  const x=e.x-camX, y=e.y+HUD_H;
+  if (e.caparazon){
+    rect(x,y+2,26,18,'#3aa030'); rect(x+3,y+5,20,12,'#7ed040');
+    if (e.girando){ rect(x+6,y+8,4,4,'#3aa030'); rect(x+16,y+8,4,4,'#3aa030'); }
+    return;
+  }
+  rect(x+2,y+12,24,18,'#3aa030');              // caparazón
+  rect(x+5,y+15,18,12,'#7ed040');
+  rect(x+16,y,10,14,'#ffe36e');                // cabeza
+  rect(x+22,y+3,3,3,'#222');
+  const paso=Math.sin(t/5)*2;
+  rect(x+4,y+30+paso*0.3,7,6,'#ffe36e'); rect(x+16,y+30-paso*0.3,7,6,'#ffe36e');
+}
+
+function dibTile(tx,ty){
+  const c = grid[ty][tx];
+  if (c==='.') return;
+  let x = tx*TILE, y = ty*TILE + HUD_H;
+  const bump = bumps.find(b=>b.tx===tx&&b.ty===ty);
+  if (bump) y -= Math.sin(bump.t/10*Math.PI)*8;
+  x -= camX;
+  if (c==='#'){
+    rect(x,y,TILE,TILE,'#c84c0c');
+    rect(x,y,TILE,3,'#f8b800'); rect(x+2,y+6,12,10,'#e07020'); rect(x+18,y+18,12,10,'#e07020');
+  } else if (c==='W' || c==='='){
+    rect(x,y,TILE,TILE,'#e09050');
+    rect(x,y,TILE,4,'#ffc078'); rect(x,y,3,TILE,'#ffc078');
+    rect(x+TILE-3,y,3,TILE,'#8a4a18'); rect(x,y+TILE-3,TILE,3,'#8a4a18');
+  } else if (c==='B'){
+    rect(x,y,TILE,TILE,'#e07020');
+    ctx.strokeStyle='#7a3000'; ctx.lineWidth=2;
+    ctx.strokeRect(x+1,y+1,TILE-2,TILE-2);
+    ctx.beginPath(); ctx.moveTo(x,y+16); ctx.lineTo(x+32,y+16);
+    ctx.moveTo(x+16,y); ctx.lineTo(x+16,y+16); ctx.moveTo(x+8,y+16); ctx.lineTo(x+8,y+32);
+    ctx.moveTo(x+24,y+16); ctx.lineTo(x+24,y+32); ctx.stroke();
+  } else if (c==='?'||c==='M'||c==='S'){
+    rect(x,y,TILE,TILE,'#f8b800');
+    ctx.strokeStyle='#7a3000'; ctx.lineWidth=2; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+    ctx.fillStyle='#7a3000'; ctx.font='bold 20px monospace';
+    const s = c==='S' ? '★' : '?';
+    if ((tick>>4)%2===0 || c!=='?') ctx.fillText(s, x+9, y+24);
+    else ctx.fillText('?', x+9, y+23);
+  } else if (c==='X'){
+    rect(x,y,TILE,TILE,'#9c5a1c');
+    ctx.strokeStyle='#5a2c00'; ctx.lineWidth=2; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+  } else if (c==='l'){
+    const tapa = getT(tx,ty-1)!=='l';
+    rect(x,y,TILE,TILE,'#30a020');
+    rect(x+3,y,5,TILE,'#80d010');
+    if (tapa){ rect(x-(getT(tx-1,ty)==='l'?0:4),y,TILE+4,8,'#30a020'); rect(x-(getT(tx-1,ty)==='l'?0:4),y,TILE+4,3,'#80d010'); }
+  } else if (c==='C'){
+    const f = (tick>>3)%4, wdt = [16,10,4,10][f];
+    rect(x+(TILE-wdt)/2, y+6, wdt, 20, '#f8b800');
+    rect(x+(TILE-wdt)/2+2, y+9, Math.max(wdt-4,2), 14, '#ffe36e');
+  }
+}
+
+function dibFondo(){
+  ctx.fillStyle = infoNivel ? infoNivel.cielo : '#5c94fc';
+  ctx.fillRect(0,HUD_H,W,H-HUD_H);
+  /* colinas y nubes con parallax */
+  const p1 = camX*0.3, p2 = camX*0.6;
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  for(let i=0;i<8;i++){
+    const nx = ((i*420 - p1) % (W+400)+ (W+400))%(W+400) - 200;
+    const ny = 90 + (i%3)*45;
+    ctx.beginPath();
+    ctx.arc(nx,ny+HUD_H,18,0,Math.PI*2); ctx.arc(nx+22,ny-10+HUD_H,22,0,Math.PI*2); ctx.arc(nx+46,ny+HUD_H,18,0,Math.PI*2);
+    ctx.fill();
+  }
+  ctx.fillStyle='#1f8f1f';
+  for(let i=0;i<6;i++){
+    const hx = ((i*560 - p2) % (W+600) + (W+600))%(W+600) - 300;
+    ctx.beginPath(); ctx.moveTo(hx,H); ctx.lineTo(hx+130,H-150-(i%2)*40); ctx.lineTo(hx+260,H); ctx.fill();
+  }
+}
+
+function dibHUD(){
+  rect(0,0,W,HUD_H,'#000');
+  ctx.fillStyle='#fff'; ctx.font='bold 18px monospace';
+  ctx.fillText('FERNANDO × ∞', 16, 26);
+  ctx.fillStyle='#f8b800';
+  ctx.fillText('⬤ ' + String(monedas).padStart(2,'0'), 16, 50);
+  ctx.fillStyle='#fff';
+  ctx.fillText('PUNTOS ' + String(puntos).padStart(7,'0'), 190, 26);
+  ctx.fillText('TIEMPO ' + String(Math.max(tiempo,0)).padStart(3,'0'), 190, 50);
+  ctx.font='bold 16px monospace';
+  ctx.fillText(infoNivel ? infoNivel.nombre : '', 430, 24);
+  ctx.font='bold 18px monospace';
+  /* medidor P */
+  ctx.fillText('P', 430, 50);
+  for(let i=0;i<6;i++){
+    ctx.fillStyle = J.pmetro > (i+1)*16 ? '#f8b800' : '#333';
+    ctx.fillText('▶', 450+i*22, 50);
+  }
+  if (J.pmetro>=95 && (tick>>3)%2){ ctx.fillStyle='#ff5050'; ctx.fillText('¡¡PP!!', 590, 50); }
+  /* estado de compañía (alineado a la derecha) */
+  ctx.font='14px monospace'; ctx.fillStyle='#8ecbff'; ctx.textAlign='right';
+  let comp = 'Penny + Sheldon';
+  if (J.cucu) comp += ' + Cucú';
+  if (J.cargaSanti) comp += ' + Santi';
+  if (J.montaAbu) comp += ' + Abu';
+  ctx.fillText(comp, W-16, 26);
+  if (J.burger>0){ ctx.fillStyle='#ffe36e'; ctx.fillText('¡SÚPER VELOCIDAD! '+Math.ceil(J.burger/60), W-16, 50); }
+  else if (muertes>0){ ctx.fillStyle='#888'; ctx.fillText('caídas: '+muertes+' (¡no pasa nada!)', W-16, 50); }
+  ctx.textAlign='left';
+}
+
+function dibBurbujas(){
+  ctx.font='bold 15px monospace';
+  for(const b of burbujas){
+    let bx, by;
+    if (b.quien==='TJ' && evTioJuan){ bx = evTioJuan.x-camX+16; by = evTioJuan.y+HUD_H-18; }
+    else { bx = J.x-camX+J.w/2; by = J.y+HUD_H-16 - (J.montaAbu?40:0); }
+    const wtx = ctx.measureText(b.txt).width;
+    const a = Math.min(1, b.t/25);
+    ctx.globalAlpha = a;
+    ctx.fillStyle='#fff';
+    const rx = Math.min(Math.max(bx-wtx/2-8, 4), W-wtx-20);
+    ctx.fillRect(rx, by-24, wtx+16, 26);
+    ctx.beginPath(); ctx.moveTo(bx-6,by+2); ctx.lineTo(bx+6,by+2); ctx.lineTo(bx,by+9); ctx.fill();
+    ctx.fillStyle='#111'; ctx.fillText(b.txt, rx+8, by-6);
+    ctx.globalAlpha = 1;
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  if (estado==='menu'){ dibMenu(); return; }
+  if (estado==='fin'){ dibFin(); return; }
+  dibFondo();
+
+  /* tiles visibles */
+  const tx0 = Math.floor(camX/TILE), tx1 = Math.min(LEVW-1, tx0 + Math.ceil(W/TILE)+1);
+  for(let ty=0;ty<ROWS;ty++) for(let tx=tx0;tx<=tx1;tx++) dibTile(tx,ty);
+
+  /* NPCs */
+  for(const n of npcs){
+    if (!n.activo) continue;
+    const nx = n.x-camX; if (nx<-80||nx>W+80) continue;
+    if (n.tipo==='santi') dibSanti(nx, n.y+HUD_H, n.t);
+    else if (n.tipo==='huevo') dibHuevo(nx, n.y+HUD_H, n.t);
+    else if (n.tipo==='abu') dibAbu(nx, n.y+HUD_H, n.vx>0?1:-1, n.t, true);
+    else if (n.tipo==='meta'){
+      /* tarjeta de meta estilo SMB3 */
+      const my = n.y+HUD_H;
+      rect(nx+14,my,6,13*TILE-n.y,'#222');
+      rect(nx-6,my+10+Math.sin(n.t/20)*6,46,46,'#fff');
+      ctx.strokeStyle='#d82800'; ctx.lineWidth=3; ctx.strokeRect(nx-6,my+10+Math.sin(n.t/20)*6,46,46);
+      ctx.font='26px monospace'; ctx.fillStyle='#d82800';
+      const simb=['★','♥','🍄'][ (n.t>>5)%3 ]||'★';
+      ctx.fillText(simb, nx+4, my+44+Math.sin(n.t/20)*6);
+    }
+  }
+
+  /* items */
+  for(const it of items){
+    const x=it.x-camX, y=it.y+HUD_H;
+    if (it.tipo==='hongo'){
+      rect(x+2,y+10,22,14,'#ffc8a0');
+      rect(x,y,26,12,'#d82800'); rect(x+4,y+2,6,5,'#fff'); rect(x+16,y+2,6,5,'#fff');
+      rect(x+7,y+14,3,4,'#222'); rect(x+16,y+14,3,4,'#222');
+    } else if (it.tipo==='flor'){
+      rect(x+10,y+12,6,14,'#2a8a2a');
+      rect(x+4,y,18,12,'#d82800'); rect(x+8,y+3,10,6,'#ffe36e');
+    } else if (it.tipo==='estrella'){
+      ctx.fillStyle = `hsl(${(tick*10)%360},90%,60%)`;
+      ctx.font='28px monospace'; ctx.fillText('★', x, y+24);
+    }
+  }
+
+  /* enemigos */
+  for(const e of enemigos){ if(e.vivo){ if(e.tipo==='goomba') dibGoomba(e,tick); else dibKoopa(e,tick); } }
+
+  /* bolas de fuego */
+  for(const f of fuegos){
+    ctx.fillStyle=(tick>>2)%2?'#ff5000':'#ffe36e';
+    ctx.beginPath(); ctx.arc(f.x-camX+6, f.y+HUD_H+6, 6, 0, Math.PI*2); ctx.fill();
+  }
+
+  /* seguidores: perrito negro, perrito marrón, Cucú */
+  const seg = [[14,'#222'],[30,'#8a5a2a']];
+  for(const [d,color] of seg){
+    const hpos = historia[Math.min(d,historia.length-1)];
+    if (hpos) dibPerro(hpos.x-camX-8, hpos.y+HUD_H+4, hpos.cara, color, tick+d);
+  }
+  if (J.cucu){
+    const hpos = historia[Math.min(46,historia.length-1)];
+    if (hpos) dibCucu(hpos.x-camX, hpos.y+HUD_H-2, hpos.cara, tick);
+  }
+
+  /* jugador (con Abu debajo si va montado) */
+  if (J.muerto>0){
+    ctx.save(); ctx.translate(J.x-camX+12, J.y+HUD_H+14); ctx.rotate(Math.PI);
+    ctx.translate(-12,-14); dibFernando(0,0,1,J.grande,false,false,tick); ctx.restore();
+  } else {
+    if (J.montaAbu){
+      dibAbu(J.x-camX-2, J.y+HUD_H+altoJ()-8, J.cara, tick, false);
+      dibFernando(J.x-camX, J.y+HUD_H-6, J.cara, J.grande, J.fuego, Math.abs(J.vx)>0.5, tick);
+    } else {
+      dibFernando(J.x-camX, J.y+HUD_H, J.cara, J.grande, J.fuego, Math.abs(J.vx)>0.5&&J.enSuelo, tick);
+    }
+  }
+
+  /* Tío Juan */
+  if (evTioJuan){
+    dibTioJuan(evTioJuan.x-camX, evTioJuan.y+HUD_H, tick);
+    if (evTioJuan.burger) dibBurger(evTioJuan.burger.x-camX, evTioJuan.burger.y+HUD_H);
+  }
+
+  /* partículas */
+  for(const p of parts){
+    const x=p.x-camX, y=p.y+HUD_H;
+    if (p.tipo==='moneda'){ rect(x,y,14,18,'#f8b800'); rect(x+3,y+3,8,12,'#ffe36e'); }
+    else if (p.tipo==='ladrillo') rect(x,y,10,8,'#e07020');
+    else if (p.tipo==='cascara'){ ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill(); }
+    else if (p.tipo==='puntos'){ ctx.fillStyle='#fff'; ctx.font='bold 13px monospace'; ctx.fillText(p.txt,x,y); }
+    else if (p.tipo==='estrellita'){ ctx.fillStyle='#ffe36e'; ctx.font='16px monospace'; ctx.fillText('✦',x,y); }
+  }
+
+  dibBurbujas();
+  dibHUD();
+
+  /* cartel de fin de nivel */
+  if (estado==='meta' && secMeta>40){
+    ctx.fillStyle='rgba(0,0,0,0.55)';
+    ctx.fillRect(W/2-260, 110, 520, 120);
+    ctx.fillStyle='#fff'; ctx.font='bold 30px monospace'; ctx.textAlign='center';
+    ctx.fillText('¡NIVEL COMPLETADO!', W/2, 155);
+    ctx.font='18px monospace'; ctx.fillStyle='#ffe36e';
+    ctx.fillText('Fernando: «Te amo tío Juan, yo soy tu pichunguito»', W/2, 190);
+    if (secMeta>200){ ctx.fillStyle='#8ecbff'; ctx.fillText('Tío Juan: «¡Muy bien, mi pichunguito!»', W/2, 215); }
+    ctx.textAlign='left';
+  }
+}
+
+function dibMenu(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1a4a'); g.addColorStop(1,'#5c94fc');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#000'; ctx.font='bold 74px monospace';
+  ctx.fillText('FERNANDO BROS', W/2+5, 145);
+  ctx.fillStyle='#f8b800';
+  ctx.fillText('FERNANDO BROS', W/2, 140);
+  ctx.fillStyle='#fff'; ctx.font='bold 22px monospace';
+  ctx.fillText('¡La aventura del pichunguito de tío Juan!', W/2, 190);
+  /* elenco */
+  const cy = 300;
+  dibFernandoMenu(W/2-260, cy-30);
+  dibPerroMenu(W/2-180, cy, '#222'); dibPerroMenu(W/2-120, cy, '#8a5a2a');
+  dibSanti(W/2-50, cy-10, tick);
+  ctx.save(); ctx.translate(W/2+20, cy-40); ctx.scale(1.2,1.2); dibAbuMenu(); ctx.restore();
+  dibCucu(W/2+90, cy-15, 1, tick);
+  ctx.save(); ctx.translate(W/2+160, cy-45); ctx.scale(1.3,1.3); dibTioJuan(0,0,tick); ctx.restore();
+  dibBurger(W/2+240, cy-15);
+  ctx.fillStyle='#ffe36e'; ctx.font='16px monospace';
+  ctx.fillText('Fernando · Penny · Sheldon · Santi · Abu · Cucú · Tío Juan · 🍔', W/2, cy+70);
+  ctx.fillStyle='#fff'; ctx.font='bold 24px monospace';
+  if ((tick>>4)%2===0) ctx.fillText('PULSA ENTER (o toca) PARA JUGAR', W/2, 440);
+  ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
+  ctx.fillText('← → mover · MAYÚS/X correr y fuego · ESPACIO/Z saltar · ↓ bajarse de Abu', W/2, 480);
+  ctx.fillText('VIDAS INFINITAS ∞ — ¡aquí nunca se pierde!', W/2, 508);
+  ctx.textAlign='left';
+}
+function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
+function dibFernandoSolo(){
+  rect(2,0,20,7,'#d82800'); rect(14,6,12,3,'#d82800');
+  rect(4,7,16,10,'#ffc8a0'); rect(15,9,3,2,'#222'); rect(2,7,3,5,'#5a3418');
+  rect(3,17,18,10,'#d82800'); rect(5,24,14,10,'#2038ec');
+  rect(4,34,7,6,'#6b3410'); rect(13,34,7,6,'#6b3410');
+}
+function dibPerroMenu(x,y,c){ ctx.save(); ctx.translate(x,y); ctx.scale(1.4,1.4); ctx.translate(-13,-10); dibPerroSolo(c); ctx.restore(); }
+function dibPerroSolo(color){
+  rect(2,8,18,10,color); rect(16,2,9,8,color);
+  rect(17,0,3,4,color); rect(22,0,3,4,color);
+  rect(23,4,2,2,'#fff'); rect(25,7,2,2,'#3b241a');
+  rect(4,16,3,5,color); rect(14,16,3,5,color); rect(-2,6,5,3,color);
+}
+function dibAbuMenu(){
+  rect(6,4,16,12,'#ffc8a0'); rect(6,0,16,5,'#cfcfcf'); rect(10,-4,8,5,'#cfcfcf');
+  rect(16,7,3,2,'#222'); rect(4,16,20,22,'#7b4fa8');
+  rect(2,20,4,10,'#7b4fa8'); rect(22,20,4,10,'#7b4fa8');
+  rect(7,38,5,10,'#ffc8a0'); rect(16,38,5,10,'#ffc8a0');
+  rect(6,46,7,3,'#3b241a'); rect(15,46,7,3,'#3b241a');
+}
+function dibFin(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#ffb0d0'); g.addColorStop(1,'#5c94fc');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#d82800'; ctx.font='bold 60px monospace';
+  ctx.fillText('¡GANASTE!', W/2, 130);
+  ctx.fillStyle='#222'; ctx.font='bold 24px monospace';
+  ctx.fillText('«Te amo tío Juan, yo soy tu pichunguito»', W/2, 180);
+  ctx.font='20px monospace';
+  ctx.fillText('— Fernando, con Penny, Sheldon, Santi, Cucú y Abu', W/2, 215);
+  const cy=330;
+  ctx.save(); ctx.translate(W/2-40, cy-90); ctx.scale(1.6,1.6); dibTioJuan(0,0,tick); ctx.restore();
+  dibFernandoMenu(W/2-140, cy-60);
+  dibPerroMenu(W/2-200, cy, '#222'); dibPerroMenu(W/2-250, cy, '#8a5a2a');
+  dibSanti(W/2+70, cy-40, tick);
+  dibCucu(W/2+130, cy-40, -1, tick);
+  ctx.save(); ctx.translate(W/2+190, cy-75); ctx.scale(1.2,1.2); dibAbuMenu(); ctx.restore();
+  dibBurger(W/2-10, cy+10);
+  ctx.fillStyle='#fff'; ctx.font='bold 22px monospace';
+  ctx.fillText('PUNTOS: '+puntos+'   MONEDAS: '+monedas, W/2, 440);
+  if ((tick>>4)%2===0) ctx.fillText('PULSA ENTER PARA VOLVER AL MENÚ', W/2, 490);
+  ctx.textAlign='left';
+}
+
+/* ---------------- Bucle principal ---------------- */
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+infoNivel = null;
+loop();
+</script>
+</body>
+</html>
