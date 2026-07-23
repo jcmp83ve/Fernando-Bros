@@ -24,7 +24,8 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 - **Fin de nivel** — Tío Juan vuelve a aparecer y Fernando le dice: *«Te amo tío Juan, yo soy tu pichunguito»*.
 - **Santi 👶** — en todos los niveles hay un bebé que Fernando recoge y carga en brazos: *«Te amo Santi, mi hermanito»*.
 - **Abu 👵** — una señora que aparece en cada nivel; Fernando se monta arriba de ella (*«Te amo Abu»*) y juntos derrotan enemigos.
-- **Cucú 👧** — de los huevos no sale Yoshi: ¡sale una niña llamada Cucú! *«Hola Cucú, acompáñame»*, y ella se une al grupo.
+- **Cucú 👧** — del **huevo de Georgie** no sale Yoshi: ¡sale una niña llamada Cucú! *«Hola Cucú, acompáñame»*, y ella se une al grupo.
+- **Letreros flotantes** — SANTI, ABU, HUEVO DE GEORGIE y ★ TÍO JUAN ★ tienen carteles con flecha para encontrarlos facilito en todos los niveles.
 
 ## 🍄 Funciones estilo Super Mario Bros 3
 
@@ -39,4 +40,4 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 
 ## 🗣️ Voces
 
-Todos los diálogos se hablan con **voz de niño en español** usando la síntesis de voz del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
+Todos los diálogos son **grabaciones con voz de niño en español** (archivos mp3), que suenan en cualquier dispositivo — incluido iPhone. Si un audio no carga, el juego usa como respaldo la voz sintética del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
