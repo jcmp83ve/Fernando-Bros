@@ -87,21 +87,29 @@ function vozEspanola(){
   /* preferir español de América si existe */
   return es.find(v=>/es[-_](419|MX|US|CO|VE|AR|CL)/i.test(v.lang)) || es[0] || null;
 }
+/* Cola de diálogos: cada frase espera a que termine la anterior,
+   para que las voces no se corten una sobre otra. */
+let colaVoz = [], clipActual = null;
 function hablar(texto){
   const src = CLIPS[texto];
-  if (src){
-    try{
-      /* detener cualquier frase anterior */
-      for(const k in elementosAudio){ const o=elementosAudio[k]; if(o && !o.paused){ o.pause(); try{o.currentTime=0;}catch(e){} } }
-      const a = elementosAudio[src] || (elementosAudio[src] = new Audio(src));
-      a._activo = true; a.muted = false;
-      try{ a.currentTime = 0; }catch(e){}
-      const p = a.play();
-      if (p && p.catch) p.catch(()=>hablarTTS(texto));
-      return;
-    }catch(e){}
-  }
-  hablarTTS(texto);
+  if (!src){ hablarTTS(texto); return; }
+  colaVoz.push({src, texto});
+  if (colaVoz.length > 4) colaVoz.shift();
+  reproducirCola();
+}
+function reproducirCola(){
+  if (clipActual && !clipActual.paused && !clipActual.ended) return; // hay una frase sonando
+  const sig = colaVoz.shift();
+  if (!sig) return;
+  try{
+    const a = elementosAudio[sig.src] || (elementosAudio[sig.src] = new Audio(sig.src));
+    a._activo = true; a.muted = false;
+    try{ a.currentTime = 0; }catch(e){}
+    clipActual = a;
+    a.onended = ()=>{ clipActual = null; reproducirCola(); };
+    const p = a.play();
+    if (p && p.catch) p.catch(()=>{ clipActual = null; hablarTTS(sig.texto); reproducirCola(); });
+  }catch(e){ clipActual = null; hablarTTS(sig.texto); }
 }
 function hablarTTS(texto){
   /* respaldo: voz sintética del navegador, con tono de niño.
@@ -204,78 +212,178 @@ const esSolido = c => SOLIDOS.includes(c);
 
 function ent(tipo,x,y){ entidadesNivel.push({tipo, x:x*TILE, y:y*TILE}); }
 
-/* ---- Nivel 1: Pradera del Pichunguito ---- */
+/* Colores de terreno por tema */
+const TIERRAS = {
+  pradera:  {base:'#c84c0c', borde:'#f8b800', rel:'#e07020', som:'#7a2e08'},
+  playa:    {base:'#e8c070', borde:'#fff0a0', rel:'#d0a050', som:'#a87838'},
+  cueva:    {base:'#5a5a78', borde:'#9090b0', rel:'#70708e', som:'#3a3a52'},
+  desierto: {base:'#d89040', borde:'#f8d878', rel:'#e8a858', som:'#a86828'},
+  castillo: {base:'#6a6a84', borde:'#a8a8c0', rel:'#84849e', som:'#4a4a64'},
+};
+/* Reglas de diseño (para que TODO sea alcanzable con un salto normal):
+   - bloques ?, M y S siempre en la fila 10 (se golpean y se sube encima)
+   - plataformas altas en la fila 7 (se sube desde los bloques de la fila 10)
+   - tubos de máximo 3 de alto, huecos de máximo 3 de ancho
+   - Santi al inicio; huevo de Georgie, estrella y Abu SIEMPRE en suelo
+     plano y despejado, nunca dentro de montañas */
+
+/* ---- Mundo 1: Pradera del Pichunguito ---- */
 function nivel1(){
   nuevoMapa(180); entidadesNivel=[];
   hueco(30,32); hueco(70,72); hueco(121,123);
-  colina(10,7,2); colina(85,9,3); colina(140,7,2);
-  fila(18,21,9,'B'); setT(19,9,'?'); setT(21,9,'M');
-  setT(25,9,'?');
-  fila(40,44,9,'B'); setT(42,9,'?'); setT(40,9,'?'); setT(44,9,'M');
-  fila(41,43,5,'B'); setT(42,5,'?');
-  setT(90,9,'S');
-  fila(100,103,9,'B'); setT(101,9,'?'); setT(103,9,'?');
-  fila(110,113,6,'='); fila(126,129,9,'=');
-  arco(58,8,5); arco(95,7,6); arco(133,7,5);
-  fila(155,158,9,'B'); setT(156,9,'M'); setT(158,9,'?');
+  colina(10,5,2); colina(85,6,2); colina(140,5,2);
+  fila(18,21,10,'B'); setT(19,10,'?'); setT(21,10,'M'); setT(25,10,'?');
+  fila(40,44,10,'B'); setT(40,10,'?'); setT(42,10,'?'); setT(44,10,'M');
+  fila(41,43,7,'B'); setT(42,7,'?');
+  fila(100,103,10,'B'); setT(101,10,'?'); setT(103,10,'?');
+  fila(110,113,7,'='); fila(126,129,10,'=');
+  fila(155,158,10,'B'); setT(156,10,'M'); setT(158,10,'?');
+  arco(58,9,5); arco(95,9,6); arco(133,9,5);
   tubo(52,2); tubo(78,3); tubo(146,2);
-  ent('goomba',26,12); ent('goomba',48,12); ent('goomba',64,12);
-  ent('koopa',96,12); ent('goomba',108,12); ent('goomba',116,12);
-  ent('koopa',136,12); ent('goomba',150,12); ent('goomba',162,12);
-  ent('santi',8,11.4); ent('huevo',60,12); ent('abu',105,12);
-  ent('meta',172,9);
-  return {nombre:'MUNDO 1 · PRADERA DEL PICHUNGUITO', cielo:'#5c94fc', spawn:{x:3,y:11}};
+  [26,48,108,116,150,162].forEach(x=>ent('goomba',x,12));
+  [96,136].forEach(x=>ent('koopa',x,12));
+  ent('santi',8,11.4); ent('huevo',57,12); setT(66,10,'S'); ent('abu',105,12); ent('meta',172,9);
+  return {nombre:'MUNDO 1 · PRADERA DEL PICHUNGUITO', cielo:'#5c94fc', decor:'colinas', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
-/* ---- Nivel 2: Cielos de Santi ---- */
+/* ---- Mundo 2: Cielos de Santi ---- */
 function nivel2(){
   nuevoMapa(200); entidadesNivel=[];
   hueco(24,26); hueco(46,48); hueco(74,76); hueco(105,107); hueco(138,140); hueco(160,162);
-  fila(25,27,10,'='); fila(47,49,9,'='); fila(75,77,8,'='); fila(78,79,10,'=');
-  fila(106,108,9,'='); fila(139,140,8,'='); fila(161,162,10,'=');
-  fila(14,17,9,'B'); setT(15,9,'M'); setT(17,9,'?');
-  fila(34,36,7,'B'); setT(35,7,'?');
-  setT(56,8,'?'); setT(58,8,'M'); setT(60,8,'?');
-  fila(84,88,9,'B'); setT(86,9,'S');
-  fila(92,94,6,'='); fila(98,100,5,'=');
-  setT(118,8,'?'); fila(120,123,8,'B'); setT(122,8,'M');
-  fila(146,149,9,'='); fila(152,155,7,'=');
-  arco(38,6,5); arco(66,7,6); arco(112,7,5); arco(129,6,6); arco(168,7,5);
-  colina(128,8,2); tubo(42,2); tubo(70,3); tubo(132,4); tubo(174,2);
-  ent('goomba',20,12); ent('koopa',32,12); ent('goomba',54,12);
-  ent('goomba',62,12); ent('koopa',90,12); ent('goomba',101,12);
-  ent('goomba',115,12); ent('koopa',126,12); ent('goomba',144,12);
-  ent('goomba',157,12); ent('koopa',170,12);
-  ent('santi',12,11.4); ent('huevo',89,12); ent('abu',124,12);
-  ent('meta',192,9);
-  return {nombre:'MUNDO 2 · CIELOS DE SANTI', cielo:'#48b0e8', spawn:{x:3,y:11}};
+  fila(14,17,10,'B'); setT(15,10,'M'); setT(17,10,'?');
+  fila(34,36,10,'B'); setT(35,10,'?');
+  setT(56,10,'?'); setT(58,10,'M'); setT(60,10,'?');
+  fila(84,85,10,'B'); fila(87,88,10,'B');
+  fila(92,94,7,'='); fila(98,100,7,'=');
+  setT(118,10,'?'); fila(120,123,10,'B'); setT(122,10,'M');
+  fila(146,149,10,'='); fila(152,155,7,'=');
+  colina(128,6,2);
+  arco(38,8,5); arco(66,9,6); arco(112,9,5); arco(142,8,4); arco(168,9,5);
+  tubo(42,2); tubo(70,3); tubo(135,2); tubo(174,2);
+  [20,54,62,101,115,144,157].forEach(x=>ent('goomba',x,12));
+  [32,90,126,170].forEach(x=>ent('koopa',x,12));
+  ent('santi',10,11.4); ent('huevo',80,12); setT(86,10,'S'); ent('abu',110,12); ent('meta',192,9);
+  return {nombre:'MUNDO 2 · CIELOS DE SANTI', cielo:'#48b0e8', decor:'nubes', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
-/* ---- Nivel 3: Castillo de Tío Juan ---- */
+/* ---- Mundo 3: Bosque de Georgie ---- */
 function nivel3(){
   nuevoMapa(220); entidadesNivel=[];
   hueco(20,22); hueco(40,42); hueco(66,68); hueco(92,94); hueco(120,122); hueco(150,152); hueco(176,178);
-  fila(41,43,9,'='); fila(93,95,8,'='); fila(121,123,9,'='); fila(151,152,8,'=');
-  fila(12,15,9,'B'); setT(13,9,'M'); setT(15,9,'?');
-  fila(28,31,9,'B'); setT(29,9,'?'); setT(31,9,'?');
-  fila(50,54,9,'B'); setT(52,9,'S');
-  fila(58,60,6,'B'); setT(59,6,'?'); setT(56,9,'M');
-  colina(74,10,4); fila(86,88,7,'=');
-  setT(100,8,'?'); setT(102,8,'?'); setT(104,8,'M');
-  fila(110,114,9,'B'); arco(110,6,5);
-  colina(130,12,5);
-  fila(144,147,8,'B'); setT(145,8,'?'); setT(147,8,'M');
-  fila(158,161,9,'='); fila(164,167,7,'='); fila(170,173,5,'=');
-  arco(34,7,5); arco(63,7,5); arco(87,4,4); arco(117,7,6); arco(155,7,5); arco(184,7,6);
-  tubo(38,2); tubo(48,3); tubo(90,2); tubo(116,3); tubo(140,5); tubo(190,3);
-  ent('goomba',18,12); ent('goomba',26,12); ent('koopa',36,12);
-  ent('goomba',56,12); ent('goomba',62,12); ent('koopa',72,8);
-  ent('goomba',84,12); ent('koopa',100,12); ent('goomba',107,12);
-  ent('goomba',128,12); ent('koopa',136,7); ent('goomba',148,12);
-  ent('koopa',156,12); ent('goomba',168,12); ent('goomba',186,12); ent('koopa',196,12);
-  ent('santi',9,11.4); ent('huevo',82,12); ent('abu',112,12);
-  ent('meta',210,9);
-  return {nombre:'MUNDO 3 · CASTILLO DE TÍO JUAN', cielo:'#3a6ec8', spawn:{x:3,y:11}};
+  fila(12,15,10,'B'); setT(13,10,'M'); setT(15,10,'?');
+  fila(28,31,10,'B'); setT(29,10,'?'); setT(31,10,'?');
+  fila(50,54,10,'B'); setT(52,10,'?'); setT(56,10,'M');
+  fila(58,60,7,'B'); setT(59,7,'?');
+  colina(72,6,2);
+  setT(100,10,'?'); setT(102,10,'?'); setT(104,10,'M');
+  fila(110,114,10,'B'); arco(110,8,5);
+  colina(130,6,3);
+  fila(144,147,10,'B'); setT(145,10,'?'); setT(147,10,'M');
+  fila(158,161,10,'='); fila(164,167,7,'=');
+  arco(34,9,5); arco(63,9,5); arco(87,8,4); arco(117,9,6); arco(155,9,5); arco(184,9,6);
+  tubo(24,2); tubo(46,2); tubo(126,2); tubo(190,3); tubo(204,2);
+  [18,26,56,62,88,106,128,148,168,186].forEach(x=>ent('goomba',x,12));
+  [36,124,156,196].forEach(x=>ent('koopa',x,12));
+  ent('santi',9,11.4); ent('huevo',84,12); setT(97,10,'S'); ent('abu',138,12); ent('meta',210,9);
+  return {nombre:'MUNDO 3 · BOSQUE DE GEORGIE', cielo:'#4a9c58', decor:'bosque', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
-const NIVELES = [nivel1, nivel2, nivel3];
+/* ---- Mundo 4: Playa de Penny ---- */
+function nivel4(){
+  nuevoMapa(190); entidadesNivel=[];
+  hueco(34,36); hueco(78,80); hueco(126,128); hueco(158,160);
+  fila(20,23,10,'B'); setT(21,10,'M'); setT(23,10,'?');
+  setT(44,10,'?'); setT(46,10,'?');
+  fila(60,63,10,'B'); setT(61,10,'?'); setT(63,10,'M');
+  fila(96,99,10,'='); fila(104,107,7,'=');
+  setT(116,10,'?'); setT(118,10,'M');
+  fila(140,143,10,'B'); setT(141,10,'?'); setT(143,10,'?');
+  fila(166,169,10,'=');
+  arco(50,9,5); arco(86,9,4); arco(132,8,5); arco(172,9,5);
+  tubo(30,2); tubo(72,3); tubo(150,2);
+  [26,52,112,134,154,172].forEach(x=>ent('goomba',x,12));
+  [66,120,176].forEach(x=>ent('koopa',x,12));
+  ent('santi',8,11.4); ent('huevo',84,12); setT(92,10,'S'); ent('abu',110,12); ent('meta',182,9);
+  return {nombre:'MUNDO 4 · PLAYA DE PENNY', cielo:'#6bd0f8', decor:'playa', tierra:TIERRAS.playa, spawn:{x:3,y:11}};
+}
+/* ---- Mundo 5: Cueva de Sheldon ---- */
+function nivel5(){
+  nuevoMapa(200); entidadesNivel=[];
+  hueco(28,30); hueco(58,60); hueco(96,98); hueco(130,132); hueco(164,166);
+  fila(16,19,10,'B'); setT(17,10,'M'); setT(19,10,'?');
+  fila(38,41,10,'B'); setT(39,10,'?'); setT(41,10,'?');
+  setT(68,10,'?'); setT(70,10,'M');
+  fila(104,108,10,'B'); setT(105,10,'?'); setT(107,10,'?');
+  fila(118,121,7,'=');
+  fila(140,143,10,'B'); setT(141,10,'M'); setT(143,10,'?');
+  fila(172,175,10,'=');
+  arco(46,9,5); arco(88,8,5); arco(124,9,5); arco(156,9,6); arco(180,8,4);
+  tubo(34,2); tubo(90,3); tubo(148,2); tubo(184,2);
+  [22,44,66,102,112,136,154,178].forEach(x=>ent('goomba',x,12));
+  [50,126,170].forEach(x=>ent('koopa',x,12));
+  ent('santi',9,11.4); ent('huevo',76,12); setT(82,10,'S'); ent('abu',114,12); ent('meta',192,9);
+  return {nombre:'MUNDO 5 · CUEVA DE SHELDON', cielo:'#2a2a48', decor:'cueva', tierra:TIERRAS.cueva, spawn:{x:3,y:11}};
+}
+/* ---- Mundo 6: Nubes de Cucú ---- */
+function nivel6(){
+  nuevoMapa(210); entidadesNivel=[];
+  hueco(24,26); hueco(48,50); hueco(72,74); hueco(100,102); hueco(128,130); hueco(154,156); hueco(180,182);
+  fila(14,17,10,'B'); setT(15,10,'M'); setT(17,10,'?');
+  fila(32,35,7,'='); fila(40,43,10,'B'); setT(41,10,'?');
+  setT(58,10,'?'); setT(60,10,'M');
+  fila(84,87,10,'B'); setT(85,10,'?'); setT(87,10,'?');
+  fila(108,111,7,'='); setT(118,10,'?'); setT(120,10,'M');
+  fila(138,141,10,'B'); setT(139,10,'?');
+  fila(162,165,7,'='); fila(170,173,10,'B'); setT(171,10,'?'); setT(173,10,'M');
+  arco(28,9,4); arco(54,8,5); arco(78,9,5); arco(114,8,5); arco(146,9,5); arco(186,8,5);
+  tubo(66,2); tubo(146,3);
+  [20,38,56,80,106,124,144,168,188].forEach(x=>ent('goomba',x,12));
+  [90,134,176].forEach(x=>ent('koopa',x,12));
+  ent('santi',8,11.4); ent('huevo',92,12); setT(96,10,'S'); ent('abu',114,12); ent('meta',200,9);
+  return {nombre:'MUNDO 6 · NUBES DE CUCÚ', cielo:'#7ec8f8', decor:'nubes', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
+}
+/* ---- Mundo 7: Desierto de Abu ---- */
+function nivel7(){
+  nuevoMapa(220); entidadesNivel=[];
+  hueco(30,32); hueco(64,66); hueco(98,100); hueco(134,136); hueco(170,172); hueco(196,198);
+  fila(18,21,10,'B'); setT(19,10,'M'); setT(21,10,'?');
+  setT(40,10,'?'); setT(42,10,'?');
+  fila(54,57,10,'B'); setT(55,10,'?'); setT(57,10,'M');
+  fila(76,79,7,'=');
+  setT(108,10,'?'); setT(110,10,'M'); setT(112,10,'?');
+  fila(122,126,10,'B'); setT(123,10,'?'); setT(125,10,'?');
+  fila(146,149,10,'='); fila(152,155,7,'=');
+  fila(162,165,10,'B'); setT(163,10,'M');
+  fila(184,187,10,'B'); setT(185,10,'?');
+  arco(46,9,5); arco(84,9,5); arco(116,8,5); arco(158,9,4); arco(190,9,5);
+  tubo(26,2); tubo(70,3); tubo(140,2); tubo(204,3);
+  [24,46,60,94,116,130,158,178,200,208].forEach(x=>ent('goomba',x,12));
+  [50,104,150,190].forEach(x=>ent('koopa',x,12));
+  ent('santi',9,11.4); ent('huevo',86,12); setT(92,10,'S'); ent('abu',118,12); ent('meta',212,9);
+  return {nombre:'MUNDO 7 · DESIERTO DE ABU', cielo:'#8fd4f0', decor:'desierto', tierra:TIERRAS.desierto, spawn:{x:3,y:11}};
+}
+/* ---- Mundo 8: Castillo de Tío Juan ---- */
+function nivel8(){
+  nuevoMapa(240); entidadesNivel=[];
+  hueco(22,24); hueco(44,46); hueco(70,72); hueco(94,96); hueco(118,120); hueco(144,146); hueco(168,170); hueco(194,196);
+  fila(14,17,10,'B'); setT(15,10,'M'); setT(17,10,'?');
+  fila(30,34,10,'B'); setT(31,10,'?'); setT(33,10,'?');
+  fila(52,56,10,'B'); setT(53,10,'?'); setT(55,10,'M');
+  fila(58,60,7,'B'); setT(59,7,'?');
+  setT(80,10,'?'); setT(82,10,'M');
+  fila(102,106,10,'B'); setT(103,10,'?'); setT(105,10,'?');
+  fila(110,113,7,'=');
+  fila(126,129,10,'B'); setT(127,10,'M');
+  fila(150,154,10,'B'); setT(151,10,'?'); setT(153,10,'?');
+  fila(158,161,7,'=');
+  fila(176,180,10,'B'); setT(177,10,'?'); setT(179,10,'M');
+  fila(200,204,10,'B'); setT(201,10,'?'); setT(203,10,'?');
+  fila(210,213,10,'='); fila(216,219,7,'=');
+  arco(38,9,4); arco(64,9,4); arco(88,8,4); arco(140,9,4); arco(164,8,4); arco(188,9,4); arco(222,9,5);
+  tubo(38,3); tubo(66,2); tubo(140,2); tubo(190,3); tubo(224,2);
+  [20,28,48,62,76,100,116,124,142,156,166,186,206,222].forEach(x=>ent('goomba',x,12));
+  [40,108,132,164,198,228].forEach(x=>ent('koopa',x,12));
+  ent('santi',8,11.4); ent('huevo',86,12); setT(90,10,'S'); ent('abu',122,12); ent('meta',232,9);
+  return {nombre:'MUNDO 8 · CASTILLO DE TÍO JUAN', cielo:'#3a3a5c', decor:'castillo', tierra:TIERRAS.castillo, spawn:{x:3,y:11}};
+}
+const NIVELES = [nivel1, nivel2, nivel3, nivel4, nivel5, nivel6, nivel7, nivel8];
 
 /* ---------------- Estado del juego ---------------- */
 let estado = 'menu';   // menu | juego | meta | fin
@@ -313,7 +421,7 @@ function cargarNivel(i){
   nivelIdx = i;
   infoNivel = NIVELES[i]();
   enemigos=[]; items=[]; fuegos=[]; parts=[]; npcs=[]; burbujas=[]; bumps=[];
-  evTioJuan=null; secMeta=0; tiempo=300; tiempoAcum=0;
+  evTioJuan=null; secMeta=0; tiempo=300; tiempoAcum=0; colaVoz=[];
   J.x = infoNivel.spawn.x*TILE; J.y = infoNivel.spawn.y*TILE;
   J.vx=0; J.vy=0; J.cara=1; J.invul=0; J.burger=0; J.pmetro=0; J.muerto=0;
   J.cargaSanti=false; J.montaAbu=false; J.cucu=false;
@@ -609,7 +717,7 @@ function update(){
     if (secMeta===200){
       hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!');
     }
-    if (secMeta>=340){
+    if (secMeta>=520){
       if (nivelIdx+1 < NIVELES.length){ cargarNivel(nivelIdx+1); estado='juego'; }
       else { estado='fin'; sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!'); }
     }
@@ -842,8 +950,11 @@ function dibTile(tx,ty){
   if (bump) y -= Math.sin(bump.t/10*Math.PI)*8;
   x -= camX;
   if (c==='#'){
-    rect(x,y,TILE,TILE,'#c84c0c');
-    rect(x,y,TILE,3,'#f8b800'); rect(x+2,y+6,12,10,'#e07020'); rect(x+18,y+18,12,10,'#e07020');
+    const t = (infoNivel && infoNivel.tierra) || TIERRAS.pradera;
+    rect(x,y,TILE,TILE,t.base);
+    rect(x,y,TILE,3,t.borde); rect(x,y+3,2,TILE-3,t.borde);
+    rect(x+2,y+6,12,10,t.rel); rect(x+18,y+18,12,10,t.rel);
+    rect(x+TILE-3,y+3,3,TILE-3,t.som); rect(x,y+TILE-3,TILE,3,t.som);
   } else if (c==='W' || c==='='){
     rect(x,y,TILE,TILE,'#e09050');
     rect(x,y,TILE,4,'#ffc078'); rect(x,y,3,TILE,'#ffc078');
@@ -857,7 +968,11 @@ function dibTile(tx,ty){
     ctx.moveTo(x+24,y+16); ctx.lineTo(x+24,y+32); ctx.stroke();
   } else if (c==='?'||c==='M'||c==='S'){
     rect(x,y,TILE,TILE,'#f8b800');
+    rect(x,y,TILE,3,'#ffe36e'); rect(x,y,3,TILE,'#ffe36e');
+    rect(x+TILE-3,y,3,TILE,'#b06000'); rect(x,y+TILE-3,TILE,3,'#b06000');
     ctx.strokeStyle='#7a3000'; ctx.lineWidth=2; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
+    /* remaches estilo SMB3 */
+    for(const [rx,ry] of [[5,5],[TILE-8,5],[5,TILE-8],[TILE-8,TILE-8]]) rect(x+rx,y+ry,3,3,'#7a3000');
     ctx.fillStyle='#7a3000'; ctx.font='bold 20px monospace';
     const s = c==='S' ? '★' : '?';
     if ((tick>>4)%2===0 || c!=='?') ctx.fillText(s, x+9, y+24);
@@ -870,7 +985,14 @@ function dibTile(tx,ty){
     const tapa = getT(tx,ty-1)!=='l';
     rect(x,y,TILE,TILE,'#30a020');
     rect(x+3,y,5,TILE,'#80d010');
-    if (tapa){ rect(x-(getT(tx-1,ty)==='l'?0:4),y,TILE+4,8,'#30a020'); rect(x-(getT(tx-1,ty)==='l'?0:4),y,TILE+4,3,'#80d010'); }
+    rect(x+TILE-6,y,4,TILE,'#187010');
+    if (tapa){
+      const off = getT(tx-1,ty)==='l' ? 0 : 4;
+      rect(x-off,y,TILE+4,10,'#30a020');
+      rect(x-off,y,TILE+4,3,'#80d010');
+      rect(x-off+3,y+3,4,7,'#80d010');
+      rect(x-off,y+8,TILE+4,2,'#187010');
+    }
   } else if (c==='C'){
     const f = (tick>>3)%4, wdt = [16,10,4,10][f];
     rect(x+(TILE-wdt)/2, y+6, wdt, 20, '#f8b800');
@@ -878,23 +1000,120 @@ function dibTile(tx,ty){
   }
 }
 
+/* --- decorados de fondo estilo SMB3 --- */
+function nubeSMB3(x,y,esc){
+  ctx.save(); ctx.translate(x,y); ctx.scale(esc||1,esc||1);
+  ctx.beginPath();
+  ctx.arc(0,0,15,Math.PI*0.45,Math.PI*1.5);
+  ctx.arc(19,-13,17,Math.PI*0.85,Math.PI*1.95);
+  ctx.arc(40,-10,14,Math.PI*1.1,Math.PI*2.1);
+  ctx.arc(50,2,13,Math.PI*1.5,Math.PI*0.55);
+  ctx.closePath();
+  ctx.fillStyle='#fff'; ctx.fill();
+  ctx.strokeStyle='#4a6ab8'; ctx.lineWidth=3; ctx.stroke();
+  ctx.restore();
+}
+function colinaSMB3(x,w,h){
+  ctx.beginPath(); ctx.moveTo(x,H); ctx.lineTo(x+w/2,H-h); ctx.lineTo(x+w,H); ctx.closePath();
+  ctx.fillStyle='#28a828'; ctx.fill();
+  ctx.strokeStyle='#0c6c0c'; ctx.lineWidth=3; ctx.stroke();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle='#0c6c0c'; ctx.lineWidth=2;
+  for(let s=0;s<4;s++){ ctx.beginPath(); ctx.moveTo(x+w/2-30+s*8, H-h+18+s*22); ctx.lineTo(x+w/2-14+s*8, H-h+34+s*22); ctx.stroke(); }
+  ctx.restore();
+}
+function arbustoSMB3(x,y){
+  ctx.beginPath();
+  ctx.arc(x,y,14,Math.PI,0); ctx.arc(x+20,y-6,16,Math.PI,0.15); ctx.arc(x+42,y,14,Math.PI,0);
+  ctx.lineTo(x-14,y);
+  ctx.fillStyle='#40c040'; ctx.fill(); ctx.strokeStyle='#0c6c0c'; ctx.lineWidth=3; ctx.stroke();
+}
+function arbolSMB3(x,y){
+  rect(x+10,y-30,10,34,'#8a5a2a');
+  ctx.beginPath(); ctx.arc(x+15,y-44,24,0,Math.PI*2);
+  ctx.fillStyle='#1f8f1f'; ctx.fill(); ctx.strokeStyle='#0c5c0c'; ctx.lineWidth=3; ctx.stroke();
+}
+function palmeraSMB3(x,y){
+  rect(x+12,y-52,8,56,'#b8863c');
+  ctx.fillStyle='#28a828'; ctx.strokeStyle='#0c6c0c'; ctx.lineWidth=2;
+  for(const a of [-0.9,-0.45,0.45,0.9]){
+    ctx.beginPath(); ctx.ellipse(x+16+Math.cos(a-1.57)*22, y-56+Math.sin(a-1.57)*10+8, 20, 7, a, 0, Math.PI*2);
+    ctx.fill(); ctx.stroke();
+  }
+}
+function cactusSMB3(x,y){
+  ctx.fillStyle='#2a9c3a'; ctx.strokeStyle='#0c5c1c'; ctx.lineWidth=2;
+  rect(x+12,y-42,12,46,'#2a9c3a'); rect(x,y-30,10,8,'#2a9c3a'); rect(x,y-30,6,16,'#2a9c3a');
+  rect(x+26,y-22,10,8,'#2a9c3a'); rect(x+30,y-22,6,12,'#2a9c3a');
+}
+function torreSMB3(x){
+  ctx.fillStyle='rgba(20,20,40,0.55)';
+  rect(x,H-160,70,160,'rgba(20,20,40,0.55)');
+  for(let i=0;i<4;i++) rect(x+i*20,H-172,12,14,'rgba(20,20,40,0.55)');
+  rect(x+26,H-120,18,26,'rgba(80,80,120,0.6)');
+}
 function dibFondo(){
+  const d = infoNivel ? infoNivel.decor : 'colinas';
   ctx.fillStyle = infoNivel ? infoNivel.cielo : '#5c94fc';
   ctx.fillRect(0,HUD_H,W,H-HUD_H);
-  /* colinas y nubes con parallax */
   const p1 = camX*0.3, p2 = camX*0.6;
-  ctx.fillStyle='rgba(255,255,255,0.85)';
-  for(let i=0;i<8;i++){
-    const nx = ((i*420 - p1) % (W+400)+ (W+400))%(W+400) - 200;
-    const ny = 90 + (i%3)*45;
-    ctx.beginPath();
-    ctx.arc(nx,ny+HUD_H,18,0,Math.PI*2); ctx.arc(nx+22,ny-10+HUD_H,22,0,Math.PI*2); ctx.arc(nx+46,ny+HUD_H,18,0,Math.PI*2);
-    ctx.fill();
+  if (d==='cueva'){
+    ctx.fillStyle='rgba(0,0,0,0.35)';
+    for(let i=0;i<10;i++){
+      const cx2 = ((i*260 - p1) % (W+300) + (W+300))%(W+300) - 150;
+      ctx.beginPath(); ctx.moveTo(cx2,HUD_H); ctx.lineTo(cx2+24,HUD_H);
+      ctx.lineTo(cx2+12,HUD_H+70+(i%3)*35); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle='rgba(255,255,200,0.12)';
+    for(let i=0;i<12;i++){
+      const gx = ((i*180 - p2) % (W+200) + (W+200))%(W+200) - 100;
+      ctx.beginPath(); ctx.arc(gx, HUD_H+140+(i*53)%260, 3, 0, Math.PI*2); ctx.fill();
+    }
+  } else {
+    for(let i=0;i<7;i++){
+      const nx = ((i*430 - p1) % (W+400) + (W+400))%(W+400) - 200;
+      nubeSMB3(nx, HUD_H + 100 + (i%3)*45, d==='nubes'?1.15:1);
+    }
+    if (d==='nubes') for(let i=0;i<5;i++){
+      const nx = ((i*380 - p2 + 150) % (W+400) + (W+400))%(W+400) - 200;
+      nubeSMB3(nx, HUD_H + 280 + (i%2)*70, 0.8);
+    }
   }
-  ctx.fillStyle='#1f8f1f';
-  for(let i=0;i<6;i++){
-    const hx = ((i*560 - p2) % (W+600) + (W+600))%(W+600) - 300;
-    ctx.beginPath(); ctx.moveTo(hx,H); ctx.lineTo(hx+130,H-150-(i%2)*40); ctx.lineTo(hx+260,H); ctx.fill();
+  if (d==='colinas' || d==='bosque'){
+    for(let i=0;i<6;i++){
+      const hx = ((i*560 - p2) % (W+600) + (W+600))%(W+600) - 300;
+      colinaSMB3(hx, 260, 140+(i%2)*40);
+    }
+    for(let i=0;i<8;i++){
+      const bx = ((i*330 - p2 + 120) % (W+500) + (W+500))%(W+500) - 200;
+      arbustoSMB3(bx, H-14);
+    }
+    if (d==='bosque') for(let i=0;i<7;i++){
+      const tx2 = ((i*300 - p2 + 60) % (W+400) + (W+400))%(W+400) - 150;
+      arbolSMB3(tx2, H-14);
+    }
+  } else if (d==='playa'){
+    ctx.fillStyle='#ffe36e'; ctx.beginPath(); ctx.arc(W-140, HUD_H+95, 40, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#e8a33d'; ctx.lineWidth=4; ctx.stroke();
+    for(let i=0;i<5;i++){
+      const px2 = ((i*420 - p2) % (W+500) + (W+500))%(W+500) - 200;
+      palmeraSMB3(px2, H-12);
+    }
+  } else if (d==='desierto'){
+    ctx.fillStyle='#e8b858';
+    for(let i=0;i<5;i++){
+      const dx2 = ((i*480 - p2) % (W+600) + (W+600))%(W+600) - 300;
+      ctx.beginPath(); ctx.arc(dx2+150, H, 150, Math.PI, 0); ctx.fill();
+    }
+    for(let i=0;i<5;i++){
+      const cx3 = ((i*390 - p2 + 140) % (W+500) + (W+500))%(W+500) - 200;
+      cactusSMB3(cx3, H-12);
+    }
+  } else if (d==='castillo'){
+    for(let i=0;i<5;i++){
+      const kx = ((i*470 - p2) % (W+600) + (W+600))%(W+600) - 250;
+      torreSMB3(kx);
+    }
   }
 }
 
@@ -1093,7 +1312,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v6', W-30, 18);
+  ctx.fillText('v7', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
