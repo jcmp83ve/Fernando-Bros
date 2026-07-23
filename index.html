@@ -47,20 +47,27 @@ if (typeof speechSynthesis !== 'undefined') speechSynthesis.onvoiceschanged = ca
    silencio), a diferencia de la voz sintética de Safari. */
 const AUDIO_BASE = 'https://d8j0ntlcm91z4.cloudfront.net/user_3Fiy4A0M4MKixWlklbu10QS1hAQ/';
 const CLIPS = {
-  '¡Fernando Bros! ¡Vamos Penny y Sheldon!': AUDIO_BASE+'hf_20260723_012534_764eb403-ec7c-4525-98b3-fe9279e1f5bd.mp3',
-  '¡Soy el pichunguito de tío Juan!': AUDIO_BASE+'hf_20260723_012908_e05aff6a-0007-4311-95d3-0801192290eb.mp3',
-  '¡Fuego pichunguito!': AUDIO_BASE+'hf_20260723_012551_1363e049-071a-4ceb-a14e-40b6e982be2b.mp3',
-  '¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!': AUDIO_BASE+'hf_20260723_012554_625f20e6-b89b-4b18-a093-142ed057bc4a.mp3',
-  '¡Gracias tío Juan!': AUDIO_BASE+'hf_20260723_012608_929fae4a-9b1c-4956-861a-7612a607c4ce.mp3',
-  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260723_012610_08cbccb0-f429-4558-b07d-7f4f1842407c.mp3',
-  'Te amo Santi, mi hermanito': AUDIO_BASE+'hf_20260723_012628_95118c02-94dd-470d-9398-81b005d60971.mp3',
-  'Hola Cucú, acompáñame': AUDIO_BASE+'hf_20260723_012630_78e89598-441f-48c5-8897-67d6c328d973.mp3',
-  'Te amo Abu': AUDIO_BASE+'hf_20260723_012646_44cb1dd9-1508-4a18-9453-de5423046d3c.mp3',
-  '¡Gracias Abu!': AUDIO_BASE+'hf_20260723_012650_4be322e4-56f9-487e-82ab-7e72d921b6e0.mp3',
-  '¡Cuídate Abu!': AUDIO_BASE+'hf_20260723_012703_38a6ee7b-bd1f-452e-8cc3-2c78fe57b38f.mp3',
-  'Te amo tío Juan, yo soy tu pichunguito': AUDIO_BASE+'hf_20260723_012707_b0548f16-aebc-4bad-bfae-c99ae2a96dd9.mp3',
-  '¡Muy bien, mi pichunguito! ¡Eres un campeón!': AUDIO_BASE+'hf_20260723_012723_88b63e0b-12cf-4864-af96-107eb5583692.mp3',
-  '¡Ganaste! ¡Te amo tío Juan!': AUDIO_BASE+'hf_20260723_012727_e67288ef-8540-4b30-95ff-5d500c6237e4.mp3',
+  '¡Fernando Bros! ¡Vamos Penny y Sheldon!': AUDIO_BASE+'hf_20260723_022831_be4594e7-9934-45df-82f7-ecbd7684a1b4.mp3',
+  '¡Soy el pichunguito de tío Juan!': AUDIO_BASE+'hf_20260723_022843_1d4b30e7-9e12-45eb-b765-1cd4192a71f1.mp3',
+  '¡Fuego pichunguito!': AUDIO_BASE+'hf_20260723_022853_3a12f5a7-1254-4828-a79d-ec513d359e17.mp3',
+  '¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!': AUDIO_BASE+'hf_20260723_022904_7e72ee2f-e753-4c38-9913-82375109fd07.mp3',
+  '¡Gracias tío Juan!': AUDIO_BASE+'hf_20260723_022915_731cc734-d397-4780-b376-0ae4832f2098.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260723_022926_3851354b-3562-48ad-85a9-600895ad4076.mp3',
+  'Te amo Santi, mi hermanito': AUDIO_BASE+'hf_20260723_022939_b650e98e-e039-4c68-8517-4bed26cf3136.mp3',
+  'Hola Cucú, acompáñame': AUDIO_BASE+'hf_20260723_022951_60e42569-0204-4c13-a440-1b3fbb2e8323.mp3',
+  'Te amo Abu': AUDIO_BASE+'hf_20260723_023000_8b6c7894-da76-44ce-8f1f-01e44d1efb18.mp3',
+  '¡Gracias Abu!': AUDIO_BASE+'hf_20260723_023015_c571b81b-b462-4c5f-902b-9cb8525d3cb5.mp3',
+  '¡Cuídate Abu!': AUDIO_BASE+'hf_20260723_023027_a7298a38-b585-42ce-9a0f-9c6de5170887.mp3',
+  'Te amo tío Juan, yo soy tu pichunguito': AUDIO_BASE+'hf_20260723_023041_e2b52034-c05e-46b6-bd10-dbb2442db2b2.mp3',
+  '¡Muy bien, mi pichunguito! ¡Eres un campeón!': AUDIO_BASE+'hf_20260723_023053_920db23a-576a-4d54-b97d-03c5bc8741fa.mp3',
+  '¡Ganaste! ¡Te amo tío Juan!': AUDIO_BASE+'hf_20260723_023105_67a22a9c-82e4-4c7c-84a1-082141d8bba2.mp3',
+  '¡Luca! ¡Mi amigo pichunguito!': AUDIO_BASE+'hf_20260723_023116_bf6a1862-d546-4eca-9ac2-4a9d22830f77.mp3',
+  '¡Salomón! ¡Juega conmigo, pichunguito!': AUDIO_BASE+'hf_20260723_023126_b6845ef0-32b0-4f99-9e7c-7783dc4c50b2.mp3',
+  '¡Qué pedo tan grande, tío Fran!': AUDIO_BASE+'hf_20260723_023137_81465d0a-8d26-4126-97b1-5ba55b001c93.mp3',
+  '¡Te amo mamá!': AUDIO_BASE+'hf_20260723_023146_ec901637-45bb-4e3d-a8e0-a68153809c87.mp3',
+  '¡Papá, mira cómo salto de alto!': AUDIO_BASE+'hf_20260723_023156_ebff0113-5296-49b5-adb9-0e65b4631f57.mp3',
+  '¡Toma, pichungazo!': AUDIO_BASE+'hf_20260723_023207_6b418548-3e75-4413-b546-9e8adbeba2a7.mp3',
+  '¡Pichunguito al ataque!': AUDIO_BASE+'hf_20260723_023217_8ad6f4d2-453d-4b77-8a92-6a2ec3f92d41.mp3',
 };
 const elementosAudio = {};
 let clipsListos = false;
@@ -1488,7 +1495,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v8', W-30, 18);
+  ctx.fillText('v9', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
