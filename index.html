@@ -35,6 +35,7 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 const TILE = 32, ROWS = 15, HUD_H = 60;
 const GRAV = 0.55, MAXFALL = 12;
+const ZOOM = 1.2, VW = Math.round(W/ZOOM); // el mundo se ve un poquito más grande
 
 /* ---------------- Voz (Web Speech API) ---------------- */
 let voces = [];
@@ -156,6 +157,8 @@ const sfx = {
   meta(){ [523,587,659,784,880,1047,1319].forEach((f,i)=>beep(f,0.18,'square',0.07,i*0.11)); },
   muerte(){ [660,494,392,330,262].forEach((f,i)=>beep(f,0.14,'square',0.06,i*0.1)); },
   huevo(){ beep(600,0.06,'square',0.07); beep(800,0.06,'square',0.07,0.07); beep(1000,0.15,'square',0.07,0.14); },
+  pedo(){ for(let i=0;i<10;i++) beep(95-i*5+(i%2)*14, 0.09, 'sawtooth', 0.12, i*0.055); },
+  beso(){ beep(880,0.07,'sine',0.1); beep(1175,0.18,'sine',0.1,0.08); },
 };
 
 /* ---------------- Entrada ---------------- */
@@ -425,6 +428,7 @@ function cargarNivel(i){
   J.x = infoNivel.spawn.x*TILE; J.y = infoNivel.spawn.y*TILE;
   J.vx=0; J.vy=0; J.cara=1; J.invul=0; J.burger=0; J.pmetro=0; J.muerto=0;
   J.cargaSanti=false; J.montaAbu=false; J.cucu=false;
+  J.luca=false; J.salomon=false; J.superSalto=false;
   historia = [];
   for(const e of entidadesNivel){
     if (e.tipo==='goomba') enemigos.push({tipo:'goomba', x:e.x, y:e.y, vx:-0.8, vy:0, w:26, h:24, vivo:true});
@@ -434,7 +438,27 @@ function cargarNivel(i){
     else if (e.tipo==='abu')   npcs.push({tipo:'abu', x:e.x, y:e.y-16, vx:-0.5, vy:0, t:0, activo:true});
     else if (e.tipo==='meta')  npcs.push({tipo:'meta', x:e.x, y:e.y, t:0, activo:true});
   }
+  colocarFamilia();
   camX = 0;
+}
+
+/* Coloca a Mamá, Luca, Papá, Salomón y Tío Fran en suelo plano y
+   despejado de cada mundo, buscando automáticamente un lugar libre. */
+function colocarFamilia(){
+  const familia = [['mama',0.18,48],['luca',0.32,34],['papa',0.46,48],['salomon',0.60,34],['tiofran',0.74,48]];
+  for(const [tipo, frac, alto] of familia){
+    let x = Math.floor(LEVW*frac);
+    while(x < LEVW-12){
+      const libre = getT(x,13)==='#' && getT(x+1,13)==='#' &&
+        getT(x,12)==='.' && getT(x,11)==='.' && getT(x,10)==='.' &&
+        getT(x+1,12)==='.' && getT(x+1,11)==='.' &&
+        !npcs.some(n=>Math.abs(n.x - x*TILE) < 3*TILE) &&
+        !entidadesNivel.some(e=>e.tipo!=='goomba'&&e.tipo!=='koopa'&&Math.abs(e.x - x*TILE) < 3*TILE);
+      if (libre) break;
+      x++;
+    }
+    npcs.push({tipo, x:x*TILE, y:13*TILE-alto, t:0, activo:true, hecho:false});
+  }
 }
 
 /* ---------------- Física / colisiones ---------------- */
@@ -551,7 +575,7 @@ function update(){
   /* salto */
   if (!enMeta && kSalto()){
     if (J.enSuelo && !J.saltando){
-      J.vy = -(11 + Math.min(Math.abs(J.vx)*0.35,2.2));
+      J.vy = -((J.superSalto?13:11) + Math.min(Math.abs(J.vx)*0.35,2.2));
       J.saltando=true; J.enSuelo=false; sfx.salto();
     }
   } else { J.saltando=false; if (J.vy<-4 && !kSalto()) J.vy=-4; }
@@ -641,7 +665,7 @@ function update(){
   /* --- enemigos --- */
   for(const e of enemigos){
     if (!e.vivo) continue;
-    if (e.x-camX > W+120) continue;             // aún fuera de pantalla
+    if (e.x-camX > VW+120) continue;            // aún fuera de pantalla
     if (e.tipo==='koopa' && e.caparazon && !e.girando){ e.vx=0; }
     moverEnte(e);
     if (e.y>ROWS*TILE+60){ e.vivo=false; continue; }
@@ -696,6 +720,44 @@ function update(){
         burbuja('¡Te amo Abu!');
         hablar('Te amo Abu');
       }
+    } else if (n.tipo==='luca'){
+      if (!J.luca && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:24,h:34})){
+        n.activo=false; J.luca=true; puntos+=1000; sfx.poder();
+        burbuja('¡Luca! ¡Mi amigo pichunguito!');
+        hablar('¡Luca! ¡Mi amigo pichunguito!');
+      }
+    } else if (n.tipo==='salomon'){
+      if (!J.salomon && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:24,h:34})){
+        n.activo=false; J.salomon=true; puntos+=1000; sfx.poder();
+        burbuja('¡Salomón! ¡Juega conmigo, pichunguito!');
+        hablar('¡Salomón! ¡Juega conmigo, pichunguito!');
+      }
+    } else if (n.tipo==='tiofran'){
+      if (!n.hecho && Math.abs(J.x-n.x)<110 && Math.abs(J.y-n.y)<120){
+        n.hecho=true; puntos+=500; sfx.pedo();
+        for(let i=0;i<10;i++) parts.push({tipo:'pedo', x:n.x+14+(Math.random()-0.5)*20,
+          y:n.y+30, vx:(Math.random()-0.5)*2, vy:-1-Math.random()*2, t:60});
+        for(const e2 of enemigos) if(e2.vivo && Math.abs(e2.x-n.x)<160) matarEnemigo(e2,true);
+        burbuja('¡Qué pedo tan grande, tío Fran!');
+        hablar('¡Qué pedo tan grande, tío Fran!');
+      }
+    } else if (n.tipo==='mama'){
+      if (!n.hecho && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:50})){
+        n.hecho=true; puntos+=2000; sfx.beso();
+        if (!J.grande){ J.grande=true; J.y-=28; }
+        J.invul=600;   // el beso de mamá protege un buen rato
+        for(let i=0;i<7;i++) parts.push({tipo:'corazon', x:n.x+14+(Math.random()-0.5)*30,
+          y:n.y+10, vy:-1-Math.random()*1.5, t:70});
+        burbuja('¡Te amo mamá!');
+        hablar('¡Te amo mamá!');
+      }
+    } else if (n.tipo==='papa'){
+      if (!n.hecho && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:50})){
+        n.hecho=true; puntos+=1000; sfx.poder();
+        J.superSalto=true;   // papá enseña el súper salto por el resto del nivel
+        burbuja('¡Papá, mira cómo salto de alto!');
+        hablar('¡Papá, mira cómo salto de alto!');
+      }
     } else if (n.tipo==='meta'){
       if (estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:40,h:13*TILE-n.y})){
         iniciarMeta(n);
@@ -718,7 +780,11 @@ function update(){
       hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!');
     }
     if (secMeta>=520){
-      if (nivelIdx+1 < NIVELES.length){ cargarNivel(nivelIdx+1); estado='juego'; }
+      if (nivelIdx+1 < NIVELES.length){
+        cargarNivel(nivelIdx+1); estado='juego';
+        burbuja('¡Pichunguito al ataque!');
+        hablar('¡Pichunguito al ataque!');
+      }
       else { estado='fin'; sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!'); }
     }
   }
@@ -726,9 +792,9 @@ function update(){
   actualizarExtras();
 
   /* cámara */
-  const objetivo = J.x - W*0.38;
+  const objetivo = J.x - VW*0.38;
   camX += (objetivo-camX)*0.12;
-  camX = Math.max(0, Math.min(camX, LEVW*TILE - W));
+  camX = Math.max(0, Math.min(camX, LEVW*TILE - VW));
 }
 
 function actualizarExtras(){
@@ -740,10 +806,17 @@ function actualizarExtras(){
   bumps = bumps.filter(b=>b.t>0);
 }
 
+let frasePichungazo = 0;
 function matarEnemigo(e, lanzado){
   e.vivo=false; puntos+=100; sfx.pisoton();
   parts.push({tipo:'puntos', x:e.x, y:e.y-10, vy:-1.5, t:40, txt:'100'});
   if (lanzado) parts.push({tipo:'estrellita', x:e.x+10, y:e.y, vx:0, vy:-4, t:30});
+  /* de vez en cuando, grito de victoria pichunguito */
+  if (tick - frasePichungazo > 600 && colaVoz.length===0 && Math.random()<0.4){
+    frasePichungazo = tick;
+    burbuja('¡Toma, pichungazo!');
+    hablar('¡Toma, pichungazo!');
+  }
 }
 
 /* ---------------- Evento estrella: ¡Tío Juan al rescate! ---------------- */
@@ -874,6 +947,66 @@ function dibAbu(x,y,cara,t,sola){
   const paso=sola?Math.sin(t/6)*2:0;
   rect(7,38+paso*0.4,5,10,'#ffc8a0'); rect(16,38-paso*0.4,5,10,'#ffc8a0');
   rect(6,46,7,3,'#3b241a'); rect(15,46,7,3,'#3b241a');
+  ctx.restore();
+}
+function dibLuca(x,y,t,cara){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-24,0); }
+  rect(2,0,20,6,'#2a9c3a'); rect(14,5,10,3,'#2a9c3a');   // gorra verde
+  rect(4,6,16,9,'#e8b088'); rect(15,8,3,2,'#222');
+  rect(3,15,18,12,'#ffe36e');                            // camiseta amarilla
+  const paso=Math.sin(t/4)*2;
+  rect(5,27+paso*0.4,6,7,'#5a5a5a'); rect(13,27-paso*0.4,6,7,'#5a5a5a');
+  ctx.restore();
+}
+function dibSalomon(x,y,t,cara){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-24,0); }
+  rect(3,-3,18,6,'#2a1a0a');                             // pelo rizado
+  for(const px of [2,8,14,19]) { ctx.fillStyle='#2a1a0a'; ctx.beginPath(); ctx.arc(px+2,-1,4,0,Math.PI*2); ctx.fill(); }
+  rect(4,3,16,10,'#c88a5a');
+  rect(12,5,9,4,'#1a1a1a'); rect(14,6,2,2,'#8ecbff');    // lentes
+  rect(3,13,18,13,'#d86a28');                            // franela naranja
+  const paso=Math.sin(t/4)*2;
+  rect(5,26+paso*0.4,6,8,'#3a3a3a'); rect(13,26-paso*0.4,6,8,'#3a3a3a');
+  ctx.restore();
+}
+function dibTioFran(x,y,t,hecho){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  rect(4,0,20,6,'#3a2a1a');                              // pelo
+  rect(6,4,16,12,'#ffc8a0');
+  rect(16,8,3,2,'#222');
+  rect(8,12,12,3,'#3a2a1a');                             // bigote
+  rect(4,16,20,20,'#8a6a3a');                            // camisa marrón
+  rect(2,20,4,10,'#8a6a3a'); rect(22,20,4,10,'#8a6a3a');
+  const paso = hecho ? Math.sin(t/3)*3 : 0;              // se ríe después del pedo
+  rect(6,36+paso*0.3,6,10,'#4a4a5a'); rect(15,36-paso*0.3,6,10,'#4a4a5a');
+  rect(5,44,8,4,'#222'); rect(15,44,8,4,'#222');
+  ctx.restore();
+}
+function dibMama(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  rect(4,-4,20,8,'#5a3418'); rect(2,0,4,18,'#5a3418'); rect(22,0,4,18,'#5a3418'); // melena
+  rect(6,2,16,12,'#ffc8a0');
+  rect(16,6,3,2,'#222'); rect(8,11,4,2,'#e07a7a');       // sonrisa
+  rect(4,14,20,24,'#ff6ea8');                            // vestido rosa
+  rect(2,18,4,10,'#ffc8a0'); rect(22,18,4,10,'#ffc8a0');
+  const f=Math.sin(t/14)*2;
+  ctx.fillStyle='#ff5a8a'; ctx.font='12px monospace'; ctx.fillText('♥', 26, -2+f);
+  rect(7,38,5,9,'#ffc8a0'); rect(16,38,5,9,'#ffc8a0');
+  rect(6,46,7,3,'#a83a5a'); rect(15,46,7,3,'#a83a5a');
+  ctx.restore();
+}
+function dibPapa(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  rect(4,-2,20,6,'#1560d0'); rect(16,2,10,3,'#1560d0');  // gorra azul
+  rect(6,4,16,12,'#ffc8a0');
+  rect(16,8,3,2,'#222'); rect(8,13,10,2,'#8a5a3a');      // barba corta
+  rect(4,16,20,20,'#2a6ad0');                            // camisa azul
+  rect(2,20,4,10,'#2a6ad0'); rect(22,20,4,10,'#2a6ad0');
+  const f=Math.sin(t/12)*2;
+  rect(6,36+f*0.2,6,10,'#3a3a4a'); rect(15,36-f*0.2,6,10,'#3a3a4a');
+  rect(5,44,8,4,'#222'); rect(15,44,8,4,'#222');
   ctx.restore();
 }
 function dibTioJuan(x,y,t){
@@ -1052,10 +1185,18 @@ function torreSMB3(x){
   for(let i=0;i<4;i++) rect(x+i*20,H-172,12,14,'rgba(20,20,40,0.55)');
   rect(x+26,H-120,18,26,'rgba(80,80,120,0.6)');
 }
+function aclarar(hex, f){
+  const n = parseInt(hex.slice(1),16), r=n>>16, g=(n>>8)&255, b=n&255;
+  const m = v => Math.round(v + (255-v)*f);
+  return 'rgb('+m(r)+','+m(g)+','+m(b)+')';
+}
 function dibFondo(){
   const d = infoNivel ? infoNivel.decor : 'colinas';
-  ctx.fillStyle = infoNivel ? infoNivel.cielo : '#5c94fc';
-  ctx.fillRect(0,HUD_H,W,H-HUD_H);
+  const cielo = infoNivel ? infoNivel.cielo : '#5c94fc';
+  const g = ctx.createLinearGradient(0,HUD_H-60,0,H);
+  g.addColorStop(0, cielo); g.addColorStop(1, aclarar(cielo, d==='cueva'?0.06:0.4));
+  ctx.fillStyle = g;
+  ctx.fillRect(0,HUD_H-60,W,H-HUD_H+60);
   const p1 = camX*0.3, p2 = camX*0.6;
   if (d==='cueva'){
     ctx.fillStyle='rgba(0,0,0,0.35)';
@@ -1136,15 +1277,20 @@ function dibHUD(){
     ctx.fillText('▶', 450+i*22, 50);
   }
   if (J.pmetro>=95 && (tick>>3)%2){ ctx.fillStyle='#ff5050'; ctx.fillText('¡¡PP!!', 590, 50); }
-  /* estado de compañía (alineado a la derecha) */
-  ctx.font='14px monospace'; ctx.fillStyle='#8ecbff'; ctx.textAlign='right';
-  let comp = 'Penny + Sheldon';
-  if (J.cucu) comp += ' + Cucú';
-  if (J.cargaSanti) comp += ' + Santi';
-  if (J.montaAbu) comp += ' + Abu';
-  ctx.fillText(comp, W-16, 26);
-  if (J.burger>0){ ctx.fillStyle='#ffe36e'; ctx.fillText('¡SÚPER VELOCIDAD! '+Math.ceil(J.burger/60), W-16, 50); }
-  else if (muertes>0){ ctx.fillStyle='#888'; ctx.fillText('caídas: '+muertes+' (¡no pasa nada!)', W-16, 50); }
+  /* estado de compañía (alineado a la derecha, línea 2, compacto) */
+  ctx.textAlign='right';
+  ctx.font='13px monospace';
+  if (J.burger>0){ ctx.fillStyle='#ffe36e'; ctx.fillText('¡SÚPER VELOCIDAD! '+Math.ceil(J.burger/60), W-16, 24); }
+  else if (muertes>0){ ctx.fillStyle='#888'; ctx.fillText('caídas: '+muertes+' (¡no pasa nada!)', W-16, 24); }
+  ctx.font='12px monospace'; ctx.fillStyle='#8ecbff';
+  let comp = 'Penny·Sheldon';
+  if (J.cucu) comp += '·Cucú';
+  if (J.luca) comp += '·Luca';
+  if (J.salomon) comp += '·Salomón';
+  if (J.cargaSanti) comp += '·Santi';
+  if (J.montaAbu) comp += '·Abu';
+  if (J.superSalto) comp += '·🦘';
+  ctx.fillText(comp, W-16, 48);
   ctx.textAlign='left';
 }
 
@@ -1158,7 +1304,7 @@ function dibBurbujas(){
     const a = Math.min(1, b.t/25);
     ctx.globalAlpha = a;
     ctx.fillStyle='#fff';
-    const rx = Math.min(Math.max(bx-wtx/2-8, 4), W-wtx-20);
+    const rx = Math.min(Math.max(bx-wtx/2-8, 4), VW-wtx-20);
     ctx.fillRect(rx, by-24, wtx+16, 26);
     ctx.beginPath(); ctx.moveTo(bx-6,by+2); ctx.lineTo(bx+6,by+2); ctx.lineTo(bx,by+9); ctx.fill();
     ctx.fillStyle='#111'; ctx.fillText(b.txt, rx+8, by-6);
@@ -1170,19 +1316,26 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   if (estado==='menu'){ dibMenu(); return; }
   if (estado==='fin'){ dibFin(); return; }
+  /* el mundo se dibuja con zoom (más grande); el HUD va aparte sin zoom */
+  ctx.save(); ctx.translate(0, H*(1-ZOOM)); ctx.scale(ZOOM, ZOOM);
   dibFondo();
 
   /* tiles visibles */
-  const tx0 = Math.floor(camX/TILE), tx1 = Math.min(LEVW-1, tx0 + Math.ceil(W/TILE)+1);
+  const tx0 = Math.floor(camX/TILE), tx1 = Math.min(LEVW-1, tx0 + Math.ceil(VW/TILE)+1);
   for(let ty=0;ty<ROWS;ty++) for(let tx=tx0;tx<=tx1;tx++) dibTile(tx,ty);
 
   /* NPCs */
   for(const n of npcs){
     if (!n.activo) continue;
-    const nx = n.x-camX; if (nx<-80||nx>W+80) continue;
+    const nx = n.x-camX; if (nx<-100||nx>VW+100) continue;
     if (n.tipo==='santi') dibSanti(nx, n.y+HUD_H, n.t);
     else if (n.tipo==='huevo'){ dibHuevo(nx, n.y+HUD_H, n.t); letrero(nx+15, n.y+HUD_H-48, 'HUEVO DE GEORGIE', '#ff9ed6'); }
     else if (n.tipo==='abu'){ dibAbu(nx, n.y+HUD_H, n.vx>0?1:-1, n.t, true); if(!n.huye) letrero(nx+14, n.y+HUD_H-26, 'ABU', '#d9b3ff'); }
+    else if (n.tipo==='luca'){ dibLuca(nx, n.y+HUD_H, n.t); letrero(nx+12, n.y+HUD_H-20, 'LUCA', '#7dffa0'); }
+    else if (n.tipo==='salomon'){ dibSalomon(nx, n.y+HUD_H, n.t); letrero(nx+12, n.y+HUD_H-20, 'SALOMÓN', '#ffd27d'); }
+    else if (n.tipo==='tiofran'){ dibTioFran(nx, n.y+HUD_H, n.t, n.hecho); letrero(nx+14, n.y+HUD_H-24, 'TÍO FRAN', '#b8e986'); }
+    else if (n.tipo==='mama'){ dibMama(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'MAMÁ', '#ff9ed6'); }
+    else if (n.tipo==='papa'){ dibPapa(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'PAPÁ', '#9ecbff'); }
     else if (n.tipo==='meta'){
       /* tarjeta de meta estilo SMB3 */
       const my = n.y+HUD_H;
@@ -1235,6 +1388,23 @@ function draw(){
     const hpos = historia[Math.min(46,historia.length-1)];
     if (hpos) dibCucu(hpos.x-camX, hpos.y+HUD_H-2, hpos.cara, tick);
   }
+  if (J.luca){
+    const hpos = historia[Math.min(60,historia.length-1)];
+    if (hpos) dibLuca(hpos.x-camX, hpos.y+HUD_H-8, tick, hpos.cara);
+  }
+  if (J.salomon){
+    const hpos = historia[Math.min(74,historia.length-1)];
+    if (hpos) dibSalomon(hpos.x-camX, hpos.y+HUD_H-8, tick, hpos.cara);
+  }
+
+  /* sombra suave bajo Fernando (toque moderno) */
+  if (J.muerto===0){
+    let sy = Math.floor((J.y+altoJ()+(J.montaAbu?40:0))/TILE);
+    const stx = Math.floor((J.x+J.w/2)/TILE);
+    while(sy<14 && !esSolido(getT(stx,sy))) sy++;
+    ctx.fillStyle='rgba(0,0,0,0.22)';
+    ctx.beginPath(); ctx.ellipse(J.x-camX+J.w/2, sy*TILE+HUD_H-2, 16, 5, 0, 0, Math.PI*2); ctx.fill();
+  }
 
   /* jugador (con Abu debajo si va montado) */
   if (J.muerto>0){
@@ -1263,9 +1433,13 @@ function draw(){
     else if (p.tipo==='cascara'){ ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill(); }
     else if (p.tipo==='puntos'){ ctx.fillStyle='#fff'; ctx.font='bold 13px monospace'; ctx.fillText(p.txt,x,y); }
     else if (p.tipo==='estrellita'){ ctx.fillStyle='#ffe36e'; ctx.font='16px monospace'; ctx.fillText('✦',x,y); }
+    else if (p.tipo==='pedo'){ ctx.globalAlpha=Math.min(1,p.t/30); ctx.fillStyle='#a8d848';
+      ctx.beginPath(); ctx.arc(x,y,6+(60-p.t)*0.3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+    else if (p.tipo==='corazon'){ ctx.fillStyle='#ff5a8a'; ctx.font='16px monospace'; ctx.fillText('♥',x,y); }
   }
 
   dibBurbujas();
+  ctx.restore();
   dibHUD();
 
   /* cartel de fin de nivel */
@@ -1303,6 +1477,8 @@ function dibMenu(){
   dibBurger(W/2+240, cy-15);
   ctx.fillStyle='#ffe36e'; ctx.font='16px monospace';
   ctx.fillText('Fernando · Penny · Sheldon · Santi · Abu · Cucú · Tío Juan · 🍔', W/2, cy+70);
+  ctx.fillStyle='#8ecbff';
+  ctx.fillText('¡Nuevos! Luca · Salomón · Tío Fran 💨 · Mamá 💋 · Papá 🦘', W/2, cy+94);
   ctx.fillStyle='#fff'; ctx.font='bold 24px monospace';
   if ((tick>>4)%2===0) ctx.fillText('PULSA ENTER (o toca) PARA JUGAR', W/2, 440);
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
@@ -1312,7 +1488,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v7', W-30, 18);
+  ctx.fillText('v8', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
