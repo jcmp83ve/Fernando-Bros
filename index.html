@@ -70,6 +70,13 @@ const CLIPS = {
   '¡Papá, mira cómo salto de alto!': AUDIO_BASE+'hf_20260723_023156_ebff0113-5296-49b5-adb9-0e65b4631f57.mp3',
   '¡Toma, pichungazo!': AUDIO_BASE+'hf_20260723_023207_6b418548-3e75-4413-b546-9e8adbeba2a7.mp3',
   '¡Pichunguito al ataque!': AUDIO_BASE+'hf_20260723_023217_8ad6f4d2-453d-4b77-8a92-6a2ec3f92d41.mp3',
+  /* Fernando Kart: mientras se graban las frases exactas, se usan
+     las grabaciones naturales existentes que más se parecen */
+  '¡Fernando Kart! ¡A correr, pichunguitos!': AUDIO_BASE+'hf_20260723_023217_8ad6f4d2-453d-4b77-8a92-6a2ec3f92d41.mp3',
+  '¡Qué pedo tan podrido, tío Fran!': AUDIO_BASE+'hf_20260723_023137_81465d0a-8d26-4126-97b1-5ba55b001c93.mp3',
+  'Eres mi pichunguito': AUDIO_BASE+'hf_20260723_023053_920db23a-576a-4d54-b97d-03c5bc8741fa.mp3',
+  '¡Gané! ¡Soy el pichunguito campeón!': AUDIO_BASE+'hf_20260723_023105_67a22a9c-82e4-4c7c-84a1-082141d8bba2.mp3',
+  '¡Qué divertido! ¡Otra vez, otra vez!': AUDIO_BASE+'hf_20260723_023207_6b418548-3e75-4413-b546-9e8adbeba2a7.mp3',
 };
 let reproductor = null, clipsListos = false, hablando = false;
 function prepararClips(){
@@ -181,8 +188,8 @@ const sfx = {
   meta(){ [523,587,659,784,880,1047,1319].forEach((f,i)=>beep(f,0.18,'square',0.07,i*0.11)); },
   muerte(){ [660,494,392,330,262].forEach((f,i)=>beep(f,0.14,'square',0.06,i*0.1)); },
   huevo(){ beep(600,0.06,'square',0.07); beep(800,0.06,'square',0.07,0.07); beep(1000,0.15,'square',0.07,0.14); },
-  pedo(){ for(let i=0;i<10;i++) beep(95-i*5+(i%2)*14, 0.09, 'sawtooth', 0.12, i*0.055); },
-  eructo(){ [82,64,92,55,72,48].forEach((f,i)=>beep(f,0.13,'sawtooth',0.14,i*0.07)); },
+  pedo(){ for(let i=0;i<14;i++) beep(92-i*4+(i%2)*16, 0.11, 'sawtooth', 0.28, i*0.06); },
+  eructo(){ [84,66,94,56,74,50,68,44].forEach((f,i)=>beep(f,0.15,'sawtooth',0.3,i*0.08)); },
   beso(){ beep(880,0.07,'sine',0.1); beep(1175,0.18,'sine',0.1,0.08); },
 };
 
@@ -1594,7 +1601,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v12', W-30, 18);
+  ctx.fillText('v13', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2107,7 +2114,7 @@ function dibMapa(){
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v12', W-34, 18);
+  ctx.fillText('v13', W-34, 18);
 }
 /* ---------------- Bucle principal ---------------- */
 function loop(){
