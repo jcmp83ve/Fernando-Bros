@@ -195,6 +195,54 @@ const sfx = {
   beso(){ beep(880,0.07,'sine',0.1); beep(1175,0.18,'sine',0.1,0.08); },
 };
 
+
+/* ---------------- Música 8-bits (compuesta con código, gratis) ---------------- */
+let musPaso = 0, musProx = 0, musTema = 'mundo';
+const TEMAS = {
+  /* notas MIDI; 0 = silencio. Corcheas. */
+  mundo: { bpm: 152,
+    mel: [72,0,76,79, 76,0,72,0, 74,0,77,81, 77,0,74,0,
+          72,0,76,79, 84,0,81,79, 77,76,74,76, 72,0,0,0,
+          69,0,72,76, 72,0,69,0, 71,0,74,77, 74,0,71,0,
+          72,0,76,79, 84,0,88,84, 81,79,77,74, 72,0,0,0],
+    bajo:[48,55,48,55, 50,57,50,57, 48,55,48,55, 43,50,43,50,
+          45,52,45,52, 47,54,47,54, 48,55,48,55, 43,47,48,0] },
+  kart: { bpm: 176,
+    mel: [69,0,69,71, 72,0,69,0, 67,0,64,67, 69,0,0,0,
+          69,0,69,71, 72,74,76,0, 74,72,71,72, 69,0,0,0,
+          76,0,74,72, 71,0,72,74, 76,0,74,72, 71,72,74,0,
+          69,72,76,81, 79,76,72,69, 71,72,74,76, 69,0,0,0],
+    bajo:[45,45,52,45, 43,43,50,43, 41,41,48,41, 43,43,50,43,
+          45,45,52,45, 48,48,55,48, 43,43,50,43, 45,52,45,0] },
+};
+const frecuencia = n => 440*Math.pow(2,(n-69)/12);
+function tonoAbs(freq, cuando, dur, tipo, vol){
+  if(!AC) return;
+  try{
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=tipo; o.frequency.value=freq;
+    g.gain.setValueAtTime(vol, cuando);
+    g.gain.exponentialRampToValueAtTime(0.001, cuando+dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(cuando); o.stop(cuando+dur+0.02);
+  }catch(e){}
+}
+function programarMusica(){
+  if (!AC || AC.state!=='running') return;
+  const temaAhora = (estado==='kart'||estado==='kartFin') ? 'kart' : 'mundo';
+  if (temaAhora !== musTema){ musTema = temaAhora; musPaso = 0; }
+  if (musProx < AC.currentTime) musProx = AC.currentTime + 0.05;
+  const t = TEMAS[musTema], dur = 60/t.bpm/2;
+  while (musProx < AC.currentTime + 0.35){
+    const m = t.mel[musPaso % t.mel.length];
+    if (m) tonoAbs(frecuencia(m), musProx, dur*0.85, 'square', 0.028);
+    if (musPaso % 2 === 0){
+      const b = t.bajo[(musPaso>>1) % t.bajo.length];
+      if (b) tonoAbs(frecuencia(b), musProx, dur*1.7, 'triangle', 0.05);
+    }
+    musPaso++; musProx += dur;
+  }
+}
 /* ---------------- Entrada ---------------- */
 /* Bloquear el zoom de Safari en iPhone: el doble toque rápido (al saltar
    una y otra vez) y el pellizco agrandan la página y esconden los
@@ -1301,6 +1349,16 @@ function aclarar(hex, f){
   return 'rgb('+m(r)+','+m(g)+','+m(b)+')';
 }
 function dibFondo(){
+  const im = fondosImg.mundos[nivelIdx];
+  if (imgLista(im)){
+    /* fondo ilustrado con paneo suave según el avance del nivel */
+    const alto = H - HUD_H + 80;
+    const ancho = Math.max(VW*1.25, alto * im.naturalWidth / im.naturalHeight);
+    const prog = Math.max(0, Math.min(1, camX / Math.max(1, LEVW*TILE - VW)));
+    const off = prog * (ancho - VW);
+    ctx.drawImage(im, -off, HUD_H - 70, ancho, alto + 70);
+    return;
+  }
   const d = infoNivel ? infoNivel.decor : 'colinas';
   const cielo = infoNivel ? infoNivel.cielo : '#5c94fc';
   const g = ctx.createLinearGradient(0,HUD_H-60,0,H);
@@ -1569,9 +1627,19 @@ function draw(){
 }
 
 function dibMenu(){
-  const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#0a1a4a'); g.addColorStop(1,'#5c94fc');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  if (imgLista(fondosImg.titulo)){
+    const im = fondosImg.titulo;
+    const ancho = Math.max(W, H * im.naturalWidth / im.naturalHeight);
+    ctx.drawImage(im, (W-ancho)/2, 0, ancho, Math.max(H, ancho*im.naturalHeight/im.naturalWidth));
+    const velo = ctx.createLinearGradient(0,0,0,H);
+    velo.addColorStop(0,'rgba(5,10,40,0.72)'); velo.addColorStop(0.45,'rgba(5,10,40,0.30)');
+    velo.addColorStop(1,'rgba(5,10,40,0.72)');
+    ctx.fillStyle=velo; ctx.fillRect(0,0,W,H);
+  } else {
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#0a1a4a'); g.addColorStop(1,'#5c94fc');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  }
   ctx.textAlign='center';
   ctx.fillStyle='#000'; ctx.font='bold 74px monospace';
   ctx.fillText('FERNANDO BROS', W/2+5, 145);
@@ -1603,7 +1671,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v14', W-30, 18);
+  ctx.fillText('v15', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2071,6 +2139,32 @@ function drawKartFin(){
 }
 
 
+
+/* ---------------- Fondos ilustrados (generados con IA) ---------------- */
+const FONDOS_BASE = 'https://d8j0ntlcm91z4.cloudfront.net/user_3Fiy4A0M4MKixWlklbu10QS1hAQ/';
+const FONDOS_URL = {
+  titulo: FONDOS_BASE+'hf_20260724_034350_dfc5e0df-6263-425f-bbef-c757efe9fd4d_min.webp',
+  mundos: [
+    FONDOS_BASE+'hf_20260724_034357_90063032-1a27-4617-a9d7-a00cce8b26f3_min.webp',  // pradera
+    FONDOS_BASE+'hf_20260724_034406_96dab8d1-5189-4418-97d0-5ce49d786db0_min.webp',  // cielos
+    FONDOS_BASE+'hf_20260724_034417_5a55386e-fe4f-4d65-a0c8-034a8794c0d1_min.webp',  // bosque
+    FONDOS_BASE+'hf_20260724_034425_f8a98386-6cc2-47ce-aac5-2615448c238f_min.webp',  // playa
+    FONDOS_BASE+'hf_20260724_034433_6836b2d4-8906-4447-ad4d-2f63b03df7bc_min.webp',  // cueva
+    FONDOS_BASE+'hf_20260724_034442_712485df-ae38-42bd-8fcd-d354693887d4_min.webp',  // nubes
+    FONDOS_BASE+'hf_20260724_034455_5764cc0e-3a0e-454f-80ab-922a3b60cffd_min.webp',  // desierto
+    FONDOS_BASE+'hf_20260724_034503_1cdbab22-3f21-4ba6-af9f-f67e858b7876_min.webp',  // castillo
+  ],
+};
+const fondosImg = { titulo:null, mundos:[null,null,null,null,null,null,null,null] };
+function cargarFondos(){
+  if (typeof Image === 'undefined') return;
+  try{
+    if (FONDOS_URL.titulo){ const im=new Image(); im.src=FONDOS_URL.titulo; fondosImg.titulo=im; }
+    FONDOS_URL.mundos.forEach((u,i)=>{ if(u){ const im=new Image(); im.src=u; fondosImg.mundos[i]=im; } });
+  }catch(e){}
+}
+cargarFondos();
+const imgLista = im => im && im.complete && im.naturalWidth > 0;
 /* ---------------- Selector de mundos ---------------- */
 let selMapa = 0;
 const NOMBRES_MAPA = ['PRADERA','CIELOS','BOSQUE','PLAYA','CUEVA','NUBES','DESIERTO','CASTILLO'];
@@ -2116,11 +2210,12 @@ function dibMapa(){
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v14', W-34, 18);
+  ctx.fillText('v15', W-34, 18);
 }
 /* ---------------- Bucle principal ---------------- */
 function loop(){
   update();
+  programarMusica();
   draw();
   requestAnimationFrame(loop);
 }
