@@ -46,9 +46,13 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
 - Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
+## 🗺️ Selector de mundos
+
+Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 8 mundos directamente, o saltar de una vez a **Fernando Kart** sin esperar al final.
+
 ## 🏁 Fernando Kart
 
-Al ganar el mundo 8 (o pulsando **K** / el botón **B** en el menú) empieza **Fernando Kart**: una carrera de 3 vueltas contra los 10 personajes, con turbo (ESPACIO/A), minimapa y podio final.
+Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pista se ve en perspectiva (técnica «Mode 7» de la SNES), con bordes rojiblancos, los rivales aparecen como personajes grandes y reconocibles en la carretera, turbo (ESPACIO/A), minimapa y podio final. Empieza al ganar el mundo 8 o desde el selector de mundos.
 
 - 💨 **Tío Fran** se echa un pedo cada vez que pasas cerca: *«¡Qué pedo tan podrido, tío Fran!»*
 - 💙 **Tío Juan** te dice *«Eres mi pichunguito»* al rebasarlo
