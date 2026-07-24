@@ -119,6 +119,13 @@ function reproducirCola(){
     if (p && p.catch) p.catch(()=>{ clipActual = null; hablarTTS(sig.texto); reproducirCola(); });
   }catch(e){ clipActual = null; hablarTTS(sig.texto); }
 }
+/* Cada personaje nuevo tiene su propia voz (tono y velocidad) */
+const VOCES_TTS = {
+  'Eres mi pichunguito': {pitch:0.6, rate:0.95},                       // Tío Juan
+  '¡Épale! ¡Aquí viene tío Nacho!': {pitch:0.85, rate:1.15},           // Tío Nacho
+  '¡Hola mi amor! ¡Soy tía Yanny!': {pitch:1.45, rate:1.0},            // Tía Yanny
+  '¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!': {pitch:0.35, rate:0.8}, // Rómulo el Penoso
+};
 function hablarTTS(texto){
   /* respaldo: voz sintética del navegador, con tono de niño.
      iOS exige que la PRIMERA frase suene dentro del toque del usuario:
@@ -129,7 +136,10 @@ function hablarTTS(texto){
     u.lang = 'es-ES';
     const v = vozEspanola();
     if (v){ u.voice = v; u.lang = v.lang; }
-    u.pitch = 1.9; u.rate = 1.05; u.volume = 1;
+    const perfil = VOCES_TTS[texto];
+    u.pitch = perfil ? perfil.pitch : 1.9;
+    u.rate = perfil ? perfil.rate : 1.05;
+    u.volume = 1;
     if (speechSynthesis.speaking || speechSynthesis.pending){
       speechSynthesis.cancel();
       setTimeout(()=>{ try{ speechSynthesis.resume(); speechSynthesis.speak(u); }catch(e){} }, 120);
@@ -165,6 +175,7 @@ const sfx = {
   muerte(){ [660,494,392,330,262].forEach((f,i)=>beep(f,0.14,'square',0.06,i*0.1)); },
   huevo(){ beep(600,0.06,'square',0.07); beep(800,0.06,'square',0.07,0.07); beep(1000,0.15,'square',0.07,0.14); },
   pedo(){ for(let i=0;i<10;i++) beep(95-i*5+(i%2)*14, 0.09, 'sawtooth', 0.12, i*0.055); },
+  eructo(){ [82,64,92,55,72,48].forEach((f,i)=>beep(f,0.13,'sawtooth',0.14,i*0.07)); },
   beso(){ beep(880,0.07,'sine',0.1); beep(1175,0.18,'sine',0.1,0.08); },
 };
 
@@ -183,20 +194,24 @@ addEventListener('keydown', e=>{
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
   keys[e.key.toLowerCase()] = true; keys[e.key] = true;
   audio();
-  if (estado==='menu' && (e.key==='Enter'||e.key===' ')) empezarJuego();
-  if (estado==='fin' && (e.key==='Enter')) { estado='menu'; }
+  if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
+  else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) empezarJuego();
+  else if (estado==='kartFin' && (e.key==='Enter'||e.key===' ')) estado='fin';
+  else if (estado==='fin' && (e.key==='Enter')) estado='menu';
 });
 addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; keys[e.key] = false; });
 function tocar(id, k){
   const el = document.getElementById(id);
-  const on = ev=>{ ev.preventDefault(); keys[k]=true; audio(); if(estado==='menu') empezarJuego(); };
+  const on = ev=>{ ev.preventDefault(); keys[k]=true; audio();
+    if(estado==='menu'){ if(k==='shift') iniciarKart(); else empezarJuego(); }
+    else if(estado==='kartFin'){ estado='fin'; } };
   const off= ev=>{ ev.preventDefault(); keys[k]=false; };
   el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off);
   el.addEventListener('pointerleave', off); el.addEventListener('pointercancel', off);
 }
 tocar('bL','arrowleft'); tocar('bR','arrowright'); tocar('bDown','arrowdown');
 tocar('bA',' '); tocar('bB','shift');
-cv.addEventListener('pointerdown', ()=>{ audio(); if(estado==='menu') empezarJuego(); if(estado==='fin') estado='menu'; });
+cv.addEventListener('pointerdown', ()=>{ audio(); if(estado==='menu') empezarJuego(); else if(estado==='kartFin') estado='fin'; else if(estado==='fin') estado='menu'; });
 const izq   = ()=> keys['arrowleft']||keys['a'];
 const der   = ()=> keys['arrowright']||keys['d'];
 const abajo = ()=> keys['arrowdown']||keys['s'];
@@ -549,6 +564,7 @@ function respawn(){
 /* ---------------- Actualización ---------------- */
 function update(){
   tick++;
+  if (estado==='kart'){ updateKart(); return; }
   if (estado!=='juego' && estado!=='meta') return;
 
   /* tiempo */
@@ -792,7 +808,7 @@ function update(){
         burbuja('¡Pichunguito al ataque!');
         hablar('¡Pichunguito al ataque!');
       }
-      else { estado='fin'; sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!'); }
+      else { sfx.meta(); hablar('¡Ganaste! ¡Te amo tío Juan!'); iniciarKart(); }
     }
   }
 
@@ -1323,6 +1339,8 @@ function draw(){
   ctx.clearRect(0,0,W,H);
   if (estado==='menu'){ dibMenu(); return; }
   if (estado==='fin'){ dibFin(); return; }
+  if (estado==='kart'){ drawKart(); return; }
+  if (estado==='kartFin'){ drawKartFin(); return; }
   /* el mundo se dibuja con zoom (más grande); el HUD va aparte sin zoom */
   ctx.save(); ctx.translate(0, H*(1-ZOOM)); ctx.scale(ZOOM, ZOOM);
   dibFondo();
@@ -1491,11 +1509,13 @@ function dibMenu(){
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
   ctx.fillText('← → mover · MAYÚS/X correr y fuego · ESPACIO/Z saltar · ↓ bajarse de Abu', W/2, 480);
   ctx.fillText('VIDAS INFINITAS ∞ — ¡aquí nunca se pierde!', W/2, 508);
+  ctx.fillStyle='#7dffa0';
+  ctx.fillText('🏁 Al ganar el mundo 8: ¡FERNANDO KART! (o pulsa K / botón B para ir directo)', W/2, 486);
   ctx.fillStyle='#ffe36e';
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v9', W-30, 18);
+  ctx.fillText('v10', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -1540,6 +1560,246 @@ function dibFin(){
   ctx.fillStyle='#fff'; ctx.font='bold 22px monospace';
   ctx.fillText('PUNTOS: '+puntos+'   MONEDAS: '+monedas, W/2, 440);
   if ((tick>>4)%2===0) ctx.fillText('PULSA ENTER PARA VOLVER AL MENÚ', W/2, 490);
+  ctx.textAlign='left';
+}
+
+
+/* ============================================================
+   FERNANDO KART — ¡carrera con todos los personajes!
+   ============================================================ */
+const PISTA = [[300,300],[700,210],[1120,250],[1430,420],[1520,720],[1330,960],[930,1040],[520,990],[240,800],[180,520]];
+const NWP = PISTA.length, ANCHO_PISTA = 110, VUELTAS = 3;
+const MUNDO_KX = 1750, MUNDO_KY = 1250;
+let corredores = [], KJ = null, kartT = 0, resultadoKart = [];
+const KART_CHARS = [
+  ['fernando','Fernando','#d82800'], ['penny','Penny','#222222'], ['sheldon','Sheldon','#8a5a2a'],
+  ['cucu','Cucú','#ff6ec0'], ['luca','Luca','#2a9c3a'], ['salomon','Salomón','#d86a28'],
+  ['tiojuan','Tío Juan','#1560d0'], ['nacho','Tío Nacho','#e8a33d'], ['yanny','Tía Yanny','#b05ad0'],
+  ['tiofran','Tío Fran','#8a6a3a'], ['romulo','Rómulo','#7a7a8a'],
+];
+function iniciarKart(){
+  estado='kart'; kartT=0; resultadoKart=[]; burbujas=[]; parts=[];
+  const a0 = Math.atan2(PISTA[1][1]-PISTA[0][1], PISTA[1][0]-PISTA[0][0]);
+  corredores = KART_CHARS.map(([tipo,nombre,color],i)=>({
+    tipo, nombre, color,
+    x: PISTA[0][0] - Math.cos(a0)*(30+Math.floor(i/3)*44) + Math.cos(a0+Math.PI/2)*((i%3)-1)*46,
+    y: PISTA[0][1] - Math.sin(a0)*(30+Math.floor(i/3)*44) + Math.sin(a0+Math.PI/2)*((i%3)-1)*46,
+    ang:a0, vel:0, wpi:1, vuelta:0, cd:0, turbo:0, turboCd:0, turboPrev:false,
+    esJugador: tipo==='fernando',
+    velBase: 3.9 + (i%5)*0.14 + (tipo==='romulo'?-0.4:0) + (tipo==='tiojuan'?0.25:0),
+  }));
+  KJ = corredores[0];
+  burbuja('¡Fernando Kart! ¡A correr, pichunguitos!');
+  hablar('¡Fernando Kart! ¡A correr, pichunguitos!');
+}
+function distPista(x,y){
+  let m = 1e9;
+  for(let i=0;i<NWP;i++){
+    const [ax,ay]=PISTA[i], [bx,by]=PISTA[(i+1)%NWP];
+    const dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy;
+    let t=((x-ax)*dx+(y-ay)*dy)/L2; t=Math.max(0,Math.min(1,t));
+    const ex=ax+dx*t-x, ey=ay+dy*t-y;
+    m = Math.min(m, ex*ex+ey*ey);
+  }
+  return Math.sqrt(m);
+}
+function updateKart(){
+  kartT++;
+  for(const c of corredores){
+    const enP = distPista(c.x,c.y) <= ANCHO_PISTA;
+    if (c.esJugador){
+      const girar = (izq()?-1:0)+(der()?1:0);
+      c.ang += girar*0.052*(0.35+Math.min(c.vel/6,1));
+      c.turboCd--;
+      if (kSalto() && !c.turboPrev && c.turboCd<=0){ c.turbo=55; c.turboCd=260; sfx.fuego(); }
+      c.turboPrev = kSalto();
+      if (c.turbo>0) c.turbo--;
+      const vmax = (enP?6.3:2.3) + (c.turbo>0?2.6:0);
+      c.vel += (c.vel<vmax ? 0.09 : -0.18);
+    } else {
+      const t2 = PISTA[c.wpi%NWP];
+      let d = Math.atan2(t2[1]-c.y, t2[0]-c.x) - c.ang;
+      while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+      c.ang += Math.max(-0.06, Math.min(0.06, d));
+      const vmax = (enP ? c.velBase + Math.sin((kartT+c.x)/80)*0.3 : 2.2);
+      c.vel += (c.vel<vmax ? 0.08 : -0.12);
+    }
+    c.x += Math.cos(c.ang)*c.vel;
+    c.y += Math.sin(c.ang)*c.vel;
+    c.x = Math.max(20, Math.min(MUNDO_KX-20, c.x));
+    c.y = Math.max(20, Math.min(MUNDO_KY-20, c.y));
+    const wp = PISTA[c.wpi%NWP];
+    if ((c.x-wp[0])**2 + (c.y-wp[1])**2 < (ANCHO_PISTA*1.5)**2) c.wpi++;
+    c.vuelta = Math.floor((c.wpi-1)/NWP);
+    c.cd--;
+  }
+  /* choques suaves entre karts */
+  for(let i=0;i<corredores.length;i++) for(let j=i+1;j<corredores.length;j++){
+    const a=corredores[i], b=corredores[j];
+    const dx=b.x-a.x, dy=b.y-a.y, d2=dx*dx+dy*dy;
+    if (d2>0.01 && d2<34*34){ const d=Math.sqrt(d2), p=(34-d)/2;
+      a.x-=dx/d*p; a.y-=dy/d*p; b.x+=dx/d*p; b.y+=dy/d*p; }
+  }
+  /* eventos al pasar cerca de cada personaje */
+  for(const c of corredores){
+    if (c.esJugador) continue;
+    if (c.tipo==='romulo' && kartT%420===200){
+      sfx.eructo();
+      for(let i=0;i<5;i++) parts.push({tipo:'pedo', x:c.x+(Math.random()-0.5)*20, y:c.y-14, vx:0, vy:-1-Math.random(), t:45});
+    }
+    const d2=(c.x-KJ.x)**2+(c.y-KJ.y)**2;
+    if (d2 < 95*95 && c.cd<=0){
+      if (c.tipo==='tiofran'){
+        c.cd=600; sfx.pedo(); puntos+=100;
+        for(let i=0;i<10;i++) parts.push({tipo:'pedo', x:c.x+(Math.random()-0.5)*26, y:c.y, vx:(Math.random()-0.5)*2, vy:-1-Math.random()*2, t:60});
+        burbuja('¡Qué pedo tan podrido, tío Fran!');
+        hablar('¡Qué pedo tan podrido, tío Fran!');
+      } else if (c.tipo==='tiojuan'){
+        c.cd=700;
+        burbuja('Eres mi pichunguito','TJ');
+        hablar('Eres mi pichunguito');
+      } else if (c.tipo==='nacho'){
+        c.cd=800;
+        burbuja('¡Épale! ¡Aquí viene tío Nacho!');
+        hablar('¡Épale! ¡Aquí viene tío Nacho!');
+      } else if (c.tipo==='yanny'){
+        c.cd=800;
+        burbuja('¡Hola mi amor! ¡Soy tía Yanny!');
+        hablar('¡Hola mi amor! ¡Soy tía Yanny!');
+      } else if (c.tipo==='romulo'){
+        c.cd=700; sfx.eructo();
+        burbuja('¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!');
+        hablar('¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!');
+      }
+    }
+  }
+  actualizarExtras();
+  if (KJ.vuelta >= VUELTAS){
+    resultadoKart = [...corredores].sort((a,b)=>b.wpi-a.wpi);
+    estado='kartFin'; sfx.meta();
+    const pos = resultadoKart.indexOf(KJ)+1;
+    hablar(pos===1 ? '¡Gané! ¡Soy el pichunguito campeón!' : '¡Qué divertido! ¡Otra vez, otra vez!');
+  }
+}
+function dibKart(c, kx, ky){
+  ctx.save(); ctx.translate(c.x-kx, c.y-ky); ctx.rotate(c.ang);
+  rect(-14,-13,8,6,'#111'); rect(-14,7,8,6,'#111');   // ruedas traseras
+  rect(8,-13,7,5,'#111'); rect(8,8,7,5,'#111');       // ruedas delanteras
+  ctx.fillStyle=c.color;
+  ctx.beginPath(); ctx.roundRect(-16,-10,34,20,6); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=2; ctx.stroke();
+  rect(6,-4,9,8,'#333');                               // volante/frente
+  ctx.restore();
+  /* cabeza del personaje (sin rotar, para reconocerla) */
+  const hx=c.x-kx, hy=c.y-ky;
+  ctx.beginPath();
+  if (c.tipo==='penny'||c.tipo==='sheldon'){
+    ctx.fillStyle = c.tipo==='penny' ? '#222' : '#8a5a2a';
+    ctx.arc(hx,hy,8,0,Math.PI*2); ctx.fill();
+    ctx.fillRect(hx-8,hy-9,4,5); ctx.fillRect(hx+4,hy-9,4,5);   // orejas
+  } else if (c.tipo==='romulo'){
+    ctx.fillStyle='#9a9aae'; ctx.arc(hx,hy,9,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#2a2a34'; ctx.fillRect(hx-8,hy-3,16,5);      // antifaz de mapache
+    ctx.fillStyle='#ffdd57'; ctx.fillRect(hx+8,hy-2,6,9);       // jarra de cerveza
+    ctx.fillStyle='#fff'; ctx.fillRect(hx+8,hy-4,6,3);          // espuma
+  } else {
+    ctx.fillStyle='#ffc8a0'; ctx.arc(hx,hy,8,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=c.color; ctx.fillRect(hx-8,hy-10,16,6);       // casco del color del kart
+  }
+  /* nombre */
+  ctx.font='bold 11px monospace'; ctx.textAlign='center';
+  ctx.fillStyle='#000'; ctx.fillText(c.nombre, hx+1, hy-15);
+  ctx.fillStyle='#fff'; ctx.fillText(c.nombre, hx, hy-16);
+  ctx.textAlign='left';
+}
+function drawKart(){
+  const kx = Math.max(0, Math.min(KJ.x-W/2, MUNDO_KX-W));
+  const ky = Math.max(0, Math.min(KJ.y-H/2, MUNDO_KY-H));
+  /* césped */
+  ctx.fillStyle='#3aa32a'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#339122';
+  for(let i=0;i<40;i++){
+    const gx=((i*173)%MUNDO_KX)-kx, gy=((i*271)%MUNDO_KY)-ky;
+    if (gx>-20&&gx<W&&gy>-20&&gy<H) ctx.fillRect(gx,gy,14,6);
+  }
+  /* carretera */
+  ctx.save(); ctx.translate(-kx,-ky);
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.strokeStyle='#4a4a52'; ctx.lineWidth=ANCHO_PISTA*2;
+  ctx.beginPath(); ctx.moveTo(PISTA[0][0],PISTA[0][1]);
+  for(let i=1;i<=NWP;i++) ctx.lineTo(PISTA[i%NWP][0],PISTA[i%NWP][1]);
+  ctx.closePath(); ctx.stroke();
+  ctx.strokeStyle='#e8e8e8'; ctx.lineWidth=4; ctx.setLineDash([26,30]);
+  ctx.beginPath(); ctx.moveTo(PISTA[0][0],PISTA[0][1]);
+  for(let i=1;i<=NWP;i++) ctx.lineTo(PISTA[i%NWP][0],PISTA[i%NWP][1]);
+  ctx.closePath(); ctx.stroke(); ctx.setLineDash([]);
+  /* línea de meta (cuadros) */
+  const a0 = Math.atan2(PISTA[1][1]-PISTA[0][1], PISTA[1][0]-PISTA[0][0]);
+  ctx.save(); ctx.translate(PISTA[0][0],PISTA[0][1]); ctx.rotate(a0+Math.PI/2);
+  for(let i=0;i<10;i++) for(let j2=0;j2<2;j2++)
+    { ctx.fillStyle=(i+j2)%2?'#fff':'#111'; ctx.fillRect(-ANCHO_PISTA+i*(ANCHO_PISTA/5), j2*10-10, ANCHO_PISTA/5, 10); }
+  ctx.restore();
+  ctx.restore();
+  /* karts (ordenados para que se tapen bien) */
+  for(const c of [...corredores].sort((a,b)=>a.y-b.y)) dibKart(c,kx,ky);
+  /* partículas (nubes de pedo, etc.) */
+  for(const p of parts){
+    const x=p.x-kx, y=p.y-ky;
+    if (p.tipo==='pedo'){ ctx.globalAlpha=Math.min(1,p.t/30); ctx.fillStyle='#a8d848';
+      ctx.beginPath(); ctx.arc(x,y,6+(60-p.t)*0.3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
+  }
+  /* burbuja de diálogo sobre el kart de Fernando (solo la más reciente) */
+  ctx.font='bold 15px monospace';
+  for(const b of burbujas.slice(-1)){
+    const bx=KJ.x-kx, by=KJ.y-ky-30;
+    const wtx=ctx.measureText(b.txt).width;
+    ctx.globalAlpha=Math.min(1,b.t/25);
+    ctx.fillStyle='#fff';
+    const rx=Math.min(Math.max(bx-wtx/2-8,4),W-wtx-20);
+    ctx.fillRect(rx,by-24,wtx+16,26);
+    ctx.fillStyle='#111'; ctx.fillText(b.txt,rx+8,by-6);
+    ctx.globalAlpha=1;
+  }
+  /* HUD del kart */
+  rect(0,0,W,44,'#000');
+  ctx.fillStyle='#f8b800'; ctx.font='bold 18px monospace';
+  ctx.fillText('FERNANDO KART', 16, 29);
+  ctx.fillStyle='#fff';
+  const posicion = [...corredores].sort((a,b)=>b.wpi-a.wpi).indexOf(KJ)+1;
+  ctx.fillText('VUELTA '+Math.min(KJ.vuelta+1,VUELTAS)+'/'+VUELTAS+'   POSICIÓN '+posicion+'/'+corredores.length, 220, 29);
+  ctx.font='13px monospace'; ctx.fillStyle='#8ecbff';
+  ctx.fillText(KJ.turboCd<=0?'ESPACIO/A = TURBO ✦':'turbo en '+Math.ceil(KJ.turboCd/60)+'s', 640, 29);
+  /* minimapa */
+  const mS=0.075, mX=W-160, mY=54;
+  ctx.globalAlpha=0.85; rect(mX-6,mY-6,MUNDO_KX*mS+12,MUNDO_KY*mS+12,'#0a2a0a'); ctx.globalAlpha=1;
+  ctx.strokeStyle='#666'; ctx.lineWidth=ANCHO_PISTA*2*mS;
+  ctx.beginPath(); ctx.moveTo(mX+PISTA[0][0]*mS,mY+PISTA[0][1]*mS);
+  for(let i=1;i<=NWP;i++) ctx.lineTo(mX+PISTA[i%NWP][0]*mS,mY+PISTA[i%NWP][1]*mS);
+  ctx.closePath(); ctx.stroke();
+  for(const c of corredores){
+    ctx.fillStyle = c.esJugador ? '#fff' : c.color;
+    ctx.beginPath(); ctx.arc(mX+c.x*mS, mY+c.y*mS, c.esJugador?4:3, 0, Math.PI*2); ctx.fill();
+  }
+}
+function drawKartFin(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1a4a'); g.addColorStop(1,'#3aa32a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#f8b800'; ctx.font='bold 44px monospace';
+  ctx.fillText('🏁 FERNANDO KART 🏁', W/2, 80);
+  const pos = resultadoKart.indexOf(KJ)+1;
+  ctx.fillStyle='#fff'; ctx.font='bold 26px monospace';
+  ctx.fillText(pos===1 ? '¡GANASTE LA COPA PICHUNGUITO! 🏆' : 'Llegaste de '+pos+'º — ¡bien pichunguito!', W/2, 122);
+  ctx.font='bold 18px monospace';
+  resultadoKart.forEach((c,i)=>{
+    const y = 165 + i*32;
+    ctx.fillStyle = c.esJugador ? '#ffe36e' : '#dfe8ff';
+    const medalla = ['🥇','🥈','🥉'][i] || (i+1)+'º';
+    ctx.fillText(medalla+'  '+c.nombre + (c.esJugador?'  ← ¡tú!':''), W/2, y);
+  });
+  ctx.fillStyle='#fff'; ctx.font='bold 20px monospace';
+  if ((tick>>4)%2===0) ctx.fillText('ENTER o toca para continuar', W/2, H-24);
   ctx.textAlign='left';
 }
 

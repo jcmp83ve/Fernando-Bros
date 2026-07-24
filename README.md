@@ -46,6 +46,15 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
 - Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
+## 🏁 Fernando Kart
+
+Al ganar el mundo 8 (o pulsando **K** / el botón **B** en el menú) empieza **Fernando Kart**: una carrera de 3 vueltas contra los 10 personajes, con turbo (ESPACIO/A), minimapa y podio final.
+
+- 💨 **Tío Fran** se echa un pedo cada vez que pasas cerca: *«¡Qué pedo tan podrido, tío Fran!»*
+- 💙 **Tío Juan** te dice *«Eres mi pichunguito»* al rebasarlo
+- 🆕 Corren también **Tío Nacho** (*«¡Épale! ¡Aquí viene tío Nacho!»*), **Tía Yanny** (*«¡Hola mi amor! ¡Soy tía Yanny!»*) y **Rómulo el Penoso**, el mapache que eructa mientras toma cerveza (*«¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!»*)
+- Cada personaje nuevo habla **con su propia voz**
+
 ## 🗣️ Voces
 
 Todos los diálogos son **grabaciones con voz de niño en español** (archivos mp3), que suenan en cualquier dispositivo — incluido iPhone. Si un audio no carga, el juego usa como respaldo la voz sintética del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
