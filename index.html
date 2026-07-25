@@ -79,6 +79,11 @@ const CLIPS = {
   '¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260724_033603_ebf5391c-9790-47e1-8617-03c3b7f376bf.mp3',
   '¡Gané! ¡Soy el pichunguito campeón!': AUDIO_BASE+'hf_20260724_033611_24c906e1-4f49-4d9f-8dad-bef017754598.mp3',
   '¡Qué divertido! ¡Otra vez, otra vez!': AUDIO_BASE+'hf_20260724_033620_de835742-0dc8-4820-a07a-dc5fa37afe22.mp3',
+  '¡Guau, guau! ¡Soy el perrito pichunguito!': AUDIO_BASE+'hf_20260725_162312_d4dbf515-e01b-47da-ad9c-64e1bd77ab03.mp3',
+  '¡A volar, pichunguitos!': AUDIO_BASE+'hf_20260725_162319_5f211291-4377-4290-8dba-6a44907caef6.mp3',
+  '¡Todos a bordo del barco pichunguito!': AUDIO_BASE+'hf_20260725_162327_f5fa2e64-407b-4948-a00b-b83b013b79fb.mp3',
+  '¡Hola pichunguito! ¡Soy tío Beto!': AUDIO_BASE+'hf_20260725_163030_8cc540e9-df84-42a8-a3f2-43da34c8f736.mp3',
+  '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!': AUDIO_BASE+'hf_20260725_163038_87ec8542-ec18-4e86-ac5c-17480516cb71.mp3',
 };
 let reproductor = null, clipsListos = false, hablando = false;
 function prepararClips(){
@@ -141,6 +146,8 @@ const VOCES_TTS = {
   '¡Épale! ¡Aquí viene tío Nacho!': {pitch:0.85, rate:1.15},           // Tío Nacho
   '¡Hola mi amor! ¡Soy tía Yanny!': {pitch:1.45, rate:1.0},            // Tía Yanny
   '¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!': {pitch:0.35, rate:0.8}, // Rómulo el Penoso
+  '¡Hola pichunguito! ¡Soy tío Beto!': {pitch:0.75, rate:1.0},          // Tío Beto
+  '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!': {pitch:1.3, rate:1.05}, // Tía Giuliana
 };
 function hablarTTS(texto){
   /* respaldo: voz sintética del navegador, con tono de niño.
@@ -263,13 +270,14 @@ addEventListener('keydown', e=>{
   if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
   else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) estado='mapa';
   else if (estado==='mapa'){
-    if (e.key==='ArrowLeft') selMapa=(selMapa+8)%9;
-    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%9;
-    else if (e.key==='ArrowUp') selMapa=selMapa===8?4:(selMapa+4)%8;
-    else if (e.key==='ArrowDown') selMapa=selMapa<4?selMapa+4:8;
-    else if (e.key>='1'&&e.key<='8') { empezarJuego(+e.key-1); }
+    if (e.key==='ArrowLeft') selMapa=(selMapa+10)%11;
+    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%11;
+    else if (e.key==='ArrowUp') selMapa = selMapa===10 ? 7 : Math.max(selMapa-5, 0);
+    else if (e.key==='ArrowDown') selMapa = selMapa>=5 && selMapa<10 ? 10 : Math.min(selMapa+5, 10);
+    else if (e.key>='1'&&e.key<='9') { empezarJuego(+e.key-1); }
+    else if (e.key==='0') { empezarJuego(9); }
     else if (e.key==='k'||e.key==='K') iniciarKart();
-    else if (e.key==='Enter'||e.key===' '){ if(selMapa===8) iniciarKart(); else empezarJuego(selMapa); }
+    else if (e.key==='Enter'||e.key===' '){ if(selMapa===10) iniciarKart(); else empezarJuego(selMapa); }
     else if (e.key==='Escape') estado='menu';
   }
   else if (estado==='kartFin' && (e.key==='Enter'||e.key===' ')) estado='fin';
@@ -281,11 +289,11 @@ function tocar(id, k){
   const on = ev=>{ ev.preventDefault(); keys[k]=true; audio();
     if(estado==='menu'){ if(k==='shift') iniciarKart(); else estado='mapa'; }
     else if(estado==='mapa'){
-      if(k==='arrowleft') selMapa=(selMapa+8)%9;
-      else if(k==='arrowright') selMapa=(selMapa+1)%9;
-      else if(k==='arrowdown') selMapa=selMapa<4?selMapa+4:8;
+      if(k==='arrowleft') selMapa=(selMapa+10)%11;
+      else if(k==='arrowright') selMapa=(selMapa+1)%11;
+      else if(k==='arrowdown') selMapa = selMapa>=5 && selMapa<10 ? 10 : Math.min(selMapa+5, 10);
       else if(k==='shift') iniciarKart();
-      else if(k===' '){ if(selMapa===8) iniciarKart(); else empezarJuego(selMapa); }
+      else if(k===' '){ if(selMapa===10) iniciarKart(); else empezarJuego(selMapa); }
     }
     else if(estado==='kartFin'){ estado='fin'; } };
   const off= ev=>{ ev.preventDefault(); keys[k]=false; };
@@ -303,7 +311,7 @@ cv.addEventListener('pointerdown', (e)=>{
     for(const c of cajasMapa()){
       if (mx>=c.x && mx<=c.x+c.w && my>=c.y && my<=c.y+c.h){
         selMapa=c.idx;
-        if (c.idx===8) iniciarKart(); else empezarJuego(c.idx);
+        if (c.idx===10) iniciarKart(); else empezarJuego(c.idx);
         break;
       }
     }
@@ -331,10 +339,23 @@ function fila(x0,x1,y,c){ for(let x=x0;x<=x1;x++) setT(x,y,c); }
 function colina(x,w,h){ for(let i=0;i<h;i++) fila(x+i, x+w-1-i, 12-i, 'W'); }
 function tubo(x,h){ for(let i=0;i<h;i++){ setT(x,12-i,'l'); setT(x+1,12-i,'l'); } }
 function arco(x0,y,n){ for(let i=0;i<n;i++) setT(x0+i, y - Math.round(Math.sin(i/(n-1)*Math.PI)*2), 'C'); }
-const SOLIDOS = '#BW?MSXl=';
+const SOLIDOS = '#BW?MSXl=O';
 const esSolido = c => SOLIDOS.includes(c);
 
 function ent(tipo,x,y){ entidadesNivel.push({tipo, x:x*TILE, y:y*TILE}); }
+
+/* alarga un mundo con un patrón seguro: huecos ≤3, bloques a fila 10, tubos ≤3 */
+function tramoExtra(x0, x1){
+  let k = 0;
+  for(let x = x0; x + 24 <= x1; x += 24, k++){
+    hueco(x+3, x+5);
+    fila(x+9, x+12, 10, 'B'); setT(x+10,10,'?'); setT(x+12,10, k%2 ? 'M' : '?');
+    arco(x+15, 9, 4);
+    tubo(x+20, 2);
+    ent('goomba', x+8, 12);
+    if (k%2) ent('koopa', x+18, 12);
+  }
+}
 
 /* Colores de terreno por tema */
 const TIERRAS = {
@@ -353,7 +374,8 @@ const TIERRAS = {
 
 /* ---- Mundo 1: Pradera del Pichunguito ---- */
 function nivel1(){
-  nuevoMapa(180); entidadesNivel=[];
+  nuevoMapa(270); entidadesNivel=[];
+  tramoExtra(176, 254);
   hueco(30,32); hueco(70,72); hueco(121,123);
   colina(10,5,2); colina(85,6,2); colina(140,5,2);
   fila(18,21,10,'B'); setT(19,10,'?'); setT(21,10,'M'); setT(25,10,'?');
@@ -366,12 +388,13 @@ function nivel1(){
   tubo(52,2); tubo(78,3); tubo(146,2);
   [26,48,108,116,150,162].forEach(x=>ent('goomba',x,12));
   [96,136].forEach(x=>ent('koopa',x,12));
-  ent('santi',8,11.4); ent('huevo',57,12); setT(66,10,'S'); ent('abu',105,12); ent('meta',172,9);
+  ent('santi',8,11.4); ent('huevo',57,12); setT(66,10,'S'); ent('abu',105,12); ent('meta',262,9);
   return {nombre:'MUNDO 1 · PRADERA DEL PICHUNGUITO', cielo:'#5c94fc', decor:'colinas', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 2: Cielos de Santi ---- */
 function nivel2(){
-  nuevoMapa(200); entidadesNivel=[];
+  nuevoMapa(300); entidadesNivel=[];
+  tramoExtra(196, 284);
   hueco(24,26); hueco(46,48); hueco(74,76); hueco(105,107); hueco(138,140); hueco(160,162);
   fila(14,17,10,'B'); setT(15,10,'M'); setT(17,10,'?');
   fila(34,36,10,'B'); setT(35,10,'?');
@@ -385,12 +408,13 @@ function nivel2(){
   tubo(42,2); tubo(70,3); tubo(135,2); tubo(174,2);
   [20,54,62,101,115,144,157].forEach(x=>ent('goomba',x,12));
   [32,90,126,170].forEach(x=>ent('koopa',x,12));
-  ent('santi',10,11.4); ent('huevo',80,12); setT(86,10,'S'); ent('abu',110,12); ent('meta',192,9);
+  ent('santi',10,11.4); ent('huevo',80,12); setT(86,10,'S'); ent('abu',110,12); ent('meta',292,9);
   return {nombre:'MUNDO 2 · CIELOS DE SANTI', cielo:'#48b0e8', decor:'nubes', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 3: Bosque de Georgie ---- */
 function nivel3(){
-  nuevoMapa(220); entidadesNivel=[];
+  nuevoMapa(330); entidadesNivel=[];
+  tramoExtra(216, 314);
   hueco(20,22); hueco(40,42); hueco(66,68); hueco(92,94); hueco(120,122); hueco(150,152); hueco(176,178);
   fila(12,15,10,'B'); setT(13,10,'M'); setT(15,10,'?');
   fila(28,31,10,'B'); setT(29,10,'?'); setT(31,10,'?');
@@ -406,12 +430,13 @@ function nivel3(){
   tubo(24,2); tubo(46,2); tubo(126,2); tubo(190,3); tubo(204,2);
   [18,26,56,62,88,106,128,148,168,186].forEach(x=>ent('goomba',x,12));
   [36,124,156,196].forEach(x=>ent('koopa',x,12));
-  ent('santi',9,11.4); ent('huevo',84,12); setT(97,10,'S'); ent('abu',138,12); ent('meta',210,9);
+  ent('santi',9,11.4); ent('huevo',84,12); setT(97,10,'S'); ent('abu',138,12); ent('meta',322,9);
   return {nombre:'MUNDO 3 · BOSQUE DE GEORGIE', cielo:'#4a9c58', decor:'bosque', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 4: Playa de Penny ---- */
 function nivel4(){
-  nuevoMapa(190); entidadesNivel=[];
+  nuevoMapa(285); entidadesNivel=[];
+  tramoExtra(186, 269);
   hueco(34,36); hueco(78,80); hueco(126,128); hueco(158,160);
   fila(20,23,10,'B'); setT(21,10,'M'); setT(23,10,'?');
   setT(44,10,'?'); setT(46,10,'?');
@@ -424,12 +449,13 @@ function nivel4(){
   tubo(30,2); tubo(72,3); tubo(150,2);
   [26,52,112,134,154,172].forEach(x=>ent('goomba',x,12));
   [66,120,176].forEach(x=>ent('koopa',x,12));
-  ent('santi',8,11.4); ent('huevo',84,12); setT(92,10,'S'); ent('abu',110,12); ent('meta',182,9);
+  ent('santi',8,11.4); ent('huevo',84,12); setT(92,10,'S'); ent('abu',110,12); ent('meta',277,9);
   return {nombre:'MUNDO 4 · PLAYA DE PENNY', cielo:'#6bd0f8', decor:'playa', tierra:TIERRAS.playa, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 5: Cueva de Sheldon ---- */
 function nivel5(){
-  nuevoMapa(200); entidadesNivel=[];
+  nuevoMapa(300); entidadesNivel=[];
+  tramoExtra(198, 284);
   hueco(28,30); hueco(58,60); hueco(96,98); hueco(130,132); hueco(164,166);
   fila(16,19,10,'B'); setT(17,10,'M'); setT(19,10,'?');
   fila(38,41,10,'B'); setT(39,10,'?'); setT(41,10,'?');
@@ -442,12 +468,13 @@ function nivel5(){
   tubo(34,2); tubo(90,3); tubo(148,2); tubo(184,2);
   [22,44,66,102,112,136,154,178].forEach(x=>ent('goomba',x,12));
   [50,126,170].forEach(x=>ent('koopa',x,12));
-  ent('santi',9,11.4); ent('huevo',76,12); setT(82,10,'S'); ent('abu',114,12); ent('meta',192,9);
+  ent('santi',9,11.4); ent('huevo',76,12); setT(82,10,'S'); ent('abu',114,12); ent('meta',292,9);
   return {nombre:'MUNDO 5 · CUEVA DE SHELDON', cielo:'#2a2a48', decor:'cueva', tierra:TIERRAS.cueva, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 6: Nubes de Cucú ---- */
 function nivel6(){
-  nuevoMapa(210); entidadesNivel=[];
+  nuevoMapa(315); entidadesNivel=[];
+  tramoExtra(206, 299);
   hueco(24,26); hueco(48,50); hueco(72,74); hueco(100,102); hueco(128,130); hueco(154,156); hueco(180,182);
   fila(14,17,10,'B'); setT(15,10,'M'); setT(17,10,'?');
   fila(32,35,7,'='); fila(40,43,10,'B'); setT(41,10,'?');
@@ -460,12 +487,13 @@ function nivel6(){
   tubo(66,2); tubo(146,3);
   [20,38,56,80,106,124,144,168,188].forEach(x=>ent('goomba',x,12));
   [90,134,176].forEach(x=>ent('koopa',x,12));
-  ent('santi',8,11.4); ent('huevo',92,12); setT(96,10,'S'); ent('abu',114,12); ent('meta',200,9);
+  ent('santi',8,11.4); ent('huevo',92,12); setT(96,10,'S'); ent('abu',114,12); ent('meta',307,9);
   return {nombre:'MUNDO 6 · NUBES DE CUCÚ', cielo:'#7ec8f8', decor:'nubes', tierra:TIERRAS.pradera, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 7: Desierto de Abu ---- */
 function nivel7(){
-  nuevoMapa(220); entidadesNivel=[];
+  nuevoMapa(330); entidadesNivel=[];
+  tramoExtra(218, 314);
   hueco(30,32); hueco(64,66); hueco(98,100); hueco(134,136); hueco(170,172); hueco(196,198);
   fila(18,21,10,'B'); setT(19,10,'M'); setT(21,10,'?');
   setT(40,10,'?'); setT(42,10,'?');
@@ -480,12 +508,13 @@ function nivel7(){
   tubo(26,2); tubo(70,3); tubo(140,2); tubo(204,3);
   [24,46,60,94,116,130,158,178,200,208].forEach(x=>ent('goomba',x,12));
   [50,104,150,190].forEach(x=>ent('koopa',x,12));
-  ent('santi',9,11.4); ent('huevo',86,12); setT(92,10,'S'); ent('abu',118,12); ent('meta',212,9);
+  ent('santi',9,11.4); ent('huevo',86,12); setT(92,10,'S'); ent('abu',118,12); ent('meta',322,9);
   return {nombre:'MUNDO 7 · DESIERTO DE ABU', cielo:'#8fd4f0', decor:'desierto', tierra:TIERRAS.desierto, spawn:{x:3,y:11}};
 }
 /* ---- Mundo 8: Castillo de Tío Juan ---- */
 function nivel8(){
-  nuevoMapa(240); entidadesNivel=[];
+  nuevoMapa(360); entidadesNivel=[];
+  tramoExtra(238, 344);
   hueco(22,24); hueco(44,46); hueco(70,72); hueco(94,96); hueco(118,120); hueco(144,146); hueco(168,170); hueco(194,196);
   fila(14,17,10,'B'); setT(15,10,'M'); setT(17,10,'?');
   fila(30,34,10,'B'); setT(31,10,'?'); setT(33,10,'?');
@@ -504,10 +533,57 @@ function nivel8(){
   tubo(38,3); tubo(66,2); tubo(140,2); tubo(190,3); tubo(224,2);
   [20,28,48,62,76,100,116,124,142,156,166,186,206,222].forEach(x=>ent('goomba',x,12));
   [40,108,132,164,198,228].forEach(x=>ent('koopa',x,12));
-  ent('santi',8,11.4); ent('huevo',86,12); setT(90,10,'S'); ent('abu',122,12); ent('meta',232,9);
+  ent('santi',8,11.4); ent('huevo',86,12); setT(90,10,'S'); ent('abu',122,12); ent('meta',352,9);
   return {nombre:'MUNDO 8 · CASTILLO DE TÍO JUAN', cielo:'#3a3a5c', decor:'castillo', tierra:TIERRAS.castillo, spawn:{x:3,y:11}};
 }
-const NIVELES = [nivel1, nivel2, nivel3, nivel4, nivel5, nivel6, nivel7, nivel8];
+/* ---- Mundo 9: Mar de Fernando (¡nadando!) ---- */
+function nivel9(){
+  nuevoMapa(300); entidadesNivel=[];
+  hueco(26,28); hueco(58,60); hueco(90,92); hueco(124,126); hueco(158,160); hueco(190,192); hueco(224,226); hueco(258,260);
+  colina(14,5,2); colina(70,6,2); colina(140,6,3); colina(210,5,2); colina(266,5,2);
+  fila(20,23,10,'B'); setT(21,10,'M'); setT(23,10,'?');
+  fila(48,51,10,'B'); setT(49,10,'?'); setT(51,10,'?');
+  setT(76,10,'?'); setT(78,10,'M');
+  fila(104,107,10,'B'); setT(105,10,'?'); setT(107,10,'M');
+  fila(132,135,7,'=');
+  setT(148,10,'?'); setT(150,10,'?');
+  fila(170,173,10,'B'); setT(171,10,'M'); setT(173,10,'?');
+  fila(200,203,10,'='); fila(206,209,7,'=');
+  fila(232,235,10,'B'); setT(233,10,'?');
+  fila(248,251,10,'=');
+  arco(34,9,5); arco(66,8,5); arco(98,9,5); arco(142,8,4); arco(180,9,5); arco(216,9,5); arco(242,8,4); arco(270,9,5);
+  tubo(40,2); tubo(84,3); tubo(164,2); tubo(220,3); tubo(276,2);
+  [24,44,64,112,130,152,176,198,222,246,268].forEach(x=>ent('goomba',x,12));
+  [36,96,144,188,240,280].forEach(x=>ent('koopa',x,12));
+  ent('santi',8,11.4); ent('huevo',80,12); setT(88,10,'S'); ent('abu',118,12); ent('meta',292,9);
+  return {nombre:'MUNDO 9 · MAR DE FERNANDO', cielo:'#1560c8', decor:'marino', tierra:TIERRAS.playa, agua:true, spawn:{x:3,y:11}};
+}
+/* ---- Mundo 10: Castillo de Bowser (¡rescata a mamá princesa!) ---- */
+function nivel10(){
+  nuevoMapa(330); entidadesNivel=[];
+  hueco(24,26); hueco(50,52); hueco(78,80); hueco(106,108); hueco(134,136); hueco(162,164); hueco(190,192); hueco(218,220); hueco(246,248);
+  fila(16,19,10,'B'); setT(17,10,'M'); setT(19,10,'?');
+  fila(34,38,10,'B'); setT(35,10,'?'); setT(37,10,'?');
+  fila(58,62,10,'B'); setT(59,10,'?'); setT(61,10,'M');
+  fila(64,66,7,'B'); setT(65,7,'?');
+  setT(88,10,'?'); setT(90,10,'M');
+  fila(114,118,10,'B'); setT(115,10,'?'); setT(117,10,'?');
+  fila(122,125,7,'=');
+  fila(142,145,10,'B'); setT(143,10,'M');
+  fila(170,174,10,'B'); setT(171,10,'?'); setT(173,10,'?');
+  fila(198,201,10,'B'); setT(199,10,'M');
+  fila(226,230,10,'B'); setT(227,10,'?'); setT(229,10,'?');
+  fila(252,255,10,'='); fila(258,261,7,'=');
+  arco(30,9,4); arco(70,9,4); arco(96,8,4); arco(128,9,4); arco(154,8,4); arco(184,9,4); arco(210,9,4); arco(238,8,4); arco(266,9,5);
+  tubo(44,3); tubo(74,2); tubo(150,2); tubo(206,3); tubo(242,2);
+  [20,32,48,68,86,104,120,140,158,180,196,216,236,258,274].forEach(x=>ent('goomba',x,12));
+  [42,92,132,168,212,250].forEach(x=>ent('koopa',x,12));
+  ent('santi',8,11.4); ent('huevo',84,12); setT(98,10,'S'); ent('abu',126,12);
+  /* el castillo del malvado Bowser y mamá princesa cautiva */
+  ent('bowser',300,12); ent('princesa',314,12);
+  return {nombre:'MUNDO 10 · CASTILLO DE BOWSER', cielo:'#2a1a3c', decor:'castillo', tierra:TIERRAS.castillo, jefe:true, spawn:{x:3,y:11}};
+}
+const NIVELES = [nivel1, nivel2, nivel3, nivel4, nivel5, nivel6, nivel7, nivel8, nivel9, nivel10];
 
 /* ---------------- Estado del juego ---------------- */
 let estado = 'menu';   // menu | juego | meta | fin
@@ -524,7 +600,9 @@ const J = {
   x:0, y:0, vx:0, vy:0, w:24, h:28,
   grande:false, fuego:false, cara:1, enSuelo:false,
   invul:0, burger:0, pmetro:0, muerto:0,
-  cargaSanti:false, montaAbu:false, cucu:false,
+  cargaSanti:false, cucu:false, abu:false, mama:false, papa:false,
+  tiofran:false, yanny:false, nacho:false, beto:false, giuliana:false,
+  perro:0, enAvion:0, enBarco:false,
   animT:0
 };
 function altoJ(){ return J.grande ? 56 : 28; }
@@ -548,7 +626,9 @@ function cargarNivel(i){
   evTioJuan=null; secMeta=0; tiempo=300; tiempoAcum=0; colaVoz=[];
   J.x = infoNivel.spawn.x*TILE; J.y = infoNivel.spawn.y*TILE;
   J.vx=0; J.vy=0; J.cara=1; J.invul=0; J.burger=0; J.pmetro=0; J.muerto=0;
-  J.cargaSanti=false; J.montaAbu=false; J.cucu=false;
+  J.cargaSanti=false; J.cucu=false; J.abu=false; J.mama=false; J.papa=false;
+  J.tiofran=false; J.yanny=false; J.nacho=false; J.beto=false; J.giuliana=false;
+  J.perro=0; J.enAvion=0; J.enBarco=false;
   J.luca=false; J.salomon=false; J.superSalto=false;
   historia = [];
   for(const e of entidadesNivel){
@@ -558,15 +638,45 @@ function cargarNivel(i){
     else if (e.tipo==='huevo') npcs.push({tipo:'huevo', x:e.x, y:e.y+8, t:0, activo:true});
     else if (e.tipo==='abu')   npcs.push({tipo:'abu', x:e.x, y:e.y-16, vx:-0.5, vy:0, t:0, activo:true});
     else if (e.tipo==='meta')  npcs.push({tipo:'meta', x:e.x, y:e.y, t:0, activo:true});
+    else if (e.tipo==='bowser') npcs.push({tipo:'bowser', x:e.x, y:e.y-40, vx:-0.5, vy:0, hp:3, t:0, activo:true});
+    else if (e.tipo==='princesa') npcs.push({tipo:'princesa', x:e.x, y:e.y-20, t:0, activo:true});
   }
+  colocarHueso();
   colocarFamilia();
+  colocarVehiculos();
   camX = 0;
+}
+
+/* un bloque de HUESO por mundo, en columna libre */
+function colocarHueso(){
+  let x = Math.floor(LEVW*0.24);
+  while(x < LEVW-12){
+    if (getT(x,13)==='#' && getT(x,12)==='.' && getT(x,11)==='.' && getT(x,10)==='.' &&
+        getT(x-1,10)==='.' && getT(x+1,10)==='.' && getT(x,9)==='.') break;
+    x++;
+  }
+  setT(x,10,'O');
+}
+/* avión en los mundos de cielo; barco en el mundo marino */
+function colocarVehiculos(){
+  const meter = (tipo, frac, w2)=>{
+    let x = Math.floor(LEVW*frac);
+    while(x < LEVW-12){
+      if (getT(x,13)==='#' && getT(x+1,13)==='#' && getT(x,12)==='.' && getT(x,11)==='.' &&
+          getT(x+1,12)==='.' && !npcs.some(n=>Math.abs(n.x-x*TILE)<3*TILE)) break;
+      x++;
+    }
+    npcs.push({tipo, x:x*TILE, y:13*TILE-w2, t:0, activo:true});
+  };
+  if (nivelIdx===1 || nivelIdx===5) meter('avion', 0.38, 30);
+  if (infoNivel && infoNivel.agua) meter('barco', 0.30, 34);
 }
 
 /* Coloca a Mamá, Luca, Papá, Salomón y Tío Fran en suelo plano y
    despejado de cada mundo, buscando automáticamente un lugar libre. */
 function colocarFamilia(){
-  const familia = [['mama',0.18,48],['luca',0.32,34],['papa',0.46,48],['salomon',0.60,34],['tiofran',0.74,48]];
+  const familia = [['mama',0.18,48],['luca',0.30,34],['nacho',0.40,48],['papa',0.48,48],
+    ['salomon',0.58,34],['beto',0.66,46],['tiofran',0.74,48],['giuliana',0.80,47],['yanny',0.88,47]];
   for(const [tipo, frac, alto] of familia){
     let x = Math.floor(LEVW*frac);
     while(x < LEVW-12){
@@ -620,6 +730,10 @@ function golpeaBloque(tx,ty){
       ? {tipo:'flor', x:tx*TILE+3, y:(ty-1)*TILE+6, vx:0, vy:0, w:26, h:26}
       : {tipo:'hongo', x:tx*TILE+3, y:(ty-1)*TILE+4, vx:0.6, vy:0, w:26, h:26});
     bumps.push({tx,ty,t:10});
+  } else if (c==='O'){
+    setT(tx,ty,'X'); sfx.poder();
+    items.push({tipo:'hueso', x:tx*TILE+3, y:(ty-1)*TILE+4, vx:0.6, vy:0, w:26, h:26});
+    bumps.push({tx,ty,t:10});
   } else if (c==='S'){
     setT(tx,ty,'X'); sfx.poder();
     /* la estrella se queda flotando sobre el bloque, fácil de agarrar */
@@ -637,13 +751,9 @@ function golpeaBloque(tx,ty){
 /* ---------------- Daño / muerte (¡vidas infinitas!) ---------------- */
 function dano(){
   if (J.invul>0 || J.burger>0 || J.muerto>0) return;
-  if (J.montaAbu){
-    J.montaAbu=false; J.invul=90; sfx.dano();
-    burbuja('¡Cuídate Abu!');
-    hablar('¡Cuídate Abu!');
-    npcs.push({tipo:'abu', x:J.x, y:J.y+altoJ()-48, vx:2.2, vy:-3, t:0, activo:true, huye:true});
-    return;
-  }
+  if (J.perro>0) return;                              // el perrito rojo es invencible
+  if (J.enAvion>0){ J.enAvion=0; J.invul=110; sfx.dano(); return; }
+  if (J.enBarco){ J.enBarco=false; J.invul=110; sfx.dano(); return; }
   if (J.fuego){ J.fuego=false; J.invul=110; sfx.dano(); }
   else if (J.grande){ J.grande=false; J.invul=110; sfx.dano(); }
   else morir();
@@ -656,7 +766,7 @@ function respawn(){
   const s = infoNivel.spawn;
   J.x=s.x*TILE; J.y=s.y*TILE; J.vx=0; J.vy=0; J.muerto=0;
   J.grande=false; J.fuego=false; J.burger=0; J.invul=120;
-  J.montaAbu=false; tiempo=300; tiempoAcum=0;
+  J.perro=0; J.enAvion=0; J.enBarco=false; tiempo=300; tiempoAcum=0;
   historia=[];
 }
 
@@ -683,7 +793,8 @@ function update(){
   /* --- controles --- */
   const enMeta = estado==='meta';
   const corre = kCorre();
-  const velTope = (J.burger>0 ? 7.2 : (corre && J.pmetro>=70 ? 5.8 : corre ? 4.6 : 3.1)) * (J.montaAbu?1.15:1);
+  const velTope = (J.burger>0 ? 7.2 : (corre && J.pmetro>=70 ? 5.8 : corre ? 4.6 : 3.1))
+    * (J.perro>0 ? 1.25 : 1) * (J.enBarco ? 1.4 : 1) * (J.enAvion>0 ? 1.2 : 1);
   const acc = J.enSuelo ? 0.5 : 0.35;
   if (!enMeta && izq()){ J.vx = Math.max(J.vx-acc, -velTope); J.cara=-1; }
   else if (!enMeta && der()){ J.vx = Math.min(J.vx+acc, velTope); J.cara=1; }
@@ -694,21 +805,21 @@ function update(){
   if (Math.abs(J.vx)>4.4 && J.enSuelo) J.pmetro=Math.min(J.pmetro+1.2,100);
   else if (J.pmetro>0 && !(Math.abs(J.vx)>4.4)) J.pmetro=Math.max(J.pmetro-0.8,0);
 
-  /* salto */
+  /* salto (en el agua se nada, en el avión se sube) */
+  const enAgua = infoNivel && infoNivel.agua;
   if (!enMeta && kSalto()){
-    if (J.enSuelo && !J.saltando){
+    if (J.enAvion>0 && !J.saltando){ J.vy = -4.6; J.saltando=true; }
+    else if (enAgua && !J.saltando){ J.vy = -5.2; J.saltando=true; sfx.salto(); }
+    else if (J.enSuelo && !J.saltando){
       J.vy = -((J.superSalto?13:11) + Math.min(Math.abs(J.vx)*0.35,2.2));
       J.saltando=true; J.enSuelo=false; sfx.salto();
     }
-  } else { J.saltando=false; if (J.vy<-4 && !kSalto()) J.vy=-4; }
+  } else { J.saltando=false; if (J.vy<-4 && !kSalto() && !enAgua && J.enAvion<=0) J.vy=-4; }
 
-  /* desmontar a Abu */
-  if (J.montaAbu && abajo() && J.enSuelo){
-    J.montaAbu=false;
-    npcs.push({tipo:'abu', x:J.x-10, y:J.y+altoJ()-48, vx:-0.5, vy:0, t:0, activo:true});
-    burbuja('¡Gracias Abu!');
-    hablar('¡Gracias Abu!');
-  }
+  /* bajarse del barco */
+  if (J.enBarco && abajo() && J.enSuelo) J.enBarco = false;
+  if (J.enAvion>0) J.enAvion--;
+  if (J.perro>0) J.perro--;
 
   /* bolas de fuego */
   if (!enMeta && J.fuego && kCorre() && !J.fuegoPrev && fuegos.length<2){
@@ -718,8 +829,10 @@ function update(){
   J.fuegoPrev = kCorre();
 
   /* --- física del jugador --- */
-  const h = altoJ() + (J.montaAbu?40:0);
-  J.vy = Math.min(J.vy + GRAV, MAXFALL);
+  const h = altoJ();
+  const gravJ = J.enAvion>0 ? 0.12 : (enAgua ? 0.16 : GRAV);
+  const caidaMax = J.enAvion>0 ? 4 : (enAgua ? 2.8 : MAXFALL);
+  J.vy = Math.min(J.vy + gravJ, caidaMax);
   J.x += J.vx;
   if (J.x<0) J.x=0;
   if (J.x>LEVW*TILE-J.w) J.x=LEVW*TILE-J.w;
@@ -747,13 +860,24 @@ function update(){
   if (J.invul>0) J.invul--;
   if (J.burger>0){ J.burger--; if(J.burger===0){ burbuja('¡Qué rica hamburguesa!'); hablar('¡Qué rica hamburguesa!'); } }
 
+  /* Tío Fran te persigue echándose pedos */
+  if (J.tiofran && historia.length>130){
+    const hf = historia[130];
+    if (tick%150===0) for(let i=0;i<4;i++) parts.push({tipo:'pedo', x:hf.x+10+(Math.random()-0.5)*16,
+      y:hf.y+10, vx:-0.5-Math.random(), vy:-0.5-Math.random(), t:55});
+    if (tick%600===0) sfx.pedo();
+  }
+  /* burbujas en el mundo marino */
+  if (enAgua && tick%14===0)
+    parts.push({tipo:'burbujaAgua', x:J.x+Math.random()*80-30, y:J.y+20, vy:-1.2-Math.random(), t:80});
+
   /* rastro para seguidores */
   historia.unshift({x:J.x, y:J.y+h-28, cara:J.cara});
-  if (historia.length>90) historia.pop();
+  if (historia.length>210) historia.pop();
 
   /* --- items --- */
   for(const it of items){
-    if (it.tipo==='hongo') moverEnte(it);
+    if (it.tipo==='hongo' || it.tipo==='hueso') moverEnte(it);
     else if (it.tipo==='estrella'){ it.t++; it.y += Math.sin(it.t/9)*0.9; }
     if (solapa({x:J.x,y:J.y,w:J.w,h}, it)){
       it.usado=true;
@@ -767,6 +891,10 @@ function update(){
         J.fuego=true; puntos+=1000; sfx.poder();
         burbuja('¡Fuego pichunguito!');
         hablar('¡Fuego pichunguito!');
+      } else if (it.tipo==='hueso'){
+        J.perro = 900; puntos+=1500; sfx.poder();
+        burbuja('¡Guau, guau! ¡Soy el perrito pichunguito!');
+        hablar('¡Guau, guau! ¡Soy el perrito pichunguito!');
       } else if (it.tipo==='estrella'){
         puntos+=1000;
         lanzarTioJuanEstrella();
@@ -798,7 +926,7 @@ function update(){
     if (enMeta || J.muerto>0 || !solapa({x:J.x,y:J.y,w:J.w,h}, e)) continue;
     const pisando = J.vy>0 && (J.y+h) - e.y < 20;
     if (J.burger>0){ matarEnemigo(e,true); continue; }
-    if (J.montaAbu){ matarEnemigo(e,true); puntos+=200; continue; }
+    if (J.perro>0 || J.enAvion>0 || J.enBarco){ matarEnemigo(e,true); puntos+=200; continue; }
     if (e.tipo==='goomba'){
       if (pisando){ matarEnemigo(e,false); J.vy=-8; }
       else dano();
@@ -837,8 +965,8 @@ function update(){
       const ea = {x:n.x, y:n.y, vx:n.vx, vy:n.vy||0, w:28, h:48};
       moverEnte(ea); n.x=ea.x; n.y=ea.y; n.vx=ea.vx; n.vy=ea.vy;
       if (n.huye && n.t>140){ n.activo=false; continue; }
-      if (!n.huye && !J.montaAbu && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:48})){
-        n.activo=false; J.montaAbu=true; J.y-=40; puntos+=2000; sfx.poder();
+      if (!n.huye && !J.abu && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:48})){
+        n.activo=false; J.abu=true; puntos+=2000; sfx.poder();
         burbuja('¡Te amo Abu!');
         hablar('Te amo Abu');
       }
@@ -856,7 +984,7 @@ function update(){
       }
     } else if (n.tipo==='tiofran'){
       if (!n.hecho && Math.abs(J.x-n.x)<110 && Math.abs(J.y-n.y)<120){
-        n.hecho=true; puntos+=500; sfx.pedo();
+        n.hecho=true; n.activo=false; J.tiofran=true; puntos+=500; sfx.pedo();
         for(let i=0;i<10;i++) parts.push({tipo:'pedo', x:n.x+14+(Math.random()-0.5)*20,
           y:n.y+30, vx:(Math.random()-0.5)*2, vy:-1-Math.random()*2, t:60});
         for(const e2 of enemigos) if(e2.vivo && Math.abs(e2.x-n.x)<160) matarEnemigo(e2,true);
@@ -865,7 +993,7 @@ function update(){
       }
     } else if (n.tipo==='mama'){
       if (!n.hecho && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:50})){
-        n.hecho=true; puntos+=2000; sfx.beso();
+        n.hecho=true; n.activo=false; J.mama=true; puntos+=2000; sfx.beso();
         if (!J.grande){ J.grande=true; J.y-=28; }
         J.invul=600;   // el beso de mamá protege un buen rato
         for(let i=0;i<7;i++) parts.push({tipo:'corazon', x:n.x+14+(Math.random()-0.5)*30,
@@ -875,10 +1003,77 @@ function update(){
       }
     } else if (n.tipo==='papa'){
       if (!n.hecho && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:50})){
-        n.hecho=true; puntos+=1000; sfx.poder();
+        n.hecho=true; n.activo=false; J.papa=true; puntos+=1000; sfx.poder();
         J.superSalto=true;   // papá enseña el súper salto por el resto del nivel
         burbuja('¡Papá, mira cómo salto de alto!');
         hablar('¡Papá, mira cómo salto de alto!');
+      }
+    } else if (n.tipo==='yanny'){
+      if (!J.yanny && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:48})){
+        n.activo=false; J.yanny=true; puntos+=1000; sfx.poder();
+        burbuja('¡Hola mi amor! ¡Soy tía Yanny!');
+        hablar('¡Hola mi amor! ¡Soy tía Yanny!');
+      }
+    } else if (n.tipo==='nacho'){
+      if (!J.nacho && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:48})){
+        n.activo=false; J.nacho=true; puntos+=1000; sfx.poder();
+        burbuja('¡Épale! ¡Aquí viene tío Nacho!');
+        hablar('¡Épale! ¡Aquí viene tío Nacho!');
+      }
+    } else if (n.tipo==='beto'){
+      if (!J.beto && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:46})){
+        n.activo=false; J.beto=true; puntos+=1000; sfx.poder();
+        burbuja('¡Hola pichunguito! ¡Soy tío Beto!');
+        hablar('¡Hola pichunguito! ¡Soy tío Beto!');
+      }
+    } else if (n.tipo==='giuliana'){
+      if (!J.giuliana && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:28,h:47})){
+        n.activo=false; J.giuliana=true; puntos+=1000; sfx.poder();
+        burbuja('¡Un abrazo, pichunguito! ¡Soy tía Giuliana!');
+        hablar('¡Un abrazo, pichunguito! ¡Soy tía Giuliana!');
+      }
+    } else if (n.tipo==='avion'){
+      if (solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:52,h:30})){
+        n.activo=false; J.enAvion=720; sfx.poder();
+        burbuja('¡A volar, pichunguitos!');
+        hablar('¡A volar, pichunguitos!');
+      }
+    } else if (n.tipo==='barco'){
+      if (!J.enBarco && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:56,h:34})){
+        n.activo=false; J.enBarco=true; sfx.poder();
+        burbuja('¡Todos a bordo del barco pichunguito!');
+        hablar('¡Todos a bordo del barco pichunguito!');
+      }
+    } else if (n.tipo==='bowser'){
+      /* el jefe patrulla frente al castillo */
+      const eb = {x:n.x, y:n.y, vx:n.vx, vy:n.vy||0, w:56, h:64};
+      moverEnte(eb); n.x=eb.x; n.y=eb.y; n.vx=eb.vx; n.vy=eb.vy;
+      if (n.x < 288*TILE) { n.x = 288*TILE; n.vx = Math.abs(n.vx); }
+      if (n.x > 306*TILE) { n.x = 306*TILE; n.vx = -Math.abs(n.vx); }
+      /* bolas de fuego le hacen daño */
+      for(const f of fuegos) if (f.t>0 && solapa(f, {x:n.x,y:n.y,w:56,h:64})){ f.t=0; n.hp--; sfx.pisoton(); n.golpe=20; }
+      if (estado==='juego' && J.muerto===0 && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:56,h:64})){
+        const pisando = J.vy>0 && (J.y+h) - n.y < 26;
+        if (pisando){ n.hp--; n.golpe=20; J.vy=-10; sfx.pisoton(); puntos+=500; }
+        else if (J.perro>0 || J.burger>0){ n.hp--; n.golpe=20; puntos+=500; }
+        else dano();
+      }
+      if (n.hp<=0){
+        n.activo=false; puntos+=5000; sfx.meta();
+        burbuja('¡Toma, pichungazo!');
+        hablar('¡Toma, pichungazo!');
+        for(let i=0;i<10;i++) parts.push({tipo:'estrellita', x:n.x+28, y:n.y+20, vx:0, vy:-2-Math.random()*3, t:50});
+      }
+      if (n.golpe>0) n.golpe--;
+    } else if (n.tipo==='princesa'){
+      const jefeVivo = npcs.some(o=>o.tipo==='bowser' && o.activo);
+      if (!jefeVivo && estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:30,h:52})){
+        n.activo=false; n.rescatada=true; puntos+=10000; sfx.beso();
+        for(let i=0;i<12;i++) parts.push({tipo:'corazon', x:n.x+15+(Math.random()-0.5)*40,
+          y:n.y+10, vy:-1-Math.random()*2, t:80});
+        burbuja('¡Te amo mamá! ¡Te rescaté!');
+        hablar('¡Te amo mamá!');
+        iniciarMeta({x:n.x, y:n.y, activo:false});
       }
     } else if (n.tipo==='meta'){
       if (estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:40,h:13*TILE-n.y})){
@@ -1167,6 +1362,84 @@ function dibRomulo(x,y,t){
   rect(-6,16,3,4,'#5a5a6e');
   ctx.restore();
 }
+function dibBowser(x,y,t,golpe){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (golpe>0 && (t>>1)%2){ ctx.restore(); return; }
+  rect(6,10,44,34,'#2a8a2a');                            // caparazón
+  for(const px of [10,24,38]) { ctx.fillStyle='#e8e0d0'; ctx.beginPath();
+    ctx.moveTo(px,10); ctx.lineTo(px+8,10); ctx.lineTo(px+4,0); ctx.closePath(); ctx.fill(); } // púas
+  rect(0,18,16,20,'#7ed040');                            // panza
+  rect(30,-8,26,22,'#7ed040');                           // cabeza
+  rect(34,-16,6,10,'#e8e0d0'); rect(46,-16,6,10,'#e8e0d0'); // cuernos
+  rect(46,-2,6,4,'#d82800');                             // ojo furioso
+  rect(44,8,12,4,'#5a3418');                             // hocico
+  const paso=Math.sin(t/6)*2;
+  rect(8,44+paso*0.3,12,10,'#e8a33d'); rect(32,44-paso*0.3,12,10,'#e8a33d');
+  ctx.restore();
+}
+function dibPrincesa(x,y,t,rescatada){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  rect(4,-4,22,8,'#5a3418'); rect(2,0,4,18,'#5a3418'); rect(24,0,4,18,'#5a3418'); // melena
+  ctx.fillStyle='#ffe36e';                               // corona
+  ctx.beginPath(); ctx.moveTo(6,-6); ctx.lineTo(10,-14); ctx.lineTo(15,-7); ctx.lineTo(20,-14); ctx.lineTo(24,-6); ctx.closePath(); ctx.fill();
+  rect(7,2,16,12,'#ffc8a0');
+  rect(17,6,3,2,'#222'); rect(9,11,4,2,'#e07a7a');
+  rect(4,14,22,26,'#ff9ed6');                            // vestido rosa de princesa
+  rect(2,18,4,10,'#ffc8a0'); rect(24,18,4,10,'#ffc8a0');
+  rect(8,40,5,8,'#ffc8a0'); rect(17,40,5,8,'#ffc8a0');
+  if (!rescatada){                                       // jaula
+    ctx.strokeStyle='#4a4a5a'; ctx.lineWidth=4;
+    for(let bx2=-8;bx2<=38;bx2+=11){ ctx.beginPath(); ctx.moveTo(bx2,-24); ctx.lineTo(bx2,52); ctx.stroke(); }
+    ctx.strokeRect(-10,-26,50,80);
+  }
+  ctx.restore();
+}
+function dibBeto(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  rect(4,-2,20,6,'#2a2a2a');                             // pelo corto
+  rect(6,4,16,12,'#e8b088');
+  rect(12,6,10,4,'#1a1a1a'); rect(14,7,2,2,'#8ecbff');   // lentes
+  rect(8,13,10,2,'#3a2a1a');                             // barba
+  rect(4,16,20,20,'#2a9c6a');                            // camisa verde
+  rect(2,20,4,10,'#2a9c6a'); rect(22,20,4,10,'#2a9c6a');
+  rect(6,36,6,10,'#3a3a4a'); rect(15,36,6,10,'#3a3a4a');
+  ctx.restore();
+}
+function dibGiuliana(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  rect(4,-4,20,8,'#7a4a1a'); rect(2,0,4,20,'#7a4a1a'); rect(22,0,4,20,'#7a4a1a'); // melena castaña
+  rect(6,2,16,12,'#ffc8a0');
+  rect(16,6,3,2,'#222'); rect(8,11,4,2,'#e07a7a');
+  rect(4,14,20,24,'#ff8a3d');                            // vestido naranja
+  rect(2,18,4,10,'#ffc8a0'); rect(22,18,4,10,'#ffc8a0');
+  rect(7,38,5,9,'#ffc8a0'); rect(16,38,5,9,'#ffc8a0');
+  ctx.restore();
+}
+function dibAvion(x,y,cara,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y));
+  if (cara<0){ ctx.scale(-1,1); ctx.translate(-56,0); }
+  const f = Math.sin(t/5)*1.5;
+  ctx.translate(0,f);
+  rect(0,8,52,14,'#e8e8f0');                            // fuselaje
+  rect(44,4,12,10,'#d82800');                           // nariz
+  rect(4,2,10,10,'#8ecbff');                            // cabina
+  rect(10,18,22,5,'#d82800');                           // ala
+  rect(-4,4,8,12,'#d82800');                            // cola
+  ctx.fillStyle='#aaa';                                  // hélice
+  ctx.beginPath(); ctx.ellipse(58,12,3,10+(t%2)*4,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+function dibBarco(x,y,t){
+  ctx.save(); ctx.translate(Math.round(x),Math.round(y+Math.sin(t/9)*2));
+  ctx.fillStyle='#8a5a2a';
+  ctx.beginPath(); ctx.moveTo(0,10); ctx.lineTo(60,10); ctx.lineTo(50,26); ctx.lineTo(10,26); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='#5a3418'; ctx.lineWidth=2; ctx.stroke();
+  rect(28,-22,4,32,'#5a3418');                           // mástil
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.moveTo(32,-20); ctx.lineTo(54,-2); ctx.lineTo(32,-2); ctx.closePath(); ctx.fill(); // vela
+  ctx.strokeStyle='#ccc'; ctx.stroke();
+  ctx.restore();
+}
 function dibTioJuan(x,y,t){
   ctx.save(); ctx.translate(Math.round(x),Math.round(y));
   /* capa */
@@ -1269,6 +1542,16 @@ function dibTile(tx,ty){
     if ((tick>>4)%2===0 || c!=='?') ctx.fillText(s, x+9, y+24);
     else ctx.fillText('?', x+9, y+23);
     if (c==='S') letrero(x+16, y-30, '★ TÍO JUAN ★', '#ffe36e');
+  } else if (c==='O'){
+    rect(x,y,TILE,TILE,'#c87838');
+    rect(x,y,TILE,3,'#e8a868'); rect(x,y,3,TILE,'#e8a868');
+    rect(x+TILE-3,y,3,TILE,'#8a4a18'); rect(x,y+TILE-3,TILE,3,'#8a4a18');
+    /* huesito */
+    rect(x+9,y+14,14,4,'#fff');
+    for(const [hx2,hy2] of [[6,11],[6,17],[21,11],[21,17]]){
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x+hx2+2,y+hy2+2,3,0,Math.PI*2); ctx.fill();
+    }
+    letrero(x+16, y-30, '¡HUESO!', '#ffb0b0');
   } else if (c==='X'){
     rect(x,y,TILE,TILE,'#9c5a1c');
     ctx.strokeStyle='#5a2c00'; ctx.lineWidth=2; ctx.strokeRect(x+2,y+2,TILE-4,TILE-4);
@@ -1423,6 +1706,18 @@ function dibFondo(){
       const kx = ((i*470 - p2) % (W+600) + (W+600))%(W+600) - 250;
       torreSMB3(kx);
     }
+  } else if (d==='marino'){
+    ctx.fillStyle='rgba(255,255,255,0.10)';
+    for(let i=0;i<5;i++){
+      const rx3 = ((i*260 - p1) % (W+300) + (W+300))%(W+300) - 150;
+      ctx.beginPath(); ctx.moveTo(rx3,HUD_H); ctx.lineTo(rx3+90,HUD_H);
+      ctx.lineTo(rx3+150,H); ctx.lineTo(rx3+20,H); ctx.closePath(); ctx.fill();
+    }
+    ctx.fillStyle='#1a8a5a';
+    for(let i=0;i<9;i++){
+      const ax2 = ((i*230 - p2) % (W+250) + (W+250))%(W+250) - 120;
+      for(let s2=0;s2<3;s2++) rect(ax2+s2*7, H-40-((i+s2)%3)*16 - Math.sin(tick/30+i)*4, 5, 46, '#1a8a5a');
+    }
   }
 }
 
@@ -1456,7 +1751,15 @@ function dibHUD(){
   if (J.luca) comp += '·Luca';
   if (J.salomon) comp += '·Salomón';
   if (J.cargaSanti) comp += '·Santi';
-  if (J.montaAbu) comp += '·Abu';
+  if (J.abu) comp += '·Abu';
+  if (J.mama) comp += '·Mamá';
+  if (J.papa) comp += '·Papá';
+  if (J.tiofran) comp += '·T.Fran💨';
+  if (J.yanny) comp += '·T.Yanny';
+  if (J.nacho) comp += '·T.Nacho';
+  if (J.beto) comp += '·T.Beto';
+  if (J.giuliana) comp += '·T.Giuli';
+  if (J.perro>0) comp += '·🐕ROJO';
   if (J.superSalto) comp += '·🦘';
   ctx.fillText(comp, W-16, 48);
   ctx.textAlign='left';
@@ -1467,7 +1770,7 @@ function dibBurbujas(){
   for(const b of burbujas){
     let bx, by;
     if (b.quien==='TJ' && evTioJuan){ bx = evTioJuan.x-camX+16; by = evTioJuan.y+HUD_H-18; }
-    else { bx = J.x-camX+J.w/2; by = J.y+HUD_H-16 - (J.montaAbu?40:0); }
+    else { bx = J.x-camX+J.w/2; by = J.y+HUD_H-16; }
     const wtx = ctx.measureText(b.txt).width;
     const a = Math.min(1, b.t/25);
     ctx.globalAlpha = a;
@@ -1507,6 +1810,25 @@ function draw(){
     else if (n.tipo==='tiofran'){ dibTioFran(nx, n.y+HUD_H, n.t, n.hecho); letrero(nx+14, n.y+HUD_H-24, 'TÍO FRAN', '#b8e986'); }
     else if (n.tipo==='mama'){ dibMama(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'MAMÁ', '#ff9ed6'); }
     else if (n.tipo==='papa'){ dibPapa(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'PAPÁ', '#9ecbff'); }
+    else if (n.tipo==='yanny'){ dibYanny(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'TÍA YANNY', '#e8b0ff'); }
+    else if (n.tipo==='avion'){ dibAvion(nx, n.y+HUD_H, 1, n.t); letrero(nx+26, n.y+HUD_H-24, '¡AVIÓN!', '#9ecbff'); }
+    else if (n.tipo==='barco'){ dibBarco(nx, n.y+HUD_H, n.t); letrero(nx+30, n.y+HUD_H-40, '¡BARCO!', '#ffe36e'); }
+    else if (n.tipo==='nacho'){ dibNacho(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'TÍO NACHO', '#ffe36e'); }
+    else if (n.tipo==='beto'){ dibBeto(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'TÍO BETO', '#7dffa0'); }
+    else if (n.tipo==='giuliana'){ dibGiuliana(nx, n.y+HUD_H, n.t); letrero(nx+14, n.y+HUD_H-24, 'TÍA GIULIANA', '#ffb27d'); }
+    else if (n.tipo==='bowser'){
+      /* castillo de fondo */
+      rect(nx+90, n.y+HUD_H-140, 150, 204, '#3a3a52');
+      rect(nx+90, n.y+HUD_H-140, 150, 8, '#2a2a3e');
+      for(let i2=0;i2<5;i2++) rect(nx+94+i2*30, n.y+HUD_H-156, 18, 18, '#3a3a52');
+      rect(nx+140, n.y+HUD_H-60, 44, 124, '#20202e');
+      dibBowser(nx, n.y+HUD_H, n.t, n.golpe||0);
+      letrero(nx+28, n.y+HUD_H-40, '¡BOWSER! ('+n.hp+'♥)', '#ff7070');
+    }
+    else if (n.tipo==='princesa'){
+      dibPrincesa(nx, n.y+HUD_H, n.t, n.rescatada);
+      letrero(nx+15, n.y+HUD_H-46, 'MAMÁ PRINCESA', '#ff9ed6');
+    }
     else if (n.tipo==='meta'){
       /* tarjeta de meta estilo SMB3 */
       const my = n.y+HUD_H;
@@ -1529,6 +1851,11 @@ function draw(){
     } else if (it.tipo==='flor'){
       rect(x+10,y+12,6,14,'#2a8a2a');
       rect(x+4,y,18,12,'#d82800'); rect(x+8,y+3,10,6,'#ffe36e');
+    } else if (it.tipo==='hueso'){
+      rect(x+6,y+10,14,5,'#fff');
+      for(const [hx2,hy2] of [[3,7],[3,14],[19,7],[19,14]]){
+        ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x+hx2+2,y+hy2+2,4,0,Math.PI*2); ctx.fill();
+      }
     } else if (it.tipo==='estrella'){
       /* halo brillante para que se vea desde lejos */
       ctx.globalAlpha = 0.35 + Math.sin(tick/6)*0.15;
@@ -1567,10 +1894,47 @@ function draw(){
     const hpos = historia[Math.min(74,historia.length-1)];
     if (hpos) dibSalomon(hpos.x-camX, hpos.y+HUD_H-8, tick, hpos.cara);
   }
+  if (J.abu){
+    const hpos = historia[Math.min(88,historia.length-1)];
+    if (hpos) dibAbu(hpos.x-camX, hpos.y+HUD_H-20, hpos.cara, tick, true);
+  }
+  if (J.mama){
+    const hpos = historia[Math.min(102,historia.length-1)];
+    if (hpos) dibMama(hpos.x-camX, hpos.y+HUD_H-20, tick);
+  }
+  if (J.papa){
+    const hpos = historia[Math.min(116,historia.length-1)];
+    if (hpos) dibPapa(hpos.x-camX, hpos.y+HUD_H-20, tick);
+  }
+  if (J.tiofran){
+    const hpos = historia[Math.min(130,historia.length-1)];
+    if (hpos) dibTioFran(hpos.x-camX, hpos.y+HUD_H-20, tick, true);
+  }
+  if (J.yanny){
+    const hpos = historia[Math.min(144,historia.length-1)];
+    if (hpos) dibYanny(hpos.x-camX, hpos.y+HUD_H-18, tick);
+  }
+  if (J.nacho){
+    const hpos = historia[Math.min(158,historia.length-1)];
+    if (hpos) dibNacho(hpos.x-camX, hpos.y+HUD_H-18, tick);
+  }
+  if (J.beto){
+    const hpos = historia[Math.min(172,historia.length-1)];
+    if (hpos) dibBeto(hpos.x-camX, hpos.y+HUD_H-17, tick);
+  }
+  if (J.giuliana){
+    const hpos = historia[Math.min(186,historia.length-1)];
+    if (hpos) dibGiuliana(hpos.x-camX, hpos.y+HUD_H-18, tick);
+  }
+  /* Tío Juan siempre acompaña volando */
+  if (!evTioJuan && historia.length>2){
+    const hj = historia[Math.min(24,historia.length-1)];
+    dibTioJuan(hj.x-camX-10, hj.y+HUD_H-128+Math.sin(tick/14)*7, tick);
+  }
 
   /* sombra suave bajo Fernando (toque moderno) */
   if (J.muerto===0){
-    let sy = Math.floor((J.y+altoJ()+(J.montaAbu?40:0))/TILE);
+    let sy = Math.floor((J.y+altoJ())/TILE);
     const stx = Math.floor((J.x+J.w/2)/TILE);
     while(sy<14 && !esSolido(getT(stx,sy))) sy++;
     ctx.fillStyle='rgba(0,0,0,0.22)';
@@ -1582,9 +1946,14 @@ function draw(){
     ctx.save(); ctx.translate(J.x-camX+12, J.y+HUD_H+14); ctx.rotate(Math.PI);
     ctx.translate(-12,-14); dibFernando(0,0,1,J.grande,false,false,tick); ctx.restore();
   } else {
-    if (J.montaAbu){
-      dibAbu(J.x-camX-2, J.y+HUD_H+altoJ()-8, J.cara, tick, false);
-      dibFernando(J.x-camX, J.y+HUD_H-6, J.cara, J.grande, J.fuego, Math.abs(J.vx)>0.5, tick);
+    if (J.enAvion>0) dibAvion(J.x-camX-16, J.y+HUD_H+altoJ()-14, J.cara, tick);
+    else if (J.enBarco) dibBarco(J.x-camX-18, J.y+HUD_H+altoJ()-14, tick);
+    if (J.perro>0){
+      /* ¡Fernando convertido en perrito rojo grande! */
+      ctx.save(); ctx.translate(J.x-camX-8, J.y+HUD_H+altoJ()-36);
+      ctx.scale(1.7,1.7);
+      if (!((J.invul>0) && (tick>>2)%2)) dibPerroSolo('#d82800');
+      ctx.restore();
     } else {
       dibFernando(J.x-camX, J.y+HUD_H, J.cara, J.grande, J.fuego, Math.abs(J.vx)>0.5&&J.enSuelo, tick);
     }
@@ -1607,6 +1976,16 @@ function draw(){
     else if (p.tipo==='pedo'){ ctx.globalAlpha=Math.min(1,p.t/30); ctx.fillStyle='#a8d848';
       ctx.beginPath(); ctx.arc(x,y,6+(60-p.t)*0.3,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; }
     else if (p.tipo==='corazon'){ ctx.fillStyle='#ff5a8a'; ctx.font='16px monospace'; ctx.fillText('♥',x,y); }
+    else if (p.tipo==='burbujaAgua'){
+      ctx.strokeStyle='rgba(220,240,255,0.7)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(x,y,3+(80-p.t)*0.05,0,Math.PI*2); ctx.stroke();
+    }
+  }
+
+  /* velo azul del mundo marino */
+  if (infoNivel && infoNivel.agua){
+    ctx.fillStyle='rgba(30,110,200,0.16)';
+    ctx.fillRect(0,HUD_H-70,W,H);
   }
 
   dibBurbujas();
@@ -1671,7 +2050,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v15', W-30, 18);
+  ctx.fillText('v16', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2153,9 +2532,11 @@ const FONDOS_URL = {
     FONDOS_BASE+'hf_20260724_034442_712485df-ae38-42bd-8fcd-d354693887d4_min.webp',  // nubes
     FONDOS_BASE+'hf_20260724_034455_5764cc0e-3a0e-454f-80ab-922a3b60cffd_min.webp',  // desierto
     FONDOS_BASE+'hf_20260724_034503_1cdbab22-3f21-4ba6-af9f-f67e858b7876_min.webp',  // castillo
+    FONDOS_BASE+'hf_20260725_162335_647b2ba4-02f1-45fa-ad6f-918031054f2a_min.webp',  // mar
+    FONDOS_BASE+'hf_20260724_034503_1cdbab22-3f21-4ba6-af9f-f67e858b7876_min.webp',  // castillo de bowser
   ],
 };
-const fondosImg = { titulo:null, mundos:[null,null,null,null,null,null,null,null] };
+const fondosImg = { titulo:null, mundos:[null,null,null,null,null,null,null,null,null,null] };
 function cargarFondos(){
   if (typeof Image === 'undefined') return;
   try{
@@ -2167,15 +2548,16 @@ cargarFondos();
 const imgLista = im => im && im.complete && im.naturalWidth > 0;
 /* ---------------- Selector de mundos ---------------- */
 let selMapa = 0;
-const NOMBRES_MAPA = ['PRADERA','CIELOS','BOSQUE','PLAYA','CUEVA','NUBES','DESIERTO','CASTILLO'];
-const COLORES_MAPA = ['#5c94fc','#48b0e8','#4a9c58','#6bd0f8','#2a2a48','#7ec8f8','#d89040','#3a3a5c'];
+const NOMBRES_MAPA = ['PRADERA','CIELOS','BOSQUE','PLAYA','CUEVA','NUBES','DESIERTO','CASTILLO','MAR','BOWSER'];
+const COLORES_MAPA = ['#5c94fc','#48b0e8','#4a9c58','#6bd0f8','#2a2a48','#7ec8f8','#d89040','#3a3a5c','#1560c8','#2a1a3c'];
+const EMOJIS_MAPA = ['🌄','☁️','🌲','🏖️','🦇','☁️','🌵','🏰','🌊','🐢'];
 function cajasMapa(){
   const cajas=[];
-  for(let i=0;i<8;i++){
-    const col=i%4, row=(i/4)|0;
-    cajas.push({x:64+col*216, y:140+row*140, w:196, h:112, idx:i});
+  for(let i=0;i<10;i++){
+    const col=i%5, row=(i/5)|0;
+    cajas.push({x:30+col*184, y:142+row*132, w:168, h:112, idx:i});
   }
-  cajas.push({x:W/2-220, y:428, w:440, h:76, idx:8});
+  cajas.push({x:W/2-220, y:424, w:440, h:70, idx:10});
   return cajas;
 }
 function dibMapa(){
@@ -2189,28 +2571,28 @@ function dibMapa(){
   ctx.fillText('Toca un mundo (o flechas + ENTER) · ¡también puedes ir directo a la carrera!', W/2, 100);
   for(const c of cajasMapa()){
     const sel = selMapa===c.idx;
-    ctx.fillStyle = c.idx===8 ? '#0a3a12' : COLORES_MAPA[c.idx];
-    ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,14); ctx.fill();
+    ctx.fillStyle = c.idx===10 ? '#0a3a12' : COLORES_MAPA[c.idx];
+    ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,12); ctx.fill();
     ctx.lineWidth = sel?6:3;
     ctx.strokeStyle = sel ? '#ffe36e' : 'rgba(255,255,255,0.5)';
     ctx.stroke();
-    if (c.idx===8){
-      ctx.fillStyle='#7dffa0'; ctx.font='bold 30px monospace';
-      ctx.fillText('🏁 FERNANDO KART 🏁', W/2, c.y+50);
+    if (c.idx===10){
+      ctx.fillStyle='#7dffa0'; ctx.font='bold 28px monospace';
+      ctx.fillText('🏁 FERNANDO KART 🏁', W/2, c.y+46);
     } else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
-      ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,34,[14,14,0,0]); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.font='bold 20px monospace';
-      ctx.fillText('MUNDO '+(c.idx+1), c.x+c.w/2, c.y+25);
-      ctx.font='bold 17px monospace'; ctx.fillStyle='#ffe36e';
-      ctx.fillText(NOMBRES_MAPA[c.idx], c.x+c.w/2, c.y+66);
-      ctx.font='20px monospace';
-      ctx.fillText(['🌄','☁️','🌲','🏖️','🦇','☁️','🌵','🏰'][c.idx]||'', c.x+c.w/2, c.y+96);
+      ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 16px monospace';
+      ctx.fillText('MUNDO '+(c.idx+1), c.x+c.w/2, c.y+22);
+      ctx.font='bold 14px monospace'; ctx.fillStyle='#ffe36e';
+      ctx.fillText(NOMBRES_MAPA[c.idx], c.x+c.w/2, c.y+58);
+      ctx.font='22px monospace';
+      ctx.fillText(EMOJIS_MAPA[c.idx]||'', c.x+c.w/2, c.y+94);
     }
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v15', W-34, 18);
+  ctx.fillText('v16', W-34, 18);
 }
 /* ---------------- Bucle principal ---------------- */
 function loop(){

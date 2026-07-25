@@ -46,6 +46,16 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
 - Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
+## 🆕 Grandes novedades
+
+- **10 mundos un 50% más largos**, incluido el **Mar de Fernando** (¡se nada!) y el **Castillo de Bowser**
+- 🦴 **El HUESO**: al comerlo, Fernando se convierte en un **perrito rojo grande** e invencible
+- 🦸 **Tío Juan vuela siempre** al lado de Fernando
+- ✈️ **Avión** en los mundos de cielo y ⛵ **barco** en el mundo marino
+- 👵 **Abu ya no se monta**: ahora todos los personajes encontrados **siguen a Fernando en un tren de amigos** (Penny, Sheldon, Cucú, Luca, Salomón, Abu, Mamá, Papá, Tío Fran 💨, Tía Yanny, Tío Nacho, Tío Beto y Tía Giuliana)
+- 💨 **Tío Fran lo persigue echándose pedos** por el camino
+- 👑 En el mundo 10, Fernando vence a **Bowser** y **rescata a su mamá princesa**
+
 ## 🗺️ Selector de mundos
 
 Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 8 mundos directamente, o saltar de una vez a **Fernando Kart** sin esperar al final.
