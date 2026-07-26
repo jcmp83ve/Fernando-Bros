@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fernando Bros — Guía del mando</title>
+<style>
+  :root{
+    --fondo:#14183a; --caja:#1e2450; --linea:#3a4384;
+    --texto:#eef1ff; --suave:#a9b2e6; --sol:#ffd34d; --rojo:#ff6b5e;
+    --verde:#5ee08a; --azul:#6fb6ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--texto);
+    font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .env{max-width:760px;margin:0 auto;padding:22px 18px 60px}
+
+  header{text-align:center;padding:26px 0 10px}
+  h1{font-family:'Courier New',monospace;font-size:clamp(26px,7vw,42px);margin:0;
+    color:var(--sol);text-shadow:3px 3px 0 #00000055;letter-spacing:1px}
+  header p{color:var(--suave);margin:8px 0 0;font-size:15px}
+
+  h2{font-size:clamp(20px,5vw,26px);margin:38px 0 4px;display:flex;align-items:center;gap:10px}
+  h2 small{font-size:14px;font-weight:normal;color:var(--suave)}
+  .sub{color:var(--suave);margin:0 0 18px;font-size:15px}
+
+  .paso{background:var(--caja);border:1px solid var(--linea);border-radius:16px;
+    padding:16px 18px 16px 62px;margin:12px 0;position:relative}
+  .paso b{display:block;font-size:17px;margin-bottom:2px}
+  .paso .n{position:absolute;left:14px;top:14px;width:34px;height:34px;border-radius:50%;
+    background:var(--sol);color:#1a1a2e;font-weight:bold;font-size:18px;
+    display:flex;align-items:center;justify-content:center;font-family:'Courier New',monospace}
+  .paso p{margin:4px 0 0;color:var(--suave);font-size:15px}
+  .paso .ok{color:var(--verde)}
+
+  .aviso{border-left:5px solid var(--sol);background:#2a2f5e;border-radius:0 12px 12px 0;
+    padding:12px 16px;margin:16px 0;font-size:15px}
+  .aviso.rojo{border-left-color:var(--rojo)}
+  .aviso.verde{border-left-color:var(--verde)}
+  .aviso b{color:var(--sol)}
+  .aviso.rojo b{color:var(--rojo)}
+  .aviso.verde b{color:var(--verde)}
+
+  figure{margin:22px 0;text-align:center}
+  svg{max-width:100%;height:auto}
+  figcaption{color:var(--suave);font-size:14px;margin-top:8px}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
+  th,td{padding:11px 10px;text-align:left;border-bottom:1px solid var(--linea)}
+  th{color:var(--sol);font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+  td:first-child{font-weight:bold;white-space:nowrap}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;
+    min-width:26px;height:26px;padding:0 7px;border-radius:50px;
+    background:#333a70;border:1px solid #5b66ad;font-weight:bold;font-size:14px;
+    font-family:'Courier New',monospace}
+
+  details{background:var(--caja);border:1px solid var(--linea);border-radius:14px;
+    padding:14px 18px;margin:10px 0}
+  summary{cursor:pointer;font-weight:bold;font-size:16px}
+  details p{color:var(--suave);font-size:15px;margin:10px 0 0}
+
+  .jugar{display:block;text-align:center;background:var(--verde);color:#10231a;
+    font-weight:bold;font-size:19px;text-decoration:none;padding:16px;
+    border-radius:16px;margin:34px 0 10px;box-shadow:0 4px 0 #37a05c}
+  .jugar:active{transform:translateY(3px);box-shadow:0 1px 0 #37a05c}
+
+  footer{text-align:center;color:var(--suave);font-size:13px;margin-top:34px}
+</style>
+</head>
+<body>
+<div class="env">
+
+<header>
+  <h1>🎮 FERNANDO BROS</h1>
+  <p>Guía fácil para jugar con el mando de Nintendo Switch</p>
+</header>
+
+<!-- ================= EL MANDO ================= -->
+<figure>
+<svg viewBox="0 0 600 330" role="img" aria-label="Dibujo del mando Pro Controller con sus botones señalados">
+  <!-- cuerpo -->
+  <path d="M110 70 h380 a52 52 0 0 1 52 52 v10 c0 55 -14 108 -34 128 c-16 16 -44 12 -56 -8 l-30 -50 h-244 l-30 50 c-12 20 -40 24 -56 8 c-20 -20 -34 -73 -34 -128 v-10 a52 52 0 0 1 52 -52 z"
+        fill="#2b3168" stroke="#5b66ad" stroke-width="4"/>
+  <!-- gatillos arriba -->
+  <rect x="96"  y="48" width="86" height="26" rx="13" fill="#3a4384" stroke="#5b66ad" stroke-width="3"/>
+  <rect x="418" y="48" width="86" height="26" rx="13" fill="#3a4384" stroke="#5b66ad" stroke-width="3"/>
+  <text x="139" y="67" font-size="14" fill="#eef1ff" text-anchor="middle" font-family="monospace">ZL / L</text>
+  <text x="461" y="67" font-size="14" fill="#eef1ff" text-anchor="middle" font-family="monospace">R / ZR</text>
+
+  <!-- botón de sincronizar -->
+  <circle cx="300" cy="60" r="9" fill="#ffd34d" stroke="#fff" stroke-width="2"/>
+  <line x1="300" y1="40" x2="300" y2="14" stroke="#ffd34d" stroke-width="2.5"/>
+  <text x="300" y="10" font-size="14" fill="#ffd34d" text-anchor="middle" font-weight="bold">botón de SINCRONIZAR</text>
+
+  <!-- palanca izquierda -->
+  <circle cx="152" cy="128" r="34" fill="#1b2049" stroke="#5b66ad" stroke-width="3"/>
+  <circle cx="152" cy="128" r="22" fill="#4a55a0"/>
+  <text x="152" y="188" font-size="14" fill="#a9b2e6" text-anchor="middle">MOVERSE</text>
+
+  <!-- cruceta -->
+  <path d="M228 196 h20 v-20 h20 v20 h20 v20 h-20 v20 h-20 v-20 h-20 z"
+        fill="#1b2049" stroke="#5b66ad" stroke-width="3"/>
+  <text x="258" y="256" font-size="14" fill="#a9b2e6" text-anchor="middle">MOVERSE</text>
+
+  <!-- botones de acción -->
+  <circle cx="455" cy="98"  r="19" fill="#ff6b5e" stroke="#ffb0a8" stroke-width="3"/>
+  <circle cx="490" cy="132" r="19" fill="#5ee08a" stroke="#b6f5cd" stroke-width="3"/>
+  <circle cx="455" cy="166" r="19" fill="#5ee08a" stroke="#b6f5cd" stroke-width="3"/>
+  <circle cx="420" cy="132" r="19" fill="#ff6b5e" stroke="#ffb0a8" stroke-width="3"/>
+  <text x="455" y="104" font-size="17" fill="#2a1010" text-anchor="middle" font-weight="bold">X</text>
+  <text x="490" y="138" font-size="17" fill="#10231a" text-anchor="middle" font-weight="bold">A</text>
+  <text x="455" y="172" font-size="17" fill="#10231a" text-anchor="middle" font-weight="bold">B</text>
+  <text x="420" y="138" font-size="17" fill="#2a1010" text-anchor="middle" font-weight="bold">Y</text>
+
+  <!-- leyenda de colores, debajo del mando -->
+  <circle cx="150" cy="305" r="11" fill="#5ee08a" stroke="#b6f5cd" stroke-width="3"/>
+  <text x="172" y="311" font-size="16" fill="#5ee08a" font-weight="bold">A · B = SALTAR</text>
+  <circle cx="345" cy="305" r="11" fill="#ff6b5e" stroke="#ffb0a8" stroke-width="3"/>
+  <text x="367" y="311" font-size="16" fill="#ff6b5e" font-weight="bold">X · Y = CORRER</text>
+
+  <!-- más y menos -->
+  <circle cx="240" cy="118" r="13" fill="#1b2049" stroke="#5b66ad" stroke-width="3"/>
+  <circle cx="360" cy="118" r="13" fill="#1b2049" stroke="#5b66ad" stroke-width="3"/>
+  <text x="240" y="124" font-size="17" fill="#eef1ff" text-anchor="middle" font-weight="bold">−</text>
+  <text x="360" y="124" font-size="17" fill="#eef1ff" text-anchor="middle" font-weight="bold">+</text>
+  <text x="240" y="96" font-size="12" fill="#a9b2e6" text-anchor="middle">VOLVER</text>
+  <text x="360" y="96" font-size="12" fill="#a9b2e6" text-anchor="middle">EMPEZAR</text>
+
+  <!-- palanca derecha -->
+  <circle cx="375" cy="196" r="28" fill="#1b2049" stroke="#5b66ad" stroke-width="3"/>
+  <circle cx="375" cy="196" r="17" fill="#4a55a0"/>
+</svg>
+<figcaption>Así queda el Pro Controller cuando Fernando juega.</figcaption>
+</figure>
+
+<!-- ================= IPAD ================= -->
+<h2>📱 En el iPad o el iPhone</h2>
+<p class="sub">Es la forma más fácil y la que funciona seguro. Se hace una sola vez.</p>
+
+<div class="paso"><span class="n">1</span>
+  <b>Despierta el mando</b>
+  <p><b>Pro Controller:</b> mantén apretado el botón redondito de <b>sincronizar</b>, arriba, al lado del enchufe USB-C. Cuenta hasta 3.<br>
+     <b>Joy-Con:</b> quítalo de la consola y aprieta el botón de <b>sincronizar</b> del riel negro (entre SL y SR).</p>
+  <p class="ok">✔ Listo cuando las lucecitas corren de un lado a otro.</p>
+</div>
+
+<div class="paso"><span class="n">2</span>
+  <b>Conéctalo al iPad</b>
+  <p>En el iPad: <b>Ajustes → Bluetooth</b>. Espera unos segundos y aparecerá <i>«Pro Controller»</i> o <i>«Joy-Con»</i>. Tócalo.</p>
+  <p class="ok">✔ Listo cuando dice <b>Conectado</b>.</p>
+</div>
+
+<div class="paso"><span class="n">3</span>
+  <b>Abre el juego</b>
+  <p>En Safari, entra a <b>jcmp83ve.github.io/Fernando-Bros</b></p>
+</div>
+
+<div class="paso"><span class="n">4</span>
+  <b>Aprieta cualquier botón del mando</b>
+  <p>Este paso no se puede saltar: Safari solo descubre el mando cuando aprietas algo.</p>
+  <p class="ok">✔ Listo cuando sale el cartel <b>🎮 ¡MANDO CONECTADO!</b> y los botones de la pantalla se esconden solos.</p>
+</div>
+
+<div class="aviso verde">
+  <b>¡Ya está!</b> La próxima vez solo tienes que encender el mando (apretando cualquier botón) y se conecta solo.
+</div>
+
+<!-- ================= BOTONES ================= -->
+<h2>🎯 Qué hace cada botón</h2>
+
+<table>
+  <tr><th>Botón</th><th>En el juego</th></tr>
+  <tr><td>Palanca o cruceta</td><td>Caminar, nadar, subir escaleras, cavar</td></tr>
+  <tr><td><span class="btn">A</span> <span class="btn">B</span></td><td>Saltar · turbo en el kart</td></tr>
+  <tr><td><span class="btn">X</span> <span class="btn">Y</span> <span class="btn">R</span> <span class="btn">ZR</span></td><td>Correr, lanzar bolas de fuego, usar los poderes del kart</td></tr>
+  <tr><td><span class="btn">+</span></td><td>Elegir y empezar</td></tr>
+  <tr><td><span class="btn">−</span></td><td>Volver atrás · salir de un minijuego</td></tr>
+</table>
+
+<div class="aviso">
+  <b>Ojo con los Joy-Con sueltos:</b> uno solo se agarra <b>de costado</b>, como en el Mario Kart de la Switch, así que los botones quedan girados. Para Fernando Bros va mucho mejor el <b>Pro Controller</b>, o los dos Joy-Con puestos en su soporte.
+</div>
+
+<!-- ================= TELEVISOR ================= -->
+<h2>📺 En el televisor LG</h2>
+
+<div class="aviso rojo">
+  <b>Importante:</b> los televisores LG <b>no se conectan</b> con mandos de Nintendo Switch. Su Bluetooth es para audífonos, teclados y —en los modelos nuevos— mandos de PlayStation y Xbox. Pero hay una solución mejor 👇
+</div>
+
+<p class="sub">Conecta el mando al iPad (los 4 pasos de arriba) y manda la imagen del iPad al televisor. Fernando ve el juego gigante en la tele y juega con el mando en las manos.</p>
+
+<div class="paso"><span class="n">A</span>
+  <b>Con cable — la mejor opción</b>
+  <p>Un cable <b>USB-C a HDMI</b> del iPad al televisor. La imagen va sin ningún retraso, que es lo que importa para el Fernando Kart.</p>
+</div>
+
+<div class="paso"><span class="n">B</span>
+  <b>Sin cable, por AirPlay</b>
+  <p>Desliza el dedo desde la esquina de arriba a la derecha del iPad → <b>Duplicar pantalla</b> → elige tu televisor LG.</p>
+  <p>Si el televisor no aparece, actívalo en el TV: <b>Inicio → Conexión de dispositivos → AirPlay</b>. Los LG desde 2019 lo traen.</p>
+</div>
+
+<div class="aviso">
+  ¿Quieres jugar directo desde el navegador del televisor, sin iPad? Entonces necesitas un mando de <b>PlayStation</b> o <b>Xbox</b>, o un adaptador <b>8BitDo Retro Receiver</b> que hace que el mando de Switch se vea como uno normal. El juego los reconoce todos igual.
+</div>
+
+<!-- ================= PROBLEMAS ================= -->
+<h2>🔧 ¿No funciona?</h2>
+
+<details><summary>El mando no aparece en el Bluetooth del iPad</summary>
+  <p>Casi siempre es que el mando sigue emparejado con la consola Switch. Mantén apretado el botón de <b>sincronizar</b> más tiempo, hasta que las luces vuelvan a correr, y busca otra vez. Si tienes la Switch encendida al lado, apágala.</p>
+</details>
+
+<details><summary>Se conectó, pero Fernando no se mueve</summary>
+  <p>Aprieta el botón <b>A</b> del mando una vez con el juego abierto. Safari no «ve» el mando hasta la primera pulsación. Si sigue igual, recarga la página con el mando ya conectado.</p>
+</details>
+
+<details><summary>Siguen apareciendo los botones en la pantalla</summary>
+  <p>Es la señal de que el juego todavía no detecta el mando: aprieta cualquier botón del mando y desaparecerán solos.</p>
+</details>
+
+<details><summary>No se escuchan las voces</summary>
+  <p>Toca una vez la pantalla del iPad (no el mando) para que el iPad deje salir el sonido, y revisa que el interruptor lateral no esté en silencio.</p>
+</details>
+
+<details><summary>Se ve una versión vieja del juego</summary>
+  <p>Entra con la dirección terminada en <b>?v=27</b> y listo. Arriba a la derecha de la pantalla debe decir <b>v27</b>.</p>
+</details>
+
+<a class="jugar" href="./?v=27">▶ JUGAR A FERNANDO BROS</a>
+
+<footer>Hecho con cariño para Fernando, el pichunguito de tío Juan 💛</footer>
+
+</div>
+</body>
+</html>
