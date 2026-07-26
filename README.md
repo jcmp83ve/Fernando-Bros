@@ -68,6 +68,9 @@ Cuatro minijuegos con los personajes del juego, desde el selector de mundos:
 - ⛏️ **Fernando Dig** — cava túneles e infla a los goombas con la bomba de aire, esquivando rocas
 - 🛢️ **Fernando Kong** — sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa
 - 🔫 **Fernando Contra** — avanza disparando por la selva con Tío Juan de apoyo, hasta el jefe final
+- 🎈 **Fernando Globos** — vuela aleteando con globos y revienta los de los koopas desde arriba
+- 💣 **Fernando Bombas** — pon bombas en el laberinto para atrapar goombas (aguantas 3 golpes)
+- 🧊 **Fernando Hielo** — rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú
 
 ## 🏁 Fernando Kart
 
@@ -77,7 +80,7 @@ Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pi
 - 💙 **Tío Juan** te dice *«Eres mi pichunguito»* al rebasarlo
 - 🆕 Corren también **Tío Nacho** (*«¡Épale! ¡Aquí viene tío Nacho!»*), **Tía Yanny** (*«¡Hola mi amor! ¡Soy tía Yanny!»*) y **Rómulo el Penoso**, el mapache que eructa mientras toma cerveza (*«¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!»*)
 - Cada personaje nuevo habla **con su propia voz**
-- 🛣️ **Tres pistas**: Circuito Pichunguito, Playa de Penny y Castillo de Bowser
+- 🛣️ **Seis pistas**: Circuito Pichunguito, Playa de Penny, Castillo de Bowser, Cueva de Sheldon, Nubes de Cucú y Desierto de Abu
 - 🎁 **Poderes**: recoge las cajas `?` y usa el botón B para lanzar el **caparazón de tortuga**, activar la **estrella mágica** (invencible y arrollador) o comerte la **hamburguesa** (turbo)
 
 ## 🗣️ Voces

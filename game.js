@@ -261,6 +261,7 @@ addEventListener('keydown', e=>{
   else if (estado==='kartPista'){
     if (e.key==='ArrowLeft') selPista=(selPista+PISTAS.length-1)%PISTAS.length;
     else if (e.key==='ArrowRight') selPista=(selPista+1)%PISTAS.length;
+    else if (e.key==='ArrowUp'||e.key==='ArrowDown') selPista=(selPista+3)%PISTAS.length;
     else if (e.key==='Enter'||e.key===' ') iniciarCarrera(selPista);
     else if (e.key==='Escape') estado='mapa';
   }
@@ -2231,7 +2232,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v23', W-30, 18);
+  ctx.fillText('v24', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2293,6 +2294,15 @@ const PISTAS = [
   { nombre:'CASTILLO DE BOWSER', emoji:'🐢', cielo:['#241436','#6a4a8a'],
     suelo:['#4a4458','#413b4e'], fondo:[74,68,88], kx:1700, ky:1400,
     pts:[[280,300],[760,240],[1180,340],[1450,600],[1380,900],[1000,1080],[620,1160],[300,1000],[200,700],[190,480]] },
+  { nombre:'CUEVA DE SHELDON', emoji:'🦇', cielo:['#0e0e20','#3a3a5c'],
+    suelo:['#5a5a72','#4e4e64'], fondo:[90,90,114], kx:1650, ky:1500,
+    pts:[[300,260],[700,220],[1050,380],[1300,660],[1420,980],[1150,1260],[720,1340],[380,1160],[220,860],[210,520]] },
+  { nombre:'NUBES DE CUCÚ', emoji:'☁️', cielo:['#3a8fe0','#eaf6ff'],
+    suelo:['#f0f4ff','#dde6f8'], fondo:[240,244,255], kx:1900, ky:1200,
+    pts:[[340,240],[880,180],[1380,260],[1680,480],[1700,800],[1400,1040],[900,1120],[460,1020],[230,760],[220,460]] },
+  { nombre:'DESIERTO DE ABU', emoji:'🌵', cielo:['#e08a3a','#ffd9a0'],
+    suelo:['#e8b45a','#d9a44a'], fondo:[232,180,90], kx:1800, ky:1350,
+    pts:[[300,280],[820,220],[1300,320],[1600,580],[1580,920],[1240,1180],[780,1240],[400,1080],[220,800],[200,500]] },
 ];
 let pistaIdx = 0, PISTA = PISTAS[0].pts;
 let NWP = PISTA.length, MUNDO_KX = PISTAS[0].kx, MUNDO_KY = PISTAS[0].ky;
@@ -2321,7 +2331,7 @@ const KART_CHARS = [
 let selPista = 0;
 function iniciarKart(){ estado='kartPista'; selPista = 0; cortina = 30; }
 function cajasPista(){
-  return PISTAS.map((p,i)=>({x:60+i*300, y:170, w:280, h:230, idx:i, p}));
+  return PISTAS.map((p,i)=>({x:25+(i%3)*312, y:142+((i/3)|0)*192, w:290, h:176, idx:i, p}));
 }
 function dibSelPista(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -2329,9 +2339,9 @@ function dibSelPista(){
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
   ctx.textAlign='center';
   ctx.fillStyle='#f8b800'; ctx.font='bold 38px monospace';
-  ctx.fillText('🏁 ELIGE TU PISTA 🏁', W/2, 90);
-  ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
-  ctx.fillText('¡Recoge las cajas y usa el botón B para lanzar tu poder!', W/2, 122);
+  ctx.fillText('🏁 ELIGE TU PISTA 🏁', W/2, 68);
+  ctx.font='14px monospace'; ctx.fillStyle='#bcd6ff';
+  ctx.fillText('¡Recoge las cajas y usa el botón B para lanzar tu poder!', W/2, 96);
   for(const c of cajasPista()){
     const s = selPista===c.idx;
     ctx.fillStyle = c.p.cielo[0];
@@ -2339,23 +2349,23 @@ function dibSelPista(){
     ctx.lineWidth = s?6:3; ctx.strokeStyle = s?'#ffe36e':'rgba(255,255,255,0.45)'; ctx.stroke();
     if (s){ ctx.globalAlpha=0.3+Math.sin(tick/7)*0.2; ctx.lineWidth=12; ctx.stroke(); ctx.globalAlpha=1; }
     /* miniatura del trazado */
-    ctx.strokeStyle=c.p.suelo[0]; ctx.lineWidth=16; ctx.lineJoin='round';
+    ctx.strokeStyle=c.p.suelo[0]; ctx.lineWidth=13; ctx.lineJoin='round';
     ctx.beginPath();
-    const e = 0.11, ox = c.x+c.w/2 - c.p.kx*e/2, oy = c.y+130 - c.p.ky*e/2;
+    const e = 0.082, ox = c.x+c.w/2 - c.p.kx*e/2, oy = c.y+96 - c.p.ky*e/2;
     ctx.moveTo(ox+c.p.pts[0][0]*e, oy+c.p.pts[0][1]*e);
     for(let i=1;i<=c.p.pts.length;i++){ const q=c.p.pts[i%c.p.pts.length]; ctx.lineTo(ox+q[0]*e, oy+q[1]*e); }
     ctx.closePath(); ctx.stroke();
     ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=3; ctx.stroke();
-    ctx.font='30px monospace'; ctx.fillStyle='#fff';
-    ctx.fillText(c.p.emoji, c.x+c.w/2, c.y+44);
-    ctx.font='bold 15px monospace'; ctx.fillStyle='#ffe36e';
-    ctx.fillText(c.p.nombre, c.x+c.w/2, c.y+c.h-18);
+    ctx.font='26px monospace'; ctx.fillStyle='#fff';
+    ctx.fillText(c.p.emoji, c.x+c.w/2, c.y+34);
+    ctx.font='bold 14px monospace'; ctx.fillStyle='#ffe36e';
+    ctx.fillText(c.p.nombre, c.x+c.w/2, c.y+c.h-14);
   }
   ctx.fillStyle='#fff'; ctx.font='bold 18px monospace';
-  if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-30);
+  if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-18);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v23', W-34, 18);
+  ctx.fillText('v24', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3086,7 +3096,7 @@ function dibMapa(){
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v23', W-34, 18);
+  ctx.fillText('v24', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
