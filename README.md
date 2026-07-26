@@ -60,6 +60,15 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 
 Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 8 mundos directamente, o saltar de una vez a **Fernando Kart** sin esperar al final.
 
+## 🕹️ Sala Arcade
+
+Cuatro minijuegos con los personajes del juego, desde el selector de mundos:
+
+- 🐦 **Fernando Birds** — lanza a Penny, Sheldon y Cucú con la resortera contra las torres de goombas
+- ⛏️ **Fernando Dig** — cava túneles e infla a los goombas con la bomba de aire, esquivando rocas
+- 🛢️ **Fernando Kong** — sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa
+- 🔫 **Fernando Contra** — avanza disparando por la selva con Tío Juan de apoyo, hasta el jefe final
+
 ## 🏁 Fernando Kart
 
 Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pista se ve en perspectiva (técnica «Mode 7» de la SNES), con bordes rojiblancos, los rivales aparecen como personajes grandes y reconocibles en la carretera, turbo (ESPACIO/A), minimapa y podio final. Empieza al ganar el mundo 8 o desde el selector de mundos.
@@ -68,6 +77,8 @@ Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pi
 - 💙 **Tío Juan** te dice *«Eres mi pichunguito»* al rebasarlo
 - 🆕 Corren también **Tío Nacho** (*«¡Épale! ¡Aquí viene tío Nacho!»*), **Tía Yanny** (*«¡Hola mi amor! ¡Soy tía Yanny!»*) y **Rómulo el Penoso**, el mapache que eructa mientras toma cerveza (*«¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!»*)
 - Cada personaje nuevo habla **con su propia voz**
+- 🛣️ **Tres pistas**: Circuito Pichunguito, Playa de Penny y Castillo de Bowser
+- 🎁 **Poderes**: recoge las cajas `?` y usa el botón B para lanzar el **caparazón de tortuga**, activar la **estrella mágica** (invencible y arrollador) o comerte la **hamburguesa** (turbo)
 
 ## 🗣️ Voces
 
