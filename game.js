@@ -294,7 +294,8 @@ function tocar(id, k){
   el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off);
   el.addEventListener('pointerleave', off); el.addEventListener('pointercancel', off);
 }
-tocar('bL','arrowleft'); tocar('bR','arrowright'); tocar('bDown','arrowdown');
+tocar('bL','arrowleft'); tocar('bR','arrowright');
+tocar('bUp','arrowup'); tocar('bDown','arrowdown');
 tocar('bA',' '); tocar('bB','shift');
 cv.addEventListener('pointerdown', (e)=>{
   audio();
@@ -2232,7 +2233,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v24', W-30, 18);
+  ctx.fillText('v25', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2365,7 +2366,7 @@ function dibSelPista(){
   if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-18);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v24', W-34, 18);
+  ctx.fillText('v25', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3096,7 +3097,7 @@ function dibMapa(){
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v24', W-34, 18);
+  ctx.fillText('v25', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
