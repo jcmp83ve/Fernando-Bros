@@ -18,6 +18,8 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 
 **Mandos compatibles:** Joy-Con y Pro Controller de Switch, mandos de PlayStation y Xbox, y genéricos — se conectan por Bluetooth a la computadora, al Android o al iPhone/iPad. El juego los detecta solo y esconde los botones de pantalla.
 
+👉 **[Guía fácil para conectar el mando](https://jcmp83ve.github.io/Fernando-Bros/mando.html)** — paso a paso con dibujos, para iPad/iPhone y para el televisor.
+
 ## ⭐ Particularidades del juego
 
 - **Vidas infinitas ∞** — aquí nunca se pierde: si te caes, vuelves a empezar sin castigo.
