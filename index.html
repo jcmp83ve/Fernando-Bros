@@ -16,15 +16,45 @@
   canvas{background:#5c94fc;max-width:100vw;max-height:100vh;
     box-shadow:0 0 40px #000;touch-action:none}
   .tbtn{touch-action:none}
-  .tbtn{position:fixed;bottom:18px;width:64px;height:64px;border-radius:50%;
-    background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.45);
-    color:#fff;font-size:22px;font-weight:bold;display:none;align-items:center;justify-content:center;
-    z-index:10}
+  /* ---- controles en pantalla: cruceta a la izquierda, acción a la derecha ---- */
+  .tbtn{position:fixed;border-radius:50%;
+    background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.55);
+    color:#fff;font-weight:bold;display:none;align-items:center;justify-content:center;
+    z-index:10;touch-action:none;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+    box-shadow:0 2px 10px rgba(0,0,0,.35);
+    transition:transform .06s ease, background .06s ease;
+    --d:min(66px, 14vmin);
+    width:var(--d);height:var(--d);font-size:calc(var(--d)*.36);
+    /* márgenes seguros del teléfono (notch y barra de inicio) */
+    --sx:calc(14px + env(safe-area-inset-left));
+    --sy:calc(14px + env(safe-area-inset-bottom));
+    --sr:calc(14px + env(safe-area-inset-right));
+  }
+  .tbtn:active{transform:scale(.9);background:rgba(255,255,255,.42)}
   @media (pointer:coarse){ .tbtn{display:flex} }
-  #bL{left:16px;bottom:88px} #bR{left:92px;bottom:88px}
-  #bUp{left:54px;bottom:150px;width:56px;height:56px}
-  #bDown{left:54px;bottom:26px;width:56px;height:56px}
-  #bB{right:96px} #bA{right:16px;bottom:44px}
+  body.conMando .tbtn{display:none !important}   /* con mando conectado estorban */
+
+  /* cruceta en diamante, abajo a la izquierda */
+  #bL   {left:var(--sx);                              bottom:calc(var(--sy) + var(--d))}
+  #bR   {left:calc(var(--sx) + var(--d) * 2);         bottom:calc(var(--sy) + var(--d))}
+  #bUp  {left:calc(var(--sx) + var(--d));             bottom:calc(var(--sy) + var(--d) * 2)}
+  #bDown{left:calc(var(--sx) + var(--d));             bottom:var(--sy)}
+
+  /* botones de acción en diagonal, como un mando de verdad */
+  #bA{right:var(--sr);                                bottom:calc(var(--sy) + var(--d) * .75);
+      background:rgba(255,120,90,.30);border-color:rgba(255,170,150,.75)}
+  #bB{right:calc(var(--sr) + var(--d) * 1.1);         bottom:var(--sy);
+      background:rgba(120,170,255,.30);border-color:rgba(170,200,255,.75)}
+  #bA:active{background:rgba(255,120,90,.55)}
+  #bB:active{background:rgba(120,170,255,.55)}
+
+  /* en pantallas anchas y bajas (teléfono acostado) los botones se hacen algo menores */
+  /* teléfono acostado: botones menores y pegados abajo, para no tapar la acción */
+  @media (pointer:coarse) and (max-height:460px){
+    .tbtn{--d:min(52px, 13.5vmin); --sy:calc(10px + env(safe-area-inset-bottom))}
+  }
+  /* pantallas muy bajas: aún más discretos */
+  @media (pointer:coarse) and (max-height:360px){ .tbtn{--d:min(46px, 13vmin)} }
 </style>
 </head>
 <body>

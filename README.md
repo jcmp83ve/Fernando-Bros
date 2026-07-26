@@ -7,13 +7,16 @@ La aventura de Fernando, el pichunguito de tío Juan, junto a sus dos perritos: 
 
 Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publícalo con GitHub Pages. Funciona también en celulares y tablets con botones táctiles.
 
-| Tecla | Acción |
-|---|---|
-| ← → (o A / D) | Moverse |
-| ESPACIO / Z / ↑ | Saltar |
-| MAYÚS / X | Correr (medidor P) y lanzar fuego |
-| ↓ | Bajarse de Abu |
-| ENTER | Empezar |
+| Teclado | Mando 🎮 | Celular 📱 | Acción |
+|---|---|---|---|
+| ← → | Palanca o cruceta | ◀ ▶ | Moverse |
+| ESPACIO / Z / ↑ | Botón inferior (A/B) | A | Saltar |
+| MAYÚS / X | Botón lateral (X/Y) o gatillo | B | Correr, fuego y poderes |
+| ↑ ↓ | Palanca o cruceta | ▲ ▼ | Subir, bajar, cavar, escaleras |
+| ENTER | Botón + / Start | tocar | Elegir |
+| ESC | Botón − / Select | ✕ SALIR | Volver |
+
+**Mandos compatibles:** Joy-Con y Pro Controller de Switch, mandos de PlayStation y Xbox, y genéricos — se conectan por Bluetooth a la computadora, al Android o al iPhone/iPad. El juego los detecta solo y esconde los botones de pantalla.
 
 ## ⭐ Particularidades del juego
 

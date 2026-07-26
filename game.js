@@ -239,6 +239,10 @@ addEventListener('keydown', e=>{
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
   keys[e.key.toLowerCase()] = true; keys[e.key] = true;
   audio();
+  procesarTecla(e.key);
+});
+function procesarTecla(k){
+  const e = {key:k};
   if (mjActivo()){ MJ.tecla(e.key); return; }
   if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
   else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) estado='mapa';
@@ -267,7 +271,77 @@ addEventListener('keydown', e=>{
   }
   else if (estado==='kartFin' && (e.key==='Enter'||e.key===' ')) estado='fin';
   else if (estado==='fin' && (e.key==='Enter')) estado='menu';
-});
+}
+
+/* ---------------- Mandos (Joy-Con, Pro Controller, PlayStation, Xbox…) ---------------- */
+const mando = {};      // botones del mando en curso
+const MANDO = {
+  activo:false, aviso:0,
+  /* mapeo estándar de la API de mandos */
+  botones: {
+    0:' ', 1:' ',            // botones inferiores/derecha → saltar
+    2:'shift', 3:'shift',    // botones izquierda/arriba → correr, fuego, poder
+    5:'shift', 7:'shift',    // gatillos R / ZR
+    9:'Enter', 8:'Escape',   // + / start  y  - / select
+    12:'arrowup', 13:'arrowdown', 14:'arrowleft', 15:'arrowright',
+  },
+  /* teclas que además abren menús al pulsarlas (flanco) */
+  pulso: { 0:' ', 1:' ', 9:'Enter', 8:'Escape', 12:'ArrowUp', 13:'ArrowDown', 14:'ArrowLeft', 15:'ArrowRight' },
+  prev: {},
+};
+function leerMandos(){
+  if (typeof navigator === 'undefined' || !navigator.getGamepads) return;
+  let gps;
+  try{ gps = navigator.getGamepads(); }catch(e){ return; }
+  let hay = false;
+  const ahora = {};
+  for(const gp of gps){
+    if (!gp || !gp.connected) continue;
+    hay = true;
+    /* palanca izquierda con zona muerta */
+    const ax = gp.axes[0]||0, ay = gp.axes[1]||0, ZM = 0.45;
+    if (ax < -ZM) ahora['arrowleft'] = true;
+    if (ax >  ZM) ahora['arrowright'] = true;
+    if (ay < -ZM) ahora['arrowup'] = true;
+    if (ay >  ZM) ahora['arrowdown'] = true;
+    /* botones */
+    for(const i in MANDO.botones){
+      const b = gp.buttons[i];
+      if (b && (b.pressed || b.value > 0.5)) ahora[MANDO.botones[i]] = true;
+    }
+  }
+  if (hay && !MANDO.activo){ MANDO.activo = true; MANDO.aviso = 200; document.body.classList.add('conMando'); }
+  if (!hay && MANDO.activo){ MANDO.activo = false; document.body.classList.remove('conMando'); }
+  if (!hay) return;
+  /* estado continuo en su propio objeto: no pisa el teclado ni los botones táctiles */
+  for(const t of [' ','shift','arrowleft','arrowright','arrowup','arrowdown']){
+    const v = !!ahora[t];
+    if (v && !mando[t]) audio();
+    mando[t] = v;
+  }
+  /* flancos: para navegar por los menús */
+  for(const gp of gps){
+    if (!gp || !gp.connected) continue;
+    for(const i in MANDO.pulso){
+      const b = gp.buttons[i];
+      const p = !!(b && (b.pressed || b.value > 0.5));
+      const clave = gp.index+':'+i;
+      if (p && !MANDO.prev[clave]) procesarTecla(MANDO.pulso[i]);
+      MANDO.prev[clave] = p;
+    }
+    /* la palanca también navega los menús, con repetición lenta */
+    const ax = gp.axes[0]||0, ay = gp.axes[1]||0, ZM = 0.6;
+    const dir = ax < -ZM ? 'ArrowLeft' : ax > ZM ? 'ArrowRight' : ay < -ZM ? 'ArrowUp' : ay > ZM ? 'ArrowDown' : null;
+    const enMenu = estado==='menu'||estado==='mapa'||estado==='kartPista'||estado==='arcade'||estado==='kartFin'||estado==='fin';
+    if (enMenu && dir){
+      if (MANDO.dirPrev !== dir || (MANDO.rep = (MANDO.rep||0)+1) > 18){
+        procesarTecla(dir); MANDO.rep = 0;
+      }
+    } else if (!dir) MANDO.dirPrev = null;
+    if (dir) MANDO.dirPrev = dir;
+  }
+}
+addEventListener('gamepadconnected', ()=>{ MANDO.aviso = 220; });
 addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; keys[e.key] = false; });
 function tocar(id, k){
   const el = document.getElementById(id);
@@ -320,11 +394,12 @@ cv.addEventListener('pointerdown', (e)=>{
   else if (estado==='kartFin') estado='fin';
   else if (estado==='fin') estado='menu';
 });
-const izq   = ()=> keys['arrowleft']||keys['a'];
-const der   = ()=> keys['arrowright']||keys['d'];
-const abajo = ()=> keys['arrowdown']||keys['s'];
-const kSalto= ()=> keys[' ']||keys['z']||keys['arrowup']||keys['w'];
-const kCorre= ()=> keys['shift']||keys['x'];
+const izq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
+const der   = ()=> keys['arrowright']||keys['d']||mando['arrowright'];
+const arriba2=()=> keys['arrowup']||keys['w']||mando['arrowup'];
+const abajo = ()=> keys['arrowdown']||keys['s']||mando['arrowdown'];
+const kSalto= ()=> keys[' ']||keys['z']||keys['arrowup']||keys['w']||mando[' ']||mando['arrowup'];
+const kCorre= ()=> keys['shift']||keys['x']||mando['shift'];
 
 /* ---------------- Nivel: constructor de mapas ---------------- */
 let grid=[], LEVW=0, entidadesNivel=[];
@@ -2166,6 +2241,17 @@ function draw(){
 let vinetaG = null;
 function dibFXFinales(){
   try{
+  if (MANDO.aviso > 0){
+    MANDO.aviso--;
+    const a = Math.min(1, MANDO.aviso/40);
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(10,14,30,0.9)';
+    ctx.beginPath(); ctx.roundRect(W/2-190, 8, 380, 40, 12); ctx.fill();
+    ctx.strokeStyle = '#7dffa0'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#7dffa0'; ctx.font = 'bold 17px monospace'; ctx.textAlign = 'center';
+    ctx.fillText('🎮 ¡MANDO CONECTADO!', W/2, 34);
+    ctx.textAlign = 'left'; ctx.globalAlpha = 1;
+  }
   if (CAL.crt){
     if (!vinetaG){
       vinetaG = ctx.createRadialGradient(W/2, H/2, H*0.45, W/2, H/2, H*0.85);
@@ -2231,9 +2317,11 @@ function dibMenu(){
   ctx.fillText('🏁 Al ganar el mundo 8: ¡FERNANDO KART! (o pulsa K / botón B para ir directo)', W/2, 486);
   ctx.fillStyle='#ffe36e';
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
+  ctx.fillStyle='#7dffa0';
+  ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v25', W-30, 18);
+  ctx.fillText('v26', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2366,7 +2454,7 @@ function dibSelPista(){
   if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-18);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v25', W-34, 18);
+  ctx.fillText('v26', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3097,7 +3185,7 @@ function dibMapa(){
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v25', W-34, 18);
+  ctx.fillText('v26', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
@@ -3179,6 +3267,7 @@ const PASO = 1000/60;
 function loop(){
   const t = (typeof performance!=='undefined' && performance.now) ? performance.now() : 0;
   medirCalidad(t);
+  leerMandos();
   let dt = ultT ? t - ultT : PASO;
   ultT = t;
   if (dt > 120) dt = 120;                       // al volver de segundo plano, no saltar

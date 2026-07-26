@@ -27,12 +27,12 @@ const JUEGOS = [
 ];
 let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0;
 /* controles: la flecha arriba sirve para SUBIR, nunca para saltar */
-const mIzq   = ()=> keys['arrowleft']||keys['a'];
-const mDer   = ()=> keys['arrowright']||keys['d'];
-const mArr   = ()=> keys['arrowup']||keys['w'];
-const mAbj   = ()=> keys['arrowdown']||keys['s'];
-const mSalta = ()=> keys[' ']||keys['z'];
-const mAccion= ()=> keys['shift']||keys['x'];
+const mIzq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
+const mDer   = ()=> keys['arrowright']||keys['d']||mando['arrowright'];
+const mArr   = ()=> keys['arrowup']||keys['w']||mando['arrowup'];
+const mAbj   = ()=> keys['arrowdown']||keys['s']||mando['arrowdown'];
+const mSalta = ()=> keys[' ']||keys['z']||mando[' '];
+const mAccion= ()=> keys['shift']||keys['x']||mando['shift'];
 let puntosMJ = 0;               /* marcador propio de cada partida */
 function sumar(n){ puntosMJ += n; puntos += n; }
 
