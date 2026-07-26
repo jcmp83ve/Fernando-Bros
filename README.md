@@ -20,7 +20,8 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 
 ## ⭐ Particularidades del juego
 
-- **Vidas infinitas ∞** — aquí nunca se pierde: si te caes, vuelves a empezar el nivel sin castigo.
+- **Vidas infinitas ∞** — aquí nunca se pierde: si te caes, vuelves a empezar sin castigo.
+- **Puntos de control 🚩** — como los mundos son largos, Fernando va guardando el camino solo: al caerse reaparece en el último punto de control, no al principio.
 - **Los perritos** — **Penny** (negra) y **Sheldon** (marrón) acompañan a Fernando a todas partes.
 - **El hongo 🍄** — al comerlo, Fernando crece y dice con voz de niño: *«¡Soy el pichunguito de tío Juan!»*
 - **La estrella ★** — aparece el superhéroe **Tío Juan**, que le da una **hamburguesa** a Fernando para que corra a súper velocidad (y sea invencible).
