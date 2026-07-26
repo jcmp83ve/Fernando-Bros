@@ -410,7 +410,11 @@ function nuevoMapa(w){
 }
 const setT=(x,y,c)=>{ if(y>=0&&y<ROWS&&x>=0&&x<LEVW) grid[y][x]=c; };
 const getT=(x,y)=>{ if(y<0||x<0||x>=LEVW) return '.'; if(y>=ROWS) return '#'; return grid[y][x]; };
-function hueco(x0,x1){ for(let x=x0;x<=x1;x++){ setT(x,13,'.'); setT(x,14,'.'); } }
+function hueco(x0,x1){
+  /* máximo 2 casillas: se cruzan con un salto normal, sin necesidad de correr */
+  const fin = Math.min(x1, x0+1);
+  for(let x=x0;x<=fin;x++){ setT(x,13,'.'); setT(x,14,'.'); }
+}
 function fila(x0,x1,y,c){ for(let x=x0;x<=x1;x++) setT(x,y,c); }
 function colina(x,w,h){ for(let i=0;i<h;i++) fila(x+i, x+w-1-i, 12-i, 'W'); }
 function tubo(x,h){ for(let i=0;i<h;i++){ setT(x,12-i,'l'); setT(x+1,12-i,'l'); } }
@@ -742,6 +746,7 @@ function cargarNivel(i){
   J.tiofran=false; J.yanny=false; J.nacho=false; J.beto=false; J.giuliana=false;
   J.perro=0; J.enAvion=0; J.enBarco=false;
   J.luca=false; J.salomon=false; J.superSalto=false;
+  J.cpX = infoNivel.spawn.x*TILE; J.cpY = infoNivel.spawn.y*TILE; J.cpAviso = 0;
   historia = [];
   for(const e of entidadesNivel){
     if (e.tipo==='goomba') enemigos.push({tipo:'goomba', x:e.x, y:e.y, vx:-0.8, vy:0, w:26, h:24, vivo:true});
@@ -877,8 +882,10 @@ function morir(){
   J.muerto = 110; J.vy = -10; muertes++; sfx.muerte(); sacudir(5);
 }
 function respawn(){
-  const s = infoNivel.spawn;
-  J.x=s.x*TILE; J.y=s.y*TILE; J.vx=0; J.vy=0; J.muerto=0;
+  /* vuelve al último punto de control, no al principio del mundo */
+  J.x = J.cpX!==undefined ? J.cpX : infoNivel.spawn.x*TILE;
+  J.y = J.cpY!==undefined ? J.cpY : infoNivel.spawn.y*TILE;
+  J.vx=0; J.vy=0; J.muerto=0;
   J.grande=false; J.fuego=false; J.burger=0; J.invul=120;
   J.perro=0; J.enAvion=0; J.enBarco=false; tiempo=300; tiempoAcum=0;
   historia=[]; cortina = 32;
@@ -956,6 +963,7 @@ function update(){
   let c = chocaMapa(J.x, J.y, J.w, h);
   if (c){ if(J.vx>0) J.x=c.tx*TILE-J.w; else if(J.vx<0) J.x=(c.tx+1)*TILE; J.vx=0; }
   J.y += J.vy;
+  if (J.y < -36){ J.y = -36; J.vy = 0; }        // techo: nunca se pierde de vista por arriba
   c = chocaMapa(J.x, J.y, J.w, h);
   J.enSuelo=false;
   if (c){
@@ -1021,6 +1029,17 @@ function update(){
   /* burbujas en el mundo marino */
   if (enAgua && tick%14===0)
     parts.push({tipo:'burbujaAgua', x:J.x+Math.random()*80-30, y:J.y+20, vy:-1.2-Math.random(), t:80});
+
+  /* punto de control: se guarda al pisar suelo firme cada cierto trecho */
+  if (J.enSuelo && J.muerto===0 && J.x > (J.cpX||0) + 26*TILE){
+    const ctx2 = Math.floor((J.x+J.w/2)/TILE);
+    if (getT(ctx2,13)==='#' && getT(ctx2+1,13)==='#'){
+      J.cpX = J.x; J.cpY = J.y; J.cpAviso = 90;
+      destello(J.x+J.w/2, J.y+altoJ()-10);
+      sfx.moneda();
+    }
+  }
+  if (J.cpAviso>0) J.cpAviso--;
 
   /* rastro para seguidores */
   historia.unshift({x:J.x, y:J.y+h-28, cara:J.cara});
@@ -1228,7 +1247,8 @@ function update(){
         iniciarMeta({x:n.x, y:n.y, activo:false});
       }
     } else if (n.tipo==='meta'){
-      if (estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x,y:n.y,w:40,h:13*TILE-n.y})){
+      /* la barra de meta cubre TODO el alto: no se puede pasar de largo por arriba */
+      if (estado==='juego' && solapa({x:J.x,y:J.y,w:J.w,h}, {x:n.x-6, y:-200, w:52, h:13*TILE+200})){
         iniciarMeta(n);
       }
     }
@@ -2321,7 +2341,7 @@ function dibMenu(){
   ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v26', W-30, 18);
+  ctx.fillText('v27', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2454,7 +2474,7 @@ function dibSelPista(){
   if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-18);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v26', W-34, 18);
+  ctx.fillText('v27', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -2541,6 +2561,18 @@ function updateKart(){
     if ((c.x-wp[0])**2 + (c.y-wp[1])**2 < (ANCHO_PISTA*1.5)**2) c.wpi++;
     c.vuelta = Math.floor((c.wpi-1)/NWP);
     c.cd--;
+  }
+  /* rescate: si un kart se pierde lejos de la pista, vuelve al trazado */
+  for(const c of corredores){
+    const fuera = distPista(c.x, c.y) > 300;
+    c.perdido = fuera ? (c.perdido||0)+1 : 0;
+    if (c.perdido > 90){
+      const t = PISTA[c.wpi % NWP], t2 = PISTA[(c.wpi+1) % NWP];
+      c.x = t[0]; c.y = t[1];
+      c.ang = Math.atan2(t2[1]-t[1], t2[0]-t[0]);
+      c.vel = 1; c.perdido = 0;
+      if (c.esJugador){ sfx.dano(); burbuja('¡A la pista, pichunguito!'); }
+    }
   }
   /* recoger cajas de poder */
   for(const cp of cajasPoder){
@@ -3185,7 +3217,7 @@ function dibMapa(){
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v26', W-34, 18);
+  ctx.fillText('v27', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
