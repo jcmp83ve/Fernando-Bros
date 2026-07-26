@@ -21,13 +21,16 @@
     color:#fff;font-size:22px;font-weight:bold;display:none;align-items:center;justify-content:center;
     z-index:10}
   @media (pointer:coarse){ .tbtn{display:flex} }
-  #bL{left:16px} #bR{left:92px} #bDown{left:54px;bottom:92px;width:56px;height:56px}
+  #bL{left:16px;bottom:88px} #bR{left:92px;bottom:88px}
+  #bUp{left:54px;bottom:150px;width:56px;height:56px}
+  #bDown{left:54px;bottom:26px;width:56px;height:56px}
   #bB{right:96px} #bA{right:16px;bottom:44px}
 </style>
 </head>
 <body>
 <div id="wrap"><canvas id="cv" width="960" height="540"></canvas></div>
-<div class="tbtn" id="bL">◀</div><div class="tbtn" id="bR">▶</div><div class="tbtn" id="bDown">▼</div>
+<div class="tbtn" id="bL">◀</div><div class="tbtn" id="bR">▶</div>
+<div class="tbtn" id="bUp">▲</div><div class="tbtn" id="bDown">▼</div>
 <div class="tbtn" id="bB">B</div><div class="tbtn" id="bA">A</div>
 <script>
 /* Carga el juego con una marca de tiempo única: así el navegador nunca
