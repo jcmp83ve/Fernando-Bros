@@ -377,10 +377,12 @@ cv.addEventListener('pointerdown', (e)=>{
   const mx = (e.clientX-r.left)*(W/r.width), my = (e.clientY-r.top)*(H/r.height);
   if (estado==='menu') estado='mapa';
   else if (estado==='kartPista'){
+    if (enAtras(mx,my)){ estado='mapa'; return; }
     for(const c of cajasPista())
       if (mx>=c.x && mx<=c.x+c.w && my>=c.y && my<=c.y+c.h){ selPista=c.idx; iniciarCarrera(c.idx); break; }
   }
   else if (estado==='mapa'){
+    if (enAtras(mx,my)){ estado='menu'; return; }
     for(const c of cajasMapa()){
       if (mx>=c.x && mx<=c.x+c.w && my>=c.y && my<=c.y+c.h){
         selMapa=c.idx;
@@ -2341,7 +2343,7 @@ function dibMenu(){
   ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v27', W-30, 18);
+  ctx.fillText('v28', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2471,10 +2473,11 @@ function dibSelPista(){
     ctx.fillText(c.p.nombre, c.x+c.w/2, c.y+c.h-14);
   }
   ctx.fillStyle='#fff'; ctx.font='bold 18px monospace';
-  if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-18);
+  if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ✕ VOLVER para salir', W/2, H-18);
   ctx.textAlign='left';
+  dibBotonAtras('✕ VOLVER');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v27', W-34, 18);
+  ctx.fillText('v28', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3167,6 +3170,19 @@ let selMapa = 0;
 const NOMBRES_MAPA = ['PRADERA','CIELOS','BOSQUE','PLAYA','CUEVA','NUBES','DESIERTO','CASTILLO','MAR','BOWSER'];
 const COLORES_MAPA = ['#5c94fc','#48b0e8','#4a9c58','#6bd0f8','#2a2a48','#7ec8f8','#d89040','#3a3a5c','#1560c8','#2a1a3c'];
 const EMOJIS_MAPA = ['🌄','☁️','🌲','🏖️','🦇','☁️','🌵','🏰','🌊','🐢'];
+/* botón de volver de las pantallas de selección: sin él, en el celular
+   no había forma de regresar (no hay tecla ESC en la pantalla táctil) */
+function zonaAtras(){ return {x:18, y:14, w:146, h:40}; }
+function dibBotonAtras(txt){
+  const z = zonaAtras();
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.beginPath(); ctx.roundRect(z.x, z.y, z.w, z.h, 12); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font='bold 16px monospace';
+  ctx.fillText(txt, z.x+z.w/2, z.y+26);
+  ctx.textAlign='left';
+}
+const enAtras = (mx,my) => { const z=zonaAtras(); return mx>=z.x && mx<=z.x+z.w && my>=z.y && my<=z.y+z.h; };
 function cajasMapa(){
   const cajas=[];
   for(let i=0;i<10;i++){
@@ -3216,8 +3232,9 @@ function dibMapa(){
     }
   }
   ctx.textAlign='left';
+  dibBotonAtras('✕ MENÚ');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v27', W-34, 18);
+  ctx.fillText('v28', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;

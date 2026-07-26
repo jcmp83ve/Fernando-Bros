@@ -64,19 +64,23 @@ Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publ�
 
 ## 🗺️ Selector de mundos
 
-Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 8 mundos directamente, o saltar de una vez a **Fernando Kart** sin esperar al final.
+Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart** y a la **Sala Arcade** sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
 
 ## 🕹️ Sala Arcade
 
-Cuatro minijuegos con los personajes del juego, desde el selector de mundos:
+Siete minijuegos con los personajes del juego, desde el selector de mundos. **Todos tienen vidas infinitas ∞**: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro, nunca se acaba la partida. Y **cada juego tiene su propio poder**:
 
-- 🐦 **Fernando Birds** — lanza a Penny, Sheldon y Cucú con la resortera contra las torres de goombas
-- ⛏️ **Fernando Dig** — cava túneles e infla a los goombas con la bomba de aire, esquivando rocas
-- 🛢️ **Fernando Kong** — sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa
-- 🔫 **Fernando Contra** — avanza disparando por la selva con Tío Juan de apoyo, hasta el jefe final
-- 🎈 **Fernando Globos** — vuela aleteando con globos y revienta los de los koopas desde arriba
-- 💣 **Fernando Bombas** — pon bombas en el laberinto para atrapar goombas (aguantas 3 golpes)
-- 🧊 **Fernando Hielo** — rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú
+| Minijuego | De qué va | Poder |
+|---|---|---|
+| 🐦 **Fernando Birds** | Lanza a Penny, Sheldon y Cucú con la resortera contra las torres de goombas. Los lanzamientos son **infinitos** | En pleno vuelo, toca la pantalla (o A/B): 🚀 **Penny cohete**, 💨 **pedo de Sheldon** que hace estallar todo, 👧 **Cucú se multiplica por tres** |
+| ⛏️ **Fernando Dig** | Cava túneles e infla a los goombas con la bomba de aire, esquivando rocas | **A** = 💨 **pedo de tío Fran**: infla de golpe a todos los goombas de alrededor |
+| 🛢️ **Fernando Kong** | Sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa | 🔨 **Martillo pichunguito**: hay dos en la torre; con él los barriles se rompen al tocarlos |
+| 🔫 **Fernando Contra** | Avanza disparando por la selva con Tío Juan de apoyo, hasta el jefe final | 🦴 Cada tres enemigos cae un **hueso**: Fernando se vuelve **perrito rojo gigante**, dispara en abanico y arrolla a todos |
+| 🎈 **Fernando Globos** | Vuela aleteando con globos y revienta los de los koopas desde arriba | **B** = 💨 **impulso pedorro**, y hay 🎈 **globos sueltos** que dan un tercer globo |
+| 💣 **Fernando Bombas** | Pon bombas en el laberinto para atrapar goombas | **A** = 💨 **súper pedo en cruz** (no te hace daño), y las cajas rotas sueltan 🔥 más alcance, 💣 más bombas y 👟 más velocidad |
+| 🧊 **Fernando Hielo** | Rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú | **B** = 🦘 **salto de papá**: sube dos pisos de un golpe y el cabezazo rompe **tres bloques** a la vez |
+
+Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
 
 ## 🏁 Fernando Kart
 
