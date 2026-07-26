@@ -239,18 +239,30 @@ addEventListener('keydown', e=>{
   if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key)) e.preventDefault();
   keys[e.key.toLowerCase()] = true; keys[e.key] = true;
   audio();
+  if (mjActivo()){ MJ.tecla(e.key); return; }
   if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
   else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) estado='mapa';
   else if (estado==='mapa'){
-    if (e.key==='ArrowLeft') selMapa=(selMapa+10)%11;
-    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%11;
-    else if (e.key==='ArrowUp') selMapa = selMapa===10 ? 7 : Math.max(selMapa-5, 0);
-    else if (e.key==='ArrowDown') selMapa = selMapa>=5 && selMapa<10 ? 10 : Math.min(selMapa+5, 10);
+    if (e.key==='ArrowLeft') selMapa=(selMapa+11)%12;
+    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%12;
+    else if (e.key==='ArrowUp') selMapa = selMapa>=10 ? (selMapa===10?5:8) : Math.max(selMapa-5, 0);
+    else if (e.key==='ArrowDown') selMapa = selMapa>=5 && selMapa<10 ? (selMapa<8?10:11) : Math.min(selMapa+5, 11);
     else if (e.key>='1'&&e.key<='9') { empezarJuego(+e.key-1); }
     else if (e.key==='0') { empezarJuego(9); }
     else if (e.key==='k'||e.key==='K') iniciarKart();
-    else if (e.key==='Enter'||e.key===' '){ if(selMapa===10) iniciarKart(); else empezarJuego(selMapa); }
+    else if (e.key==='a'||e.key==='A') { if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+    else if (e.key==='Enter'||e.key===' '){
+      if(selMapa===10) iniciarKart();
+      else if(selMapa===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+      else empezarJuego(selMapa);
+    }
     else if (e.key==='Escape') estado='menu';
+  }
+  else if (estado==='kartPista'){
+    if (e.key==='ArrowLeft') selPista=(selPista+PISTAS.length-1)%PISTAS.length;
+    else if (e.key==='ArrowRight') selPista=(selPista+1)%PISTAS.length;
+    else if (e.key==='Enter'||e.key===' ') iniciarCarrera(selPista);
+    else if (e.key==='Escape') estado='mapa';
   }
   else if (estado==='kartFin' && (e.key==='Enter'||e.key===' ')) estado='fin';
   else if (estado==='fin' && (e.key==='Enter')) estado='menu';
@@ -265,7 +277,16 @@ function tocar(id, k){
       else if(k==='arrowright') selMapa=(selMapa+1)%11;
       else if(k==='arrowdown') selMapa = selMapa>=5 && selMapa<10 ? 10 : Math.min(selMapa+5, 10);
       else if(k==='shift') iniciarKart();
-      else if(k===' '){ if(selMapa===10) iniciarKart(); else empezarJuego(selMapa); }
+      else if(k===' '){
+        if(selMapa===10) iniciarKart();
+        else if(selMapa===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+        else empezarJuego(selMapa);
+      }
+    }
+    else if(estado==='kartPista'){
+      if(k==='arrowleft') selPista=(selPista+PISTAS.length-1)%PISTAS.length;
+      else if(k==='arrowright') selPista=(selPista+1)%PISTAS.length;
+      else if(k===' ') iniciarCarrera(selPista);
     }
     else if(estado==='kartFin'){ estado='fin'; } };
   const off= ev=>{ ev.preventDefault(); keys[k]=false; };
@@ -279,11 +300,17 @@ cv.addEventListener('pointerdown', (e)=>{
   const r = cv.getBoundingClientRect();
   const mx = (e.clientX-r.left)*(W/r.width), my = (e.clientY-r.top)*(H/r.height);
   if (estado==='menu') estado='mapa';
+  else if (estado==='kartPista'){
+    for(const c of cajasPista())
+      if (mx>=c.x && mx<=c.x+c.w && my>=c.y && my<=c.y+c.h){ selPista=c.idx; iniciarCarrera(c.idx); break; }
+  }
   else if (estado==='mapa'){
     for(const c of cajasMapa()){
       if (mx>=c.x && mx<=c.x+c.w && my>=c.y && my<=c.y+c.h){
         selMapa=c.idx;
-        if (c.idx===10) iniciarKart(); else empezarJuego(c.idx);
+        if (c.idx===10) iniciarKart();
+        else if (c.idx===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+        else empezarJuego(c.idx);
         break;
       }
     }
@@ -781,8 +808,10 @@ function respawn(){
 }
 
 /* ---------------- Actualización ---------------- */
+const mjActivo = ()=> typeof MJ !== 'undefined' && MJ.activo();
 function update(){
   tick++;
+  if (mjActivo()){ MJ.update(); return; }
   if (estado==='kart'){ updateKart(); return; }
   if (estado!=='juego' && estado!=='meta') return;
 
@@ -1862,9 +1891,11 @@ function dibBurbujas(){
 
 function draw(){
   ctx.clearRect(0,0,W,H);
+  if (mjActivo()){ MJ.draw(); return; }
   if (estado==='menu'){ dibMenu(); return; }
   if (estado==='mapa'){ dibMapa(); return; }
   if (estado==='fin'){ dibFin(); return; }
+  if (estado==='kartPista'){ dibSelPista(); dibFXFinales(); return; }
   if (estado==='kart'){ drawKart(); return; }
   if (estado==='kartFin'){ drawKartFin(); return; }
   /* el mundo se dibuja con zoom (más grande); el HUD va aparte sin zoom */
@@ -2200,7 +2231,7 @@ function dibMenu(){
   ctx.fillText('¿No escuchas las voces? Quita el modo silencio del teléfono y sube el volumen', W/2, 530);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v21', W-30, 18);
+  ctx.fillText('v23', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2252,17 +2283,82 @@ function dibFin(){
 /* ============================================================
    FERNANDO KART — ¡carrera con todos los personajes!
    ============================================================ */
-const PISTA = [[300,300],[700,210],[1120,250],[1430,420],[1520,720],[1330,960],[930,1040],[520,990],[240,800],[180,520]];
-const NWP = PISTA.length, ANCHO_PISTA = 110, VUELTAS = 3;
-const MUNDO_KX = 1750, MUNDO_KY = 1250;
+const PISTAS = [
+  { nombre:'CIRCUITO PICHUNGUITO', emoji:'🌄', cielo:['#2a6ad0','#aadcf8'],
+    suelo:['#3fae2f','#379d28'], fondo:[63,174,47], kx:1750, ky:1250,
+    pts:[[300,300],[700,210],[1120,250],[1430,420],[1520,720],[1330,960],[930,1040],[520,990],[240,800],[180,520]] },
+  { nombre:'PLAYA DE PENNY', emoji:'🏖️', cielo:['#1e8fd0','#bfeaff'],
+    suelo:['#e8cf8a','#dcbf72'], fondo:[232,207,138], kx:1900, ky:1300,
+    pts:[[320,260],[820,200],[1300,300],[1620,560],[1660,900],[1380,1120],[900,1180],[480,1080],[220,840],[200,520]] },
+  { nombre:'CASTILLO DE BOWSER', emoji:'🐢', cielo:['#241436','#6a4a8a'],
+    suelo:['#4a4458','#413b4e'], fondo:[74,68,88], kx:1700, ky:1400,
+    pts:[[280,300],[760,240],[1180,340],[1450,600],[1380,900],[1000,1080],[620,1160],[300,1000],[200,700],[190,480]] },
+];
+let pistaIdx = 0, PISTA = PISTAS[0].pts;
+let NWP = PISTA.length, MUNDO_KX = PISTAS[0].kx, MUNDO_KY = PISTAS[0].ky;
+const ANCHO_PISTA = 110, VUELTAS = 3;
+function cargarPista(i){
+  pistaIdx = i;
+  const p = PISTAS[i];
+  PISTA = p.pts; NWP = PISTA.length; MUNDO_KX = p.kx; MUNDO_KY = p.ky;
+  pistaData = null;                    // obliga a redibujar la textura
+  drawKart.gcielo = null; drawKart.gn = null; drawKart.gsol = null; drawKart.gbruma = null;
+}
 let corredores = [], KJ = null, kartT = 0, resultadoKart = [];
+/* poderes: caparazón de tortuga, estrella mágica y hamburguesa */
+const PODERES = [
+  {id:'tortuga', nombre:'CAPARAZÓN', emoji:'🐢', color:'#3aa030'},
+  {id:'estrella', nombre:'ESTRELLA MÁGICA', emoji:'⭐', color:'#ffe36e'},
+  {id:'burger', nombre:'HAMBURGUESA', emoji:'🍔', color:'#e8a33d'},
+];
+let cajasPoder = [], caparazones = [];
 const KART_CHARS = [
   ['fernando','Fernando','#d82800'], ['penny','Penny','#222222'], ['sheldon','Sheldon','#8a5a2a'],
   ['cucu','Cucú','#ff6ec0'], ['luca','Luca','#2a9c3a'], ['salomon','Salomón','#d86a28'],
   ['tiojuan','Tío Juan','#1560d0'], ['nacho','Tío Nacho','#e8a33d'], ['yanny','Tía Yanny','#b05ad0'],
   ['tiofran','Tío Fran','#8a6a3a'], ['romulo','Rómulo','#7a7a8a'],
 ];
-function iniciarKart(){
+let selPista = 0;
+function iniciarKart(){ estado='kartPista'; selPista = 0; cortina = 30; }
+function cajasPista(){
+  return PISTAS.map((p,i)=>({x:60+i*300, y:170, w:280, h:230, idx:i, p}));
+}
+function dibSelPista(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1a4a'); g.addColorStop(1,'#2a5aa8');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.textAlign='center';
+  ctx.fillStyle='#f8b800'; ctx.font='bold 38px monospace';
+  ctx.fillText('🏁 ELIGE TU PISTA 🏁', W/2, 90);
+  ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
+  ctx.fillText('¡Recoge las cajas y usa el botón B para lanzar tu poder!', W/2, 122);
+  for(const c of cajasPista()){
+    const s = selPista===c.idx;
+    ctx.fillStyle = c.p.cielo[0];
+    ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,16); ctx.fill();
+    ctx.lineWidth = s?6:3; ctx.strokeStyle = s?'#ffe36e':'rgba(255,255,255,0.45)'; ctx.stroke();
+    if (s){ ctx.globalAlpha=0.3+Math.sin(tick/7)*0.2; ctx.lineWidth=12; ctx.stroke(); ctx.globalAlpha=1; }
+    /* miniatura del trazado */
+    ctx.strokeStyle=c.p.suelo[0]; ctx.lineWidth=16; ctx.lineJoin='round';
+    ctx.beginPath();
+    const e = 0.11, ox = c.x+c.w/2 - c.p.kx*e/2, oy = c.y+130 - c.p.ky*e/2;
+    ctx.moveTo(ox+c.p.pts[0][0]*e, oy+c.p.pts[0][1]*e);
+    for(let i=1;i<=c.p.pts.length;i++){ const q=c.p.pts[i%c.p.pts.length]; ctx.lineTo(ox+q[0]*e, oy+q[1]*e); }
+    ctx.closePath(); ctx.stroke();
+    ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=3; ctx.stroke();
+    ctx.font='30px monospace'; ctx.fillStyle='#fff';
+    ctx.fillText(c.p.emoji, c.x+c.w/2, c.y+44);
+    ctx.font='bold 15px monospace'; ctx.fillStyle='#ffe36e';
+    ctx.fillText(c.p.nombre, c.x+c.w/2, c.y+c.h-18);
+  }
+  ctx.fillStyle='#fff'; ctx.font='bold 18px monospace';
+  if ((tick>>4)%2===0) ctx.fillText('Toca una pista · flechas + ENTER · ESC vuelve', W/2, H-30);
+  ctx.textAlign='left';
+  ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
+  ctx.fillText('v23', W-34, 18);
+}
+function iniciarCarrera(idx){
+  cargarPista(idx===undefined ? 0 : idx);
   estado='kart'; kartT=0; resultadoKart=[]; burbujas=[]; parts=[];
   const a0 = Math.atan2(PISTA[1][1]-PISTA[0][1], PISTA[1][0]-PISTA[0][0]);
   corredores = KART_CHARS.map(([tipo,nombre,color],i)=>({
@@ -2273,11 +2369,37 @@ function iniciarKart(){
     esJugador: tipo==='fernando',
     velBase: 3.9 + (i%5)*0.14 + (tipo==='romulo'?-0.4:0) + (tipo==='tiojuan'?0.25:0),
     claro: aclarar(color,0.45), oscuro: oscurecer(color,0.4),
+    poder: null, estrella: 0, frenado: 0,
   }));
   KJ = corredores[0]; cortina = 45;
+  /* cajas de poder repartidas por la pista */
+  cajasPoder = []; caparazones = [];
+  for(let i=0;i<NWP;i++){
+    const [ax,ay] = PISTA[i], [bx,by] = PISTA[(i+1)%NWP];
+    for(const t of [0.35, 0.7]){
+      const cx2 = ax+(bx-ax)*t, cy2 = ay+(by-ay)*t;
+      const ang = Math.atan2(by-ay, bx-ax) + Math.PI/2;
+      for(const lado of [-45, 0, 45])
+        cajasPoder.push({x:cx2+Math.cos(ang)*lado, y:cy2+Math.sin(ang)*lado, t:0, activa:true});
+    }
+  }
   if (!pistaData) prepararMode7();
   burbuja('¡Fernando Kart! ¡A correr, pichunguitos!');
   hablar('¡Fernando Kart! ¡A correr, pichunguitos!');
+}
+function usarPoder(c){
+  const p = c.poder; c.poder = null;
+  if (p==='tortuga'){
+    caparazones.push({x:c.x + Math.cos(c.ang)*38, y:c.y + Math.sin(c.ang)*38,
+                      ang:c.ang, wpi:c.wpi, t:420, de:c});
+    if (c.esJugador){ sfx.fuego(); burbuja('¡Toma, pichungazo!'); }
+  } else if (p==='estrella'){
+    c.estrella = 330;
+    if (c.esJugador){ sfx.poder(); burbuja('¡Estrella mágica!'); hablar('¡Toma, pichungazo!'); }
+  } else if (p==='burger'){
+    c.turbo = 90; c.turboCd = 0;
+    if (c.esJugador){ sfx.poder(); burbuja('¡Qué rica hamburguesa!'); hablar('¡Qué rica hamburguesa!'); }
+  }
 }
 function distPista(x,y){
   let m = 1e9;
@@ -2301,14 +2423,15 @@ function updateKart(){
       if (kSalto() && !c.turboPrev && c.turboCd<=0){ c.turbo=55; c.turboCd=260; sfx.fuego(); }
       c.turboPrev = kSalto();
       if (c.turbo>0) c.turbo--;
-      const vmax = (enP?6.3:2.3) + (c.turbo>0?2.6:0);
+      const vmax = ((enP?6.3:2.3) + (c.turbo>0?2.6:0) + (c.estrella>0?2.2:0)) * (c.frenado>0?0.45:1);
       c.vel += (c.vel<vmax ? 0.09 : -0.18);
     } else {
       const t2 = PISTA[c.wpi%NWP];
       let d = Math.atan2(t2[1]-c.y, t2[0]-c.x) - c.ang;
       while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
       c.ang += Math.max(-0.06, Math.min(0.06, d));
-      const vmax = (enP ? c.velBase + Math.sin((kartT+c.x)/80)*0.3 : 2.2);
+      const vmax = ((enP ? c.velBase + Math.sin((kartT+c.x)/80)*0.3 : 2.2)
+        + (c.turbo>0?2.4:0) + (c.estrella>0?2:0)) * (c.frenado>0?0.45:1);
       c.vel += (c.vel<vmax ? 0.08 : -0.12);
     }
     c.x += Math.cos(c.ang)*c.vel;
@@ -2319,6 +2442,63 @@ function updateKart(){
     if ((c.x-wp[0])**2 + (c.y-wp[1])**2 < (ANCHO_PISTA*1.5)**2) c.wpi++;
     c.vuelta = Math.floor((c.wpi-1)/NWP);
     c.cd--;
+  }
+  /* recoger cajas de poder */
+  for(const cp of cajasPoder){
+    cp.t++;
+    if (!cp.activa){ if (cp.t - cp.tomada > 420) cp.activa = true; continue; }
+    for(const c of corredores){
+      if ((c.x-cp.x)**2 + (c.y-cp.y)**2 < 40*40){
+        cp.activa = false; cp.tomada = cp.t;
+        if (!c.poder){
+          c.poder = PODERES[(Math.random()*PODERES.length)|0].id;
+          if (c.esJugador) sfx.moneda();
+        }
+        break;
+      }
+    }
+  }
+  /* usar el poder (jugador con el botón B / MAYÚS) */
+  if (KJ.poder && kCorre() && !KJ.poderPrev){
+    usarPoder(KJ);
+  }
+  KJ.poderPrev = kCorre();
+  /* la máquina usa su poder al rato de tenerlo */
+  for(const c of corredores){
+    if (!c.esJugador && c.poder && kartT % 90 === (c.wpi*7)%90) usarPoder(c);
+    if (c.estrella > 0) c.estrella--;
+    if (c.frenado > 0){ c.frenado--; c.vel *= 0.9; }
+  }
+  /* caparazones en vuelo */
+  for(const cap of caparazones){
+    cap.t--;
+    const obj = PISTA[cap.wpi % NWP];
+    let d = Math.atan2(obj[1]-cap.y, obj[0]-cap.x) - cap.ang;
+    while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI;
+    cap.ang += Math.max(-0.08, Math.min(0.08, d));
+    cap.x += Math.cos(cap.ang)*8.5; cap.y += Math.sin(cap.ang)*8.5;
+    if ((cap.x-obj[0])**2 + (cap.y-obj[1])**2 < 120*120) cap.wpi++;
+    for(const c of corredores){
+      if (c === cap.de || c.estrella>0) continue;
+      if ((c.x-cap.x)**2 + (c.y-cap.y)**2 < 34*34){
+        cap.t = 0; c.frenado = 70; c.vel *= 0.35;
+        if (c.esJugador){ sfx.dano(); sacudir(5); }
+        else if (cap.de.esJugador){ puntos += 300; sfx.pisoton(); }
+        for(let i=0;i<6;i++) parts.push({tipo:'estrellita', x:c.x, y:c.y, vx:(Math.random()-0.5)*4, vy:-2-Math.random()*3, t:30});
+      }
+    }
+  }
+  caparazones = caparazones.filter(c=>c.t>0);
+  /* la estrella mágica arrolla a quien toque */
+  for(const c of corredores){
+    if (c.estrella<=0) continue;
+    for(const o of corredores){
+      if (o===c || o.estrella>0) continue;
+      if ((o.x-c.x)**2 + (o.y-c.y)**2 < 40*40){
+        o.frenado = 60; o.vel *= 0.4;
+        if (c.esJugador) puntos += 200;
+      }
+    }
   }
   /* choques suaves entre karts */
   for(let i=0;i<corredores.length;i++) for(let j=i+1;j<corredores.length;j++){
@@ -2389,7 +2569,8 @@ function prepararBuffer(){
     bufCtx = bufCanvas.getContext('2d');
     bufImg = bufCtx.createImageData(bw, bh);
     buf32 = new Uint32Array(bufImg.data.buffer);
-    fondoVerde = LE ? (255<<24 | 47<<16 | 174<<8 | 63) : (63<<24 | 174<<16 | 47<<8 | 255);
+    const fc = PISTAS[pistaIdx].fondo;
+    fondoVerde = LE ? (255<<24 | fc[2]<<16 | fc[1]<<8 | fc[0]) : (fc[0]<<24 | fc[1]<<16 | fc[2]<<8 | 255);
     bufNivel = CAL.nivel;
   }catch(e){ buf32=null; }
 }
@@ -2400,8 +2581,8 @@ function prepararMode7(){
     pc.width=pcW; pc.height=pcH;
     const c2 = pc.getContext('2d');
     /* césped a cuadros como el Super Mario Kart de verdad */
-    c2.fillStyle='#3fae2f'; c2.fillRect(0,0,pcW,pcH);
-    c2.fillStyle='#379d28';
+    c2.fillStyle=PISTAS[pistaIdx].suelo[0]; c2.fillRect(0,0,pcW,pcH);
+    c2.fillStyle=PISTAS[pistaIdx].suelo[1];
     for(let gy=0;gy<pcH;gy+=64) for(let gx=0;gx<pcW;gx+=64)
       if (((gx>>6)+(gy>>6))%2===0) c2.fillRect(gx,gy,64,64);
     c2.save(); c2.scale(PC_S,PC_S);
@@ -2603,7 +2784,7 @@ function drawKart(){
     ctx.fillStyle = drawKart.gn;
     ctx.fillRect(-100, HORY, W+200, (B3H-B3HOR)*ESC3+40);
   } else {
-    ctx.fillStyle='#3fae2f'; ctx.fillRect(-100,HORY,W+200,H-HORY+100);
+    ctx.fillStyle=PISTAS[pistaIdx].suelo[0]; ctx.fillRect(-100,HORY,W+200,H-HORY+100);
   }
   /* función de proyección compartida */
   const proyectar = (x,y)=>{
@@ -2652,6 +2833,31 @@ function drawKart(){
       ctx.textAlign='left';
     }
   }
+  /* cajas de poder flotando sobre la pista */
+  for(const cp of cajasPoder){
+    if (!cp.activa) continue;
+    const pr = proyectar(cp.x, cp.y);
+    if (!pr || pr.fwd>2200) continue;
+    const s = Math.min(2.6, 420/pr.fwd);
+    const yy = pr.Y - 26*s + Math.sin(kartT/12 + cp.x)*4*s;
+    ctx.save(); ctx.translate(pr.X, yy); ctx.rotate(kartT/26);
+    ctx.fillStyle=`hsl(${(kartT*3+cp.x)%360},85%,60%)`;
+    ctx.fillRect(-13*s, -13*s, 26*s, 26*s);
+    ctx.strokeStyle='#fff'; ctx.lineWidth=2*s; ctx.strokeRect(-13*s,-13*s,26*s,26*s);
+    ctx.fillStyle='#fff'; ctx.font='bold '+(16*s|0)+'px monospace'; ctx.textAlign='center';
+    ctx.fillText('?', 0, 6*s); ctx.textAlign='left';
+    ctx.restore();
+  }
+  /* caparazones lanzados */
+  for(const cap of caparazones){
+    const pr = proyectar(cap.x, cap.y);
+    if (!pr || pr.fwd>2200) continue;
+    const s = Math.min(2.6, 420/pr.fwd);
+    ctx.save(); ctx.translate(pr.X, pr.Y-10*s); ctx.scale(s,s);
+    ctx.fillStyle='#3aa030'; ctx.beginPath(); ctx.ellipse(0,0,15,11,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#7ed040'; ctx.beginPath(); ctx.ellipse(0,0,10,7,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
   /* nubes de pedo proyectadas */
   for(const p of parts){
     if (p.tipo!=='pedo') continue;
@@ -2695,6 +2901,12 @@ function drawKart(){
   }
   /* el kart de Fernando, de espaldas, abajo al centro */
   ctx.save(); ctx.translate(W/2, H-18);
+  if (KJ.estrella>0){
+    ctx.globalAlpha=0.5;
+    ctx.fillStyle=`hsl(${(kartT*11)%360},95%,62%)`;
+    ctx.beginPath(); ctx.ellipse(0,-40,120,80,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+  }
   if (KJ.turbo>0){
     ctx.fillStyle=(tick>>1)%2?'#ff5000':'#ffe36e';
     ctx.beginPath(); ctx.ellipse(-11,4,9,22,0,0,Math.PI*2); ctx.ellipse(13,4,9,22,0,0,Math.PI*2); ctx.fill();
@@ -2721,7 +2933,20 @@ function drawKart(){
   const posicion = [...corredores].sort((a,b)=>b.wpi-a.wpi).indexOf(KJ)+1;
   ctx.fillText('VUELTA '+Math.min(KJ.vuelta+1,VUELTAS)+'/'+VUELTAS+'   POSICIÓN '+posicion+'/'+corredores.length, 220, 29);
   ctx.font='13px monospace'; ctx.fillStyle='#8ecbff';
-  ctx.fillText(KJ.turboCd<=0?'ESPACIO/A = TURBO ✦':'turbo en '+Math.ceil(KJ.turboCd/60)+'s', 640, 29);
+  ctx.fillText(KJ.turboCd<=0?'A = TURBO ✦':'turbo en '+Math.ceil(KJ.turboCd/60)+'s', 596, 29);
+  /* caja de poder del jugador */
+  const px3 = 720, py3 = 5;
+  ctx.fillStyle='rgba(255,255,255,0.14)';
+  ctx.beginPath(); ctx.roundRect(px3, py3, 34, 34, 8); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.45)'; ctx.lineWidth=2; ctx.stroke();
+  if (KJ.poder){
+    const pd2 = PODERES.find(p=>p.id===KJ.poder);
+    ctx.font='22px monospace'; ctx.textAlign='center';
+    ctx.fillText(pd2.emoji, px3+17, py3+26);
+    ctx.font='11px monospace'; ctx.fillStyle='#ffe36e';
+    ctx.fillText('B = usar', px3+17, py3+43);
+    ctx.textAlign='left';
+  }
   /* posición gigante estilo Mario Kart 64 */
   const posK = [...corredores].sort((a,b)=>b.wpi-a.wpi).indexOf(KJ)+1;
   ctx.save();
@@ -2815,9 +3040,10 @@ function cajasMapa(){
   const cajas=[];
   for(let i=0;i<10;i++){
     const col=i%5, row=(i/5)|0;
-    cajas.push({x:30+col*184, y:142+row*132, w:168, h:112, idx:i});
+    cajas.push({x:30+col*184, y:130+row*126, w:168, h:106, idx:i});
   }
-  cajas.push({x:W/2-220, y:424, w:440, h:70, idx:10});
+  cajas.push({x:W/2-330, y:400, w:320, h:64, idx:10});
+  cajas.push({x:W/2+10,  y:400, w:320, h:64, idx:11});
   return cajas;
 }
 function dibMapa(){
@@ -2828,10 +3054,10 @@ function dibMapa(){
   ctx.fillStyle='#f8b800'; ctx.font='bold 40px monospace';
   ctx.fillText('ELIGE TU MUNDO', W/2, 70);
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
-  ctx.fillText('Toca un mundo (o flechas + ENTER) · ¡también puedes ir directo a la carrera!', W/2, 100);
+  ctx.fillText('Toca un mundo · o entra a la carrera y a la SALA ARCADE con sus minijuegos', W/2, 100);
   for(const c of cajasMapa()){
     const sel = selMapa===c.idx;
-    ctx.fillStyle = c.idx===10 ? '#0a3a12' : COLORES_MAPA[c.idx];
+    ctx.fillStyle = c.idx===10 ? '#0a3a12' : c.idx===11 ? '#3a0a3a' : COLORES_MAPA[c.idx];
     ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,12); ctx.fill();
     ctx.lineWidth = sel?6:3;
     ctx.strokeStyle = sel ? '#ffe36e' : 'rgba(255,255,255,0.5)';
@@ -2842,22 +3068,25 @@ function dibMapa(){
       ctx.globalAlpha = 1; ctx.lineWidth=3;
     }
     if (c.idx===10){
-      ctx.fillStyle='#7dffa0'; ctx.font='bold 28px monospace';
-      ctx.fillText('🏁 FERNANDO KART 🏁', W/2, c.y+46);
+      ctx.fillStyle='#7dffa0'; ctx.font='bold 22px monospace';
+      ctx.fillText('🏁 FERNANDO KART', c.x+c.w/2, c.y+40);
+    } else if (c.idx===11){
+      ctx.fillStyle='#ff9ed6'; ctx.font='bold 22px monospace';
+      ctx.fillText('🕹️ SALA ARCADE', c.x+c.w/2, c.y+40);
     } else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
       ctx.fillStyle='#fff'; ctx.font='bold 16px monospace';
       ctx.fillText('MUNDO '+(c.idx+1), c.x+c.w/2, c.y+22);
       ctx.font='bold 14px monospace'; ctx.fillStyle='#ffe36e';
-      ctx.fillText(NOMBRES_MAPA[c.idx], c.x+c.w/2, c.y+58);
+      ctx.fillText(NOMBRES_MAPA[c.idx], c.x+c.w/2, c.y+56);
       ctx.font='22px monospace';
-      ctx.fillText(EMOJIS_MAPA[c.idx]||'', c.x+c.w/2, c.y+94);
+      ctx.fillText(EMOJIS_MAPA[c.idx]||'', c.x+c.w/2, c.y+90);
     }
   }
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v21', W-34, 18);
+  ctx.fillText('v23', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
