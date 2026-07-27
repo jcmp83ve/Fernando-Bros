@@ -70,7 +70,7 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 
 ## 🕹️ Sala Arcade
 
-Siete minijuegos con los personajes del juego, desde el selector de mundos.
+Diez minijuegos con los personajes del juego, desde el selector de mundos.
 
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
 - **Seis niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el sexto. Arriba se ve **NIV 1/6**.
@@ -86,6 +86,9 @@ Siete minijuegos con los personajes del juego, desde el selector de mundos.
 | 🎈 **Fernando Globos** | Vuela aleteando con globos y revienta los de los koopas desde arriba | **B** = 💨 **impulso pedorro**, y hay 🎈 **globos sueltos** que dan un tercer globo |
 | 💣 **Fernando Bombas** | Pon bombas en el laberinto para atrapar goombas | **A** = 💨 **súper pedo en cruz** (no te hace daño), y las cajas rotas sueltan 🔥 más alcance, 💣 más bombas y 👟 más velocidad |
 | 🧊 **Fernando Hielo** | Rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú | **B** = 🦘 **salto de papá**: sube dos pisos de un golpe y el cabezazo rompe **tres bloques** a la vez |
+| 🏰 **Fernando Torre** | **Defensa de torres**: los goombas avanzan por el caminito hacia la casa donde está tu amigo. Coloca a **Penny** (rápida), **Sheldon** (pega fuerte) y **Tío Juan** (largo alcance) en el césped para frenarlos. Ganas monedas por cada goomba que cae, y hay hasta 8 oleadas | **▲ + B** = 💨 **pedo total**: daña de golpe a todos los goombas del campo |
+| 🎿 **Fernando Nieve** | **Bajada en tabla**: esquiva pinos y rocas, recoge hamburguesas y rescata a tu amigo a mitad de la montaña, hasta llegar a la meta | **A** salta por encima de los obstáculos · **B** = 🍔 **turbo de hamburguesa** (invencible y a toda velocidad) |
+| 🚀 **Fernando Luna** | **Alunizaje**: baja la nave con cuidado y pósala en las plataformas sin pasarte de velocidad ni de inclinación. Tres alunizajes por nivel, y en la plataforma dorada ★ espera tu amigo. Los medidores se ponen verdes cuando puedes posarte | **A** enciende el motor · **←→** giran · **B** = 🦸 **Tío Juan te sostiene** (media gravedad y no te estrellas) |
 
 Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
 

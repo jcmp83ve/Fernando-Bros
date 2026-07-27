@@ -24,7 +24,14 @@ const JUEGOS = [
    desc:'Bombas y poderes · poder: súper pedo en cruz'},
   {id:'hielo',  nombre:'FERNANDO HIELO',   emoji:'🧊', color:'#2a8aa0',
    desc:'Sube hasta Cucú · poder: salto de papá'},
+  {id:'torre',  nombre:'FERNANDO TORRE',   emoji:'🏰', color:'#2a6f26',
+   desc:'Pon a Penny y Tío Juan a frenar goombas'},
+  {id:'nieve',  nombre:'FERNANDO NIEVE',   emoji:'🎿', color:'#3a7ab0',
+   desc:'Baja la montaña esquivando pinos'},
+  {id:'luna',   nombre:'FERNANDO LUNA',    emoji:'🚀', color:'#3a2a7a',
+   desc:'Aluniza suavecito en las plataformas'},
 ];
+const COLS_ARCADE = 4;
 let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0;
 /* controles: la flecha arriba sirve para SUBIR, nunca para saltar */
 const mIzq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
@@ -94,7 +101,7 @@ const AMIGOS = [
   {id:'tiojuan',  nombre:'TÍO JUAN',     frase:'¡Te amo tío Juan, yo soy tu pichunguito!',
    dib:(x,y,t)=>dibTioJuan(x,y,t)},
 ];
-const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13};
+const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13, torre:1, nieve:4, luna:8};
 function amigoDeNivel(juego, n){
   /* en Kong mamá princesa ya espera arriba, así que ella no entra en el sorteo */
   const lista = juego==='kong' ? AMIGOS.filter(a=>a.id!=='mama') : AMIGOS;
@@ -1720,10 +1727,511 @@ function drawHielo(){
 }
 
 /* ============================================================
+   8) FERNANDO TORRE  (defensa de torres)
+   ============================================================ */
+const TD = { cx:0, cy:0, torres:[], enem:[], oleada:0, restan:0, spawn:0, monedas:0, tipo:0,
+             t:0, sustos:0, pedoCd:0, pedoPrev:false, ponPrev:false, camPrev:false, amigo:null, bajas:0 };
+const TC = 60, TW = 15, TH = 7, TX0 = 30, TY0 = 74, PEDO_TD = 420;
+/* el caminito que recorren los goombas, en casillas */
+const CAMINO = [[0,1],[1,1],[2,1],[3,1],[4,1],[4,2],[4,3],[4,4],[5,4],[6,4],[7,4],
+                [7,3],[7,2],[7,1],[8,1],[9,1],[10,1],[10,2],[10,3],[10,4],[10,5],
+                [11,5],[12,5],[13,5],[14,5]];
+const enCamino = (cx,cy) => CAMINO.some(c=>c[0]===cx && c[1]===cy);
+const TORRES = [
+  {id:'penny',   nombre:'PENNY',    coste:2, alcance:150, dano:1, cd:26, color:'#222'},
+  {id:'sheldon', nombre:'SHELDON',  coste:3, alcance:120, dano:3, cd:54, color:'#8a5a2a'},
+  {id:'tiojuan', nombre:'TÍO JUAN', coste:5, alcance:235, dano:2, cd:40, color:'#2a6ad0'},
+];
+const celPix = (cx,cy) => ({x: TX0 + cx*TC + TC/2, y: TY0 + cy*TC + TC/2});
+function iniciarTorre(){
+  const N = nivelDe('torre');
+  TD.torres = []; TD.enem = []; TD.t = 0; TD.sustos = 0; TD.bajas = 0;
+  TD.cx = 2; TD.cy = 3; TD.tipo = 0;
+  TD.monedas = 5 + N;
+  TD.oleada = 0; TD.restan = 0; TD.spawn = 40;
+  TD.oleadas = 2 + N;                       /* de 3 a 8 oleadas */
+  TD.pedoCd = 0; TD.pedoPrev = false; TD.ponPrev = false; TD.camPrev = false;
+  const casa = celPix(14,5);
+  TD.amigo = nuevoRescate('torre', casa.x-13, casa.y-46);
+  TD.amigo.salvado = true;                  /* aquí no se rescata: se DEFIENDE */
+  aviso('¡Defiende a '+TD.amigo.a.nombre+'! Flechas mueven · A pone · B cambia', 4.2);
+}
+function ponerTorre(){
+  const t = TORRES[TD.tipo];
+  if (TD.monedas < t.coste){ aviso('Te faltan monedas para '+t.nombre, 1.4); sfx.dano(); return; }
+  if (enCamino(TD.cx, TD.cy)){ aviso('Ahí pasan los goombas', 1.4); sfx.dano(); return; }
+  if (TD.torres.some(o=>o.cx===TD.cx && o.cy===TD.cy)){ aviso('Ya hay alguien ahí', 1.4); return; }
+  TD.monedas -= t.coste;
+  TD.torres.push({cx:TD.cx, cy:TD.cy, t:TD.tipo, cd:0, tiro:0, blanco:null});
+  sfx.poder(); sacudir(2);
+  aviso('¡'+t.nombre+' a defender!', 1.4);
+}
+function posEnem(e){
+  const a = CAMINO[Math.min(e.i, CAMINO.length-1)], b = CAMINO[Math.min(e.i+1, CAMINO.length-1)];
+  const pa = celPix(a[0], a[1]), pb = celPix(b[0], b[1]);
+  return {x: pa.x + (pb.x-pa.x)*e.p, y: pa.y + (pb.y-pa.y)*e.p};
+}
+function updateTorre(){
+  TD.t++;
+  const N = nivelDe('torre');
+  /* mover el cursor casilla a casilla, sin repetir mientras se mantiene */
+  const mover = (dx,dy)=>{ TD.cx = Math.max(0, Math.min(TW-1, TD.cx+dx));
+                           TD.cy = Math.max(0, Math.min(TH-1, TD.cy+dy)); sfx.moneda(); };
+  const dir = mIzq()? 'i' : mDer()? 'd' : mArr()? 'a' : mAbj()? 'b' : null;
+  if (dir && dir !== TD.dirPrev){
+    if (dir==='i') mover(-1,0); else if (dir==='d') mover(1,0);
+    else if (dir==='a') mover(0,-1); else mover(0,1);
+    TD.repite = 26;
+  } else if (dir && --TD.repite <= 0){
+    if (dir==='i') mover(-1,0); else if (dir==='d') mover(1,0);
+    else if (dir==='a') mover(0,-1); else mover(0,1);
+    TD.repite = 9;
+  }
+  TD.dirPrev = dir;
+  if (mSalta() && !TD.ponPrev) ponerTorre();
+  TD.ponPrev = mSalta();
+  /* B: cambia de defensor, o suelta el pedo si se mantiene */
+  if (mAccion() && !TD.camPrev){ TD.tipo = (TD.tipo+1) % TORRES.length; sfx.huevo(); }
+  TD.camPrev = mAccion();
+  /* PODER: el pedo de tío Fran daña a todos los goombas del mapa */
+  if (TD.pedoCd>0) TD.pedoCd--;
+  if (mArr() && mAccion() && TD.pedoCd<=0){
+    TD.pedoCd = PEDO_TD; sfx.pedo(); sacudir(7);
+    aviso('💨 ¡PEDO DE TÍO FRAN EN TODO EL CAMPO!', 2.2);
+    hablar('¡Qué pedo tan grande, tío Fran!');
+    for(const e of TD.enem){ e.vida -= 3; const p = posEnem(e); nubePedo(p.x, p.y, 6); }
+  }
+  /* oleadas */
+  if (TD.restan<=0 && TD.enem.length===0 && TD.oleada < TD.oleadas && TD.spawn<=0){
+    TD.oleada++;
+    TD.restan = 4 + N + TD.oleada*2;
+    aviso('🌊 ¡OLEADA '+TD.oleada+' DE '+TD.oleadas+'!', 2);
+    sfx.heroe();
+  }
+  if (TD.spawn>0) TD.spawn--;
+  if (TD.restan>0 && TD.spawn<=0){
+    TD.restan--;
+    TD.spawn = Math.max(22, 48 - N*3 - TD.oleada);
+    TD.enem.push({i:0, p:0, vida:2 + N + Math.floor(TD.oleada*0.8),
+                  max:2 + N + Math.floor(TD.oleada*0.8), vel:0.010 + N*0.0008 + TD.oleada*0.0004});
+  }
+  /* goombas por el camino */
+  for(const e of TD.enem){
+    e.p += e.vel;
+    while (e.p >= 1){ e.p -= 1; e.i++; }
+    if (e.i >= CAMINO.length-1){
+      e.fuera = true;
+      susto(TD, '¡Un goomba llegó a la casa! Vidas infinitas: sigue');
+    }
+  }
+  TD.enem = TD.enem.filter(e=>{
+    if (e.fuera) return false;
+    if (e.vida<=0){
+      const p = posEnem(e);
+      sumar(250); sfx.pisoton();
+      for(let i=0;i<6;i++) parts.push({tipo:'estrellita', x:p.x, y:p.y, vx:(Math.random()-0.5)*4, vy:-2-Math.random()*3, t:30});
+      if (++TD.bajas % 4 === 0){ TD.monedas++; aviso('🪙 ¡Una moneda más!', 1.2); }
+      return false;
+    }
+    return true;
+  });
+  /* las torres disparan al goomba más adelantado que tengan a tiro */
+  for(const to of TD.torres){
+    const d = TORRES[to.t];
+    if (to.cd>0) to.cd--;
+    if (to.tiro>0) to.tiro--;
+    const c = celPix(to.cx, to.cy);
+    let mejor = null, mejorAvance = -1;
+    for(const e of TD.enem){
+      const p = posEnem(e);
+      if (Math.hypot(p.x-c.x, p.y-c.y) > d.alcance) continue;
+      const avance = e.i + e.p;
+      if (avance > mejorAvance){ mejorAvance = avance; mejor = e; }
+    }
+    to.blanco = mejor ? posEnem(mejor) : null;
+    if (mejor && to.cd<=0){
+      to.cd = d.cd; to.tiro = 7;
+      mejor.vida -= d.dano;
+      sfx.fuego();
+    }
+  }
+  /* fin del nivel */
+  if (TD.oleada >= TD.oleadas && TD.enem.length===0 && TD.restan<=0)
+    pasarNivel('torre', iniciarTorre, 'finTorre', '¡Toma, pichungazo!');
+}
+function drawTorre(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#2a6f26'); g.addColorStop(1,'#1c4a1a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* césped a cuadros */
+  for(let y=0;y<TH;y++) for(let x=0;x<TW;x++){
+    rect(TX0+x*TC, TY0+y*TC, TC, TC, (x+y)%2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)');
+  }
+  /* el camino */
+  for(const [cx,cy] of CAMINO){
+    rect(TX0+cx*TC, TY0+cy*TC, TC, TC, '#b08a50');
+    rect(TX0+cx*TC, TY0+cy*TC, TC, 5, '#c8a068');
+  }
+  /* la casa que hay que defender, con el amigo dentro */
+  const casa = celPix(14,5);
+  rect(casa.x-28, casa.y-30, 56, 52, '#d8d0c0');
+  ctx.fillStyle='#c8402a';
+  ctx.beginPath(); ctx.moveTo(casa.x-34, casa.y-30); ctx.lineTo(casa.x, casa.y-58);
+  ctx.lineTo(casa.x+34, casa.y-30); ctx.fill();
+  rect(casa.x-9, casa.y-4, 18, 26, '#8a5a2a');
+  if (TD.amigo){
+    const fa = Math.sin(T/14)*3;
+    TD.amigo.a.dib(casa.x-13, casa.y-100+fa, T);
+    letrero(casa.x, casa.y-112+fa, TD.amigo.a.nombre, '#ffe36e');
+  }
+  /* torres colocadas */
+  for(const to of TD.torres){
+    const c = celPix(to.cx, to.cy), d = TORRES[to.t];
+    sombra(c.x, c.y+18, 15);
+    if (d.id==='tiojuan') dibTioJuan(c.x-14, c.y-30, T);
+    else { ctx.save(); ctx.translate(c.x-13, c.y-8); dibPerroSolo(d.color); ctx.restore(); }
+    if (to.tiro>0 && to.blanco){
+      ctx.strokeStyle='#ffe36e'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(c.x, c.y-6); ctx.lineTo(to.blanco.x, to.blanco.y); ctx.stroke();
+    }
+  }
+  /* goombas */
+  for(const e of TD.enem){
+    const p = posEnem(e);
+    sombra(p.x, p.y+14, 13);
+    dibGoomba(p.x-13, p.y-12, T);
+    rect(p.x-15, p.y-24, 30, 5, '#3a0a0a');
+    rect(p.x-15, p.y-24, 30*Math.max(0,e.vida)/e.max, 5, '#5ee08a');
+  }
+  /* cursor y alcance del defensor elegido */
+  const c = celPix(TD.cx, TD.cy), d = TORRES[TD.tipo];
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = enCamino(TD.cx,TD.cy) ? '#ff5a5a' : '#ffe36e';
+  ctx.beginPath(); ctx.arc(c.x, c.y, d.alcance, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = enCamino(TD.cx,TD.cy) ? '#ff5a5a' : '#ffe36e';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(TX0+TD.cx*TC+3, TY0+TD.cy*TC+3, TC-6, TC-6);
+  ctx.globalAlpha = 0.5;
+  if (d.id==='tiojuan') dibTioJuan(c.x-14, c.y-30, T);
+  else { ctx.save(); ctx.translate(c.x-13, c.y-8); dibPerroSolo(d.color); ctx.restore(); }
+  ctx.globalAlpha = 1;
+  hudMJ('🏰 TORRE', etiquetaNivel('torre')+'  🌊'+Math.max(1,TD.oleada)+'/'+TD.oleadas+'  🪙'+TD.monedas+'  '+corazonesInf(TD),
+        'A pone · B cambia');
+  texto('PONES: '+d.nombre+' (🪙'+d.coste+')', 16, H-16, 16, TD.monedas>=d.coste ? '#5ee08a' : '#ff8a8a');
+  barraPoder(TD.pedoCd<=0 ? '💨 PEDO TOTAL (▲ + B)' : '💨 cargando pedo...', 1-TD.pedoCd/PEDO_TD, TD.pedoCd<=0);
+}
+
+/* ============================================================
+   9) FERNANDO NIEVE  (bajada en tabla de nieve)
+   ============================================================ */
+const SN = { x:0, vx:0, dist:0, obs:[], premios:[], salto:0, saltoPrev:false, turbo:0, turboCd:0,
+             t:0, sustos:0, meta:0, frenado:0, amigo:null, amigoDist:0 };
+const SNY = 400, TURBO_SN = 200;
+function iniciarNieve(){
+  const N = nivelDe('nieve');
+  SN.x = W/2; SN.vx = 0; SN.dist = 0; SN.obs = []; SN.premios = [];
+  SN.salto = 0; SN.saltoPrev = false; SN.turbo = 0; SN.turboCd = 0;
+  SN.t = 0; SN.sustos = 0; SN.frenado = 0;
+  SN.meta = 3600 + N*700;
+  SN.amigoDist = SN.meta * 0.55;
+  SN.amigo = nuevoRescate('nieve', 0, -999);
+  aviso('¡Baja esquivando los pinos! A salta · B turbo de hamburguesa 🍔', 4);
+}
+const velNieve = () => (4.6 + nivelDe('nieve')*0.5) * (SN.turbo>0 ? 1.75 : 1) * (SN.frenado>0 ? 0.45 : 1);
+function updateNieve(){
+  SN.t++;
+  const v = velNieve();
+  if (SN.frenado>0) SN.frenado--;
+  if (SN.turbo>0) SN.turbo--;
+  if (SN.turboCd>0) SN.turboCd--;
+  if (SN.salto>0) SN.salto--;
+  /* mover de lado */
+  if (mIzq()) SN.vx -= 0.62; if (mDer()) SN.vx += 0.62;
+  SN.vx *= 0.90;
+  SN.vx = Math.max(-9, Math.min(9, SN.vx));
+  SN.x = Math.max(28, Math.min(W-28, SN.x + SN.vx));
+  /* saltar y turbo */
+  if (mSalta() && !SN.saltoPrev && SN.salto<=0){ SN.salto = 38; sfx.salto(); }
+  SN.saltoPrev = mSalta();
+  if (mAccion() && SN.turboCd<=0){
+    SN.turbo = 110; SN.turboCd = TURBO_SN; sfx.poder();
+    aviso('🍔 ¡TURBO DE HAMBURGUESA!', 1.6);
+  }
+  SN.dist += v;
+  /* aparecen pinos y premios */
+  if (SN.t % Math.max(11, 26 - nivelDe('nieve')*2) === 0)
+    SN.obs.push({x: 40 + Math.random()*(W-80), y: -50, tipo: Math.random()<0.25 ? 'roca' : 'pino'});
+  if (SN.t % 70 === 0)
+    SN.premios.push({x: 40 + Math.random()*(W-80), y: -40});
+  /* el amigo aparece a mitad de la bajada */
+  if (SN.amigo && SN.amigo.y < -100 && SN.dist >= SN.amigoDist){
+    SN.amigo.x = 60 + Math.random()*(W-120); SN.amigo.y = -60;
+  }
+  for(const o of SN.obs) o.y += v;
+  for(const p of SN.premios) p.y += v;
+  if (SN.amigo && SN.amigo.y > -100 && !SN.amigo.salvado) SN.amigo.y += v;
+  SN.obs = SN.obs.filter(o=>o.y < H+60);
+  SN.premios = SN.premios.filter(p=>{
+    if (p.y > H+40) return false;
+    if (Math.abs(p.x-SN.x)<26 && Math.abs(p.y-SNY)<28){ sumar(150); sfx.moneda(); return false; }
+    return true;
+  });
+  /* chocar: solo si no va saltando ni con turbo */
+  if (SN.salto<=0 && SN.turbo<=0){
+    for(const o of SN.obs){
+      if (o.chocado) continue;
+      if (Math.abs(o.x-SN.x)<24 && Math.abs(o.y-SNY)<26){
+        o.chocado = true; SN.frenado = 55; SN.vx = (SN.x<o.x?-6:6);
+        susto(SN, '¡Auch, un pino! Vidas infinitas: sigue bajando');
+      }
+    }
+  }
+  if (SN.amigo && !SN.amigo.salvado && SN.amigo.y > -100)
+    rescatar(SN.amigo, SN.x, SNY, 34);
+  if (SN.dist >= SN.meta) pasarNivel('nieve', iniciarNieve, 'finNieve', '¡Toma, pichungazo!');
+}
+function drawNieve(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#bfe8ff'); g.addColorStop(1,'#ffffff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* rayas de la pista que corren hacia abajo */
+  ctx.fillStyle='rgba(150,190,230,0.35)';
+  for(let i=0;i<14;i++){
+    const y = ((i*60 + SN.dist*1.2) % (H+60)) - 30;
+    ctx.fillRect(0, y, W, 3);
+  }
+  /* nieve que vuela */
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  for(let i=0;i<50;i++){
+    const y = ((i*53 + SN.dist*2.1) % (H+40)) - 20;
+    ctx.fillRect((i*167)%W, y, 3, 5);
+  }
+  /* premios */
+  for(const p of SN.premios) dibBurger(p.x-11, p.y-10);
+  /* amigo bajando */
+  if (SN.amigo && SN.amigo.y > -100) dibRescate(SN.amigo);
+  /* pinos y rocas */
+  for(const o of SN.obs){
+    sombra(o.x, o.y+16, 16);
+    if (o.tipo==='roca'){
+      ctx.fillStyle='#8a8a96';
+      ctx.beginPath(); ctx.roundRect(o.x-18, o.y-16, 36, 32, 10); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.fillRect(o.x-12, o.y-11, 18, 5);
+    } else {
+      rect(o.x-4, o.y+2, 8, 16, '#7a4a20');
+      ctx.fillStyle='#1c6a2a';
+      for(const k of [0,1,2]){
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y-30+k*13); ctx.lineTo(o.x-19+k*3, o.y-6+k*9); ctx.lineTo(o.x+19-k*3, o.y-6+k*9);
+        ctx.fill();
+      }
+      ctx.fillStyle='rgba(255,255,255,0.85)';
+      ctx.beginPath(); ctx.moveTo(o.x, o.y-30); ctx.lineTo(o.x-7, o.y-16); ctx.lineTo(o.x+7, o.y-16); ctx.fill();
+    }
+  }
+  /* Fernando en la tabla */
+  const alto = SN.salto>0 ? Math.sin((38-SN.salto)/38*Math.PI)*36 : 0;
+  sombra(SN.x, SNY+20, 18 - alto*0.25);
+  ctx.save();
+  ctx.translate(SN.x, SNY-alto);
+  ctx.rotate(SN.vx*0.035);
+  rect(-22, 14, 44, 8, '#e03434');
+  rect(-20, 15, 40, 3, '#ff8a6a');
+  ctx.translate(-12, -28); dibFernandoSolo();
+  ctx.restore();
+  if (SN.turbo>0){
+    ctx.fillStyle='rgba(255,227,110,0.5)';
+    for(let i=0;i<8;i++) ctx.fillRect(SN.x-20+Math.random()*40, SNY+20+i*6, 4, 10);
+  }
+  /* barra de la bajada */
+  const frac = Math.min(1, SN.dist/SN.meta);
+  rect(W-40, 70, 16, H-160, 'rgba(0,0,0,0.35)');
+  rect(W-40, 70, 16, (H-160)*frac, '#5ee08a');
+  texto('🏁', W-38, 70+(H-160)*frac+6, 16, '#fff');
+  hudMJ('🎿 NIEVE', etiquetaNivel('nieve')+'  '+Math.round(frac*100)+'%  '+corazonesInf(SN), 'A salta · B turbo');
+  barraPoder(SN.turbo>0 ? '🍔 ¡TURBO!' : (SN.turboCd<=0 ? '🍔 TURBO LISTO (B)' : '🍔 comiendo...'),
+             SN.turbo>0 ? 1 : 1-SN.turboCd/TURBO_SN, SN.turbo>0);
+}
+
+/* ============================================================
+   10) FERNANDO LUNA  (alunizaje)
+   ============================================================ */
+const LU = { x:0, y:0, vx:0, vy:0, ang:0, fuel:0, motor:false, suelo:[], plats:[], t:0,
+             logrados:0, meta:0, sustos:0, capa:0, capaCd:0, capaPrev:false, amigo:null, platAmigo:0, exito:0 };
+const LUPASO = 24, CAPA_CD = 460;
+function iniciarLuna(){
+  const N = nivelDe('luna');
+  LU.meta = 3;                                   /* tres alunizajes por nivel */
+  LU.logrados = 0; LU.t = 0; LU.sustos = 0;
+  LU.capa = 0; LU.capaCd = 0; LU.capaPrev = false;
+  nuevoTerrenoLuna();
+  LU.amigo = nuevoRescate('luna', 0, 0);
+  aviso('¡Aluniza suavecito en las plataformas! A enciende el motor · ←→ giran', 4.2);
+}
+function nuevoTerrenoLuna(){
+  const N = nivelDe('luna');
+  const n = Math.ceil(W/LUPASO)+1;
+  LU.suelo = [];
+  let h = 430;
+  for(let i=0;i<n;i++){
+    h += (Math.random()-0.5)*54;
+    h = Math.max(330, Math.min(505, h));
+    LU.suelo.push(h);
+  }
+  /* dos o tres plataformas planas donde se puede posar */
+  LU.plats = [];
+  const nP = Math.max(2, 4 - Math.floor(N/2));
+  for(let k=0;k<nP;k++){
+    const i0 = 3 + Math.floor((k+0.15)*(n-8)/nP);
+    const ancho = 5;
+    const hp = 360 + Math.random()*110;
+    for(let i=i0;i<i0+ancho && i<n;i++) LU.suelo[i] = hp;
+    LU.plats.push({i0, i1:i0+ancho-1, y:hp, x0:i0*LUPASO, x1:(i0+ancho-1)*LUPASO});
+  }
+  LU.platAmigo = (LU.logrados) % LU.plats.length;
+  LU.x = 90 + Math.random()*(W-180); LU.y = 90;
+  LU.vx = (Math.random()-0.5)*1.6; LU.vy = 0.4; LU.ang = 0;
+  LU.fuel = 620 - N*40;
+  LU.exito = 0;
+}
+const alturaLuna = x => {
+  const i = Math.max(0, Math.min(LU.suelo.length-2, Math.floor(x/LUPASO)));
+  const f = (x - i*LUPASO)/LUPASO;
+  return LU.suelo[i] + (LU.suelo[i+1]-LU.suelo[i])*f;
+};
+function updateLuna(){
+  LU.t++;
+  if (LU.exito>0){                        /* pequeña pausa de celebración */
+    if (--LU.exito<=0){
+      LU.logrados++;
+      if (LU.logrados >= LU.meta) pasarNivel('luna', iniciarLuna, 'finLuna', '¡Toma, pichungazo!');
+      else { nuevoTerrenoLuna(); aviso('🚀 ¡'+LU.logrados+' de '+LU.meta+'! A por la siguiente', 2); }
+    }
+    return;
+  }
+  if (LU.capaCd>0) LU.capaCd--;
+  if (LU.capa>0) LU.capa--;
+  if (mAccion() && !LU.capaPrev && LU.capaCd<=0){
+    LU.capa = 260; LU.capaCd = CAPA_CD; sfx.heroe();
+    aviso('🦸 ¡TÍO JUAN TE SOSTIENE!', 2);
+    hablar('¡Te amo tío Juan, yo soy tu pichunguito!');
+  }
+  LU.capaPrev = mAccion();
+  if (mIzq()) LU.ang -= 0.045;
+  if (mDer()) LU.ang += 0.045;
+  LU.ang = Math.max(-1.2, Math.min(1.2, LU.ang));
+  LU.motor = mSalta() && LU.fuel>0;
+  if (LU.motor){
+    LU.fuel--;
+    LU.vx += Math.sin(LU.ang)*0.115;
+    LU.vy -= Math.cos(LU.ang)*0.115;
+    if (LU.t%3===0) parts.push({tipo:'estrellita', x:LU.x-Math.sin(LU.ang)*16, y:LU.y+Math.cos(LU.ang)*16,
+                                vx:(Math.random()-0.5)*2, vy:1.5, t:16});
+  }
+  LU.vy += LU.capa>0 ? 0.021 : 0.046;
+  LU.x += LU.vx; LU.y += LU.vy;
+  if (LU.x < 12){ LU.x = 12; LU.vx = Math.abs(LU.vx)*0.4; }
+  if (LU.x > W-12){ LU.x = W-12; LU.vx = -Math.abs(LU.vx)*0.4; }
+  if (LU.y < 40){ LU.y = 40; LU.vy = Math.abs(LU.vy)*0.4; }
+  /* tocar el suelo */
+  const hs = alturaLuna(LU.x);
+  if (LU.y >= hs-14){
+    const plat = LU.plats.find(p=> LU.x >= p.x0-6 && LU.x <= p.x1+LUPASO+6 && Math.abs(hs-p.y)<3);
+    const suave = Math.abs(LU.vx) < 1.5 && LU.vy < 2.4 && Math.abs(LU.ang) < 0.42;
+    if (plat && (suave || LU.capa>0)){
+      LU.y = hs-14; LU.vx = 0; LU.vy = 0; LU.exito = 70;
+      sumar(1200); sfx.meta(); sacudir(2);
+      for(let i=0;i<14;i++) parts.push({tipo:'estrellita', x:LU.x, y:LU.y+12,
+        vx:(Math.random()-0.5)*6, vy:-2-Math.random()*3, t:36});
+      const esDelAmigo = LU.plats.indexOf(plat) === LU.platAmigo;
+      if (esDelAmigo && LU.amigo && !LU.amigo.salvado){
+        LU.amigo.x = LU.x-13; LU.amigo.y = LU.y-26;
+        rescatar(LU.amigo, LU.x, LU.y, 60);
+      } else aviso('🚀 ¡Alunizaje perfecto! +1200', 2);
+    } else {
+      /* golpe: vidas infinitas, se vuelve a intentar */
+      susto(LU, '¡Muy fuerte! Vidas infinitas: otra vez');
+      sfx.muerte();
+      for(let i=0;i<12;i++) parts.push({tipo:'ladrillo', x:LU.x, y:hs-10,
+        vx:(Math.random()-0.5)*7, vy:-2-Math.random()*4, t:36});
+      LU.x = 90 + Math.random()*(W-180); LU.y = 90;
+      LU.vx = (Math.random()-0.5)*1.6; LU.vy = 0.4; LU.ang = 0;
+      LU.fuel = Math.max(LU.fuel, 320);
+    }
+  }
+}
+function drawLuna(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#05061a'); g.addColorStop(1,'#1a1038');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){
+    ctx.fillStyle='rgba(255,255,255,'+(0.3+Math.sin(T/26+i)*0.25)+')';
+    ctx.fillRect((i*137)%W, (i*89)%400, 2, 2);
+  }
+  /* planeta de fondo */
+  ctx.fillStyle='rgba(120,160,255,0.18)';
+  ctx.beginPath(); ctx.arc(W-140, 120, 76, 0, Math.PI*2); ctx.fill();
+  /* terreno */
+  ctx.fillStyle='#6a6a86';
+  ctx.beginPath(); ctx.moveTo(0, H);
+  for(let i=0;i<LU.suelo.length;i++) ctx.lineTo(i*LUPASO, LU.suelo[i]);
+  ctx.lineTo(W, H); ctx.fill();
+  ctx.strokeStyle='#b8b8d0'; ctx.lineWidth=3;
+  ctx.beginPath();
+  for(let i=0;i<LU.suelo.length;i++) (i ? ctx.lineTo(i*LUPASO, LU.suelo[i]) : ctx.moveTo(0, LU.suelo[0]));
+  ctx.stroke();
+  /* plataformas de alunizaje */
+  LU.plats.forEach((p,k)=>{
+    rect(p.x0, p.y-5, p.x1-p.x0+LUPASO, 7, k===LU.platAmigo ? '#ffe36e' : '#5ee08a');
+    texto(k===LU.platAmigo ? '★' : 'H', (p.x0+p.x1+LUPASO)/2, p.y-12, 15,
+          k===LU.platAmigo ? '#ffe36e' : '#5ee08a', true);
+    if (k===LU.platAmigo && LU.amigo && !LU.amigo.salvado){
+      const cxp = (p.x0+p.x1+LUPASO)/2;
+      LU.amigo.a.dib(cxp-13, p.y-46+Math.sin(T/14)*2, T);
+      letrero(cxp, p.y-58, LU.amigo.a.nombre, '#ffe36e');
+    }
+  });
+  /* la nave, con Fernando dentro */
+  ctx.save(); ctx.translate(LU.x, LU.y); ctx.rotate(LU.ang);
+  if (LU.capa>0){
+    ctx.globalAlpha = 0.5+Math.sin(T/6)*0.2;
+    ctx.fillStyle='#8ecbff';
+    ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  rect(-14, -12, 28, 20, '#d8d8e8');
+  rect(-10, -8, 20, 10, '#3a6ad0');
+  rect(-4, -6, 8, 6, '#ffc8a0');
+  rect(-16, 8, 6, 8, '#8a8a9a'); rect(10, 8, 6, 8, '#8a8a9a');
+  rect(-18, 15, 10, 4, '#8a8a9a'); rect(8, 15, 10, 4, '#8a8a9a');
+  if (LU.motor){
+    ctx.fillStyle = (T>>1)%2 ? '#ffb020' : '#ffe36e';
+    ctx.beginPath(); ctx.moveTo(-7, 9); ctx.lineTo(0, 26+Math.random()*8); ctx.lineTo(7, 9); ctx.fill();
+  }
+  ctx.restore();
+  /* medidores de velocidad: en verde cuando se puede posar */
+  const suaveX = Math.abs(LU.vx) < 1.5, suaveY = LU.vy < 2.4, recto = Math.abs(LU.ang) < 0.42;
+  texto('↔ '+LU.vx.toFixed(1), 16, H-58, 16, suaveX ? '#5ee08a' : '#ff8a8a');
+  texto('↕ '+LU.vy.toFixed(1), 16, H-38, 16, suaveY ? '#5ee08a' : '#ff8a8a');
+  texto('⟳ '+LU.ang.toFixed(2), 16, H-18, 16, recto ? '#5ee08a' : '#ff8a8a');
+  rect(110, H-30, 160, 12, 'rgba(0,0,0,0.4)');
+  rect(110, H-30, 160*Math.max(0, LU.fuel)/620, 12, LU.fuel>150 ? '#8ecbff' : '#ff8a4a');
+  texto('COMBUSTIBLE', 112, H-36, 12, '#8ecbff');
+  hudMJ('🚀 LUNA', etiquetaNivel('luna')+'  🛬'+LU.logrados+'/'+LU.meta+'  '+corazonesInf(LU), 'A motor · ←→ giran');
+  barraPoder(LU.capa>0 ? '🦸 ¡TÍO JUAN TE SOSTIENE!' : (LU.capaCd<=0 ? '🦸 TÍO JUAN (B)' : '🦸 volando hacia ti...'),
+             LU.capa>0 ? 1 : 1-LU.capaCd/CAPA_CD, LU.capa>0);
+}
+
+/* ============================================================
    Sala arcade y orquestación
    ============================================================ */
 function cajasArcade(){
-  return JUEGOS.map((j,i)=>({x: 26+(i%3)*318, y: 140+((i/3)|0)*128, w: 296, h: 116, idx:i, j}));
+  const anc = 222, alt = 108, hx = 14, hy = 12, x0 = 24, y0 = 128;
+  return JUEGOS.map((j,i)=>({
+    x: x0 + (i%COLS_ARCADE)*(anc+hx),
+    y: y0 + ((i/COLS_ARCADE)|0)*(alt+hy),
+    w: anc, h: alt, idx:i, j }));
 }
 function drawArcade(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -1742,12 +2250,12 @@ function drawArcade(){
     ctx.lineWidth = s?6:3; ctx.strokeStyle = s ? '#ffe36e' : 'rgba(255,255,255,0.45)';
     ctx.stroke();
     if (s){ ctx.globalAlpha=0.3+Math.sin(T/7)*0.22; ctx.lineWidth=12; ctx.stroke(); ctx.globalAlpha=1; }
-    ctx.font='36px monospace'; ctx.textAlign='left';
-    ctx.fillText(c.j.emoji, c.x+16, c.y+62);
-    texto(c.j.nombre, c.x+66, c.y+44, 17, '#fff');
+    ctx.font='27px monospace'; ctx.textAlign='left';
+    ctx.fillText(c.j.emoji, c.x+12, c.y+34);
+    texto(c.j.nombre.replace('FERNANDO ',''), c.x+48, c.y+30, 16, '#fff');
     /* la descripción se parte en líneas que quepan de verdad dentro de la tarjeta */
     ctx.font = 'bold 11.5px monospace';
-    const ancho = c.w - 76;
+    const ancho = c.w - 24;
     const lineas = [];
     let linea = '';
     for(const palabra of c.j.desc.split(' ')){
@@ -1756,8 +2264,8 @@ function drawArcade(){
       else linea = prueba;
       if (lineas.length===3) break;
     }
-    if (linea && lineas.length<3) lineas.push(linea);
-    lineas.forEach((l,i)=> texto(l, c.x+66, c.y+64+i*16, 11.5, 'rgba(255,255,255,0.85)'));
+    if (linea && lineas.length<4) lineas.push(linea);
+    lineas.forEach((l,i)=> texto(l, c.x+12, c.y+56+i*15, 11.5, 'rgba(255,255,255,0.85)'));
   }
   /* botón para volver: sin él, en el celular no había manera de salir de la sala */
   const z = zonaVolver();
@@ -1777,6 +2285,9 @@ function empezar(id){
   else if (id==='globos'){ iniciarGlobos(); modo='globos'; estado='mjGlobos'; }
   else if (id==='bomba'){ iniciarBombas(); modo='bomba'; estado='mjBombas'; }
   else if (id==='hielo'){ iniciarHielo(); modo='hielo'; estado='mjHielo'; }
+  else if (id==='torre'){ iniciarTorre(); modo='torre'; estado='mjTorre'; }
+  else if (id==='nieve'){ iniciarNieve(); modo='nieve'; estado='mjNieve'; }
+  else if (id==='luna'){ iniciarLuna(); modo='luna'; estado='mjLuna'; }
   cortina = 40;
 }
 function activo(){ return estado==='arcade' || (typeof estado==='string' && estado.indexOf('mj')===0); }
@@ -1802,6 +2313,9 @@ function update(){
   else if (modo==='globos') updateGlobos();
   else if (modo==='bomba') updateBombas();
   else if (modo==='hielo') updateHielo();
+  else if (modo==='torre') updateTorre();
+  else if (modo==='nieve') updateNieve();
+  else if (modo==='luna') updateLuna();
   else if (modo && modo.indexOf('fin')===0){
     if (pt.soltado){ pt.soltado=false; abrirArcade(); }
   }
@@ -1819,6 +2333,9 @@ function draw(){
   else if (modo==='globos') drawGlobos();
   else if (modo==='bomba') drawBombas();
   else if (modo==='hielo') drawHielo();
+  else if (modo==='torre') drawTorre();
+  else if (modo==='nieve') drawNieve();
+  else if (modo==='luna') drawLuna();
   else if (modo==='finBirds') pantallaFin(resultado, resultado?'¡GANASTE!':'CASI...', resultado?'¡Todos los goombas fuera!':'Se acabaron los lanzamientos');
   else if (modo==='finDig') pantallaFin(resultado, resultado?'¡GANASTE!':'¡TE ATRAPARON!', resultado?'¡Túneles limpios!':'Inténtalo otra vez, pichunguito');
   else if (modo==='finKong') pantallaFin(resultado, resultado?'¡RESCATASTE A MAMÁ!':'¡UN BARRIL!', resultado?'«¡Te amo mamá!»':'Sube con más cuidado');
@@ -1826,6 +2343,9 @@ function draw(){
   else if (modo==='finGlobos') pantallaFin(resultado, resultado?'¡GANASTE!':'¡AL AGUA!', resultado?'¡Todos los koopas al mar!':'Se te acabaron los globos');
   else if (modo==='finBombas') pantallaFin(resultado, resultado?'¡GANASTE!':'¡BOOM!', resultado?'¡Laberinto despejado!':'Cuidado con tus propias bombas');
   else if (modo==='finHielo') pantallaFin(resultado, resultado?'¡LLEGASTE A CUCÚ!':'¡TE CAÍSTE!', resultado?'«¡Hola Cucú, acompáñame!»':'Sube con más cuidado');
+  else if (modo==='finTorre') pantallaFin(resultado, '¡CASA DEFENDIDA!', '¡Ni un goomba se coló hasta el final!');
+  else if (modo==='finNieve') pantallaFin(resultado, '¡LLEGASTE ABAJO!', '¡Qué manera de bajar, pichunguito!');
+  else if (modo==='finLuna') pantallaFin(resultado, '¡ALUNIZAJE PERFECTO!', '¡Fernando astronauta!');
   /* partículas compartidas */
   for(const p of parts){
     if (p.tipo==='estrellita'){ ctx.fillStyle='#ffe36e'; ctx.font='16px monospace'; ctx.fillText('✦',p.x,p.y); }
@@ -1853,8 +2373,8 @@ function tecla(k){
   if (estado==='arcade'){
     if (k==='ArrowLeft') sel = (sel+JUEGOS.length-1)%JUEGOS.length;
     else if (k==='ArrowRight') sel = (sel+1)%JUEGOS.length;
-    else if (k==='ArrowUp') sel = (sel+JUEGOS.length-3)%JUEGOS.length;
-    else if (k==='ArrowDown') sel = (sel+3)%JUEGOS.length;
+    else if (k==='ArrowUp') sel = (sel+JUEGOS.length-COLS_ARCADE)%JUEGOS.length;
+    else if (k==='ArrowDown') sel = (sel+COLS_ARCADE)%JUEGOS.length;
     else if (k==='Enter'||k===' ') empezar(JUEGOS[sel].id);
     else if (k==='Escape') estado='mapa';
     return;
@@ -1869,7 +2389,9 @@ return { activo, update, draw, tecla, abrirArcade, empezar,
          _estado: ()=>modo, _juegos: JUEGOS,
          _nivel: id=>nivelDe(id), _ponNivel: (id,n)=>{ nivel[id]=n; }, _MAXNIV: MAXNIV,
          _reiniciar: id=>({birds:iniciarBirds, dig:iniciarDig, kong:iniciarKong, contra:iniciarContra,
-                           globos:iniciarGlobos, bomba:iniciarBombas, hielo:iniciarHielo}[id])(),
+                           globos:iniciarGlobos, bomba:iniciarBombas, hielo:iniciarHielo,
+                           torre:iniciarTorre, nieve:iniciarNieve, luna:iniciarLuna}[id])(),
+         _TD:TD, _SN:SN, _LU:LU,
          _amigos: AMIGOS,
          _zonaSalir: zonaSalir, _zonaVolver: zonaVolver,
          _B:B, _D:D, _K:K, _C:C, _KPL:KPL, _KESC:KESC, _G:G, _M:M, _I:I,
