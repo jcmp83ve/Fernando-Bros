@@ -109,3 +109,5 @@ Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pi
 ## 🗣️ Voces
 
 Todos los diálogos son **grabaciones con voz de niño en español** (archivos mp3), que suenan en cualquier dispositivo — incluido iPhone. Si un audio no carga, el juego usa como respaldo la voz sintética del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
+
+**En la sala arcade también hablan.** Los 13 minijuegos usan las mismas grabaciones: al empezar una partida, al subir de nivel, al rescatar a cada amigo (cada uno con su frase), al usar los poderes (la hamburguesa, el hueso, el globo, el pedo de tío Fran, el salto de papá…), cuando Rómulo eructa al comérselo en Fernando-Man, y al ganar. Las frases del código están enlazadas al texto exacto de cada mp3, y hay una prueba automática que avisa si alguna se sale del guion y caería en la voz sintética.
