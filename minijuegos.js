@@ -30,8 +30,14 @@ const JUEGOS = [
    desc:'Baja la montaña esquivando pinos'},
   {id:'luna',   nombre:'FERNANDO LUNA',    emoji:'🚀', color:'#3a2a7a',
    desc:'Aluniza suavecito en las plataformas'},
+  {id:'corre',  nombre:'FERNANDO RUNNER',  emoji:'🏃', color:'#2a4a9a',
+   desc:'Corre sin parar por tres carriles'},
+  {id:'flappy', nombre:'FLAPPY FERNANDO',  emoji:'🐤', color:'#2a8ad0',
+   desc:'Aletea y pasa entre los tubos'},
+  {id:'coco',   nombre:'FERNANDO-MAN',     emoji:'🟡', color:'#1a2a8a',
+   desc:'Cómete las hamburguesas del laberinto'},
 ];
-const COLS_ARCADE = 4;
+const COLS_ARCADE = 5;
 let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0;
 /* controles: la flecha arriba sirve para SUBIR, nunca para saltar */
 const mIzq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
@@ -101,7 +107,8 @@ const AMIGOS = [
   {id:'tiojuan',  nombre:'TÍO JUAN',     frase:'¡Te amo tío Juan, yo soy tu pichunguito!',
    dib:(x,y,t)=>dibTioJuan(x,y,t)},
 ];
-const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13, torre:1, nieve:4, luna:8};
+const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13,
+                 torre:1, nieve:4, luna:8, corre:3, flappy:6, coco:12};
 function amigoDeNivel(juego, n){
   /* en Kong mamá princesa ya espera arriba, así que ella no entra en el sorteo */
   const lista = juego==='kong' ? AMIGOS.filter(a=>a.id!=='mama') : AMIGOS;
@@ -2224,10 +2231,467 @@ function drawLuna(){
 }
 
 /* ============================================================
+   11) FERNANDO RUNNER  (corre sin parar, estilo Subway Surfers)
+   ============================================================ */
+const RU = { carril:1, salto:0, agacha:0, dist:0, meta:0, obs:[], t:0, sustos:0, inv:0,
+             vuela:0, vuelaCd:0, vPrev:false, sPrev:false, dirPrev:null, amigo:null, amigoDist:0 };
+const RHOR = 196, RSUELO = 452, VUELA_CD = 430;
+const rp = z => 1/(1 + Math.max(0,z)*0.026);          /* perspectiva sencilla */
+const rx = (carril, z) => W/2 + (carril-1)*178*rp(z);
+const ry = z => RHOR + (RSUELO-RHOR)*rp(z);
+function iniciarRunner(){
+  const N = nivelDe('corre');
+  RU.carril = 1; RU.salto = 0; RU.agacha = 0; RU.dist = 0; RU.obs = [];
+  RU.t = 0; RU.sustos = 0; RU.inv = 0; RU.vuela = 0; RU.vuelaCd = 0;
+  RU.vPrev = false; RU.sPrev = false; RU.dirPrev = null;
+  RU.meta = 3200 + N*650;
+  RU.amigoDist = RU.meta*0.5;
+  RU.amigo = nuevoRescate('corre', 0, 0);
+  RU.amigo.enPista = false;
+  aviso('¡Corre! ←→ cambian de carril · A salta · ▼ se agacha · B vuela con tío Juan', 4.4);
+}
+const velRunner = () => (5.4 + nivelDe('corre')*0.55) * (RU.vuela>0 ? 1.5 : 1);
+function updateRunner(){
+  RU.t++;
+  const N = nivelDe('corre'), v = velRunner();
+  if (RU.inv>0) RU.inv--;
+  if (RU.salto>0) RU.salto--;
+  if (RU.vuela>0) RU.vuela--;
+  if (RU.vuelaCd>0) RU.vuelaCd--;
+  RU.agacha = (mAbj() && RU.salto<=0) ? 12 : 0;
+  /* cambiar de carril, un paso por pulsación */
+  const dir = mIzq() ? 'i' : mDer() ? 'd' : null;
+  if (dir && dir !== RU.dirPrev){
+    RU.carril = Math.max(0, Math.min(2, RU.carril + (dir==='i' ? -1 : 1)));
+    sfx.salto();
+  }
+  RU.dirPrev = dir;
+  if (mSalta() && !RU.sPrev && RU.salto<=0){ RU.salto = 36; sfx.salto(); }
+  RU.sPrev = mSalta();
+  /* PODER: tío Juan lo lleva volando por encima de todo */
+  if (mAccion() && !RU.vPrev && RU.vuelaCd<=0){
+    RU.vuela = 230; RU.vuelaCd = VUELA_CD; sfx.heroe();
+    aviso('🦸 ¡TÍO JUAN TE LLEVA VOLANDO!', 2.2);
+    hablar('¡Te amo tío Juan, yo soy tu pichunguito!');
+  }
+  RU.vPrev = mAccion();
+  RU.dist += v;
+  /* van apareciendo obstáculos y monedas al fondo */
+  if (RU.t % Math.max(16, 34 - N*2) === 0){
+    const tipo = ['valla','techo','tren'][(Math.random()*3)|0];
+    const carril = (Math.random()*3)|0;
+    RU.obs.push({carril, z:118, tipo});
+    /* de vez en cuando una fila de monedas en otro carril */
+    if (Math.random() < 0.55){
+      const otro = (carril + 1 + ((Math.random()*2)|0)) % 3;
+      for(let k=0;k<4;k++) RU.obs.push({carril:otro, z:118+k*7, tipo:'moneda'});
+    }
+  }
+  /* el amigo aparece a mitad del recorrido */
+  if (RU.amigo && !RU.amigo.enPista && !RU.amigo.salvado && RU.dist >= RU.amigoDist){
+    RU.amigo.enPista = true;
+    RU.obs.push({carril:(Math.random()*3)|0, z:120, tipo:'amigo'});
+  }
+  const salta = RU.salto>0 || RU.vuela>0;
+  const agachado = RU.agacha>0 || RU.vuela>0;
+  for(const o of RU.obs){
+    o.z -= v*0.1;
+    if (o.z > 5 || o.z < -7 || o.usado) continue;
+    if (o.carril !== RU.carril) continue;
+    if (o.tipo==='moneda'){ o.usado = true; sumar(120); sfx.moneda(); continue; }
+    if (o.tipo==='amigo'){ o.usado = true; RU.amigo.x = 0; RU.amigo.y = 0;
+      rescatar(RU.amigo, 0, 0, 9999); continue; }
+    if (RU.vuela>0) continue;                       /* volando no le pasa nada */
+    const esquiva = (o.tipo==='valla' && salta) || (o.tipo==='techo' && agachado);
+    if (!esquiva && RU.inv<=0){
+      o.usado = true; RU.inv = 70;
+      susto(RU, '¡Auch! Vidas infinitas: sigue corriendo');
+    }
+  }
+  RU.obs = RU.obs.filter(o=>o.z > -8 && !o.usado);
+  if (RU.dist >= RU.meta) pasarNivel('corre', iniciarRunner, 'finRunner', '¡Toma, pichungazo!');
+}
+function drawRunner(){
+  const g = ctx.createLinearGradient(0,0,0,RHOR);
+  g.addColorStop(0,'#1a2a6a'); g.addColorStop(1,'#8ec0f0');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,RHOR);
+  /* el prado de los lados, que además limpia el cuadro anterior */
+  const g2 = ctx.createLinearGradient(0,RHOR,0,H);
+  g2.addColorStop(0,'#2f8f22'); g2.addColorStop(1,'#1c5a14');
+  ctx.fillStyle=g2; ctx.fillRect(0,RHOR,W,H-RHOR);
+  /* edificios al fondo */
+  for(let i=0;i<16;i++){
+    const bx = ((i*140 - RU.dist*0.06) % (W+200) + (W+200)) % (W+200) - 100;
+    const bh = 40 + (i*37)%90;
+    rect(bx, RHOR-bh, 96, bh, '#2a3a6a');
+    for(let k=0;k<4;k++) rect(bx+12+k*20, RHOR-bh+10, 10, 10, 'rgba(255,227,110,0.35)');
+  }
+  /* la pista en perspectiva */
+  ctx.fillStyle='#6a6a78';
+  ctx.beginPath();
+  ctx.moveTo(rx(-0.6,118), ry(118)); ctx.lineTo(rx(2.6,118), ry(118));
+  ctx.lineTo(rx(2.6,0), H); ctx.lineTo(rx(-0.6,0), H);
+  ctx.fill();
+  /* líneas de los carriles y traviesas que corren */
+  ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=3;
+  for(const c of [-0.5, 0.5, 1.5, 2.5]){
+    ctx.beginPath(); ctx.moveTo(rx(c,118), ry(118)); ctx.lineTo(rx(c,0), H); ctx.stroke();
+  }
+  for(let i=0;i<16;i++){
+    const z = ((i*9 - RU.dist*0.1) % 118 + 118) % 118;
+    const p = rp(z), y = ry(z);
+    ctx.fillStyle = 'rgba(0,0,0,'+(0.10*p)+')';
+    ctx.fillRect(rx(-0.6,z), y, rx(2.6,z)-rx(-0.6,z), Math.max(2, 10*p));
+  }
+  /* obstáculos, de lejos a cerca */
+  const orden = RU.obs.slice().sort((a,b)=>b.z-a.z);
+  for(const o of orden){
+    const p = rp(o.z), x = rx(o.carril, o.z), y = ry(o.z);
+    if (o.tipo==='moneda'){ ctx.save(); ctx.translate(x, y-46*p); ctx.scale(p*1.1, p*1.1);
+      dibBurger(-11,-10); ctx.restore(); continue; }
+    if (o.tipo==='amigo'){ ctx.save(); ctx.translate(x, y-56*p); ctx.scale(p*1.2, p*1.2);
+      RU.amigo.a.dib(-13, -14, T); ctx.restore();
+      if (p>0.5) letrero(x, y-64*p, RU.amigo.a.nombre, '#ffe36e');
+      continue; }
+    if (o.tipo==='valla'){
+      rect(x-52*p, y-40*p, 104*p, 12*p, '#e0a020');
+      rect(x-52*p, y-28*p, 104*p, 26*p, '#c85a20');
+      for(let k=0;k<4;k++) rect(x-46*p+k*26*p, y-26*p, 10*p, 22*p, '#f0d060');
+    } else if (o.tipo==='techo'){
+      rect(x-58*p, y-150*p, 116*p, 46*p, '#3a4a8a');
+      rect(x-58*p, y-108*p, 116*p, 10*p, '#8ecbff');
+      texto('AGÁCHATE', x, y-118*p, Math.max(9, 15*p), '#ffe36e', true);
+    } else {
+      rect(x-54*p, y-118*p, 108*p, 118*p, '#c83a3a');
+      rect(x-54*p, y-118*p, 108*p, 16*p, '#f06a5a');
+      rect(x-40*p, y-92*p, 34*p, 30*p, '#8ecbff');
+      rect(x+8*p, y-92*p, 34*p, 30*p, '#8ecbff');
+    }
+  }
+  /* Fernando corriendo */
+  const alto = RU.salto>0 ? Math.sin((36-RU.salto)/36*Math.PI)*90 : 0;
+  const px = rx(RU.carril, 0), py = ry(0) - alto - (RU.vuela>0 ? 120 : 0);
+  sombra(px, ry(0)+4, 26);
+  if (!(RU.inv>0 && (T>>2)%2)){
+    ctx.save(); ctx.translate(px, py); ctx.scale(1.5, RU.agacha>0 ? 0.85 : 1.5);
+    ctx.translate(-12, -40); dibFernandoSolo(); ctx.restore();
+    if (RU.vuela>0) dibTioJuan(px-14, py-96+Math.sin(T/8)*5, T);
+  }
+  /* barra de avance */
+  const frac = Math.min(1, RU.dist/RU.meta);
+  rect(24, H-26, W-260, 14, 'rgba(0,0,0,0.4)');
+  rect(24, H-26, (W-260)*frac, 14, '#5ee08a');
+  texto('🏁', 24+(W-260)*frac-6, H-14, 15, '#fff');
+  hudMJ('🏃 RUNNER', etiquetaNivel('corre')+'  '+Math.round(frac*100)+'%  '+corazonesInf(RU), 'A salta · ▼ agacha');
+  barraPoder(RU.vuela>0 ? '🦸 ¡VOLANDO!' : (RU.vuelaCd<=0 ? '🦸 TÍO JUAN (B)' : '🦸 ya viene...'),
+             RU.vuela>0 ? 1 : 1-RU.vuelaCd/VUELA_CD, RU.vuela>0);
+}
+
+/* ============================================================
+   12) FLAPPY FERNANDO
+   ============================================================ */
+const FL = { y:0, vy:0, tubos:[], pasados:0, meta:0, t:0, sustos:0, inv:0,
+             globo:0, globoCd:0, gPrev:false, aPrev:false, amigo:null, amigoPuesto:false };
+const FLX = 220, FLSUELO = 470, GLOBO_CD = 380;
+function iniciarFlappy(){
+  const N = nivelDe('flappy');
+  FL.y = 240; FL.vy = 0; FL.tubos = []; FL.pasados = 0; FL.t = 0; FL.sustos = 0; FL.inv = 0;
+  FL.globo = 0; FL.globoCd = 0; FL.gPrev = false; FL.aPrev = false;
+  FL.meta = 8 + N*2;                                   /* de 10 a 20 tubos */
+  FL.amigo = nuevoRescate('flappy', 0, 0);
+  FL.amigoPuesto = false;
+  aviso('¡Toca A para aletear! Pasa '+FL.meta+' tubos · B saca el globo 🎈', 4);
+}
+function updateFlappy(){
+  FL.t++;
+  const N = nivelDe('flappy');
+  const vel = 3.1 + N*0.28;
+  const hueco = Math.max(128, 190 - N*10);
+  if (FL.inv>0) FL.inv--;
+  if (FL.globo>0) FL.globo--;
+  if (FL.globoCd>0) FL.globoCd--;
+  /* aletear */
+  if ((mSalta()||mArr()) && !FL.aPrev){ FL.vy = FL.globo>0 ? -4.6 : -7.4; sfx.salto();
+    for(let i=0;i<3;i++) parts.push({tipo:'polvo', x:FLX-14, y:FL.y+16, vx:-1, vy:1, t:16}); }
+  FL.aPrev = mSalta()||mArr();
+  /* PODER: el globo lo deja flotar suavecito y sin sustos */
+  if (mAccion() && !FL.gPrev && FL.globoCd<=0){
+    FL.globo = 300; FL.globoCd = GLOBO_CD; sfx.poder();
+    aviso('🎈 ¡GLOBO! Flotas suavecito y nada te toca', 2.2);
+  }
+  FL.gPrev = mAccion();
+  FL.vy += FL.globo>0 ? 0.16 : 0.44;
+  FL.vy = Math.min(FL.vy, FL.globo>0 ? 3.4 : 10);
+  FL.y += FL.vy;
+  if (FL.y < 34){ FL.y = 34; FL.vy = 0; }
+  /* tubos */
+  if (FL.t % Math.max(70, 108 - N*6) === 0 && FL.pasados + FL.tubos.length < FL.meta + 2){
+    const centro = 130 + Math.random()*(FLSUELO-260);
+    FL.tubos.push({x:W+40, c:centro, pasado:false});
+  }
+  for(const tu of FL.tubos){
+    tu.x -= vel;
+    if (!tu.pasado && tu.x + 40 < FLX){
+      tu.pasado = true; FL.pasados++; sumar(200); sfx.moneda();
+    }
+    if (FL.globo>0 || FL.inv>0) continue;
+    const dentro = Math.abs(tu.x - FLX) < 52;
+    if (dentro && (FL.y < tu.c - hueco/2 || FL.y > tu.c + hueco/2)){
+      FL.inv = 80; FL.vy = -3;
+      FL.y = tu.c;                                    /* lo pone en el hueco y sigue */
+      susto(FL, '¡Pum! Vidas infinitas: te pongo en el hueco');
+    }
+  }
+  FL.tubos = FL.tubos.filter(tu=>tu.x > -70);
+  if (FL.y > FLSUELO-18){
+    FL.y = FLSUELO-18; FL.vy = -6;
+    if (FL.inv<=0 && FL.globo<=0){ FL.inv = 80; susto(FL, '¡Al suelo! Vidas infinitas: arriba otra vez'); }
+  }
+  /* el amigo aparece a mitad de camino, volando entre los tubos */
+  if (!FL.amigoPuesto && FL.pasados >= Math.floor(FL.meta/2)){
+    FL.amigoPuesto = true;
+    FL.amigo.x = W+60; FL.amigo.y = 120 + Math.random()*220;
+  }
+  if (FL.amigoPuesto && !FL.amigo.salvado){
+    FL.amigo.x -= vel;
+    rescatar(FL.amigo, FLX, FL.y+14, 40);
+    if (FL.amigo.x < -60){ FL.amigo.x = W+60; FL.amigo.y = 120 + Math.random()*220; }
+  }
+  if (FL.pasados >= FL.meta) pasarNivel('flappy', iniciarFlappy, 'finFlappy', '¡Toma, pichungazo!');
+}
+function drawFlappy(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#4aa0e8'); g.addColorStop(1,'#bfe8ff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<7;i++){
+    const cx = ((i*220 - FL.t*0.5) % (W+240) + (W+240)) % (W+240) - 120;
+    ctx.fillStyle='rgba(255,255,255,0.85)';
+    ctx.beginPath(); ctx.ellipse(cx, 90+(i%3)*46, 52, 18, 0, 0, Math.PI*2); ctx.fill();
+  }
+  const N = nivelDe('flappy'), hueco = Math.max(128, 190 - N*10);
+  for(const tu of FL.tubos){
+    for(const [y0,y1] of [[0, tu.c-hueco/2], [tu.c+hueco/2, FLSUELO]]){
+      rect(tu.x-38, y0, 76, y1-y0, '#2a9c3a');
+      rect(tu.x-34, y0, 12, y1-y0, '#6ad048');
+      rect(tu.x+22, y0, 8, y1-y0, '#1a6a24');
+    }
+    rect(tu.x-46, tu.c-hueco/2-26, 92, 26, '#2a9c3a');
+    rect(tu.x-42, tu.c-hueco/2-22, 12, 22, '#6ad048');
+    rect(tu.x-46, tu.c+hueco/2, 92, 26, '#2a9c3a');
+    rect(tu.x-42, tu.c+hueco/2+4, 12, 22, '#6ad048');
+  }
+  rect(0, FLSUELO, W, H-FLSUELO, '#3fae2f');
+  rect(0, FLSUELO, W, 8, '#2f8f22');
+  if (FL.amigoPuesto && !FL.amigo.salvado) dibRescate(FL.amigo);
+  /* Fernando volando */
+  if (!(FL.inv>0 && (FL.t>>2)%2)){
+    if (FL.globo>0) dibGlobitos(FLX, FL.y+18, 2, '#f8b800');
+    ctx.save(); ctx.translate(FLX, FL.y);
+    ctx.rotate(Math.max(-0.5, Math.min(0.9, FL.vy*0.07)));
+    ctx.translate(-12, -14); dibFernandoSolo();
+    /* alitas que aletean */
+    ctx.fillStyle='#fff';
+    const al = Math.sin(FL.t/3)*7;
+    ctx.beginPath(); ctx.ellipse(-6, 16+al, 12, 6, -0.4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(30, 16-al, 12, 6, 0.4, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  texto(FL.pasados+' / '+FL.meta, W/2, 96, 40, '#fff', true);
+  hudMJ('🐤 FLAPPY', etiquetaNivel('flappy')+'  TUBOS '+FL.pasados+'/'+FL.meta+'  '+corazonesInf(FL), 'A aletea');
+  barraPoder(FL.globo>0 ? '🎈 ¡GLOBO!' : (FL.globoCd<=0 ? '🎈 GLOBO (B)' : '🎈 inflando...'),
+             FL.globo>0 ? 1 : 1-FL.globoCd/GLOBO_CD, FL.globo>0);
+}
+
+/* ============================================================
+   13) FERNANDO-MAN  (laberinto de hamburguesas)
+   ============================================================ */
+const MAPA_COCO = [
+  '###################',
+  '#o.......#.......o#',
+  '#.##.###.#.###.##.#',
+  '#.................#',
+  '#.##.#.#####.#.##.#',
+  '#....#...#...#....#',
+  '###..###.#.###..###',
+  '#o.......#.......o#',
+  '#.##.###.#.###.##.#',
+  '#.................#',
+  '###################',
+];
+const CO = { g:[], x:0, y:0, dx:0, dy:0, qx:0, qy:0, bolitas:0, fant:[], t:0, sustos:0, inv:0,
+             asusta:0, pedoCd:0, pPrev:false, amigo:null, vel:2.4 };
+const CC = 40, COW = 19, COH = 11, COX0 = 100, COY0 = 76, PEDO_CO = 400;
+const coCel = (cx,cy) => (cx<0||cy<0||cx>=COW||cy>=COH) ? '#' : CO.g[cy][cx];
+const coLibre = (cx,cy) => coCel(cx,cy) !== '#';
+const coPix = (cx,cy) => ({x: COX0 + cx*CC + CC/2, y: COY0 + cy*CC + CC/2});
+function iniciarCoco(){
+  const N = nivelDe('coco');
+  CO.g = MAPA_COCO.map(f=>f.split(''));
+  CO.bolitas = 0;
+  for(let y=0;y<COH;y++) for(let x=0;x<COW;x++) if (CO.g[y][x]==='.'||CO.g[y][x]==='o') CO.bolitas++;
+  const ini = coPix(9, 3);
+  CO.x = ini.x; CO.y = ini.y; CO.dx = 0; CO.dy = 0; CO.qx = 0; CO.qy = 0;
+  CO.tcx = undefined; CO.tcy = undefined;
+  CO.t = 0; CO.sustos = 0; CO.inv = 0; CO.asusta = 0; CO.pedoCd = 0; CO.pPrev = false;
+  CO.vel = 2.4 + N*0.12;
+  const casas = [[1,1],[17,1],[1,9],[17,9]];
+  CO.fant = casas.map((c,i)=>{
+    const p = coPix(c[0], c[1]);
+    const f = {x:p.x, y:p.y, dx:0, dy:0, qx:0, qy:0, tcx:c[0], tcy:c[1],
+               color:['#e03434','#ff9ed6','#8ecbff','#f8a020'][i],
+               nombre:['BOWSER','RÓMULO','KOOPA','GOOMBA'][i],
+               vel:1.5 + N*0.13 + i*0.06, salida:i*70};
+    f.decide = (cx,cy)=>decidirFantasma(f, cx, cy);
+    return f;
+  });
+  /* el amigo del nivel, escondido en una esquina del laberinto */
+  const rincones = [[1,5],[17,5],[9,1],[9,9],[3,3],[15,7]];
+  const rc = rincones[(N-1) % rincones.length];
+  const pa = coPix(rc[0], rc[1]);
+  CO.amigo = nuevoRescate('coco', pa.x-13, pa.y-20);
+  aviso('¡Cómete todas las hamburguesas! Las ⭐ asustan a los fantasmas · B = pedo 💨', 4.4);
+}
+/* Movimiento por rejilla: cada uno va SIEMPRE hacia el centro de una casilla
+   destino y solo al llegar decide la siguiente. Comparar la distancia al
+   centro con la velocidad no vale: por los decimales de la coma flotante se
+   quedaba pegado al centro y no avanzaba nunca. */
+const coCelActual = o => ({ cx: Math.round((o.x-COX0-CC/2)/CC),
+                            cy: Math.round((o.y-COY0-CC/2)/CC) });
+function coMover(o, vel){
+  if (o.tcx === undefined){ const c0 = coCelActual(o); o.tcx = c0.cx; o.tcy = c0.cy; }
+  const dest = coPix(o.tcx, o.tcy);
+  const dx = dest.x - o.x, dy = dest.y - o.y;
+  if (Math.abs(dx) + Math.abs(dy) <= vel + 0.002){
+    o.x = dest.x; o.y = dest.y;                 /* llegó al centro: aquí se decide */
+    if (o.decide) o.decide(o.tcx, o.tcy);
+    if ((o.qx||o.qy) && coLibre(o.tcx+o.qx, o.tcy+o.qy)){ o.dx = o.qx; o.dy = o.qy; }
+    if (!coLibre(o.tcx+o.dx, o.tcy+o.dy)){ o.dx = 0; o.dy = 0; }
+    if (o.dx || o.dy){ o.tcx += o.dx; o.tcy += o.dy; }
+  } else {
+    o.x += Math.max(-vel, Math.min(vel, dx));
+    o.y += Math.max(-vel, Math.min(vel, dy));
+  }
+  return coCelActual(o);
+}
+/* los fantasmas eligen el camino que más los acerca a Fernando (o que más los
+   aleja mientras están asustados), y no se dan la vuelta si tienen otra salida */
+function decidirFantasma(f, cx, cy){
+  const huye = CO.asusta > 0;
+  const salidas = [[1,0],[-1,0],[0,1],[0,-1]].filter(([ox,oy])=>
+    coLibre(cx+ox, cy+oy) && !(ox === -f.dx && oy === -f.dy));
+  const lista = salidas.length ? salidas : [[-f.dx, -f.dy]];
+  const coste = ([ox,oy]) => {
+    const p = coPix(cx+ox, cy+oy);
+    return Math.hypot(p.x-CO.x, p.y-CO.y);
+  };
+  lista.sort((a,b)=> huye ? coste(b)-coste(a) : coste(a)-coste(b));
+  f.qx = lista[0][0]; f.qy = lista[0][1];
+}
+function updateCoco(){
+  CO.t++;
+  if (CO.inv>0) CO.inv--;
+  if (CO.asusta>0) CO.asusta--;
+  if (CO.pedoCd>0) CO.pedoCd--;
+  if (mIzq()){ CO.qx=-1; CO.qy=0; } else if (mDer()){ CO.qx=1; CO.qy=0; }
+  else if (mArr()){ CO.qx=0; CO.qy=-1; } else if (mAbj()){ CO.qx=0; CO.qy=1; }
+  /* PODER: el pedo asusta a todos los fantasmas sin gastar estrella */
+  if (mAccion() && !CO.pPrev && CO.pedoCd<=0){
+    CO.pedoCd = PEDO_CO; CO.asusta = Math.max(CO.asusta, 300);
+    sfx.pedo(); sacudir(5); nubePedo(CO.x, CO.y, 16);
+    aviso('💨 ¡PEDO! Los fantasmas salen corriendo', 2.2);
+    hablar('¡Qué pedo tan grande, tío Fran!');
+  }
+  CO.pPrev = mAccion();
+  const c = coMover(CO, CO.vel);
+  /* comer */
+  const cel = coCel(c.cx, c.cy);
+  if (cel==='.'){ CO.g[c.cy][c.cx]=' '; CO.bolitas--; sumar(30); if (CO.t%4===0) sfx.moneda(); }
+  else if (cel==='o'){
+    CO.g[c.cy][c.cx]=' '; CO.bolitas--; sumar(150); sfx.poder();
+    CO.asusta = 360; aviso('⭐ ¡A por ellos!', 1.6);
+  }
+  rescatar(CO.amigo, CO.x, CO.y, 30);
+  /* fantasmas */
+  for(const f of CO.fant){
+    if (f.salida>0){ f.salida--; continue; }
+    coMover(f, f.vel * (CO.asusta>0 ? 0.62 : 1));
+    /* encuentro */
+    if (Math.abs(f.x-CO.x) < 22 && Math.abs(f.y-CO.y) < 22){
+      if (CO.asusta>0){
+        sumar(600); sfx.pisoton(); sacudir(3);
+        const casa = coPix(9, 3);
+        f.x = casa.x; f.y = casa.y; f.salida = 150; f.dx = 0; f.dy = 0;
+        f.tcx = undefined; f.tcy = undefined; f.qx = 0; f.qy = 0;
+        for(let i=0;i<6;i++) parts.push({tipo:'estrellita', x:f.x, y:f.y, vx:(Math.random()-0.5)*4, vy:-2-Math.random()*3, t:30});
+      } else if (CO.asusta<=0 && CO.inv<=0){
+        CO.inv = 110;
+        const ini = coPix(9, 3);
+        CO.x = ini.x; CO.y = ini.y; CO.dx = 0; CO.dy = 0; CO.qx = 0; CO.qy = 0;
+        CO.tcx = undefined; CO.tcy = undefined;
+        susto(CO, '¡Te atrapó! Vidas infinitas: vuelves al centro');
+      }
+    }
+  }
+  if (CO.bolitas <= 0) pasarNivel('coco', iniciarCoco, 'finCoco', '¡Toma, pichungazo!');
+}
+function drawCoco(){
+  ctx.fillStyle='#04061e'; ctx.fillRect(0,0,W,H);
+  for(let y=0;y<COH;y++) for(let x=0;x<COW;x++){
+    const p = {x: COX0+x*CC, y: COY0+y*CC};
+    const cel = CO.g[y][x];
+    if (cel==='#'){
+      rect(p.x+3, p.y+3, CC-6, CC-6, '#1a2a8a');
+      rect(p.x+6, p.y+6, CC-12, 5, '#4a6ad8');
+    } else if (cel==='.'){
+      ctx.save(); ctx.translate(p.x+CC/2-9, p.y+CC/2-8); ctx.scale(0.8,0.8); dibBurger(0,0); ctx.restore();
+    } else if (cel==='o'){
+      const s = 1+Math.sin(CO.t/7)*0.16;
+      ctx.save(); ctx.translate(p.x+CC/2, p.y+CC/2); ctx.scale(s,s);
+      texto('★', 0, 8, 26, '#ffe36e', true);
+      ctx.restore();
+    }
+  }
+  dibRescate(CO.amigo);
+  /* fantasmas */
+  for(const f of CO.fant){
+    const asustado = CO.asusta>0;
+    ctx.fillStyle = asustado ? ((CO.asusta<80 && (CO.t>>2)%2) ? '#fff' : '#3a5ad8') : f.color;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y-4, 15, Math.PI, 0);
+    ctx.lineTo(f.x+15, f.y+13);
+    for(let k=0;k<3;k++) ctx.lineTo(f.x+15-(k*2+1)*5, f.y + (k%2 ? 13 : 5));
+    ctx.lineTo(f.x-15, f.y+13);
+    ctx.closePath(); ctx.fill();
+    if (!asustado){
+      rect(f.x-9+f.dx*3, f.y-8, 7, 8, '#fff'); rect(f.x+2+f.dx*3, f.y-8, 7, 8, '#fff');
+      rect(f.x-7+f.dx*5, f.y-5, 4, 4, '#222'); rect(f.x+4+f.dx*5, f.y-5, 4, 4, '#222');
+    } else {
+      rect(f.x-8, f.y-6, 4, 4, '#fff'); rect(f.x+4, f.y-6, 4, 4, '#fff');
+      rect(f.x-9, f.y+3, 18, 3, '#fff');
+    }
+    if (f.salida<=0 && !asustado) texto(f.nombre, f.x, f.y-24, 10, f.color, true);
+  }
+  /* Fernando comilón */
+  if (!(CO.inv>0 && (CO.t>>2)%2)){
+    ctx.save(); ctx.translate(CO.x, CO.y);
+    if (CO.dx<0) ctx.scale(-1,1);
+    ctx.translate(-12, -20); dibFernandoSolo();
+    ctx.restore();
+  }
+  if (CO.asusta>0){
+    ctx.strokeStyle='rgba(255,227,110,'+(0.4+Math.sin(CO.t/5)*0.25)+')'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(CO.x, CO.y, 26, 0, Math.PI*2); ctx.stroke();
+  }
+  hudMJ('🟡 COCO', etiquetaNivel('coco')+'  🍔'+CO.bolitas+'  '+corazonesInf(CO), 'flechas · B pedo');
+  barraPoder(CO.asusta>0 ? '💨 ¡A POR ELLOS!' : (CO.pedoCd<=0 ? '💨 PEDO (B)' : '💨 cargando...'),
+             CO.asusta>0 ? 1 : 1-CO.pedoCd/PEDO_CO, CO.asusta>0);
+}
+
+/* ============================================================
    Sala arcade y orquestación
    ============================================================ */
 function cajasArcade(){
-  const anc = 222, alt = 108, hx = 14, hy = 12, x0 = 24, y0 = 128;
+  const anc = 174, alt = 112, hx = 12, hy = 12, x0 = 20, y0 = 126;
   return JUEGOS.map((j,i)=>({
     x: x0 + (i%COLS_ARCADE)*(anc+hx),
     y: y0 + ((i/COLS_ARCADE)|0)*(alt+hy),
@@ -2250,22 +2714,22 @@ function drawArcade(){
     ctx.lineWidth = s?6:3; ctx.strokeStyle = s ? '#ffe36e' : 'rgba(255,255,255,0.45)';
     ctx.stroke();
     if (s){ ctx.globalAlpha=0.3+Math.sin(T/7)*0.22; ctx.lineWidth=12; ctx.stroke(); ctx.globalAlpha=1; }
-    ctx.font='27px monospace'; ctx.textAlign='left';
-    ctx.fillText(c.j.emoji, c.x+12, c.y+34);
-    texto(c.j.nombre.replace('FERNANDO ',''), c.x+48, c.y+30, 16, '#fff');
+    ctx.font='22px monospace'; ctx.textAlign='left';
+    ctx.fillText(c.j.emoji, c.x+9, c.y+30);
+    texto(c.j.nombre.replace('FERNANDO ','').replace('FERNANDO-',''), c.x+38, c.y+27, 14, '#fff');
     /* la descripción se parte en líneas que quepan de verdad dentro de la tarjeta */
-    ctx.font = 'bold 11.5px monospace';
-    const ancho = c.w - 24;
+    ctx.font = 'bold 10px monospace';
+    const ancho = c.w - 20;
     const lineas = [];
     let linea = '';
     for(const palabra of c.j.desc.split(' ')){
       const prueba = linea ? linea+' '+palabra : palabra;
       if (ctx.measureText(prueba).width > ancho && linea){ lineas.push(linea); linea = palabra; }
       else linea = prueba;
-      if (lineas.length===3) break;
+      if (lineas.length===4) break;
     }
-    if (linea && lineas.length<4) lineas.push(linea);
-    lineas.forEach((l,i)=> texto(l, c.x+12, c.y+56+i*15, 11.5, 'rgba(255,255,255,0.85)'));
+    if (linea && lineas.length<5) lineas.push(linea);
+    lineas.forEach((l,i)=> texto(l, c.x+10, c.y+50+i*14, 10, 'rgba(255,255,255,0.85)'));
   }
   /* botón para volver: sin él, en el celular no había manera de salir de la sala */
   const z = zonaVolver();
@@ -2288,6 +2752,9 @@ function empezar(id){
   else if (id==='torre'){ iniciarTorre(); modo='torre'; estado='mjTorre'; }
   else if (id==='nieve'){ iniciarNieve(); modo='nieve'; estado='mjNieve'; }
   else if (id==='luna'){ iniciarLuna(); modo='luna'; estado='mjLuna'; }
+  else if (id==='corre'){ iniciarRunner(); modo='corre'; estado='mjRunner'; }
+  else if (id==='flappy'){ iniciarFlappy(); modo='flappy'; estado='mjFlappy'; }
+  else if (id==='coco'){ iniciarCoco(); modo='coco'; estado='mjCoco'; }
   cortina = 40;
 }
 function activo(){ return estado==='arcade' || (typeof estado==='string' && estado.indexOf('mj')===0); }
@@ -2316,6 +2783,9 @@ function update(){
   else if (modo==='torre') updateTorre();
   else if (modo==='nieve') updateNieve();
   else if (modo==='luna') updateLuna();
+  else if (modo==='corre') updateRunner();
+  else if (modo==='flappy') updateFlappy();
+  else if (modo==='coco') updateCoco();
   else if (modo && modo.indexOf('fin')===0){
     if (pt.soltado){ pt.soltado=false; abrirArcade(); }
   }
@@ -2336,6 +2806,9 @@ function draw(){
   else if (modo==='torre') drawTorre();
   else if (modo==='nieve') drawNieve();
   else if (modo==='luna') drawLuna();
+  else if (modo==='corre') drawRunner();
+  else if (modo==='flappy') drawFlappy();
+  else if (modo==='coco') drawCoco();
   else if (modo==='finBirds') pantallaFin(resultado, resultado?'¡GANASTE!':'CASI...', resultado?'¡Todos los goombas fuera!':'Se acabaron los lanzamientos');
   else if (modo==='finDig') pantallaFin(resultado, resultado?'¡GANASTE!':'¡TE ATRAPARON!', resultado?'¡Túneles limpios!':'Inténtalo otra vez, pichunguito');
   else if (modo==='finKong') pantallaFin(resultado, resultado?'¡RESCATASTE A MAMÁ!':'¡UN BARRIL!', resultado?'«¡Te amo mamá!»':'Sube con más cuidado');
@@ -2346,6 +2819,9 @@ function draw(){
   else if (modo==='finTorre') pantallaFin(resultado, '¡CASA DEFENDIDA!', '¡Ni un goomba se coló hasta el final!');
   else if (modo==='finNieve') pantallaFin(resultado, '¡LLEGASTE ABAJO!', '¡Qué manera de bajar, pichunguito!');
   else if (modo==='finLuna') pantallaFin(resultado, '¡ALUNIZAJE PERFECTO!', '¡Fernando astronauta!');
+  else if (modo==='finRunner') pantallaFin(resultado, '¡QUÉ CARRERA!', '¡Nadie corre como el pichunguito!');
+  else if (modo==='finFlappy') pantallaFin(resultado, '¡TODOS LOS TUBOS!', '¡Fernando vuela como un pajarito!');
+  else if (modo==='finCoco') pantallaFin(resultado, '¡LABERINTO LIMPIO!', '¡Ni una hamburguesa quedó!');
   /* partículas compartidas */
   for(const p of parts){
     if (p.tipo==='estrellita'){ ctx.fillStyle='#ffe36e'; ctx.font='16px monospace'; ctx.fillText('✦',p.x,p.y); }
@@ -2390,8 +2866,9 @@ return { activo, update, draw, tecla, abrirArcade, empezar,
          _nivel: id=>nivelDe(id), _ponNivel: (id,n)=>{ nivel[id]=n; }, _MAXNIV: MAXNIV,
          _reiniciar: id=>({birds:iniciarBirds, dig:iniciarDig, kong:iniciarKong, contra:iniciarContra,
                            globos:iniciarGlobos, bomba:iniciarBombas, hielo:iniciarHielo,
-                           torre:iniciarTorre, nieve:iniciarNieve, luna:iniciarLuna}[id])(),
-         _TD:TD, _SN:SN, _LU:LU,
+                           torre:iniciarTorre, nieve:iniciarNieve, luna:iniciarLuna,
+                           corre:iniciarRunner, flappy:iniciarFlappy, coco:iniciarCoco}[id])(),
+         _TD:TD, _SN:SN, _LU:LU, _RU:RU, _FL:FL, _CO:CO,
          _amigos: AMIGOS,
          _zonaSalir: zonaSalir, _zonaVolver: zonaVolver,
          _B:B, _D:D, _K:K, _C:C, _KPL:KPL, _KESC:KESC, _G:G, _M:M, _I:I,

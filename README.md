@@ -70,7 +70,7 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 
 ## 🕹️ Sala Arcade
 
-Diez minijuegos con los personajes del juego, desde el selector de mundos.
+Trece minijuegos con los personajes del juego, desde el selector de mundos.
 
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
 - **Seis niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el sexto. Arriba se ve **NIV 1/6**.
@@ -89,6 +89,9 @@ Diez minijuegos con los personajes del juego, desde el selector de mundos.
 | 🏰 **Fernando Torre** | **Defensa de torres**: los goombas avanzan por el caminito hacia la casa donde está tu amigo. Coloca a **Penny** (rápida), **Sheldon** (pega fuerte) y **Tío Juan** (largo alcance) en el césped para frenarlos. Ganas monedas por cada goomba que cae, y hay hasta 8 oleadas | **▲ + B** = 💨 **pedo total**: daña de golpe a todos los goombas del campo |
 | 🎿 **Fernando Nieve** | **Bajada en tabla**: esquiva pinos y rocas, recoge hamburguesas y rescata a tu amigo a mitad de la montaña, hasta llegar a la meta | **A** salta por encima de los obstáculos · **B** = 🍔 **turbo de hamburguesa** (invencible y a toda velocidad) |
 | 🚀 **Fernando Luna** | **Alunizaje**: baja la nave con cuidado y pósala en las plataformas sin pasarte de velocidad ni de inclinación. Tres alunizajes por nivel, y en la plataforma dorada ★ espera tu amigo. Los medidores se ponen verdes cuando puedes posarte | **A** enciende el motor · **←→** giran · **B** = 🦸 **Tío Juan te sostiene** (media gravedad y no te estrellas) |
+| 🏃 **Fernando Runner** | **Carrera sin fin en tres carriles**, en perspectiva: esquiva vallas saltando, barras agachándote y trenes cambiándote de carril, recogiendo hamburguesas. A mitad de camino aparece tu amigo | **←→** cambian de carril · **A** salta · **▼** se agacha · **B** = 🦸 **Tío Juan te lleva volando** por encima de todo |
+| 🐤 **Flappy Fernando** | Aletea entre los tubos sin tocarlos. Si chocas no se acaba: te deja dentro del hueco y sigues. Hay que pasar de 10 a 20 tubos según el nivel | **A** aletea · **B** = 🎈 **el globo**: flotas suavecito y nada te toca |
+| 🟡 **Fernando-Man** | Laberinto comiendo hamburguesas, perseguido por **Bowser, Rómulo, un koopa y un goomba**. Las ⭐ estrellas los asustan y entonces te los puedes comer. Tu amigo del nivel espera escondido en un rincón | **flechas** para moverse · **B** = 💨 **el pedo**, que los asusta a todos sin gastar estrella |
 
 Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
 
