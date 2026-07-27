@@ -70,7 +70,7 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 
 ## 🕹️ Sala Arcade
 
-Trece minijuegos con los personajes del juego, desde el selector de mundos.
+Diecinueve minijuegos con los personajes del juego, desde el selector de mundos.
 
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
 - **Seis niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el sexto. Arriba se ve **NIV 1/6**.
@@ -92,6 +92,12 @@ Trece minijuegos con los personajes del juego, desde el selector de mundos.
 | 🏃 **Fernando Runner** | **Carrera sin fin en tres carriles**, en perspectiva: esquiva vallas saltando, barras agachándote y trenes cambiándote de carril, recogiendo hamburguesas. A mitad de camino aparece tu amigo | **←→** cambian de carril · **A** salta · **▼** se agacha · **B** = 🦸 **Tío Juan te lleva volando** por encima de todo |
 | 🐤 **Flappy Fernando** | Aletea entre los tubos sin tocarlos. Si chocas no se acaba: te deja dentro del hueco y sigues. Hay que pasar de 10 a 20 tubos según el nivel | **A** aletea · **B** = 🎈 **el globo**: flotas suavecito y nada te toca |
 | 🟡 **Fernando-Man** | Laberinto comiendo hamburguesas, perseguido por **Bowser, Rómulo, un koopa y un goomba**. Las ⭐ estrellas los asustan y entonces te los puedes comer. Tu amigo del nivel espera escondido en un rincón | **flechas** para moverse · **B** = 💨 **el pedo**, que los asusta a todos sin gastar estrella |
+| 🤖 **Fernando Mega** *(Mega Man)* | Pasillo lleno de goombas y koopas con un **jefe al final**. Al vencerlo **le robas su poder** y lo llevas al siguiente nivel: fuego, hielo, pedo, estrella y hueso | **B** dispara y **manteniéndolo** sale el disparo cargado · **▲** cambia de arma |
+| 🍔 **Fernando Burger** *(BurgerTime)* | Camina por encima de los ingredientes para tirarlos al plato, subiendo y bajando escaleras mientras te persiguen el huevo, la salchicha y el pepino | **B** = 🌶️ **pimienta**, que los deja aturdidos |
+| 🧛 **Fernando Súper** *(estilo Vampire Survivors)* | **Solo te mueves**: el pichungazo dispara solo al goomba más cercano. Recoges estrellitas, subes de nivel y **eliges un poder entre tres** — Penny y Sheldon girando a tu alrededor, el aura de tío Fran, el imán de Abu… Hay que aguantar hasta que se acabe el tiempo | El poder lo eliges tú al subir de nivel |
+| 🚙 **Fernando Jeep** *(Jackal)* | Visto desde arriba, subiendo por el camino: dispara, cuélate por los huecos de los muros y **rescata a los amigos que están en jaulas** | **B** dispara · **A** = 💣 **bombazo** que revienta todo alrededor |
+| 🐭 **Fernando Mappy** | Recoge todo por los cinco pisos usando las **tirolinas** para subir y bajar, esquivando a los gatos | **B** = 🚪 **portazo**: si estás junto a una puerta, manda a volar a los gatos |
+| 🎪 **Fernando Circo** *(Circus Charlie)* | **Dos actos que se alternan**: en los niveles impares montas el león y saltas los aros de fuego; en los pares rebotas en el balancín para reventar los 24 globos | **B** = ⭐ **estrella mágica**: nada te toca |
 
 Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
 
