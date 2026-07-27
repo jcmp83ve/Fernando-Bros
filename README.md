@@ -73,15 +73,16 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 Siete minijuegos con los personajes del juego, desde el selector de mundos.
 
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
-- **Tres niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos) sin perder los puntos, y la copa sale al terminar el tercero. Arriba se ve **NIV 1/3**.
+- **Seis niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el sexto. Arriba se ve **NIV 1/6**.
+- **Todo el elenco tiene su momento**: en cada nivel aparece **un amigo distinto al que rescatar** — Santi, Cucú, Penny, Sheldon, Luca, Salomón, Abu, Tío Fran, Mamá, Papá, Tía Yanny, Tío Nacho, Tío Beto, Tía Giuliana, Rómulo y Tío Juan. Lleva su cartel con flecha y da **+1500 puntos** y su frase con voz de niño.
 - **Cada juego tiene su propio poder**:
 
 | Minijuego | De qué va | Poder |
 |---|---|---|
-| 🐦 **Fernando Birds** | Lanza a Penny, Sheldon y Cucú con la resortera contra las torres de goombas. Los lanzamientos son **infinitos** | En pleno vuelo, toca la pantalla (o A/B): 🚀 **Penny cohete**, 💨 **pedo de Sheldon** que hace estallar todo, 👧 **Cucú se multiplica por tres** |
+| 🐦 **Fernando Birds** | Lanza a los amigos con la resortera contra las torres de goombas. Los lanzamientos son **infinitos** y el elenco crece con el nivel hasta **siete personajes** | En pleno vuelo, toca la pantalla (o A/B): 🚀 **Penny cohete** · 💨 **pedo de Sheldon** · 👧 **Cucú por tres** · ⚽ **Luca pelota** (rebota sin parar) · 🪨 **Salomón en picada** · 💥 **el pedazo de pedo de tío Fran** · 👶 **Santi taladro** (atraviesa las cajas) |
 | ⛏️ **Fernando Dig** | Cava túneles e infla a los goombas con la bomba de aire. Ellos patrullan sus túneles y, si llevan rato sin poder llegar, **se vuelven fantasmas y atraviesan la tierra**. Las rocas caen en cuanto les quitas el suelo | **A** = 💨 **pedo de tío Fran**: infla de golpe a todos los goombas de alrededor |
 | 🛢️ **Fernando Kong** | Sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa. Las escaleras se agarran con margen de sobra | 🔨 **Martillo pichunguito**: hay dos en la torre; con él los barriles se rompen al tocarlos |
-| 🔫 **Fernando Contra** | Avanza por la selva con Tío Juan de apoyo hasta el jefe final. **Mantén B** y dispara sin parar, no hay que machacar el botón | 🦴 Cada tres enemigos cae un **hueso**: Fernando se vuelve **perrito rojo gigante**, dispara en abanico y arrolla a todos |
+| 🔫 **Fernando Contra** | Avanza por la selva hasta el jefe final con **un compañero distinto en cada nivel** volando de apoyo, que además dispara. **Mantén B** y disparas sin parar | 🦴 Cada tres enemigos cae un **hueso**: Fernando se vuelve **perrito rojo gigante**, dispara en abanico y arrolla a todos |
 | 🎈 **Fernando Globos** | Vuela aleteando con globos y revienta los de los koopas desde arriba | **B** = 💨 **impulso pedorro**, y hay 🎈 **globos sueltos** que dan un tercer globo |
 | 💣 **Fernando Bombas** | Pon bombas en el laberinto para atrapar goombas | **A** = 💨 **súper pedo en cruz** (no te hace daño), y las cajas rotas sueltan 🔥 más alcance, 💣 más bombas y 👟 más velocidad |
 | 🧊 **Fernando Hielo** | Rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú | **B** = 🦘 **salto de papá**: sube dos pisos de un golpe y el cabezazo rompe **tres bloques** a la vez |

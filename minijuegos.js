@@ -40,7 +40,7 @@ function sumar(n){ puntosMJ += n; puntos += n; }
    Cada minijuego tiene tres niveles: al superar uno se vuelve a armar el
    escenario más difícil, sin perder los puntos, y solo al terminar el
    tercero aparece la pantalla de victoria. */
-const MAXNIV = 3;
+const MAXNIV = 6;
 const nivel = {};
 const nivelDe = id => nivel[id] || 1;
 function pasarNivel(id, iniciar, finModo, frase){
@@ -56,6 +56,75 @@ function pasarNivel(id, iniciar, finModo, frase){
   }
 }
 const etiquetaNivel = id => 'NIV '+nivelDe(id)+'/'+MAXNIV;
+
+/* ---------- el elenco de Fernando Bros ----------
+   En cada nivel de cada minijuego aparece un amigo distinto al que hay que
+   rescatar (o que acompaña a Fernando). Así van saliendo todos. */
+const AMIGOS = [
+  {id:'santi',    nombre:'SANTI',        frase:'¡Te amo Santi, mi hermanito!',
+   dib:(x,y,t)=>dibSanti(x,y,t)},
+  {id:'cucu',     nombre:'CUCÚ',         frase:'¡Hola Cucú, acompáñame!',
+   dib:(x,y,t)=>dibCucu(x,y,1,t)},
+  {id:'penny',    nombre:'PENNY',        frase:'¡Penny, mi perrita linda!',
+   dib:(x,y,t)=>{ ctx.save(); ctx.translate(x,y+10); dibPerroSolo('#222'); ctx.restore(); }},
+  {id:'sheldon',  nombre:'SHELDON',      frase:'¡Sheldon, ven conmigo!',
+   dib:(x,y,t)=>{ ctx.save(); ctx.translate(x,y+10); dibPerroSolo('#8a5a2a'); ctx.restore(); }},
+  {id:'luca',     nombre:'LUCA',         frase:'¡Luca, vamos juntos!',
+   dib:(x,y,t)=>dibLuca(x,y,t,1)},
+  {id:'salomon',  nombre:'SALOMÓN',      frase:'¡Salomón, eres mi amigo!',
+   dib:(x,y,t)=>dibSalomon(x,y,t,1)},
+  {id:'abu',      nombre:'ABU',          frase:'¡Te amo Abu!',
+   dib:(x,y,t)=>dibAbu(x,y,1,t,true)},
+  {id:'tiofran',  nombre:'TÍO FRAN',     frase:'¡Qué pedo tan grande, tío Fran!',
+   dib:(x,y,t)=>dibTioFran(x,y,t,false)},
+  {id:'mama',     nombre:'MAMÁ',         frase:'¡Te amo mamá!',
+   dib:(x,y,t)=>dibMama(x,y,t)},
+  {id:'papa',     nombre:'PAPÁ',         frase:'¡Papá, mira cómo salto de alto!',
+   dib:(x,y,t)=>dibPapa(x,y,t)},
+  {id:'yanny',    nombre:'TÍA YANNY',    frase:'¡Hola mi amor! ¡Soy tía Yanny!',
+   dib:(x,y,t)=>dibYanny(x,y,t)},
+  {id:'nacho',    nombre:'TÍO NACHO',    frase:'¡Épale! ¡Aquí viene tío Nacho!',
+   dib:(x,y,t)=>dibNacho(x,y,t)},
+  {id:'beto',     nombre:'TÍO BETO',     frase:'¡Hola tío Beto!',
+   dib:(x,y,t)=>dibBeto(x,y,t)},
+  {id:'giuliana', nombre:'TÍA GIULIANA', frase:'¡Hola tía Giuliana!',
+   dib:(x,y,t)=>dibGiuliana(x,y,t)},
+  {id:'romulo',   nombre:'RÓMULO',       frase:'¡Brrrp! ¡Ay, qué pena!',
+   dib:(x,y,t)=>dibRomulo(x,y,t)},
+  {id:'tiojuan',  nombre:'TÍO JUAN',     frase:'¡Te amo tío Juan, yo soy tu pichunguito!',
+   dib:(x,y,t)=>dibTioJuan(x,y,t)},
+];
+const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13};
+function amigoDeNivel(juego, n){
+  /* en Kong mamá princesa ya espera arriba, así que ella no entra en el sorteo */
+  const lista = juego==='kong' ? AMIGOS.filter(a=>a.id!=='mama') : AMIGOS;
+  return lista[((DESFASE[juego]||0) + (n||1) - 1) % lista.length];
+}
+/* un amigo esperando a que Fernando lo rescate */
+function nuevoRescate(juego, x, y){
+  return {a: amigoDeNivel(juego, nivelDe(juego)), x, y, salvado:false};
+}
+function dibRescate(r){
+  if (!r || r.salvado) return;
+  const f = Math.sin(T/12)*3;
+  ctx.globalAlpha = 0.32+Math.sin(T/8)*0.2;
+  ctx.strokeStyle='#ffe36e'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.arc(r.x+13, r.y+18+f, 32, 0, Math.PI*2); ctx.stroke();
+  ctx.globalAlpha = 1;
+  r.a.dib(r.x, r.y+f, T);
+  letrero(r.x+13, r.y-18+f, r.a.nombre, '#ffe36e');
+}
+function rescatar(r, px, py, radio){
+  if (!r || r.salvado) return false;
+  const rr = radio || 34;
+  if (Math.abs(px-(r.x+13)) > rr || Math.abs(py-(r.y+18)) > rr+12) return false;
+  r.salvado = true; sumar(1500); sfx.poder(); sacudir(3);
+  hablar(r.a.frase);
+  aviso('🤗 ¡RESCATASTE A '+r.a.nombre+'! +1500', 2.4);
+  for(let i=0;i<12;i++) parts.push({tipo:'estrellita', x:r.x+13, y:r.y+16,
+    vx:(Math.random()-0.5)*6, vy:-2-Math.random()*3, t:36});
+  return true;
+}
 
 /* ---------- utilidades ---------- */
 const HUD2 = 44;
@@ -73,8 +142,15 @@ function hudMJ(titulo, izqTxt, derTxt){
   acc.addColorStop(0,'#d82800'); acc.addColorStop(0.5,'#f8b800'); acc.addColorStop(1,'#2a6ad0');
   ctx.fillStyle=acc; ctx.fillRect(0,HUD2-3,W,3);
   texto(titulo, 16, 29, 17, '#f8b800');
-  if (izqTxt) texto(izqTxt, 290, 29, 16, '#fff');
-  if (derTxt) texto(derTxt, 560, 28, 13, '#8ecbff');
+  /* los dos rótulos se encogen si hace falta, para no encimarse nunca */
+  const cabe = (t, tam, max) => {
+    let f = tam;
+    ctx.font = 'bold '+f+'px monospace';
+    while (f > 9 && ctx.measureText(t).width > max){ f -= 0.5; ctx.font = 'bold '+f+'px monospace'; }
+    return f;
+  };
+  if (izqTxt) texto(izqTxt, 248, 29, cabe(izqTxt, 16, 336), '#fff');
+  if (derTxt) texto(derTxt, 596, 28, cabe(derTxt, 13, 216), '#8ecbff');
   const z = zonaSalir();
   ctx.fillStyle='rgba(255,255,255,0.16)';
   ctx.beginPath(); ctx.roundRect(z.x, z.y, z.w, z.h, 11); ctx.fill();
@@ -98,7 +174,7 @@ function susto(obj, frase){
   sfx.dano(); sacudir(4);
   aviso(frase || '¡Ay! Vidas infinitas: sigue jugando', 1.4);
 }
-const corazonesInf = obj => '♥∞   😵'+(obj.sustos||0);
+const corazonesInf = obj => '♥∞ 😵'+(obj.sustos||0);
 
 /* nube de pedo reutilizable (el poder favorito de tío Fran) */
 function nubePedo(x, y, n){
@@ -152,13 +228,25 @@ try{
    ============================================================ */
 const B = { proy:null, extras:[], cajas:[], bichos:[], tiros:3, listos:[], apunta:false, ang:-0.6, fza:0,
             fase:'espera', disparos:0, podPrev:false, sustos:0 };
+/* quién se puede lanzar con la resortera, y qué hace su poder */
+const ELENCO_B = ['penny','sheldon','cucu','luca','salomon','tiofran','santi'];
+const PODER_B = {
+  penny:   '🚀 PENNY COHETE',
+  sheldon: '💨 PEDO DE SHELDON',
+  cucu:    '👧 CUCÚ POR TRES',
+  luca:    '⚽ LUCA PELOTA',
+  salomon: '🪨 SALOMÓN EN PICADA',
+  tiofran: '💥 PEDAZO DE PEDO',
+  santi:   '👶 SANTI TALADRO',
+};
 const SUELO_B = 470;
 /* nombre del perrito que toca lanzar (los tiros son infinitos y van rotando) */
 const bichoTurno = () => B.listos[B.disparos % B.listos.length];
 function iniciarBirds(){
   B.tiros = 0; B.fase='espera'; B.proy=null; B.extras=[]; B.ang=-0.6; B.fza=0; B.apunta=false; B.finT=undefined;
   B.disparos = 0; B.podPrev = false; B.sustos = 0;
-  B.listos = ['penny','sheldon','cucu'];
+  /* el elenco lanzable crece con el nivel: cada uno con su propio poder */
+  B.listos = ELENCO_B.slice(0, Math.min(ELENCO_B.length, 2 + nivelDe('birds')));
   B.cajas = []; B.bichos = [];
   const N = nivelDe('birds');
   const base = 520;
@@ -200,23 +288,53 @@ function poderBird(p){
     p.vx *= 0.25; p.vy = -2.5;
     aviso('💨 ¡Qué pedo tan grande, tío Fran!', 2);
     hablar('¡Qué pedo tan grande, tío Fran!');
-  } else {                                     /* Cucú se multiplica por tres */
+  } else if (p.tipo==='cucu'){                 /* Cucú se multiplica por tres */
     for(const giro of [-0.32, 0.32]){
       const co = Math.cos(giro), si = Math.sin(giro);
       B.extras.push({x:p.x, y:p.y, vx:p.vx*co - p.vy*si, vy:p.vx*si + p.vy*co,
                      tipo:'cucu', t:p.t, espera:0, usado:true});
     }
     sfx.huevo(); aviso('👧 ¡CUCÚ SE MULTIPLICA POR TRES!', 1.8);
+  } else if (p.tipo==='luca'){                 /* Luca rebota como una pelota */
+    p.pelota = true; p.vy = -Math.abs(p.vy) - 6; p.vx *= 1.25;
+    sfx.salto(); aviso('⚽ ¡LUCA PELOTA! Rebota y rebota', 1.6);
+  } else if (p.tipo==='salomon'){              /* Salomón cae a plomo */
+    p.vx *= 0.35; p.vy = 21; p.pesado = true;
+    sfx.pisoton(); aviso('🪨 ¡SALOMÓN EN PICADA!', 1.6);
+  } else if (p.tipo==='tiofran'){              /* el pedo más grande de todos */
+    nubePedo(p.x, p.y, 30); sfx.pedo(); sacudir(9);
+    for(const c of B.cajas){
+      const d = Math.hypot(c.x+18-p.x, c.y+18-p.y);
+      if (d < 240){ c.vida -= 2; c.vx += (c.x+18-p.x)/(d||1)*9; c.vy += (c.y+18-p.y)/(d||1)*8 - 3; }
+    }
+    for(const b of B.bichos)
+      if (b.vivo && Math.hypot(b.x-p.x, b.y-p.y) < 190){ b.vivo = false; sumar(500); sfx.pisoton(); }
+    p.vx *= 0.2; p.vy = -3;
+    aviso('💥 ¡QUÉ PEDO TAN GRANDE, TÍO FRAN!', 2.2);
+    hablar('¡Qué pedo tan grande, tío Fran!');
+  } else {                                     /* Santi atraviesa las cajas */
+    p.taladro = 140;
+    sfx.moneda(); aviso('👶 ¡SANTI TALADRO! Atraviesa las cajas', 1.8);
   }
 }
 /* física de un proyectil; devuelve false cuando ya terminó su vuelo */
 function fisicaProy(p){
   if (p.espera>0) p.espera--;
-  p.vy += 0.42; p.x += p.vx; p.y += p.vy; p.t++;
-  if (p.y > SUELO_B-14){ p.y = SUELO_B-14; p.vy *= -0.42; p.vx *= 0.7; }
+  if (p.taladro>0) p.taladro--;
+  p.vy += p.pesado ? 0.9 : 0.42; p.x += p.vx; p.y += p.vy; p.t++;
+  if (p.y > SUELO_B-14){
+    p.y = SUELO_B-14;
+    p.vy *= p.pelota ? -0.92 : -0.42;           /* Luca rebota casi sin perder fuerza */
+    p.vx *= p.pelota ? 0.97 : 0.7;
+  }
   for(const c of B.cajas){
     if (p.x+12>c.x && p.x-12<c.x+c.w && p.y+12>c.y && p.y-12<c.y+c.h){
       if (p.espera>0) continue;                 /* evita golpear 60 veces por segundo */
+      if (p.taladro>0){                         /* Santi taladro: rompe y sigue de largo */
+        c.vida--; c.vx += p.vx*0.3; c.vy -= 1;
+        p.espera = 5; sfx.romper(); sacudir(2);
+        continue;
+      }
       p.espera = 8;
       const fuerza = Math.hypot(p.vx,p.vy);
       c.vx += p.vx*0.5; c.vy += p.vy*0.4 - 1.5;
@@ -344,8 +462,7 @@ function drawBirds(){
   /* proyectiles */
   for(const p of (B.proy ? [B.proy].concat(B.extras) : B.extras)){
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.t*0.15);
-    if (p.tipo==='cucu') dibCucu(-11,-14,1,T);
-    else { ctx.translate(-13,-10); dibPerroSolo(p.tipo==='penny'?'#222':'#8a5a2a'); }
+    dibLanzable(p.tipo);
     ctx.restore();
     if (!p.usado){                                  /* aro que recuerda que tiene poder */
       ctx.strokeStyle='rgba(255,227,110,'+(0.45+Math.sin(T/5)*0.3)+')'; ctx.lineWidth=3;
@@ -370,18 +487,33 @@ function drawBirds(){
   /* a quién le toca lanzar (la munición nunca se acaba) */
   for(let i=0;i<3;i++){
     const t2 = B.listos[(B.disparos+i) % B.listos.length];
-    ctx.save(); ctx.translate(40+i*34, SUELO_B+34); ctx.scale(i===0?1:0.7, i===0?1:0.7);
+    ctx.save(); ctx.translate(40+i*38, SUELO_B+38); ctx.scale(i===0?1:0.7, i===0?1:0.7);
     ctx.globalAlpha = i===0 ? 1 : 0.5;
-    if (t2==='cucu') dibCucu(-8,-14,1,T); else dibPerroSolo(t2==='penny'?'#222':'#8a5a2a');
+    dibLanzable(t2);
     ctx.globalAlpha = 1;
     ctx.restore();
   }
-  texto('∞', 40+3*34+6, SUELO_B+50, 24, '#ffe36e');
+  texto('∞', 40+3*38+4, SUELO_B+50, 24, '#ffe36e');
   const enVuelo = B.proy && !B.proy.usado;
   hudMJ('🐦 BIRDS', etiquetaNivel('birds')+'   GOOMBAS: '+B.bichos.filter(b=>b.vivo).length+'   TIROS: ∞', 'arrastra y suelta');
-  const nomP = {penny:'🚀 PENNY COHETE', sheldon:'💨 PEDO DE SHELDON', cucu:'👧 CUCÚ POR TRES'};
-  barraPoder(enVuelo ? '¡TOCA YA! '+nomP[B.proy.tipo] : 'PODER: '+nomP[bichoTurno()],
+  barraPoder(enVuelo ? '¡TOCA YA! '+PODER_B[B.proy.tipo] : 'PODER: '+PODER_B[bichoTurno()],
              enVuelo ? 1 : 0.34, !!enVuelo);
+}
+/* cada personaje lanzable, dibujado centrado en el origen */
+function dibLanzable(tipo){
+  if (tipo==='penny'){ ctx.save(); ctx.translate(-13,-10); dibPerroSolo('#222'); ctx.restore(); }
+  else if (tipo==='sheldon'){ ctx.save(); ctx.translate(-13,-10); dibPerroSolo('#8a5a2a'); ctx.restore(); }
+  else if (tipo==='cucu') dibCucu(-11,-14,1,T);
+  else if (tipo==='luca') dibLuca(-12,-17,T,1);
+  else if (tipo==='salomon') dibSalomon(-12,-13,T,1);
+  else if (tipo==='tiofran') dibTioFran(-14,-16,T,false);
+  else {                                        /* Santi, en versión compacta */
+    rect(-13,-4,26,16,'#8ecbff');
+    rect(-8,-15,16,12,'#ffc8a0');
+    rect(-8,-17,16,4,'#4a2f10');
+    rect(-4,-11,2,2,'#222'); rect(2,-11,2,2,'#222');
+    rect(-2,-7,4,2,'#e07a7a');
+  }
 }
 
 /* ============================================================
@@ -399,8 +531,8 @@ function iniciarDig(){
   D.g[1][1] = 0; D.g[1][2] = 0; D.g[1][3] = 0;
   /* los goombas arrancan lejos de Fernando para que nadie muera de entrada */
   const N = nivelDe('dig');
-  const sitios = [[18,4],[21,7],[9,9],[16,9],[21,2],[12,6],[6,7],[19,10]];
-  D.enem = sitios.slice(0, 2 + N*2).map(([cx,cy])=>          /* 4, 6 y 8 goombas */
+  const sitios = [[18,4],[21,7],[9,9],[16,9],[21,2],[12,6],[6,7],[19,10],[14,3],[22,5]];
+  D.enem = sitios.slice(0, Math.min(10, 2 + N*2)).map(([cx,cy])=>   /* de 4 a 10 goombas */
     ({x:cx*DC, y:DY0+cy*DC, vivo:true, infla:0, t:0, golpe:0}));
   /* cada goomba nace en un pasillito para que se mueva desde el primer momento */
   D.enem.forEach((e,i)=>{
@@ -409,12 +541,16 @@ function iniciarDig(){
     e.fantasma = 0; e.atasco = 0; e.enTierra = false;
     e.tcx = undefined; e.ox = 0; e.oy = 0;
     e.espera = i*80;              /* así no salen todos a la vez por la tierra */
-    e.vel = 1.25 + i*0.10 + (N-1)*0.22;   /* cada goomba con su ritmo, y más rápidos por nivel */
+    e.vel = 1.25 + i*0.08 + Math.min(N-1,5)*0.17;   /* cada uno a su ritmo, más rápidos por nivel */
   });
   D.rocas = [{cx:6, cae:false, y:DY0+2*DC, quieta:false}, {cx:13, cae:false, y:DY0+4*DC, quieta:false},
              {cx:19, cae:false, y:DY0+7*DC, quieta:false}];
   if (N>=2) D.rocas.push({cx:10, cae:false, y:DY0+7*DC, quieta:false});
   if (N>=3) D.rocas.push({cx:16, cae:false, y:DY0+3*DC, quieta:false});
+  /* el amigo del nivel, enterrado al fondo: hay que cavar hasta él */
+  const rincones = [[22,8],[2,9],[22,2],[11,10],[6,3],[17,6]];
+  const rc = rincones[(N-1) % rincones.length];
+  D.amigo = nuevoRescate('dig', rc[0]*DC-13, DY0+rc[1]*DC-22);
   aviso('¡Cava y usa B para inflar! Con A sueltas el PEDO DE TÍO FRAN 💨', 4);
 }
 function celdaLibre(cx, cy){ return cx>=0 && cx<DW && cy>=0 && cy<DH; }
@@ -565,6 +701,7 @@ function updateDig(){
     if (r.y > DY0+(DH-1)*DC){ r.y = DY0+(DH-1)*DC; r.quieta = true; }
     else if (celdaLibre(r.cx, ncy+1) && D.g[ncy+1][r.cx]===1){ r.quieta = true; }
   }
+  rescatar(D.amigo, D.px, D.py, 32);
   if (D.enem.every(e=>!e.vivo)) pasarNivel('dig', iniciarDig, 'finDig', '¡Toma, pichungazo!');
 }
 function drawDig(){
@@ -611,6 +748,7 @@ function drawDig(){
     } else dibGoomba(0, 0, T);
     ctx.restore();
   }
+  dibRescate(D.amigo);
   /* nube verde mientras dura el pedo */
   if (D.pedo>0){
     ctx.fillStyle='rgba(120,220,90,'+(0.12+Math.sin(T/6)*0.05)+')';
@@ -654,7 +792,10 @@ function iniciarKong(){
     {x: 300,   y: yEnPlat(KPL[1], 300)-20,   tomado:false},
     {x: W-320, y: yEnPlat(KPL[3], W-320)-20, tomado:false},
   ];
-  aviso('¡Sube hasta mamá! Agarra los 🔨 martillos para romper barriles', 4);
+  /* un amigo esperando a mitad de la torre */
+  const xa = (nivelDe('kong')%2) ? 210 : W-260;
+  K.amigo = nuevoRescate('kong', xa-13, yEnPlat(KPL[2], xa)-40);
+  aviso('¡Sube hasta mamá! Agarra los 🔨 martillos y rescata a tu amigo', 4);
 }
 function danoKong(caida){
   if (K.inv>0 && !caida) return;
@@ -699,8 +840,8 @@ function updateKong(){
   }
   /* barriles que tira Bowser: más seguidos en cada nivel */
   const NK = nivelDe('kong');
-  if (K.t % (104 - NK*16) === 0){
-    K.barriles.push({x:150, y:KPL[KPL.length-2].y0-16, vx:2.4+NK*0.25, vy:0, rot:0});
+  if (K.t % Math.max(38, 104 - NK*12) === 0){
+    K.barriles.push({x:150, y:KPL[KPL.length-2].y0-16, vx:2.4+Math.min(NK,5)*0.22, vy:0, rot:0});
     sfx.romper();
   }
   /* ---- PODER: el martillo pichunguito ---- */
@@ -737,6 +878,7 @@ function updateKong(){
     if (Math.abs(b.x-K.x)<40 && K.y < b.y-20 && !b.contado){ b.contado=true; sumar(200); }
   }
   K.barriles = K.barriles.filter(b=>!b.roto && b.y < H+60);
+  rescatar(K.amigo, K.x, K.y-18, 36);
   /* llegar arriba con mamá princesa */
   if (K.y <= KPL[KPL.length-2].y0+6 && K.x > W-330){
     pasarNivel('kong', iniciarKong, 'finKong', '¡Te amo mamá!');
@@ -777,6 +919,7 @@ function drawKong(){
     ctx.fillStyle='rgba(255,255,255,0.25)'; ctx.fillRect(-11,-10,22,3);
     ctx.restore();
   }
+  dibRescate(K.amigo);
   /* martillos esperando en las plataformas */
   for(const m of K.martillos){
     if (m.tomado) continue;
@@ -793,7 +936,7 @@ function drawKong(){
     ctx.save(); ctx.translate(K.x-12, K.y-40); dibFernandoSolo(); ctx.restore();
     if (K.martillo>0) dibMartillo(K.x+((K.t>>3)%2?18:-18), K.y-44, (K.t>>3)%2 ? 0.6 : -0.6);
   }
-  hudMJ('🛢️ KONG', etiquetaNivel('kong')+'   ALTURA: '+Math.max(0, Math.round((540-K.y)/4))+'m   '+corazonesInf(K), '↑ escaleras · A salta');
+  hudMJ('🛢️ KONG', etiquetaNivel('kong')+'  '+Math.max(0, Math.round((540-K.y)/4))+'m  '+corazonesInf(K), '↑ escaleras · A salta');
   const restan = K.martillos.filter(m=>!m.tomado).length;
   barraPoder(K.martillo>0 ? '🔨 ¡MARTILLO ACTIVO!' : (restan ? '🔨 HAY '+restan+' MARTILLOS' : '🔨 SIN MARTILLOS'),
              K.martillo>0 ? K.martillo/MARTILLO_T : (restan?1:0), K.martillo>0);
@@ -819,6 +962,8 @@ function iniciarContra(){
   C.x = 140; C.y = SUELO_C; C.vy = 0; C.vida = 5;
   C.balas = []; C.enem = []; C.balasE = []; C.scroll = 0; C.t = 0; C.jefe = null; C.inv = 0; C.cara = 1;
   C.items = []; C.perro = 0; C.bajas = 0; C.sustos = 0; C.recarga = 0;
+  C.socio = amigoDeNivel('contra', nivelDe('contra'));   /* el compañero de este nivel */
+  C.socioT = 0;
   aviso('¡Mantén B para disparar sin parar! El 🦴 hueso te vuelve perrito rojo gigante', 4);
 }
 function updateContra(){
@@ -832,6 +977,11 @@ function updateContra(){
   C.vy = Math.min(C.vy+0.6, 14); C.y += C.vy;
   if (C.y >= SUELO_C){ C.y = SUELO_C; C.vy = 0; C.suelo = true; }
   C.scroll += C.jefe ? 0 : 1.5;
+  /* el compañero vuela al lado y echa una mano disparando de vez en cuando */
+  if (++C.socioT % 96 === 0 && (C.enem.length || C.jefe)){
+    C.balas.push({x:C.x-40, y:C.y-140, vx:10, vy:0, socio:true});
+    sfx.fuego();
+  }
   /* ---- PODER: hueso → perrito rojo gigante (dispara en abanico) ---- */
   if (C.perro>0){
     C.perro--;
@@ -865,9 +1015,9 @@ function updateContra(){
   for(const b of C.balas){ b.x += b.vx; b.y += b.vy||0; }
   C.balas = C.balas.filter(b=>b.x>-20 && b.x<W+20 && b.y>-20 && b.y<H+20);
   /* aparición de enemigos (cada nivel, más y más seguidos) */
-  const NC = nivelDe('contra'), META_C = 2400 + (NC-1)*500;
-  if (!C.jefe && C.t % (76 - NC*12) === 0 && C.scroll < META_C){
-    C.enem.push({x:W+30, y:SUELO_C, vida:1+NC, t:0, tipo: Math.random()<0.35?'koopa':'goomba'});
+  const NC = nivelDe('contra'), META_C = 2400 + (NC-1)*380;
+  if (!C.jefe && C.t % Math.max(28, 76 - NC*9) === 0 && C.scroll < META_C){
+    C.enem.push({x:W+30, y:SUELO_C, vida:Math.min(4, 1+NC), t:0, tipo: Math.random()<0.35?'koopa':'goomba'});
   }
   for(const e of C.enem){
     e.t++;
@@ -904,7 +1054,7 @@ function updateContra(){
   C.balasE = C.balasE.filter(b=>!b.usada && b.x>-20);
   /* jefe final */
   if (!C.jefe && C.scroll >= META_C && C.enem.length===0){
-    C.jefe = {x:W-220, y:150, vy:1.6+ (NC-1)*0.5, vida:12+NC*4, vidaMax:12+NC*4, golpe:0};
+    C.jefe = {x:W-220, y:150, vy:1.6+ (NC-1)*0.35, vida:12+NC*3, vidaMax:12+NC*3, golpe:0};
     aviso('¡JEFE FINAL DEL NIVEL '+NC+'!', 2.4);
   }
   if (C.jefe){
@@ -979,8 +1129,8 @@ function drawContra(){
     ctx.globalAlpha = 1;
   }
   /* balas */
-  for(const b of C.balas){ ctx.fillStyle = b.perro ? '#ff5a3a' : '#ffe36e';
-    ctx.beginPath(); ctx.arc(b.x, b.y, b.perro?7:5, 0, Math.PI*2); ctx.fill(); }
+  for(const b of C.balas){ ctx.fillStyle = b.perro ? '#ff5a3a' : (b.socio ? '#8ecbff' : '#ffe36e');
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.perro?7:(b.socio?6:5), 0, Math.PI*2); ctx.fill(); }
   for(const b of C.balasE){ ctx.fillStyle='#ff6a4a';
     ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI*2); ctx.fill(); }
   /* Fernando disparando (parpadea tras un golpe) */
@@ -1001,8 +1151,12 @@ function drawContra(){
     rect(20, 16, 16, 5, '#3a3a44');
   }
   ctx.restore(); }
-  /* Tío Juan de apoyo, volando */
-  dibTioJuan(C.x-70, C.y-150+Math.sin(T/16)*8, T);
+  /* el compañero del nivel, volando de apoyo */
+  if (C.socio){
+    const yv = C.y-150+Math.sin(T/16)*8;
+    C.socio.dib(C.x-70, yv, T);
+    letrero(C.x-57, yv-16, C.socio.nombre, '#8ecbff');
+  }
   hudMJ('🔫 CONTRA', etiquetaNivel('contra')+'   '+corazonesInf(C), C.jefe ? '¡DERROTA A BOWSER!' : 'mantén B para disparar');
   barraPoder(C.perro>0 ? '🦴 ¡PERRITO ROJO GIGANTE!' : '🦴 BUSCA EL HUESO',
              C.perro>0 ? C.perro/PERRO_T : (C.bajas%3)/3, C.perro>0);
@@ -1021,10 +1175,13 @@ function iniciarGlobos(){
   G.plats = [{x:120,y:420,w:180},{x:420,y:340,w:170},{x:700,y:430,w:190},{x:560,y:210,w:150},{x:200,y:180,w:150}];
   G.enem = [];
   const NG = nivelDe('globos');
-  for(let i=0;i<3+NG;i++)                                   /* 4, 5 y 6 koopas */
-    G.enem.push({x:300+i*115, y:130+ (i%2)*120, vx:(i%2?1:-1)*(1+NG*0.15), vy:0,
+  const nK = Math.min(8, 3+NG);                             /* de 4 a 8 koopas */
+  for(let i=0;i<nK;i++)
+    G.enem.push({x:200+i*95, y:120+ (i%2)*120, vx:(i%2?1:-1)*(1+Math.min(NG,5)*0.13), vy:0,
                  globos:2, cae:0, vivo:true, f:Math.random()*6});
-  aviso('¡Aletea con A! Con B sueltas el IMPULSO PEDORRO 💨 y subes como un cohete', 4);
+  const pa = G.plats[(nivelDe('globos')-1) % G.plats.length];
+  G.amigo = nuevoRescate('globos', pa.x + pa.w/2 - 13, pa.y - 40);
+  aviso('¡Aletea con A! Con B, IMPULSO PEDORRO 💨 · rescata a tu amigo', 4);
 }
 function updateGlobos(){
   G.t++;
@@ -1096,6 +1253,7 @@ function updateGlobos(){
       }
     }
   }
+  rescatar(G.amigo, G.x, G.y, 34);
   /* agua: sin globos, Fernando sale a flote con globos nuevos (vidas infinitas) */
   if (G.y > AGUA_G-10){
     if (G.globos>0){ G.y = AGUA_G-10; G.vy = -4; }
@@ -1145,6 +1303,7 @@ function drawGlobos(){
       ctx.lineTo(e.x+18,e.y-26); ctx.stroke(); }
     dibKoopa(e.x-13, e.y-22, {caparazon:false}, T);
   }
+  dibRescate(G.amigo);
   /* globos extra flotando */
   for(const pr of G.premios){
     dibGlobitos(pr.x, pr.y, 1, '#5ee08a');
@@ -1185,11 +1344,15 @@ function iniciarBombas(){
   const libres = [];
   for(let y=1;y<MH-1;y++) for(let x=1;x<MW-1;x++)
     if (M.g[y][x]===0 && x+y>8) libres.push({x,y});
-  for(let i=0;i<2+NM*2 && libres.length;i++){                /* 4, 6 y 8 goombas */
+  for(let i=0;i<Math.min(10, 2+NM*2) && libres.length;i++){   /* de 4 a 10 goombas */
     const c = libres.splice((Math.random()*libres.length)|0, 1)[0];
-    M.enem.push({x:MX0+c.x*MC, y:MY0+c.y*MC, dir:(Math.random()*4)|0, vivo:true, vel:1.15+NM*0.22});
+    M.enem.push({x:MX0+c.x*MC, y:MY0+c.y*MC, dir:(Math.random()*4)|0, vivo:true, vel:1.15+Math.min(NM,5)*0.19});
   }
-  aviso('¡B pone bombas! Rompe cajas para hallar poderes · A = SÚPER PEDO 💨', 4);
+  /* el amigo del nivel, encerrado al otro extremo del laberinto */
+  const ca = {x: MW-2, y: MH-2};
+  M.g[ca.y][ca.x] = 0;
+  M.amigo = nuevoRescate('bomba', MX0+ca.x*MC-13, MY0+ca.y*MC-22);
+  aviso('¡B pone bombas! Rompe cajas, halla poderes y rescata a tu amigo', 4);
 }
 const mCel = (x,y) => (x<0||y<0||x>=MW||y>=MH) ? 2 : M.g[y][x];
 function danoBomba(){
@@ -1304,6 +1467,7 @@ function updateBombas(){
     if (M.t%90===0 && Math.random()<0.4) e.dir = (Math.random()*4)|0;
     if (Math.abs(e.x-M.px)<24 && Math.abs(e.y-M.py)<24) danoBomba();
   }
+  rescatar(M.amigo, M.px, M.py, 32);
   if (M.enem.every(e=>!e.vivo)) pasarNivel('bomba', iniciarBombas, 'finBombas', '¡Toma, pichungazo!');
 }
 /* una de cada tres cajas rotas esconde un poder */
@@ -1364,6 +1528,7 @@ function drawBombas(){
     rect(fx+8, fy+8, MC-16, MC-16, f.pedo ? '#d8f8b0' : '#fff6c0');
     ctx.globalAlpha = 1;
   }
+  dibRescate(M.amigo);
   /* goombas */
   for(const e of M.enem) if (e.vivo) dibGoomba(e.x-13, e.y-12, T);
   /* Fernando (parpadea tras un golpe) */
@@ -1407,7 +1572,13 @@ function iniciarHielo(){
   I.enem = [];
   const NI = nivelDe('hielo');
   for(let p=2;p<IPISOS-1;p+=(NI>=3?1:2))          /* cada nivel, más goombas por la torre */
-    I.enem.push({x:200+Math.random()*500, y:I.pisos[p].y-22, vx:(p%4?1:-1)*(1+NI*0.22), piso:p, vivo:true});
+    I.enem.push({x:200+Math.random()*500, y:I.pisos[p].y-22,
+                 vx:(p%4?1:-1)*(1+Math.min(NI,5)*0.2), piso:p, vivo:true});
+  /* un amigo a mitad de la torre, sobre hielo firme */
+  const pm = I.pisos[5];
+  let cm = pm.cel.findIndex(v=>v===1);
+  if (cm < 0){ cm = 3; pm.cel[3] = 1; }
+  I.amigo = nuevoRescate('hielo', cm*IC2 + 6, pm.y - 40);
   aviso('¡Rompe el hielo con la cabeza! Con B das el SALTO DE PAPÁ 🦘', 4);
 }
 function danoHielo(){
@@ -1501,6 +1672,7 @@ function updateHielo(){
   /* caer fuera de la pantalla: pierde un corazón y vuelve al último piso pisado */
   if (I.y > 470 + 240) danoHielo();
   /* llegar a la cima */
+  rescatar(I.amigo, I.x, I.y-18, 34);
   if (I.cima >= IPISOS-1) pasarNivel('hielo', iniciarHielo, 'finHielo', '¡Hola Cucú, acompáñame!');
 }
 function drawHielo(){
@@ -1533,6 +1705,7 @@ function drawHielo(){
   const cima = I.pisos[IPISOS-1];
   dibCucu(W/2-11, cima.y-52, 1, T);
   texto('CUCÚ', W/2, cima.y-62, 13, '#ff9ed6', true);
+  dibRescate(I.amigo);
   /* enemigos */
   for(const e of I.enem) if (e.vivo){ sombra(e.x, e.y+22, 15); dibGoomba(e.x-13, e.y, T); }
   /* Fernando (parpadea tras un golpe) */
@@ -1695,6 +1868,9 @@ function tecla(k){
 return { activo, update, draw, tecla, abrirArcade, empezar,
          _estado: ()=>modo, _juegos: JUEGOS,
          _nivel: id=>nivelDe(id), _ponNivel: (id,n)=>{ nivel[id]=n; }, _MAXNIV: MAXNIV,
+         _reiniciar: id=>({birds:iniciarBirds, dig:iniciarDig, kong:iniciarKong, contra:iniciarContra,
+                           globos:iniciarGlobos, bomba:iniciarBombas, hielo:iniciarHielo}[id])(),
+         _amigos: AMIGOS,
          _zonaSalir: zonaSalir, _zonaVolver: zonaVolver,
          _B:B, _D:D, _K:K, _C:C, _KPL:KPL, _KESC:KESC, _G:G, _M:M, _I:I,
          _MW:MW, _MH:MH, _IPISOS:IPISOS, _DY0:DY0, _DC:DC, _MX0:MX0, _MY0:MY0, _MC:MC, _IC2:IC2 };
