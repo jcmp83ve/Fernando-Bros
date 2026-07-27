@@ -41,6 +41,9 @@
   .tbtn.on i{transform:scale(1.08);background:rgba(255,255,255,.5)}
   @media (pointer:coarse){ .tbtn{display:flex} }
   body.conMando .tbtn{display:none !important}   /* con mando conectado estorban */
+  /* en los menús y en la sala arcade todo se elige tocando la pantalla:
+     los botones sobran y además tapaban la última fila de tarjetas */
+  body.sinBotones .tbtn{display:none !important}
 
   /* cruceta en diamante, abajo a la izquierda (las posiciones descuentan el
      margen invisible para que el círculo quede donde siempre) */
