@@ -341,6 +341,18 @@ function leerMandos(){
     if (dir) MANDO.dirPrev = dir;
   }
 }
+/* En el menú, el mapa, la sala arcade y el selector de pistas se elige TOCANDO
+   la pantalla, así que los botones de dirección solo estorban: con 19 tarjetas
+   llegaban a tapar la última fila. Se esconden y se vuelven a sacar al jugar. */
+let botonesFuera = null;
+function ocultarBotonesEnMenus(){
+  const soloToque = estado==='menu' || estado==='mapa' || estado==='arcade' ||
+                    estado==='kartPista' || estado==='fin' || estado==='kartFin';
+  if (soloToque === botonesFuera) return;
+  botonesFuera = soloToque;
+  try{ document.body.classList.toggle('sinBotones', soloToque); }catch(e){}
+  if (soloToque){ dedos.clear(); refrescarTeclasTactiles(); }
+}
 addEventListener('gamepadconnected', ()=>{ MANDO.aviso = 220; });
 addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; keys[e.key] = false; });
 /* ---------------- Botones de pantalla ----------------
@@ -2393,7 +2405,7 @@ function dibMenu(){
   ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v35', W-30, 18);
+  ctx.fillText('v36', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2527,7 +2539,7 @@ function dibSelPista(){
   ctx.textAlign='left';
   dibBotonAtras('✕ VOLVER');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v35', W-34, 18);
+  ctx.fillText('v36', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3301,7 +3313,7 @@ function dibMapa(){
   ctx.textAlign='left';
   dibBotonAtras('✕ MENÚ');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v35', W-34, 18);
+  ctx.fillText('v36', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
@@ -3383,6 +3395,7 @@ const PASO = 1000/60;
 function loop(){
   const t = (typeof performance!=='undefined' && performance.now) ? performance.now() : 0;
   medirCalidad(t);
+  ocultarBotonesEnMenus();
   leerMandos();
   let dt = ultT ? t - ultT : PASO;
   ultT = t;

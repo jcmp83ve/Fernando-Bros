@@ -2333,13 +2333,23 @@ function updateRunner(){
   RU.dist += v;
   /* van apareciendo obstáculos y monedas al fondo */
   if (RU.t % Math.max(16, 34 - N*2) === 0){
-    const tipo = ['valla','techo','tren'][(Math.random()*3)|0];
-    const carril = (Math.random()*3)|0;
-    RU.obs.push({carril, z:118, tipo});
-    /* de vez en cuando una fila de monedas en otro carril */
-    if (Math.random() < 0.55){
-      const otro = (carril + 1 + ((Math.random()*2)|0)) % 3;
-      for(let k=0;k<4;k++) RU.obs.push({carril:otro, z:118+k*7, tipo:'moneda'});
+    /* Un obstáculo no puede caer justo detrás de otro del MISMO carril: el
+       salto dura 36 cuadros y el segundo llegaría estando aún en el aire, lo
+       que sería imposible de esquivar. Y nunca se bloquean los tres carriles. */
+    const zSalto = 36 * v * 0.1 + 10;
+    const estorba = (c, margen) => RU.obs.some(o =>
+      o.tipo !== 'moneda' && o.tipo !== 'amigo' && o.carril === c && Math.abs(o.z-118) < margen);
+    const libres = [0,1,2].filter(c => !estorba(c, zSalto));
+    const ocupados = [0,1,2].filter(c => estorba(c, 24)).length;
+    if (libres.length && ocupados < 2){
+      const carril = libres[(Math.random()*libres.length)|0];
+      const tipo = ['valla','techo','tren'][(Math.random()*3)|0];
+      RU.obs.push({carril, z:118, tipo});
+      /* de vez en cuando una fila de monedas en otro carril */
+      if (Math.random() < 0.55){
+        const otro = (carril + 1 + ((Math.random()*2)|0)) % 3;
+        for(let k=0;k<4;k++) RU.obs.push({carril:otro, z:118+k*7, tipo:'moneda'});
+      }
     }
   }
   /* el amigo aparece a mitad del recorrido */
@@ -3665,6 +3675,11 @@ const CI = { x:0, y:0, vy:0, suelo:false, avance:0, meta:0, aros:[], globos:[], 
              sustos:0, inv:0, saltoPrev:false, estrella:0, estrellaCd:0, estPrev:false,
              acto:0, vx:0, amigo:null, faltan:0 };
 const CISUELO = 442, ESTRELLA_CI = 400;
+/* Impulso del balancín. Tiene que dar de sobra para llegar a la fila de globos
+   más alta: con gravedad 0.44 la altura que sube es v²/(2·0.44). Si se toca
+   alguno de los dos números hay que comprobar que sigue alcanzando. */
+const IMPULSO_CI = N => 16.4 + N*0.2;
+const ALTO_CI = N => (CISUELO-40) - (IMPULSO_CI(N)*IMPULSO_CI(N))/(2*0.44);
 function iniciarCirco(){
   const N = nivelDe('circo');
   CI.acto = (N-1) % 2;                     /* 0 = león y aros · 1 = balancín y globos */
@@ -3679,9 +3694,10 @@ function iniciarCirco(){
     aviso('¡Salta los aros de fuego montado en el león! A salta · B estrella mágica', 4.2);
   } else {
     CI.faltan = 0;
+    /* las tres filas van dentro del alcance del rebote (ver ALTO_CI abajo) */
     for(let f=0; f<3; f++)
       for(let k=0; k<8; k++)
-        CI.globos.push({x: 90 + k*100, y: 90 + f*60, vivo:true, color:['#e03434','#ffe36e','#5ee08a','#8ecbff'][(f+k)%4]});
+        CI.globos.push({x: 90 + k*100, y: 132 + f*62, vivo:true, color:['#e03434','#ffe36e','#5ee08a','#8ecbff'][(f+k)%4]});
     CI.faltan = CI.globos.length;
     CI.y = CISUELO - 40; CI.vy = -12;
     aviso('¡Rebota en el balancín y revienta todos los globos! ←→ para moverte', 4.2);
@@ -3758,7 +3774,7 @@ function updateCirco(){
     if (CI.x > W-40){ CI.x = W-40; CI.vx = -Math.abs(CI.vx)*0.6; }
     CI.vy = Math.min(CI.vy+0.44, 14); CI.y += CI.vy;
     if (CI.y >= CISUELO-40){                    /* el balancín lo vuelve a lanzar */
-      CI.y = CISUELO-40; CI.vy = -12.6 - N*0.25;
+      CI.y = CISUELO-40; CI.vy = -IMPULSO_CI(N);
       sfx.salto();
       for(let i=0;i<5;i++) parts.push({tipo:'polvo', x:CI.x, y:CI.y+24,
         vx:(Math.random()-0.5)*3, vy:1, t:16});
