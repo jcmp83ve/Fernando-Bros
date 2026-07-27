@@ -368,12 +368,48 @@ function iniciarDig(){
     {x:9*DC,  y:DY0+9*DC, vivo:true, infla:0, t:0, golpe:0},
     {x:16*DC, y:DY0+9*DC, vivo:true, infla:0, t:0, golpe:0},
   ];
-  for(const e of D.enem){ const cx=(e.x/DC)|0, cy=((e.y-DY0)/DC)|0; D.g[cy][cx]=0; }
+  /* cada goomba nace en un pasillito para que se mueva desde el primer momento */
+  D.enem.forEach((e,i)=>{
+    const cx=(e.x/DC)|0, cy=((e.y-DY0)/DC)|0;
+    for(let o=-1;o<=1;o++) if (celdaLibre(cx+o,cy)) D.g[cy][cx+o]=0;
+    e.fantasma = 0; e.atasco = 0; e.enTierra = false;
+    e.tcx = undefined; e.ox = 0; e.oy = 0;
+    e.espera = i*80;              /* así no salen todos a la vez por la tierra */
+    e.vel = 1.25 + i*0.12;        /* cada goomba con su ritmo */
+  });
   D.rocas = [{cx:6, cae:false, y:DY0+2*DC, quieta:false}, {cx:13, cae:false, y:DY0+4*DC, quieta:false},
              {cx:19, cae:false, y:DY0+7*DC, quieta:false}];
   aviso('¡Cava y usa B para inflar! Con A sueltas el PEDO DE TÍO FRAN 💨', 4);
 }
 function celdaLibre(cx, cy){ return cx>=0 && cx<DW && cy>=0 && cy<DH; }
+/* Un goomba recorre el túnel casilla a casilla: se fija una casilla contigua
+   excavada como destino y no cambia de idea hasta llegar a su centro. Así
+   avanza de verdad en vez de temblar en el borde entre dos casillas.
+   Devuelve false si está encerrado y no tiene ninguna salida. */
+function moverEnemDig(e, v){
+  const llego = e.tcx===undefined ||
+                (Math.abs(e.x-e.tcx*DC)<=v && Math.abs(e.y-(DY0+e.tcy*DC))<=v);
+  if (llego){
+    const ecx = Math.round(e.x/DC), ecy = Math.round((e.y-DY0)/DC);
+    e.x = ecx*DC; e.y = DY0+ecy*DC;                  /* se centra en su casilla */
+    const salidas = [];
+    for(const [ox,oy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const tcx = ecx+ox, tcy = ecy+oy;
+      if (celdaLibre(tcx,tcy) && D.g[tcy][tcx]===0) salidas.push({tcx, tcy, ox, oy});
+    }
+    if (!salidas.length){ e.tcx = undefined; return false; }
+    /* no se da la vuelta si tiene otra salida: así recorre el túnel entero */
+    const sinVolver = salidas.filter(s => !(s.ox === -(e.ox||0) && s.oy === -(e.oy||0)));
+    const lista = sinVolver.length ? sinVolver : salidas;
+    lista.sort((a,b) =>
+      Math.hypot(a.tcx*DC-D.px, DY0+a.tcy*DC-D.py) - Math.hypot(b.tcx*DC-D.px, DY0+b.tcy*DC-D.py));
+    const s = lista[0];
+    e.tcx = s.tcx; e.tcy = s.tcy; e.ox = s.ox; e.oy = s.oy;
+  }
+  e.x += Math.max(-v, Math.min(v, e.tcx*DC - e.x));
+  e.y += Math.max(-v, Math.min(v, DY0 + e.tcy*DC - e.y));
+  return true;
+}
 function danoDig(){
   if (D.inv>0) return;
   D.inv = 120; susto(D, '¡Ay! Vidas infinitas: vuelves arriba y sigues');
@@ -438,38 +474,53 @@ function updateDig(){
       }
     }
   }
-  /* enemigos: persiguen por los túneles */
+  /* enemigos: persiguen por los túneles y, si se quedan encerrados,
+     atraviesan la tierra hechos fantasmas, como en el Dig Dug de verdad */
   for(const e of D.enem){
     if (!e.vivo) continue;
     e.t++;
     if (e.golpe>0){ e.golpe--; continue; }
-    const v = 1.05 + e.infla*0.2;
-    const ecx = Math.round(e.x/DC), ecy = Math.round((e.y-DY0)/DC);
-    const dx = D.px-e.x, dy = D.py-e.y;
-    let nx = e.x, ny = e.y;
-    if (Math.abs(dx)>Math.abs(dy)) nx += Math.sign(dx)*v; else ny += Math.sign(dy)*v;
-    const ncx = Math.round(nx/DC), ncy = Math.round((ny-DY0)/DC);
-    if (celdaLibre(ncx,ncy) && D.g[ncy][ncx]===0){ e.x=nx; e.y=ny; }
-    else {  /* intenta el otro eje */
-      let ax = e.x + (Math.abs(dx)>Math.abs(dy) ? 0 : Math.sign(dx)*v);
-      let ay = e.y + (Math.abs(dx)>Math.abs(dy) ? Math.sign(dy)*v : 0);
-      const acx = Math.round(ax/DC), acy = Math.round((ay-DY0)/DC);
-      if (celdaLibre(acx,acy) && D.g[acy][acx]===0){ e.x=ax; e.y=ay; }
+    const v = (e.vel || 1.35) + e.infla*0.25;
+    if (e.fantasma>0){
+      e.fantasma--;
+      const dx = D.px-e.x, dy = D.py-e.y, d = Math.hypot(dx,dy) || 1;
+      e.x += dx/d*0.95; e.y += dy/d*0.95;
+      e.x = Math.max(0, Math.min((DW-1)*DC, e.x));
+      e.y = Math.max(DY0, Math.min(DY0+(DH-1)*DC, e.y));
+      /* al asomar a un túnel vuelve a ser goomba de carne y hueso */
+      const cx3 = Math.round(e.x/DC), cy3 = Math.round((e.y-DY0)/DC);
+      const dentro = !celdaLibre(cx3,cy3) || D.g[cy3][cx3]===1;
+      if (dentro) e.enTierra = true;                 /* ya se metió en la tierra */
+      /* solo vuelve a ser goomba normal al asomar a OTRO túnel */
+      if (e.enTierra && !dentro){ e.fantasma = 0; e.enTierra = false; e.tcx = undefined; e.ox = 0; e.oy = 0; }
+      else if (e.fantasma<=0 && e.enTierra) e.fantasma = 120;   /* no se materializa dentro de la tierra */
+    } else {
+      const avanza = moverEnemDig(e, v);
+      e.atasco = avanza ? 0 : (e.atasco||0)+1;
+      /* mientras persigue de cerca no hace falta trampa; si lleva cinco
+         segundos lejos sin poder llegar, se cuela por dentro de la tierra */
+      const lejos = Math.hypot(D.px-e.x, D.py-e.y) > 4*DC;
+      e.espera = lejos ? (e.espera||0)+1 : 0;
+      if (e.atasco > 40 || e.espera > 300){
+        e.fantasma = 320; e.atasco = 0; e.espera = 0; e.tcx = undefined;
+      }
     }
-    if (Math.abs(e.x-D.px)<24 && Math.abs(e.y-D.py)<24 && e.infla<0.5) danoDig();
+    /* los fantasmas no hacen daño hasta que salen a un túnel */
+    if (!e.fantasma && Math.abs(e.x-D.px)<24 && Math.abs(e.y-D.py)<24 && e.infla<0.5) danoDig();
   }
   /* rocas: caen si les quitan el suelo y quedan enterradas al tocar tierra */
   for(const r of D.rocas){
     if (r.quieta) continue;
     const rcy = Math.round((r.y-DY0)/DC);
     if (!r.cae){
-      if (celdaLibre(r.cx, rcy+1) && D.g[rcy+1][r.cx]===0 && Math.abs(D.px-r.cx*DC)>10){
+      /* basta con quitarle el suelo: tiembla un pestañeo y se viene abajo */
+      if (celdaLibre(r.cx, rcy+1) && D.g[rcy+1][r.cx]===0){
         r.aviso = (r.aviso||0)+1;
-        if (r.aviso>28) r.cae = true;             /* tiembla antes de caer, como en el original */
+        if (r.aviso>18) r.cae = true;             /* tiembla antes de caer, como en el original */
       } else r.aviso = 0;
       continue;
     }
-    r.y += 5;
+    r.y += 9;
     const ncy = Math.round((r.y-DY0)/DC);
     for(const e of D.enem) if (e.vivo && Math.abs(e.x-r.cx*DC)<26 && Math.abs(e.y-r.y)<28){
       e.vivo=false; sumar(1000); sfx.romper(); sacudir(4);
@@ -510,12 +561,18 @@ function drawDig(){
     ctx.fillStyle='#fff';
     ctx.beginPath(); ctx.arc(D.px+dx*D.arponL, D.py+dy*D.arponL, 6, 0, Math.PI*2); ctx.fill();
   }
-  /* goombas inflados */
+  /* goombas inflados (los que atraviesan la tierra van transparentes) */
   for(const e of D.enem){
     if (!e.vivo) continue;
     const s = 1 + e.infla*1.5;
     ctx.save(); ctx.translate(e.x, e.y); ctx.scale(s, s); ctx.translate(-13, -12);
-    dibGoomba(0, 0, T);
+    if (e.fantasma>0){
+      ctx.globalAlpha = 0.45 + Math.sin(T/7)*0.12;
+      dibGoomba(0, 0, T);
+      ctx.globalAlpha = 1;
+      /* ojitos brillantes para que se vea que viene por dentro de la tierra */
+      rect(6, 8, 4, 4, '#fff'); rect(16, 8, 4, 4, '#fff');
+    } else dibGoomba(0, 0, T);
     ctx.restore();
   }
   /* nube verde mientras dura el pedo */

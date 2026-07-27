@@ -73,7 +73,7 @@ Siete minijuegos con los personajes del juego, desde el selector de mundos. **To
 | Minijuego | De qué va | Poder |
 |---|---|---|
 | 🐦 **Fernando Birds** | Lanza a Penny, Sheldon y Cucú con la resortera contra las torres de goombas. Los lanzamientos son **infinitos** | En pleno vuelo, toca la pantalla (o A/B): 🚀 **Penny cohete**, 💨 **pedo de Sheldon** que hace estallar todo, 👧 **Cucú se multiplica por tres** |
-| ⛏️ **Fernando Dig** | Cava túneles e infla a los goombas con la bomba de aire, esquivando rocas | **A** = 💨 **pedo de tío Fran**: infla de golpe a todos los goombas de alrededor |
+| ⛏️ **Fernando Dig** | Cava túneles e infla a los goombas con la bomba de aire. Ellos patrullan sus túneles y, si llevan rato sin poder llegar, **se vuelven fantasmas y atraviesan la tierra**. Las rocas caen en cuanto les quitas el suelo | **A** = 💨 **pedo de tío Fran**: infla de golpe a todos los goombas de alrededor |
 | 🛢️ **Fernando Kong** | Sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa | 🔨 **Martillo pichunguito**: hay dos en la torre; con él los barriles se rompen al tocarlos |
 | 🔫 **Fernando Contra** | Avanza disparando por la selva con Tío Juan de apoyo, hasta el jefe final | 🦴 Cada tres enemigos cae un **hueso**: Fernando se vuelve **perrito rojo gigante**, dispara en abanico y arrolla a todos |
 | 🎈 **Fernando Globos** | Vuela aleteando con globos y revienta los de los koopas desde arriba | **B** = 💨 **impulso pedorro**, y hay 🎈 **globos sueltos** que dan un tercer globo |
