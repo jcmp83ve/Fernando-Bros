@@ -36,6 +36,27 @@ const mAccion= ()=> keys['shift']||keys['x']||mando['shift'];
 let puntosMJ = 0;               /* marcador propio de cada partida */
 function sumar(n){ puntosMJ += n; puntos += n; }
 
+/* ---------- niveles ----------
+   Cada minijuego tiene tres niveles: al superar uno se vuelve a armar el
+   escenario más difícil, sin perder los puntos, y solo al terminar el
+   tercero aparece la pantalla de victoria. */
+const MAXNIV = 3;
+const nivel = {};
+const nivelDe = id => nivel[id] || 1;
+function pasarNivel(id, iniciar, finModo, frase){
+  if (nivelDe(id) < MAXNIV){
+    nivel[id] = nivelDe(id) + 1;
+    sumar(1000); sfx.meta();
+    iniciar();
+    aviso('🏅 ¡NIVEL '+nivel[id]+' DE '+MAXNIV+'! Ahora un poquito más difícil', 2.6);
+    cortina = 34;
+  } else {
+    resultado = 1; modo = finModo; sfx.meta();
+    if (frase) hablar(frase);
+  }
+}
+const etiquetaNivel = id => 'NIV '+nivelDe(id)+'/'+MAXNIV;
+
 /* ---------- utilidades ---------- */
 const HUD2 = 44;
 function texto(t, x, y, tam, color, centro){
@@ -56,13 +77,18 @@ function hudMJ(titulo, izqTxt, derTxt){
   if (derTxt) texto(derTxt, 560, 28, 13, '#8ecbff');
   const z = zonaSalir();
   ctx.fillStyle='rgba(255,255,255,0.16)';
-  ctx.beginPath(); ctx.roundRect(z.x, z.y, z.w, z.h, 9); ctx.fill();
+  ctx.beginPath(); ctx.roundRect(z.x, z.y, z.w, z.h, 11); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.lineWidth=2; ctx.stroke();
-  texto('✕ SALIR', z.x+z.w/2, z.y+20, 13, '#fff', true);
+  texto('✕ SALIR', z.x+z.w/2, z.y+23, 16, '#fff', true);
 }
-function zonaSalir(){ return {x: W-108, y: 8, w: 96, h: 29}; }
+function zonaSalir(){ return {x: W-138, y: 5, w: 126, h: 34}; }
 /* botón de volver de la propia sala arcade (aquí no hay marcador) */
-function zonaVolver(){ return {x: 22, y: 22, w: 150, h: 42}; }
+function zonaVolver(){ return {x: 22, y: 18, w: 168, h: 50}; }
+/* al tocar con el dedo se admite un margen de sobra alrededor del botón */
+const enZona = (z, x, y, m) => {
+  m = m===undefined ? 20 : m;
+  return x>=z.x-m && x<=z.x+z.w+m && y>=z.y-m && y<=z.y+z.h+m;
+};
 
 /* ---------- vidas infinitas ----------
    En los minijuegos nadie pierde nunca: un golpe solo cuesta un susto,
@@ -83,7 +109,7 @@ function nubePedo(x, y, n){
 
 /* medidor del poder de cada minijuego, abajo a la derecha */
 function barraPoder(nombre, frac, encendido){
-  const w = 216, x = W-w-16, y = H-42;
+  const w = 250, x = W-w-16, y = H-42;
   ctx.fillStyle = 'rgba(8,10,24,0.72)';
   ctx.beginPath(); ctx.roundRect(x, y, w, 30, 9); ctx.fill();
   ctx.strokeStyle = encendido ? '#ffe36e' : 'rgba(255,255,255,0.32)';
@@ -93,7 +119,11 @@ function barraPoder(nombre, frac, encendido){
   ctx.beginPath(); ctx.roundRect(bx, y+20, bw, 6, 3); ctx.fill();
   ctx.fillStyle = encendido ? '#ffe36e' : (frac>=1 ? '#5ee08a' : '#8ecbff');
   ctx.beginPath(); ctx.roundRect(bx, y+20, bw*Math.max(0,Math.min(1,frac)), 6, 3); ctx.fill();
-  texto(nombre, x+w/2, y+15, 13, frac>=1||encendido ? '#ffe36e' : '#cfd8ff', true);
+  /* el rótulo se encoge solito para no salirse nunca del recuadro */
+  let tam = 13;
+  ctx.font = 'bold '+tam+'px monospace';
+  while (tam > 8 && ctx.measureText(nombre).width > w-18){ tam -= 0.5; ctx.font = 'bold '+tam+'px monospace'; }
+  texto(nombre, x+w/2, y+15, tam, frac>=1||encendido ? '#ffe36e' : '#cfd8ff', true);
 }
 function pantallaFin(gano, titulo, sub){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -130,16 +160,23 @@ function iniciarBirds(){
   B.disparos = 0; B.podPrev = false; B.sustos = 0;
   B.listos = ['penny','sheldon','cucu'];
   B.cajas = []; B.bichos = [];
-  const base = 560;
-  /* torre de cajas con goombas dentro */
+  const N = nivelDe('birds');
+  const base = 520;
+  /* torres de cajas con goombas dentro; cada nivel añade una torre y un goomba */
   const col = (x, n, y0) => { for(let i=0;i<n;i++) B.cajas.push({x, y:y0-i*36, w:36, h:36, vx:0, vy:0, vida:2}); };
-  col(base, 3, SUELO_B-36); col(base+150, 3, SUELO_B-36);
-  for(let i=0;i<4;i++) B.cajas.push({x:base+i*38, y:SUELO_B-36*3-36, w:36, h:36, vx:0, vy:0, vida:2});
-  col(base+300, 2, SUELO_B-36);
+  const alto = 2 + N;                                   /* 3, 4 y 5 cajas de alto */
+  col(base, alto, SUELO_B-36); col(base+150, alto, SUELO_B-36);
+  for(let i=0;i<4;i++) B.cajas.push({x:base+i*38, y:SUELO_B-36*alto-36, w:36, h:36, vx:0, vy:0, vida:2});
+  col(base+300, alto-1, SUELO_B-36);
+  if (N>=2) col(base+225, 2, SUELO_B-36);
+  if (N>=3) col(base+375, 3, SUELO_B-36);
   B.bichos.push({x:base+46, y:SUELO_B-30, vx:0, vy:0, vivo:true});
   B.bichos.push({x:base+96, y:SUELO_B-30, vx:0, vy:0, vivo:true});
-  B.bichos.push({x:base+60, y:SUELO_B-36*4-30, vx:0, vy:0, vivo:true});
-  B.bichos.push({x:base+310, y:SUELO_B-36*2-30, vx:0, vy:0, vivo:true});
+  B.bichos.push({x:base+60, y:SUELO_B-36*(alto+1)-30, vx:0, vy:0, vivo:true});
+  B.bichos.push({x:base+310, y:SUELO_B-36*(alto-1)-30, vx:0, vy:0, vivo:true});
+  if (N>=2) B.bichos.push({x:base+235, y:SUELO_B-36*2-30, vx:0, vy:0, vivo:true});
+  if (N>=3) B.bichos.push({x:base+385, y:SUELO_B-36*3-30, vx:0, vy:0, vivo:true},
+                          {x:base+146, y:SUELO_B-30, vx:0, vy:0, vivo:true});
   aviso('¡Arrastra y suelta! En pleno vuelo toca otra vez: cada perrito tiene su poder', 4);
 }
 /* ---- poderes en el aire: uno distinto por personaje ---- */
@@ -278,8 +315,7 @@ function updateBirds(){
   /* fin: solo se gana; los lanzamientos son infinitos */
   const quedan = B.bichos.filter(b=>b.vivo).length;
   if (quedan===0 && !B.proy && B.extras.length===0){
-    resultado = 1; modo='finBirds'; sfx.meta();
-    hablar('¡Toma, pichungazo!');
+    pasarNivel('birds', iniciarBirds, 'finBirds', '¡Toma, pichungazo!');
   }
 }
 function drawBirds(){
@@ -342,7 +378,7 @@ function drawBirds(){
   }
   texto('∞', 40+3*34+6, SUELO_B+50, 24, '#ffe36e');
   const enVuelo = B.proy && !B.proy.usado;
-  hudMJ('🐦 BIRDS', 'GOOMBAS: '+B.bichos.filter(b=>b.vivo).length+'   TIROS: ∞', 'arrastra y suelta');
+  hudMJ('🐦 BIRDS', etiquetaNivel('birds')+'   GOOMBAS: '+B.bichos.filter(b=>b.vivo).length+'   TIROS: ∞', 'arrastra y suelta');
   const nomP = {penny:'🚀 PENNY COHETE', sheldon:'💨 PEDO DE SHELDON', cucu:'👧 CUCÚ POR TRES'};
   barraPoder(enVuelo ? '¡TOCA YA! '+nomP[B.proy.tipo] : 'PODER: '+nomP[bichoTurno()],
              enVuelo ? 1 : 0.34, !!enVuelo);
@@ -362,12 +398,10 @@ function iniciarDig(){
   D.sustos = 0; D.pedo = 0; D.pedoCd = 0; D.pedoPrev = false;
   D.g[1][1] = 0; D.g[1][2] = 0; D.g[1][3] = 0;
   /* los goombas arrancan lejos de Fernando para que nadie muera de entrada */
-  D.enem = [
-    {x:18*DC, y:DY0+4*DC, vivo:true, infla:0, t:0, golpe:0},
-    {x:21*DC, y:DY0+7*DC, vivo:true, infla:0, t:0, golpe:0},
-    {x:9*DC,  y:DY0+9*DC, vivo:true, infla:0, t:0, golpe:0},
-    {x:16*DC, y:DY0+9*DC, vivo:true, infla:0, t:0, golpe:0},
-  ];
+  const N = nivelDe('dig');
+  const sitios = [[18,4],[21,7],[9,9],[16,9],[21,2],[12,6],[6,7],[19,10]];
+  D.enem = sitios.slice(0, 2 + N*2).map(([cx,cy])=>          /* 4, 6 y 8 goombas */
+    ({x:cx*DC, y:DY0+cy*DC, vivo:true, infla:0, t:0, golpe:0}));
   /* cada goomba nace en un pasillito para que se mueva desde el primer momento */
   D.enem.forEach((e,i)=>{
     const cx=(e.x/DC)|0, cy=((e.y-DY0)/DC)|0;
@@ -375,10 +409,12 @@ function iniciarDig(){
     e.fantasma = 0; e.atasco = 0; e.enTierra = false;
     e.tcx = undefined; e.ox = 0; e.oy = 0;
     e.espera = i*80;              /* así no salen todos a la vez por la tierra */
-    e.vel = 1.25 + i*0.12;        /* cada goomba con su ritmo */
+    e.vel = 1.25 + i*0.10 + (N-1)*0.22;   /* cada goomba con su ritmo, y más rápidos por nivel */
   });
   D.rocas = [{cx:6, cae:false, y:DY0+2*DC, quieta:false}, {cx:13, cae:false, y:DY0+4*DC, quieta:false},
              {cx:19, cae:false, y:DY0+7*DC, quieta:false}];
+  if (N>=2) D.rocas.push({cx:10, cae:false, y:DY0+7*DC, quieta:false});
+  if (N>=3) D.rocas.push({cx:16, cae:false, y:DY0+3*DC, quieta:false});
   aviso('¡Cava y usa B para inflar! Con A sueltas el PEDO DE TÍO FRAN 💨', 4);
 }
 function celdaLibre(cx, cy){ return cx>=0 && cx<DW && cy>=0 && cy<DH; }
@@ -529,7 +565,7 @@ function updateDig(){
     if (r.y > DY0+(DH-1)*DC){ r.y = DY0+(DH-1)*DC; r.quieta = true; }
     else if (celdaLibre(r.cx, ncy+1) && D.g[ncy+1][r.cx]===1){ r.quieta = true; }
   }
-  if (D.enem.every(e=>!e.vivo)){ resultado=1; modo='finDig'; sfx.meta(); hablar('¡Toma, pichungazo!'); }
+  if (D.enem.every(e=>!e.vivo)) pasarNivel('dig', iniciarDig, 'finDig', '¡Toma, pichungazo!');
 }
 function drawDig(){
   ctx.fillStyle='#2a1a0e'; ctx.fillRect(0,0,W,H);
@@ -584,7 +620,7 @@ function drawDig(){
   if (!(D.inv>0 && (T>>2)%2)){
     ctx.save(); ctx.translate(D.px-12, D.py-20); dibFernandoSolo(); ctx.restore();
   }
-  hudMJ('⛏️ DIG', 'GOOMBAS: '+D.enem.filter(e=>e.vivo).length+'   '+corazonesInf(D), 'flechas cavan · B infla');
+  hudMJ('⛏️ DIG', etiquetaNivel('dig')+'   GOOMBAS: '+D.enem.filter(e=>e.vivo).length+'   '+corazonesInf(D), 'flechas cavan · B infla');
   barraPoder('💨 PEDO DE TÍO FRAN (A)', D.pedo>0 ? 1 : 1-D.pedoCd/PEDO_CD, D.pedo>0);
 }
 
@@ -640,7 +676,8 @@ function updateKong(){
   K.t++;
   if (K.inv>0) K.inv--;
   /* escaleras: se sube desde abajo y se remata sobre la plataforma de arriba */
-  const esc = KESC.find(e => Math.abs(K.x-e.x)<22 && K.y<=e.y1+18 && K.y>=e.y0-10);
+  /* la escalera se agarra con margen de sobra: no hay que clavar la posición */
+  const esc = KESC.find(e => Math.abs(K.x-e.x)<34 && K.y<=e.y1+22 && K.y>=e.y0-12);
   if (esc && (mArr()||mAbj())){
     K.escalando = true; K.vy = 0;
     K.y += mArr() ? -2.6 : 2.6;
@@ -660,9 +697,10 @@ function updateKong(){
     if (py!==null && K.vy>=0 && antesY<=py+4 && K.y>=py-2){ K.y = py; K.vy = 0; K.suelo = true; }
     if (K.y > H+60) danoKong(true);
   }
-  /* barriles que tira Bowser */
-  if (K.t%92===0){
-    K.barriles.push({x:150, y:KPL[KPL.length-2].y0-16, vx:2.6, vy:0, rot:0});
+  /* barriles que tira Bowser: más seguidos en cada nivel */
+  const NK = nivelDe('kong');
+  if (K.t % (104 - NK*16) === 0){
+    K.barriles.push({x:150, y:KPL[KPL.length-2].y0-16, vx:2.4+NK*0.25, vy:0, rot:0});
     sfx.romper();
   }
   /* ---- PODER: el martillo pichunguito ---- */
@@ -701,8 +739,7 @@ function updateKong(){
   K.barriles = K.barriles.filter(b=>!b.roto && b.y < H+60);
   /* llegar arriba con mamá princesa */
   if (K.y <= KPL[KPL.length-2].y0+6 && K.x > W-330){
-    resultado=1; modo='finKong'; sfx.meta();
-    hablar('¡Te amo mamá!');
+    pasarNivel('kong', iniciarKong, 'finKong', '¡Te amo mamá!');
   }
 }
 function drawKong(){
@@ -756,9 +793,9 @@ function drawKong(){
     ctx.save(); ctx.translate(K.x-12, K.y-40); dibFernandoSolo(); ctx.restore();
     if (K.martillo>0) dibMartillo(K.x+((K.t>>3)%2?18:-18), K.y-44, (K.t>>3)%2 ? 0.6 : -0.6);
   }
-  hudMJ('🛢️ KONG', 'ALTURA: '+Math.max(0, Math.round((540-K.y)/4))+'m   '+corazonesInf(K), '↑ escaleras · A salta');
+  hudMJ('🛢️ KONG', etiquetaNivel('kong')+'   ALTURA: '+Math.max(0, Math.round((540-K.y)/4))+'m   '+corazonesInf(K), '↑ escaleras · A salta');
   const restan = K.martillos.filter(m=>!m.tomado).length;
-  barraPoder(K.martillo>0 ? '🔨 ¡MARTILLO ACTIVO!' : (restan ? '🔨 BUSCA UN MARTILLO ('+restan+')' : '🔨 SIN MARTILLOS'),
+  barraPoder(K.martillo>0 ? '🔨 ¡MARTILLO ACTIVO!' : (restan ? '🔨 HAY '+restan+' MARTILLOS' : '🔨 SIN MARTILLOS'),
              K.martillo>0 ? K.martillo/MARTILLO_T : (restan?1:0), K.martillo>0);
 }
 /* martillo dibujado a mano, girado un poco al golpear */
@@ -781,8 +818,8 @@ const SUELO_C = 470, PERRO_T = 560;
 function iniciarContra(){
   C.x = 140; C.y = SUELO_C; C.vy = 0; C.vida = 5;
   C.balas = []; C.enem = []; C.balasE = []; C.scroll = 0; C.t = 0; C.jefe = null; C.inv = 0; C.cara = 1;
-  C.items = []; C.perro = 0; C.bajas = 0; C.sustos = 0;
-  aviso('¡B dispara · A salta! Recoge el 🦴 hueso y serás un perrito rojo gigante', 4);
+  C.items = []; C.perro = 0; C.bajas = 0; C.sustos = 0; C.recarga = 0;
+  aviso('¡Mantén B para disparar sin parar! El 🦴 hueso te vuelve perrito rojo gigante', 4);
 }
 function updateContra(){
   C.t++;
@@ -811,8 +848,10 @@ function updateContra(){
     }
   }
   C.items = C.items.filter(it=>!it.usado && it.x>-40);
-  /* disparo */
-  if (mAccion() && !C.dispPrev){
+  /* disparo: basta con MANTENER el botón, no hace falta machacarlo */
+  if (C.recarga>0) C.recarga--;
+  if (mAccion() && (!C.dispPrev || C.recarga<=0)){
+    C.recarga = 11;
     const cara = C.cara||1;
     if (C.perro>0){                       /* de perrito grande dispara en abanico */
       for(const dv of [-3.4, 0, 3.4]) C.balas.push({x:C.x+18*cara, y:C.y-30, vx:11*cara, vy:dv, perro:true});
@@ -825,9 +864,10 @@ function updateContra(){
   C.dispPrev = mAccion();
   for(const b of C.balas){ b.x += b.vx; b.y += b.vy||0; }
   C.balas = C.balas.filter(b=>b.x>-20 && b.x<W+20 && b.y>-20 && b.y<H+20);
-  /* aparición de enemigos */
-  if (!C.jefe && C.t%64===0 && C.scroll < 2400){
-    C.enem.push({x:W+30, y:SUELO_C, vida:2, t:0, tipo: Math.random()<0.35?'koopa':'goomba'});
+  /* aparición de enemigos (cada nivel, más y más seguidos) */
+  const NC = nivelDe('contra'), META_C = 2400 + (NC-1)*500;
+  if (!C.jefe && C.t % (76 - NC*12) === 0 && C.scroll < META_C){
+    C.enem.push({x:W+30, y:SUELO_C, vida:1+NC, t:0, tipo: Math.random()<0.35?'koopa':'goomba'});
   }
   for(const e of C.enem){
     e.t++;
@@ -863,9 +903,9 @@ function updateContra(){
   }
   C.balasE = C.balasE.filter(b=>!b.usada && b.x>-20);
   /* jefe final */
-  if (!C.jefe && C.scroll >= 2400 && C.enem.length===0){
-    C.jefe = {x:W-220, y:150, vy:1.6, vida:14, golpe:0};
-    aviso('¡JEFE FINAL!', 2);
+  if (!C.jefe && C.scroll >= META_C && C.enem.length===0){
+    C.jefe = {x:W-220, y:150, vy:1.6+ (NC-1)*0.5, vida:12+NC*4, vidaMax:12+NC*4, golpe:0};
+    aviso('¡JEFE FINAL DEL NIVEL '+NC+'!', 2.4);
   }
   if (C.jefe){
     const j = C.jefe;
@@ -878,7 +918,7 @@ function updateContra(){
       }
     }
     if (j.golpe>0) j.golpe--;
-    if (j.vida<=0){ resultado=1; modo='finContra'; sfx.meta(); hablar('¡Gané! ¡Soy el pichunguito campeón!'); }
+    if (j.vida<=0) pasarNivel('contra', iniciarContra, 'finContra', '¡Gané! ¡Soy el pichunguito campeón!');
     /* el jefe también suelta huesos, para no quedarse nunca sin poder */
     if (C.t%420===0) soltarHueso({x:j.x, y:j.y+60});
   }
@@ -922,7 +962,7 @@ function drawContra(){
     const j = C.jefe;
     if (!(j.golpe>0 && (T>>1)%2)) dibBowser(j.x, j.y, T, 0);
     rect(j.x-4, j.y-24, 68, 9, '#3a0a0a');
-    rect(j.x-4, j.y-24, 68*Math.max(0,j.vida)/14, 9, '#e03434');
+    rect(j.x-4, j.y-24, 68*Math.max(0,j.vida)/(j.vidaMax||14), 9, '#e03434');
   }
   /* huesos por recoger */
   for(const it of C.items){
@@ -963,8 +1003,8 @@ function drawContra(){
   ctx.restore(); }
   /* Tío Juan de apoyo, volando */
   dibTioJuan(C.x-70, C.y-150+Math.sin(T/16)*8, T);
-  hudMJ('🔫 CONTRA', corazonesInf(C), C.jefe ? '¡DERROTA A BOWSER!' : 'B dispara · A salta');
-  barraPoder(C.perro>0 ? '🦴 ¡PERRITO ROJO GIGANTE!' : '🦴 VENCE ENEMIGOS Y SUELTAN HUESOS',
+  hudMJ('🔫 CONTRA', etiquetaNivel('contra')+'   '+corazonesInf(C), C.jefe ? '¡DERROTA A BOWSER!' : 'mantén B para disparar');
+  barraPoder(C.perro>0 ? '🦴 ¡PERRITO ROJO GIGANTE!' : '🦴 BUSCA EL HUESO',
              C.perro>0 ? C.perro/PERRO_T : (C.bajas%3)/3, C.perro>0);
 }
 
@@ -980,8 +1020,10 @@ function iniciarGlobos(){
   G.premios = []; G.pedoCd = 0; G.pedoPrev = false; G.sustos = 0;
   G.plats = [{x:120,y:420,w:180},{x:420,y:340,w:170},{x:700,y:430,w:190},{x:560,y:210,w:150},{x:200,y:180,w:150}];
   G.enem = [];
-  for(let i=0;i<4;i++)
-    G.enem.push({x:400+i*140, y:150+ (i%2)*120, vx:(i%2?1:-1)*1.1, vy:0, globos:2, cae:0, vivo:true, f:Math.random()*6});
+  const NG = nivelDe('globos');
+  for(let i=0;i<3+NG;i++)                                   /* 4, 5 y 6 koopas */
+    G.enem.push({x:300+i*115, y:130+ (i%2)*120, vx:(i%2?1:-1)*(1+NG*0.15), vy:0,
+                 globos:2, cae:0, vivo:true, f:Math.random()*6});
   aviso('¡Aletea con A! Con B sueltas el IMPULSO PEDORRO 💨 y subes como un cohete', 4);
 }
 function updateGlobos(){
@@ -1063,7 +1105,7 @@ function updateGlobos(){
       sfx.poder();
     }
   }
-  if (G.enem.every(e=>!e.vivo)){ resultado=1; modo='finGlobos'; sfx.meta(); hablar('¡Toma, pichungazo!'); }
+  if (G.enem.every(e=>!e.vivo)) pasarNivel('globos', iniciarGlobos, 'finGlobos', '¡Toma, pichungazo!');
 }
 function dibGlobitos(x, y, n, color){
   const desf = n===1 ? [0] : n===2 ? [-11,11] : [-16,0,16];
@@ -1116,8 +1158,8 @@ function drawGlobos(){
     if (G.globos>0) dibGlobitos(G.x, G.y, G.globos, '#f8b800');
     ctx.save(); ctx.translate(G.x-12, G.y-16); dibFernandoSolo(); ctx.restore();
   }
-  hudMJ('🎈 GLOBOS', 'KOOPAS: '+G.enem.filter(e=>e.vivo).length+'   🎈'+G.globos+'   '+corazonesInf(G), 'A = aletear');
-  barraPoder(G.pedoCd<=0 ? '💨 IMPULSO PEDORRO LISTO (B)' : '💨 tomando aire...',
+  hudMJ('🎈 GLOBOS', etiquetaNivel('globos')+'   KOOPAS: '+G.enem.filter(e=>e.vivo).length+'   🎈'+G.globos+'   '+corazonesInf(G), 'A = aletear');
+  barraPoder(G.pedoCd<=0 ? '💨 PEDO PROPULSOR (B)' : '💨 tomando aire...',
              1-G.pedoCd/PEDO_G, G.pedoCd<=0);
 }
 
@@ -1139,12 +1181,13 @@ function iniciarBombas(){
   M.items = []; M.alcance = 2; M.maxBombas = 2; M.vel = 2.6;
   M.pedoCd = 0; M.pedoPrev = false; M.sustos = 0;
   M.enem = [];
+  const NM = nivelDe('bomba');
   const libres = [];
   for(let y=1;y<MH-1;y++) for(let x=1;x<MW-1;x++)
     if (M.g[y][x]===0 && x+y>8) libres.push({x,y});
-  for(let i=0;i<4 && libres.length;i++){
+  for(let i=0;i<2+NM*2 && libres.length;i++){                /* 4, 6 y 8 goombas */
     const c = libres.splice((Math.random()*libres.length)|0, 1)[0];
-    M.enem.push({x:MX0+c.x*MC, y:MY0+c.y*MC, dir:(Math.random()*4)|0, vivo:true});
+    M.enem.push({x:MX0+c.x*MC, y:MY0+c.y*MC, dir:(Math.random()*4)|0, vivo:true, vel:1.15+NM*0.22});
   }
   aviso('¡B pone bombas! Rompe cajas para hallar poderes · A = SÚPER PEDO 💨', 4);
 }
@@ -1253,14 +1296,15 @@ function updateBombas(){
   for(const e of M.enem){
     if (!e.vivo) continue;
     const dx=[1,0,-1,0][e.dir], dy=[0,1,0,-1][e.dir];
-    const nx2 = e.x+dx*1.3, ny2 = e.y+dy*1.3;
+    const ve = e.vel || 1.3;
+    const nx2 = e.x+dx*ve, ny2 = e.y+dy*ve;
     const ecx = Math.round((nx2-MX0)/MC), ecy = Math.round((ny2-MY0)/MC);
     if (mCel(ecx,ecy)===0 && !M.bombas.some(b=>b.x===ecx&&b.y===ecy)){ e.x=nx2; e.y=ny2; }
     else e.dir = (Math.random()*4)|0;
     if (M.t%90===0 && Math.random()<0.4) e.dir = (Math.random()*4)|0;
     if (Math.abs(e.x-M.px)<24 && Math.abs(e.y-M.py)<24) danoBomba();
   }
-  if (M.enem.every(e=>!e.vivo)){ resultado=1; modo='finBombas'; sfx.meta(); hablar('¡Toma, pichungazo!'); }
+  if (M.enem.every(e=>!e.vivo)) pasarNivel('bomba', iniciarBombas, 'finBombas', '¡Toma, pichungazo!');
 }
 /* una de cada tres cajas rotas esconde un poder */
 function soltarPremio(x, y){
@@ -1326,9 +1370,9 @@ function drawBombas(){
   if (!(M.inv>0 && (M.t>>2)%2)){
     ctx.save(); ctx.translate(M.px-12, M.py-22); dibFernandoSolo(); ctx.restore();
   }
-  hudMJ('💣 BOMBAS', 'GOOMBAS: '+M.enem.filter(e=>e.vivo).length+'   '+corazonesInf(M),
+  hudMJ('💣 BOMBAS', etiquetaNivel('bomba')+'   GOOMBAS: '+M.enem.filter(e=>e.vivo).length+'   '+corazonesInf(M),
         '💣'+M.maxBombas+' 🔥'+M.alcance+' 👟'+M.vel.toFixed(1));
-  barraPoder(M.pedoCd<=0 ? '💨 SÚPER PEDO LISTO (A)' : '💨 cargando pedo...',
+  barraPoder(M.pedoCd<=0 ? '💨 SÚPER PEDO (A)' : '💨 cargando pedo...',
              1-M.pedoCd/PEDO_M, M.pedoCd<=0);
 }
 
@@ -1361,8 +1405,9 @@ function iniciarHielo(){
   I.vida = 3; I.inv = 0; I.suelo = true; I.saltoPrev = false;
   I.papa = 0; I.papaCd = 0; I.papaPrev = false; I.sustos = 0;
   I.enem = [];
-  for(let p=2;p<IPISOS-1;p+=2)
-    I.enem.push({x:200+Math.random()*500, y:I.pisos[p].y-22, vx:(p%4?1:-1)*1.15, piso:p, vivo:true});
+  const NI = nivelDe('hielo');
+  for(let p=2;p<IPISOS-1;p+=(NI>=3?1:2))          /* cada nivel, más goombas por la torre */
+    I.enem.push({x:200+Math.random()*500, y:I.pisos[p].y-22, vx:(p%4?1:-1)*(1+NI*0.22), piso:p, vivo:true});
   aviso('¡Rompe el hielo con la cabeza! Con B das el SALTO DE PAPÁ 🦘', 4);
 }
 function danoHielo(){
@@ -1456,7 +1501,7 @@ function updateHielo(){
   /* caer fuera de la pantalla: pierde un corazón y vuelve al último piso pisado */
   if (I.y > 470 + 240) danoHielo();
   /* llegar a la cima */
-  if (I.cima >= IPISOS-1){ resultado=1; modo='finHielo'; sfx.meta(); hablar('¡Hola Cucú, acompáñame'); }
+  if (I.cima >= IPISOS-1) pasarNivel('hielo', iniciarHielo, 'finHielo', '¡Hola Cucú, acompáñame!');
 }
 function drawHielo(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -1496,8 +1541,8 @@ function drawHielo(){
     ctx.save(); ctx.translate(I.x-12, I.y-40); dibFernandoSolo(); ctx.restore();
   }
   ctx.restore();
-  hudMJ('🧊 HIELO', 'PISO: '+(I.cima+1)+'/'+IPISOS+'   '+corazonesInf(I), 'A salta · rompe hielo');
-  barraPoder(I.papa>0 ? '🦘 ¡SALTO DE PAPÁ!' : (I.papaCd<=0 ? '🦘 SALTO DE PAPÁ LISTO (B)' : '🦘 tomando impulso...'),
+  hudMJ('🧊 HIELO', etiquetaNivel('hielo')+'   PISO: '+(I.cima+1)+'/'+IPISOS+'   '+corazonesInf(I), 'A salta · rompe hielo');
+  barraPoder(I.papa>0 ? '🦘 ¡SALTO DE PAPÁ!' : (I.papaCd<=0 ? '🦘 SALTO DE PAPÁ (B)' : '🦘 tomando impulso...'),
              I.papa>0 ? 1 : 1-I.papaCd/PAPA_CD, I.papa>0);
 }
 
@@ -1546,12 +1591,12 @@ function drawArcade(){
   ctx.fillStyle='rgba(255,255,255,0.18)';
   ctx.beginPath(); ctx.roundRect(z.x, z.y, z.w, z.h, 12); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=2; ctx.stroke();
-  texto('✕ VOLVER', z.x+z.w/2, z.y+27, 17, '#fff', true);
+  texto('✕ VOLVER', z.x+z.w/2, z.y+32, 20, '#fff', true);
   texto('Toca un juego · flechas + ENTER · ESC o ✕ VOLVER para salir', W/2, H-30, 15, '#dfc8ff', true);
 }
 function abrirArcade(){ estado = 'arcade'; modo = null; sel = 0; }
 function empezar(id){
-  resultado = 0; puntosMJ = 0; parts.length = 0;
+  resultado = 0; puntosMJ = 0; parts.length = 0; nivel[id] = 1;
   if (id==='birds'){ iniciarBirds(); modo='birds'; estado='mjBirds'; }
   else if (id==='dig'){ iniciarDig(); modo='dig'; estado='mjDig'; }
   else if (id==='kong'){ iniciarKong(); modo='kong'; estado='mjKong'; }
@@ -1570,8 +1615,7 @@ function update(){
     if (pt.soltado){
       pt.soltado = false;
       /* volver al selector de mundos (y de ahí al menú principal) */
-      const z = zonaVolver();
-      if (pt.x>=z.x && pt.x<=z.x+z.w && pt.y>=z.y && pt.y<=z.y+z.h){ estado='mapa'; return; }
+      if (enZona(zonaVolver(), pt.x, pt.y)){ estado='mapa'; return; }
       /* toque en las tarjetas */
       for(const c of cajasArcade())
         if (pt.x>=c.x && pt.x<=c.x+c.w && pt.y>=c.y && pt.y<=c.y+c.h){ sel=c.idx; empezar(c.j.id); break; }
@@ -1590,8 +1634,7 @@ function update(){
   }
   /* salir tocando el botón SALIR del marcador */
   if (pt.soltado && modo && modo.indexOf('fin')!==0){
-    const z = zonaSalir();
-    if (pt.x>=z.x && pt.x<=z.x+z.w && pt.y>=z.y && pt.y<=z.y+z.h){ pt.soltado=false; abrirArcade(); return; }
+    if (enZona(zonaSalir(), pt.x, pt.y)){ pt.soltado=false; abrirArcade(); return; }
   }
 }
 function draw(){
@@ -1651,6 +1694,8 @@ function tecla(k){
 }
 return { activo, update, draw, tecla, abrirArcade, empezar,
          _estado: ()=>modo, _juegos: JUEGOS,
+         _nivel: id=>nivelDe(id), _ponNivel: (id,n)=>{ nivel[id]=n; }, _MAXNIV: MAXNIV,
+         _zonaSalir: zonaSalir, _zonaVolver: zonaVolver,
          _B:B, _D:D, _K:K, _C:C, _KPL:KPL, _KESC:KESC, _G:G, _M:M, _I:I,
          _MW:MW, _MH:MH, _IPISOS:IPISOS, _DY0:DY0, _DC:DC, _MX0:MX0, _MY0:MY0, _MC:MC, _IC2:IC2 };
 })();

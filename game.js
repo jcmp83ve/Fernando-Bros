@@ -343,34 +343,84 @@ function leerMandos(){
 }
 addEventListener('gamepadconnected', ()=>{ MANDO.aviso = 220; });
 addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; keys[e.key] = false; });
-function tocar(id, k){
-  const el = document.getElementById(id);
-  const on = ev=>{ ev.preventDefault(); keys[k]=true; audio();
-    if(estado==='menu'){ if(k==='shift') iniciarKart(); else estado='mapa'; }
-    else if(estado==='mapa'){
-      if(k==='arrowleft') selMapa=(selMapa+10)%11;
-      else if(k==='arrowright') selMapa=(selMapa+1)%11;
-      else if(k==='arrowdown') selMapa = selMapa>=5 && selMapa<10 ? 10 : Math.min(selMapa+5, 10);
-      else if(k==='shift') iniciarKart();
-      else if(k===' '){
-        if(selMapa===10) iniciarKart();
-        else if(selMapa===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
-        else empezarJuego(selMapa);
-      }
-    }
-    else if(estado==='kartPista'){
-      if(k==='arrowleft') selPista=(selPista+PISTAS.length-1)%PISTAS.length;
-      else if(k==='arrowright') selPista=(selPista+1)%PISTAS.length;
-      else if(k===' ') iniciarCarrera(selPista);
-    }
-    else if(estado==='kartFin'){ estado='fin'; } };
-  const off= ev=>{ ev.preventDefault(); keys[k]=false; };
-  el.addEventListener('pointerdown', on); el.addEventListener('pointerup', off);
-  el.addEventListener('pointerleave', off); el.addEventListener('pointercancel', off);
+/* ---------------- Botones de pantalla ----------------
+   Un único vigilante de toques para todos los botones, en vez de un oyente
+   por botón. Ventajas para quien juega con el dedo:
+     · la zona sensible es bastante mayor que el círculo que se ve;
+     · si el toque cae en medio de dos, gana el más cercano;
+     · se puede DESLIZAR el dedo de ◀ a ▶ sin levantarlo;
+     · varios dedos a la vez (caminar y saltar), y nada se queda pegado. */
+const BOTONES = [
+  {id:'bL',    tecla:'ArrowLeft',  k:'arrowleft'},
+  {id:'bR',    tecla:'ArrowRight', k:'arrowright'},
+  {id:'bUp',   tecla:'ArrowUp',    k:'arrowup'},
+  {id:'bDown', tecla:'ArrowDown',  k:'arrowdown'},
+  {id:'bA',    tecla:' ',          k:' '},
+  {id:'bB',    tecla:'shift',      k:'shift'},
+];
+const dedos = new Map();            /* pointerId → botón que está pulsando */
+function elemBoton(b){
+  if (!b.el) { try{ b.el = document.getElementById(b.id); }catch(e){ b.el = null; } }
+  return b.el;
 }
-tocar('bL','arrowleft'); tocar('bR','arrowright');
-tocar('bUp','arrowup'); tocar('bDown','arrowdown');
-tocar('bA',' '); tocar('bB','shift');
+/* botón más cercano al dedo, con un margen generoso alrededor */
+function botonEn(x, y){
+  let mejor = null, mejorRel = 1;
+  for(const b of BOTONES){
+    const el = elemBoton(b);
+    if (!el || !el.getBoundingClientRect) continue;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) continue;            /* oculto: ni existe */
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const rel = Math.hypot(x-cx, y-cy) / (Math.max(r.width, r.height)/2);
+    if (rel < mejorRel){ mejorRel = rel; mejor = b; }
+  }
+  return mejor;
+}
+function pintarBotones(){
+  const pulsados = new Set([...dedos.values()].map(b=>b.id));
+  for(const b of BOTONES){
+    const el = elemBoton(b);
+    if (el && el.classList) el.classList.toggle('on', pulsados.has(b.id));
+  }
+}
+function refrescarTeclasTactiles(){
+  const activas = new Set([...dedos.values()].map(b=>b.k));
+  for(const b of BOTONES) if (!activas.has(b.k)) keys[b.k] = false;
+  for(const k of activas) keys[k] = true;
+  pintarBotones();
+}
+function tocarBoton(id, ev){
+  const b = botonEn(ev.clientX, ev.clientY);
+  if (!b) return false;
+  const antes = dedos.get(id);
+  if (antes === b) return true;
+  dedos.set(id, b);
+  refrescarTeclasTactiles();
+  if (!antes || antes.tecla !== b.tecla) procesarTecla(b.tecla);   /* menús y pantallas */
+  return true;
+}
+function soltarBoton(id){
+  if (!dedos.has(id)) return;
+  dedos.delete(id);
+  refrescarTeclasTactiles();
+}
+try{
+  document.addEventListener('pointerdown', ev=>{
+    audio();
+    if (tocarBoton(ev.pointerId, ev)){ ev.preventDefault(); ev.stopPropagation(); }
+  }, true);
+  document.addEventListener('pointermove', ev=>{
+    if (!dedos.has(ev.pointerId)) return;
+    tocarBoton(ev.pointerId, ev);
+    ev.preventDefault(); ev.stopPropagation();
+  }, true);
+  const fin = ev=>{ if (dedos.has(ev.pointerId)){ soltarBoton(ev.pointerId); ev.stopPropagation(); } };
+  document.addEventListener('pointerup', fin, true);
+  document.addEventListener('pointercancel', fin, true);
+  /* si el navegador se traga un "soltar" (llamada, notificación…), nada se queda pegado */
+  addEventListener('blur', ()=>{ dedos.clear(); refrescarTeclasTactiles(); });
+}catch(e){}
 cv.addEventListener('pointerdown', (e)=>{
   audio();
   const r = cv.getBoundingClientRect();
@@ -2343,7 +2393,7 @@ function dibMenu(){
   ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v29', W-30, 18);
+  ctx.fillText('v30', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2477,7 +2527,7 @@ function dibSelPista(){
   ctx.textAlign='left';
   dibBotonAtras('✕ VOLVER');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v29', W-34, 18);
+  ctx.fillText('v30', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3182,7 +3232,28 @@ function dibBotonAtras(txt){
   ctx.fillText(txt, z.x+z.w/2, z.y+26);
   ctx.textAlign='left';
 }
-const enAtras = (mx,my) => { const z=zonaAtras(); return mx>=z.x && mx<=z.x+z.w && my>=z.y && my<=z.y+z.h; };
+/* margen generoso para el dedo alrededor del botón */
+const enAtras = (mx,my) => { const z=zonaAtras(), m=22;
+  return mx>=z.x-m && mx<=z.x+z.w+m && my>=z.y-m && my<=z.y+z.h+m; };
+/* Rótulo emoji + texto centrado DE VERDAD dentro de su recuadro.
+   Con fillText centrado el emoji se dibuja más ancho de lo que mide la
+   fuente monoespaciada y todo el letrero acababa corrido hacia la derecha,
+   así que aquí se mide el texto y se coloca cada parte por separado. */
+function rotuloConEmoji(emoji, txt, c, color){
+  const tam = 22, hueco = 10;
+  ctx.font = 'bold '+tam+'px monospace';
+  const anchoTxt = ctx.measureText(txt).width;
+  ctx.font = '26px monospace';
+  const emojiW = ctx.measureText(emoji).width || 30;
+  const inicio = c.x + (c.w - (emojiW + hueco + anchoTxt))/2;
+  const linea = c.y + c.h/2 + tam*0.36;
+  ctx.textAlign = 'left';
+  ctx.fillStyle = color;
+  ctx.fillText(emoji, inicio, linea);
+  ctx.font = 'bold '+tam+'px monospace';
+  ctx.fillText(txt, inicio + emojiW + hueco, linea);
+  ctx.textAlign = 'center';
+}
 function cajasMapa(){
   const cajas=[];
   for(let i=0;i<10;i++){
@@ -3214,13 +3285,9 @@ function dibMapa(){
       ctx.lineWidth=10; ctx.stroke();
       ctx.globalAlpha = 1; ctx.lineWidth=3;
     }
-    if (c.idx===10){
-      ctx.fillStyle='#7dffa0'; ctx.font='bold 22px monospace';
-      ctx.fillText('🏁 FERNANDO KART', c.x+c.w/2, c.y+40);
-    } else if (c.idx===11){
-      ctx.fillStyle='#ff9ed6'; ctx.font='bold 22px monospace';
-      ctx.fillText('🕹️ SALA ARCADE', c.x+c.w/2, c.y+40);
-    } else {
+    if (c.idx===10) rotuloConEmoji('🏁', 'FERNANDO KART', c, '#7dffa0');
+    else if (c.idx===11) rotuloConEmoji('🕹️', 'SALA ARCADE', c, '#ff9ed6');
+    else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
       ctx.fillStyle='#fff'; ctx.font='bold 16px monospace';
@@ -3234,7 +3301,7 @@ function dibMapa(){
   ctx.textAlign='left';
   dibBotonAtras('✕ MENÚ');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v29', W-34, 18);
+  ctx.fillText('v30', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;

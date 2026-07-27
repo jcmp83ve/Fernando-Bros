@@ -7,6 +7,8 @@ La aventura de Fernando, el pichunguito de tío Juan, junto a sus dos perritos: 
 
 Abre `index.html` en cualquier navegador (Chrome, Edge, Firefox, Safari) o publícalo con GitHub Pages. Funciona también en celulares y tablets con botones táctiles.
 
+Los botones de la pantalla son **zonas de toque grandes** (bastante mayores que el círculo que se ve), se puede **deslizar el dedo** de ◀ a ▶ sin levantarlo y usar **dos dedos a la vez** para correr y saltar.
+
 | Teclado | Mando 🎮 | Celular 📱 | Acción |
 |---|---|---|---|
 | ← → | Palanca o cruceta | ◀ ▶ | Moverse |
@@ -68,14 +70,18 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 
 ## 🕹️ Sala Arcade
 
-Siete minijuegos con los personajes del juego, desde el selector de mundos. **Todos tienen vidas infinitas ∞**: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro, nunca se acaba la partida. Y **cada juego tiene su propio poder**:
+Siete minijuegos con los personajes del juego, desde el selector de mundos.
+
+- **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
+- **Tres niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos) sin perder los puntos, y la copa sale al terminar el tercero. Arriba se ve **NIV 1/3**.
+- **Cada juego tiene su propio poder**:
 
 | Minijuego | De qué va | Poder |
 |---|---|---|
 | 🐦 **Fernando Birds** | Lanza a Penny, Sheldon y Cucú con la resortera contra las torres de goombas. Los lanzamientos son **infinitos** | En pleno vuelo, toca la pantalla (o A/B): 🚀 **Penny cohete**, 💨 **pedo de Sheldon** que hace estallar todo, 👧 **Cucú se multiplica por tres** |
 | ⛏️ **Fernando Dig** | Cava túneles e infla a los goombas con la bomba de aire. Ellos patrullan sus túneles y, si llevan rato sin poder llegar, **se vuelven fantasmas y atraviesan la tierra**. Las rocas caen en cuanto les quitas el suelo | **A** = 💨 **pedo de tío Fran**: infla de golpe a todos los goombas de alrededor |
-| 🛢️ **Fernando Kong** | Sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa | 🔨 **Martillo pichunguito**: hay dos en la torre; con él los barriles se rompen al tocarlos |
-| 🔫 **Fernando Contra** | Avanza disparando por la selva con Tío Juan de apoyo, hasta el jefe final | 🦴 Cada tres enemigos cae un **hueso**: Fernando se vuelve **perrito rojo gigante**, dispara en abanico y arrolla a todos |
+| 🛢️ **Fernando Kong** | Sube por plataformas y escaleras esquivando los barriles de Bowser hasta rescatar a mamá princesa. Las escaleras se agarran con margen de sobra | 🔨 **Martillo pichunguito**: hay dos en la torre; con él los barriles se rompen al tocarlos |
+| 🔫 **Fernando Contra** | Avanza por la selva con Tío Juan de apoyo hasta el jefe final. **Mantén B** y dispara sin parar, no hay que machacar el botón | 🦴 Cada tres enemigos cae un **hueso**: Fernando se vuelve **perrito rojo gigante**, dispara en abanico y arrolla a todos |
 | 🎈 **Fernando Globos** | Vuela aleteando con globos y revienta los de los koopas desde arriba | **B** = 💨 **impulso pedorro**, y hay 🎈 **globos sueltos** que dan un tercer globo |
 | 💣 **Fernando Bombas** | Pon bombas en el laberinto para atrapar goombas | **A** = 💨 **súper pedo en cruz** (no te hace daño), y las cajas rotas sueltan 🔥 más alcance, 💣 más bombas y 👟 más velocidad |
 | 🧊 **Fernando Hielo** | Rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú | **B** = 🦘 **salto de papá**: sube dos pisos de un golpe y el cabezazo rompe **tres bloques** a la vez |
