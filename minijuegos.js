@@ -38,7 +38,7 @@ const JUEGOS = [
    desc:'Cómete las hamburguesas del laberinto'},
 ];
 const COLS_ARCADE = 5;
-let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0;
+let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0, finDicho = false;
 /* controles: la flecha arriba sirve para SUBIR, nunca para saltar */
 const mIzq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
 const mDer   = ()=> keys['arrowright']||keys['d']||mando['arrowright'];
@@ -48,6 +48,42 @@ const mSalta = ()=> keys[' ']||keys['z']||mando[' '];
 const mAccion= ()=> keys['shift']||keys['x']||mando['shift'];
 let puntosMJ = 0;               /* marcador propio de cada partida */
 function sumar(n){ puntosMJ += n; puntos += n; }
+
+/* ---------- voces de verdad ----------
+   Todas estas frases son grabaciones que ya existen en CLIPS (game.js), así que
+   suenan con la voz de niño de siempre y no hace falta generar nada nuevo.
+   Si alguna se cambia, hay que respetar el texto EXACTO o el juego se pasa a la
+   voz sintética del navegador. */
+const VOZ = {
+  vamos:      '¡Fernando Bros! ¡Vamos Penny y Sheldon!',
+  hongo:      '¡Soy el pichunguito de tío Juan!',
+  fuego:      '¡Fuego pichunguito!',
+  gracias:    '¡Gracias tío Juan!',
+  hamburguesa:'¡Qué rica hamburguesa!',
+  santi:      'Te amo Santi, mi hermanito',
+  cucu:       'Hola Cucú, acompáñame',
+  abu:        'Te amo Abu',
+  graciasAbu: '¡Gracias Abu!',
+  tioJuan:    'Te amo tío Juan, yo soy tu pichunguito',
+  campeon:    '¡Muy bien, mi pichunguito! ¡Eres un campeón!',
+  ganaste:    '¡Ganaste! ¡Te amo tío Juan!',
+  luca:       '¡Luca! ¡Mi amigo pichunguito!',
+  salomon:    '¡Salomón! ¡Juega conmigo, pichunguito!',
+  pedo:       '¡Qué pedo tan grande, tío Fran!',
+  mama:       '¡Te amo mamá!',
+  papa:       '¡Papá, mira cómo salto de alto!',
+  pichungazo: '¡Toma, pichungazo!',
+  ataque:     '¡Pichunguito al ataque!',
+  yanny:      '¡Hola mi amor! ¡Soy tía Yanny!',
+  nacho:      '¡Épale! ¡Aquí viene tío Nacho!',
+  romulo:     '¡Brrrp! ¡Qué rica cerveza! ¡Ay, qué pena!',
+  gane:       '¡Gané! ¡Soy el pichunguito campeón!',
+  otraVez:    '¡Qué divertido! ¡Otra vez, otra vez!',
+  perrito:    '¡Guau, guau! ¡Soy el perrito pichunguito!',
+  volar:      '¡A volar, pichunguitos!',
+  beto:       '¡Hola pichunguito! ¡Soy tío Beto!',
+  giuliana:   '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!',
+};
 
 /* ---------- niveles ----------
    Cada minijuego tiene tres niveles: al superar uno se vuelve a armar el
@@ -60,6 +96,7 @@ function pasarNivel(id, iniciar, finModo, frase){
   if (nivelDe(id) < MAXNIV){
     nivel[id] = nivelDe(id) + 1;
     sumar(1000); sfx.meta();
+    hablar(VOZ.campeon);
     iniciar();
     aviso('🏅 ¡NIVEL '+nivel[id]+' DE '+MAXNIV+'! Ahora un poquito más difícil', 2.6);
     cortina = 34;
@@ -74,37 +111,37 @@ const etiquetaNivel = id => 'NIV '+nivelDe(id)+'/'+MAXNIV;
    En cada nivel de cada minijuego aparece un amigo distinto al que hay que
    rescatar (o que acompaña a Fernando). Así van saliendo todos. */
 const AMIGOS = [
-  {id:'santi',    nombre:'SANTI',        frase:'¡Te amo Santi, mi hermanito!',
+  {id:'santi',    nombre:'SANTI',        frase:VOZ.santi,
    dib:(x,y,t)=>dibSanti(x,y,t)},
-  {id:'cucu',     nombre:'CUCÚ',         frase:'¡Hola Cucú, acompáñame!',
+  {id:'cucu',     nombre:'CUCÚ',         frase:VOZ.cucu,
    dib:(x,y,t)=>dibCucu(x,y,1,t)},
-  {id:'penny',    nombre:'PENNY',        frase:'¡Penny, mi perrita linda!',
+  {id:'penny',    nombre:'PENNY',        frase:VOZ.vamos,
    dib:(x,y,t)=>{ ctx.save(); ctx.translate(x,y+10); dibPerroSolo('#222'); ctx.restore(); }},
-  {id:'sheldon',  nombre:'SHELDON',      frase:'¡Sheldon, ven conmigo!',
+  {id:'sheldon',  nombre:'SHELDON',      frase:VOZ.vamos,
    dib:(x,y,t)=>{ ctx.save(); ctx.translate(x,y+10); dibPerroSolo('#8a5a2a'); ctx.restore(); }},
-  {id:'luca',     nombre:'LUCA',         frase:'¡Luca, vamos juntos!',
+  {id:'luca',     nombre:'LUCA',         frase:VOZ.luca,
    dib:(x,y,t)=>dibLuca(x,y,t,1)},
-  {id:'salomon',  nombre:'SALOMÓN',      frase:'¡Salomón, eres mi amigo!',
+  {id:'salomon',  nombre:'SALOMÓN',      frase:VOZ.salomon,
    dib:(x,y,t)=>dibSalomon(x,y,t,1)},
-  {id:'abu',      nombre:'ABU',          frase:'¡Te amo Abu!',
+  {id:'abu',      nombre:'ABU',          frase:VOZ.abu,
    dib:(x,y,t)=>dibAbu(x,y,1,t,true)},
-  {id:'tiofran',  nombre:'TÍO FRAN',     frase:'¡Qué pedo tan grande, tío Fran!',
+  {id:'tiofran',  nombre:'TÍO FRAN',     frase:VOZ.pedo,
    dib:(x,y,t)=>dibTioFran(x,y,t,false)},
-  {id:'mama',     nombre:'MAMÁ',         frase:'¡Te amo mamá!',
+  {id:'mama',     nombre:'MAMÁ',         frase:VOZ.mama,
    dib:(x,y,t)=>dibMama(x,y,t)},
-  {id:'papa',     nombre:'PAPÁ',         frase:'¡Papá, mira cómo salto de alto!',
+  {id:'papa',     nombre:'PAPÁ',         frase:VOZ.papa,
    dib:(x,y,t)=>dibPapa(x,y,t)},
-  {id:'yanny',    nombre:'TÍA YANNY',    frase:'¡Hola mi amor! ¡Soy tía Yanny!',
+  {id:'yanny',    nombre:'TÍA YANNY',    frase:VOZ.yanny,
    dib:(x,y,t)=>dibYanny(x,y,t)},
-  {id:'nacho',    nombre:'TÍO NACHO',    frase:'¡Épale! ¡Aquí viene tío Nacho!',
+  {id:'nacho',    nombre:'TÍO NACHO',    frase:VOZ.nacho,
    dib:(x,y,t)=>dibNacho(x,y,t)},
-  {id:'beto',     nombre:'TÍO BETO',     frase:'¡Hola tío Beto!',
+  {id:'beto',     nombre:'TÍO BETO',     frase:VOZ.beto,
    dib:(x,y,t)=>dibBeto(x,y,t)},
-  {id:'giuliana', nombre:'TÍA GIULIANA', frase:'¡Hola tía Giuliana!',
+  {id:'giuliana', nombre:'TÍA GIULIANA', frase:VOZ.giuliana,
    dib:(x,y,t)=>dibGiuliana(x,y,t)},
-  {id:'romulo',   nombre:'RÓMULO',       frase:'¡Brrrp! ¡Ay, qué pena!',
+  {id:'romulo',   nombre:'RÓMULO',       frase:VOZ.romulo,
    dib:(x,y,t)=>dibRomulo(x,y,t)},
-  {id:'tiojuan',  nombre:'TÍO JUAN',     frase:'¡Te amo tío Juan, yo soy tu pichunguito!',
+  {id:'tiojuan',  nombre:'TÍO JUAN',     frase:VOZ.tioJuan,
    dib:(x,y,t)=>dibTioJuan(x,y,t)},
 ];
 const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13,
@@ -216,6 +253,7 @@ function barraPoder(nombre, frac, encendido){
   texto(nombre, x+w/2, y+15, tam, frac>=1||encendido ? '#ffe36e' : '#cfd8ff', true);
 }
 function pantallaFin(gano, titulo, sub){
+  if (!finDicho){ finDicho = true; hablar(gano ? VOZ.ganaste : VOZ.otraVez); }
   const g = ctx.createLinearGradient(0,0,0,H);
   if (gano){ g.addColorStop(0,'#0a3a1a'); g.addColorStop(1,'#2a8a4a'); }
   else { g.addColorStop(0,'#3a0a1a'); g.addColorStop(1,'#8a2a3a'); }
@@ -288,7 +326,7 @@ function poderBird(p){
   if (p.tipo==='penny'){                       /* Penny cohete */
     const m = Math.hypot(p.vx, p.vy) || 1;
     p.vx = p.vx/m*23; p.vy = p.vy/m*23;
-    sfx.fuego(); aviso('🚀 ¡PENNY COHETE!', 1.4);
+    sfx.fuego(); aviso('🚀 ¡PENNY COHETE!', 1.4); hablar(VOZ.vamos);
     for(let i=0;i<8;i++) parts.push({tipo:'estrellita', x:p.x, y:p.y,
       vx:-p.vx*0.2+(Math.random()-0.5)*2, vy:-p.vy*0.2+(Math.random()-0.5)*2, t:24});
   } else if (p.tipo==='sheldon'){              /* Sheldon pedorro */
@@ -301,20 +339,20 @@ function poderBird(p){
       if (b.vivo && Math.hypot(b.x-p.x, b.y-p.y) < 115){ b.vivo = false; sumar(500); sfx.pisoton(); }
     p.vx *= 0.25; p.vy = -2.5;
     aviso('💨 ¡Qué pedo tan grande, tío Fran!', 2);
-    hablar('¡Qué pedo tan grande, tío Fran!');
+    hablar(VOZ.pedo);
   } else if (p.tipo==='cucu'){                 /* Cucú se multiplica por tres */
     for(const giro of [-0.32, 0.32]){
       const co = Math.cos(giro), si = Math.sin(giro);
       B.extras.push({x:p.x, y:p.y, vx:p.vx*co - p.vy*si, vy:p.vx*si + p.vy*co,
                      tipo:'cucu', t:p.t, espera:0, usado:true});
     }
-    sfx.huevo(); aviso('👧 ¡CUCÚ SE MULTIPLICA POR TRES!', 1.8);
+    sfx.huevo(); aviso('👧 ¡CUCÚ SE MULTIPLICA POR TRES!', 1.8); hablar(VOZ.cucu);
   } else if (p.tipo==='luca'){                 /* Luca rebota como una pelota */
     p.pelota = true; p.vy = -Math.abs(p.vy) - 6; p.vx *= 1.25;
-    sfx.salto(); aviso('⚽ ¡LUCA PELOTA! Rebota y rebota', 1.6);
+    sfx.salto(); aviso('⚽ ¡LUCA PELOTA! Rebota y rebota', 1.6); hablar(VOZ.luca);
   } else if (p.tipo==='salomon'){              /* Salomón cae a plomo */
     p.vx *= 0.35; p.vy = 21; p.pesado = true;
-    sfx.pisoton(); aviso('🪨 ¡SALOMÓN EN PICADA!', 1.6);
+    sfx.pisoton(); aviso('🪨 ¡SALOMÓN EN PICADA!', 1.6); hablar(VOZ.salomon);
   } else if (p.tipo==='tiofran'){              /* el pedo más grande de todos */
     nubePedo(p.x, p.y, 30); sfx.pedo(); sacudir(9);
     for(const c of B.cajas){
@@ -325,10 +363,10 @@ function poderBird(p){
       if (b.vivo && Math.hypot(b.x-p.x, b.y-p.y) < 190){ b.vivo = false; sumar(500); sfx.pisoton(); }
     p.vx *= 0.2; p.vy = -3;
     aviso('💥 ¡QUÉ PEDO TAN GRANDE, TÍO FRAN!', 2.2);
-    hablar('¡Qué pedo tan grande, tío Fran!');
+    hablar(VOZ.pedo);
   } else {                                     /* Santi atraviesa las cajas */
     p.taladro = 140;
-    sfx.moneda(); aviso('👶 ¡SANTI TALADRO! Atraviesa las cajas', 1.8);
+    sfx.moneda(); aviso('👶 ¡SANTI TALADRO! Atraviesa las cajas', 1.8); hablar(VOZ.santi);
   }
 }
 /* física de un proyectil; devuelve false cuando ya terminó su vuelo */
@@ -447,7 +485,7 @@ function updateBirds(){
   /* fin: solo se gana; los lanzamientos son infinitos */
   const quedan = B.bichos.filter(b=>b.vivo).length;
   if (quedan===0 && !B.proy && B.extras.length===0){
-    pasarNivel('birds', iniciarBirds, 'finBirds', '¡Toma, pichungazo!');
+    pasarNivel('birds', iniciarBirds, 'finBirds', VOZ.pichungazo);
   }
 }
 function drawBirds(){
@@ -643,7 +681,7 @@ function updateDig(){
   if (mSalta() && !D.pedoPrev && D.pedo<=0 && D.pedoCd<=0){
     D.pedo = 80; D.pedoCd = PEDO_CD; sfx.pedo(); sacudir(5);
     aviso('💨 ¡PEDO DE TÍO FRAN!', 2);
-    hablar('¡Qué pedo tan grande, tío Fran!');
+    hablar(VOZ.pedo);
   }
   D.pedoPrev = mSalta();
   if (D.pedo>0){
@@ -716,7 +754,7 @@ function updateDig(){
     else if (celdaLibre(r.cx, ncy+1) && D.g[ncy+1][r.cx]===1){ r.quieta = true; }
   }
   rescatar(D.amigo, D.px, D.py, 32);
-  if (D.enem.every(e=>!e.vivo)) pasarNivel('dig', iniciarDig, 'finDig', '¡Toma, pichungazo!');
+  if (D.enem.every(e=>!e.vivo)) pasarNivel('dig', iniciarDig, 'finDig', VOZ.pichungazo);
 }
 function drawDig(){
   ctx.fillStyle='#2a1a0e'; ctx.fillRect(0,0,W,H);
@@ -865,7 +903,8 @@ function updateKong(){
       m.tomado = true; K.martillo = MARTILLO_T;
       sfx.poder(); sacudir(3);
       aviso('🔨 ¡MARTILLO PICHUNGUITO! Rompe todos los barriles', 2.4);
-      hablar('¡Pichunguito al ataque!');
+      hablar(VOZ.ataque);
+      K.dijoMartillo = true;
     }
   }
   if (K.martillo>0){
@@ -895,7 +934,7 @@ function updateKong(){
   rescatar(K.amigo, K.x, K.y-18, 36);
   /* llegar arriba con mamá princesa */
   if (K.y <= KPL[KPL.length-2].y0+6 && K.x > W-330){
-    pasarNivel('kong', iniciarKong, 'finKong', '¡Te amo mamá!');
+    pasarNivel('kong', iniciarKong, 'finKong', VOZ.mama);
   }
 }
 function drawKong(){
@@ -976,6 +1015,7 @@ function iniciarContra(){
   C.x = 140; C.y = SUELO_C; C.vy = 0; C.vida = 5;
   C.balas = []; C.enem = []; C.balasE = []; C.scroll = 0; C.t = 0; C.jefe = null; C.inv = 0; C.cara = 1;
   C.items = []; C.perro = 0; C.bajas = 0; C.sustos = 0; C.recarga = 0;
+  C.disparoDicho = false;
   C.socio = amigoDeNivel('contra', nivelDe('contra'));   /* el compañero de este nivel */
   C.socioT = 0;
   aviso('¡Mantén B para disparar sin parar! El 🦴 hueso te vuelve perrito rojo gigante', 4);
@@ -1008,13 +1048,14 @@ function updateContra(){
     if (!it.usado && Math.abs(it.x-C.x)<32 && Math.abs(it.y-(C.y-20))<46){
       it.usado = true; C.perro = PERRO_T; sfx.poder(); sacudir(4); sumar(400);
       aviso('🦴 ¡FERNANDO PERRITO ROJO GIGANTE!', 2.4);
-      hablar('¡Guau guau! ¡Soy un perrito grande!');
+      hablar(VOZ.perrito);
     }
   }
   C.items = C.items.filter(it=>!it.usado && it.x>-40);
   /* disparo: basta con MANTENER el botón, no hace falta machacarlo */
   if (C.recarga>0) C.recarga--;
   if (mAccion() && (!C.dispPrev || C.recarga<=0)){
+    if (!C.disparoDicho){ C.disparoDicho = true; hablar(VOZ.fuego); }
     C.recarga = 11;
     const cara = C.cara||1;
     if (C.perro>0){                       /* de perrito grande dispara en abanico */
@@ -1082,7 +1123,7 @@ function updateContra(){
       }
     }
     if (j.golpe>0) j.golpe--;
-    if (j.vida<=0) pasarNivel('contra', iniciarContra, 'finContra', '¡Gané! ¡Soy el pichunguito campeón!');
+    if (j.vida<=0) pasarNivel('contra', iniciarContra, 'finContra', VOZ.gane);
     /* el jefe también suelta huesos, para no quedarse nunca sin poder */
     if (C.t%420===0) soltarHueso({x:j.x, y:j.y+60});
   }
@@ -1210,7 +1251,7 @@ function updateGlobos(){
   if (mAccion() && !G.pedoPrev && G.pedoCd<=0){
     G.vy = -9; G.vx += (G.vx>=0 ? 2.6 : -2.6); G.pedoCd = PEDO_G;
     nubePedo(G.x, G.y+24, 14); sfx.pedo(); sacudir(4);
-    aviso('💨 ¡IMPULSO PEDORRO!', 1.4);
+    aviso('💨 ¡IMPULSO PEDORRO!', 1.4); hablar(VOZ.volar);
   }
   G.pedoPrev = mAccion();
   /* globos sueltos que devuelven aire (hasta tres) */
@@ -1277,7 +1318,7 @@ function updateGlobos(){
       sfx.poder();
     }
   }
-  if (G.enem.every(e=>!e.vivo)) pasarNivel('globos', iniciarGlobos, 'finGlobos', '¡Toma, pichungazo!');
+  if (G.enem.every(e=>!e.vivo)) pasarNivel('globos', iniciarGlobos, 'finGlobos', VOZ.pichungazo);
 }
 function dibGlobitos(x, y, n, color){
   const desf = n===1 ? [0] : n===2 ? [-11,11] : [-16,0,16];
@@ -1413,7 +1454,7 @@ function updateBombas(){
   if (mSalta() && !M.pedoPrev && M.pedoCd<=0){
     M.pedoCd = PEDO_M; sfx.pedo(); sacudir(6);
     aviso('💨 ¡SÚPER PEDO PICHUNGUITO!', 2);
-    hablar('¡Qué pedo tan grande, tío Fran!');
+    hablar(VOZ.pedo);
     M.fuego.push({x:M.jx, y:M.jy, t:36, pedo:true});
     nubePedo(M.px, M.py, 14);
     for(const [dx2,dy2] of [[1,0],[-1,0],[0,1],[0,-1]]){
@@ -1482,7 +1523,7 @@ function updateBombas(){
     if (Math.abs(e.x-M.px)<24 && Math.abs(e.y-M.py)<24) danoBomba();
   }
   rescatar(M.amigo, M.px, M.py, 32);
-  if (M.enem.every(e=>!e.vivo)) pasarNivel('bomba', iniciarBombas, 'finBombas', '¡Toma, pichungazo!');
+  if (M.enem.every(e=>!e.vivo)) pasarNivel('bomba', iniciarBombas, 'finBombas', VOZ.pichungazo);
 }
 /* una de cada tres cajas rotas esconde un poder */
 function soltarPremio(x, y){
@@ -1628,7 +1669,7 @@ function updateHielo(){
     I.vy = -18.6; I.suelo = false; I.papa = 70; I.papaCd = PAPA_CD;
     sfx.poder(); sacudir(3);
     aviso('🦘 ¡SALTO DE PAPÁ!', 1.6);
-    hablar('¡Papá, mira cómo salto de alto!');
+    hablar(VOZ.papa);
   }
   I.papaPrev = mAccion();
   I.vy = Math.min(I.vy+0.62, 14);
@@ -1687,7 +1728,7 @@ function updateHielo(){
   if (I.y > 470 + 240) danoHielo();
   /* llegar a la cima */
   rescatar(I.amigo, I.x, I.y-18, 34);
-  if (I.cima >= IPISOS-1) pasarNivel('hielo', iniciarHielo, 'finHielo', '¡Hola Cucú, acompáñame!');
+  if (I.cima >= IPISOS-1) pasarNivel('hielo', iniciarHielo, 'finHielo', VOZ.cucu);
 }
 function drawHielo(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -1771,6 +1812,7 @@ function ponerTorre(){
   TD.monedas -= t.coste;
   TD.torres.push({cx:TD.cx, cy:TD.cy, t:TD.tipo, cd:0, tiro:0, blanco:null});
   sfx.poder(); sacudir(2);
+  hablar(t.id==='tiojuan' ? VOZ.tioJuan : VOZ.vamos);
   aviso('¡'+t.nombre+' a defender!', 1.4);
 }
 function posEnem(e){
@@ -1805,7 +1847,7 @@ function updateTorre(){
   if (mArr() && mAccion() && TD.pedoCd<=0){
     TD.pedoCd = PEDO_TD; sfx.pedo(); sacudir(7);
     aviso('💨 ¡PEDO DE TÍO FRAN EN TODO EL CAMPO!', 2.2);
-    hablar('¡Qué pedo tan grande, tío Fran!');
+    hablar(VOZ.pedo);
     for(const e of TD.enem){ e.vida -= 3; const p = posEnem(e); nubePedo(p.x, p.y, 6); }
   }
   /* oleadas */
@@ -1864,7 +1906,7 @@ function updateTorre(){
   }
   /* fin del nivel */
   if (TD.oleada >= TD.oleadas && TD.enem.length===0 && TD.restan<=0)
-    pasarNivel('torre', iniciarTorre, 'finTorre', '¡Toma, pichungazo!');
+    pasarNivel('torre', iniciarTorre, 'finTorre', VOZ.pichungazo);
 }
 function drawTorre(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -1963,7 +2005,7 @@ function updateNieve(){
   SN.saltoPrev = mSalta();
   if (mAccion() && SN.turboCd<=0){
     SN.turbo = 110; SN.turboCd = TURBO_SN; sfx.poder();
-    aviso('🍔 ¡TURBO DE HAMBURGUESA!', 1.6);
+    aviso('🍔 ¡TURBO DE HAMBURGUESA!', 1.6); hablar(VOZ.hamburguesa);
   }
   SN.dist += v;
   /* aparecen pinos y premios */
@@ -1996,7 +2038,7 @@ function updateNieve(){
   }
   if (SN.amigo && !SN.amigo.salvado && SN.amigo.y > -100)
     rescatar(SN.amigo, SN.x, SNY, 34);
-  if (SN.dist >= SN.meta) pasarNivel('nieve', iniciarNieve, 'finNieve', '¡Toma, pichungazo!');
+  if (SN.dist >= SN.meta) pasarNivel('nieve', iniciarNieve, 'finNieve', VOZ.pichungazo);
 }
 function drawNieve(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -2112,7 +2154,7 @@ function updateLuna(){
   if (LU.exito>0){                        /* pequeña pausa de celebración */
     if (--LU.exito<=0){
       LU.logrados++;
-      if (LU.logrados >= LU.meta) pasarNivel('luna', iniciarLuna, 'finLuna', '¡Toma, pichungazo!');
+      if (LU.logrados >= LU.meta) pasarNivel('luna', iniciarLuna, 'finLuna', VOZ.pichungazo);
       else { nuevoTerrenoLuna(); aviso('🚀 ¡'+LU.logrados+' de '+LU.meta+'! A por la siguiente', 2); }
     }
     return;
@@ -2122,7 +2164,7 @@ function updateLuna(){
   if (mAccion() && !LU.capaPrev && LU.capaCd<=0){
     LU.capa = 260; LU.capaCd = CAPA_CD; sfx.heroe();
     aviso('🦸 ¡TÍO JUAN TE SOSTIENE!', 2);
-    hablar('¡Te amo tío Juan, yo soy tu pichunguito!');
+    hablar(VOZ.tioJuan);
   }
   LU.capaPrev = mAccion();
   if (mIzq()) LU.ang -= 0.045;
@@ -2155,7 +2197,7 @@ function updateLuna(){
       if (esDelAmigo && LU.amigo && !LU.amigo.salvado){
         LU.amigo.x = LU.x-13; LU.amigo.y = LU.y-26;
         rescatar(LU.amigo, LU.x, LU.y, 60);
-      } else aviso('🚀 ¡Alunizaje perfecto! +1200', 2);
+      } else { aviso('🚀 ¡Alunizaje perfecto! +1200', 2); hablar(VOZ.gracias); }
     } else {
       /* golpe: vidas infinitas, se vuelve a intentar */
       susto(LU, '¡Muy fuerte! Vidas infinitas: otra vez');
@@ -2272,7 +2314,7 @@ function updateRunner(){
   if (mAccion() && !RU.vPrev && RU.vuelaCd<=0){
     RU.vuela = 230; RU.vuelaCd = VUELA_CD; sfx.heroe();
     aviso('🦸 ¡TÍO JUAN TE LLEVA VOLANDO!', 2.2);
-    hablar('¡Te amo tío Juan, yo soy tu pichunguito!');
+    hablar(VOZ.tioJuan);
   }
   RU.vPrev = mAccion();
   RU.dist += v;
@@ -2309,7 +2351,7 @@ function updateRunner(){
     }
   }
   RU.obs = RU.obs.filter(o=>o.z > -8 && !o.usado);
-  if (RU.dist >= RU.meta) pasarNivel('corre', iniciarRunner, 'finRunner', '¡Toma, pichungazo!');
+  if (RU.dist >= RU.meta) pasarNivel('corre', iniciarRunner, 'finRunner', VOZ.pichungazo);
 }
 function drawRunner(){
   const g = ctx.createLinearGradient(0,0,0,RHOR);
@@ -2417,7 +2459,7 @@ function updateFlappy(){
   /* PODER: el globo lo deja flotar suavecito y sin sustos */
   if (mAccion() && !FL.gPrev && FL.globoCd<=0){
     FL.globo = 300; FL.globoCd = GLOBO_CD; sfx.poder();
-    aviso('🎈 ¡GLOBO! Flotas suavecito y nada te toca', 2.2);
+    aviso('🎈 ¡GLOBO! Flotas suavecito y nada te toca', 2.2); hablar(VOZ.volar);
   }
   FL.gPrev = mAccion();
   FL.vy += FL.globo>0 ? 0.16 : 0.44;
@@ -2457,7 +2499,7 @@ function updateFlappy(){
     rescatar(FL.amigo, FLX, FL.y+14, 40);
     if (FL.amigo.x < -60){ FL.amigo.x = W+60; FL.amigo.y = 120 + Math.random()*220; }
   }
-  if (FL.pasados >= FL.meta) pasarNivel('flappy', iniciarFlappy, 'finFlappy', '¡Toma, pichungazo!');
+  if (FL.pasados >= FL.meta) pasarNivel('flappy', iniciarFlappy, 'finFlappy', VOZ.pichungazo);
 }
 function drawFlappy(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -2599,7 +2641,7 @@ function updateCoco(){
     CO.pedoCd = PEDO_CO; CO.asusta = Math.max(CO.asusta, 300);
     sfx.pedo(); sacudir(5); nubePedo(CO.x, CO.y, 16);
     aviso('💨 ¡PEDO! Los fantasmas salen corriendo', 2.2);
-    hablar('¡Qué pedo tan grande, tío Fran!');
+    hablar(VOZ.pedo);
   }
   CO.pPrev = mAccion();
   const c = coMover(CO, CO.vel);
@@ -2608,7 +2650,7 @@ function updateCoco(){
   if (cel==='.'){ CO.g[c.cy][c.cx]=' '; CO.bolitas--; sumar(30); if (CO.t%4===0) sfx.moneda(); }
   else if (cel==='o'){
     CO.g[c.cy][c.cx]=' '; CO.bolitas--; sumar(150); sfx.poder();
-    CO.asusta = 360; aviso('⭐ ¡A por ellos!', 1.6);
+    CO.asusta = 360; aviso('⭐ ¡A por ellos!', 1.6); hablar(VOZ.ataque);
   }
   rescatar(CO.amigo, CO.x, CO.y, 30);
   /* fantasmas */
@@ -2618,7 +2660,9 @@ function updateCoco(){
     /* encuentro */
     if (Math.abs(f.x-CO.x) < 22 && Math.abs(f.y-CO.y) < 22){
       if (CO.asusta>0){
-        sumar(600); sfx.pisoton(); sacudir(3);
+        sumar(600); sacudir(3);
+        if (f.nombre==='RÓMULO'){ sfx.eructo(); hablar(VOZ.romulo); }
+        else { sfx.pisoton(); if (Math.random()<0.4) hablar(VOZ.pichungazo); }
         const casa = coPix(9, 3);
         f.x = casa.x; f.y = casa.y; f.salida = 150; f.dx = 0; f.dy = 0;
         f.tcx = undefined; f.tcy = undefined; f.qx = 0; f.qy = 0;
@@ -2632,7 +2676,7 @@ function updateCoco(){
       }
     }
   }
-  if (CO.bolitas <= 0) pasarNivel('coco', iniciarCoco, 'finCoco', '¡Toma, pichungazo!');
+  if (CO.bolitas <= 0) pasarNivel('coco', iniciarCoco, 'finCoco', VOZ.pichungazo);
 }
 function drawCoco(){
   ctx.fillStyle='#04061e'; ctx.fillRect(0,0,W,H);
@@ -2739,9 +2783,10 @@ function drawArcade(){
   texto('✕ VOLVER', z.x+z.w/2, z.y+32, 20, '#fff', true);
   texto('Toca un juego · flechas + ENTER · ESC o ✕ VOLVER para salir', W/2, H-30, 15, '#dfc8ff', true);
 }
-function abrirArcade(){ estado = 'arcade'; modo = null; sel = 0; }
+function abrirArcade(){ estado = 'arcade'; modo = null; sel = 0; finDicho = false; }
 function empezar(id){
-  resultado = 0; puntosMJ = 0; parts.length = 0; nivel[id] = 1;
+  resultado = 0; puntosMJ = 0; parts.length = 0; nivel[id] = 1; finDicho = false;
+  hablar(VOZ.ataque);
   if (id==='birds'){ iniciarBirds(); modo='birds'; estado='mjBirds'; }
   else if (id==='dig'){ iniciarDig(); modo='dig'; estado='mjDig'; }
   else if (id==='kong'){ iniciarKong(); modo='kong'; estado='mjKong'; }
