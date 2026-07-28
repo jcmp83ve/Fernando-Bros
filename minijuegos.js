@@ -48,8 +48,26 @@ const JUEGOS = [
    corto:'MAPPY', desc:'Tirolinas y portazos a los gatos'},
   {id:'circo',  nombre:'FERNANDO CIRCO',   emoji:'🎪', color:'#8a1a4a',
    corto:'CIRCO', desc:'Aros de fuego y balancín con globos'},
+  {id:'patos',    nombre:'FERNANDO PATOS',    emoji:'🦆', color:'#2a6ad0',
+   corto:'PATOS', desc:'Tócalos al vuelo · Penny se ríe si fallas'},
+  {id:'isla',     nombre:'FERNANDO ISLA',     emoji:'🏝️', color:'#2a8a4a',
+   corto:'ISLA', desc:'Corre comiendo fruta o se acaba la energía'},
+  {id:'galaxia',  nombre:'FERNANDO GALAXIA',  emoji:'👾', color:'#2a2a7a',
+   corto:'GALAXIA', desc:'Nave con barra de mejoras y nave madre'},
+  {id:'lucha',    nombre:'FERNANDO LUCHA',    emoji:'🥊', color:'#a04a1a',
+   corto:'LUCHA', desc:'Pelea uno a uno con golpe especial'},
+  {id:'vagoneta', nombre:'VAGONETA',          emoji:'🚃', color:'#6a3a1a',
+   corto:'VAGONETA', desc:'La vagoneta de Sheldon: solo saltar'},
+  {id:'jam',      nombre:'FERNANDO JAM',      emoji:'🏀', color:'#c8853a',
+   corto:'JAM', desc:'2 contra 2 y a los 3 aciertos ¡fuego!'},
+  {id:'fcero',    nombre:'FERNANDO F-CERO',   emoji:'🏎️', color:'#6a1a8a',
+   corto:'F-CERO', desc:'Carrera futurista con turbo'},
+  {id:'bananas',  nombre:'BANANAS',           emoji:'🍌', color:'#3a3a8a',
+   corto:'BANANAS', desc:'Ángulo y fuerza contra tío Fran'},
+  {id:'quake',    nombre:'FERNANDO 3D',       emoji:'🧱', color:'#1a3a5a',
+   corto:'3D', desc:'Laberinto en primera persona'},
 ];
-const COLS_ARCADE = 5;
+const COLS_ARCADE = 7;
 let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0, finDicho = false;
 /* controles: la flecha arriba sirve para SUBIR, nunca para saltar */
 const mIzq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
@@ -158,7 +176,9 @@ const AMIGOS = [
 ];
 const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13,
                  torre:1, nieve:4, luna:8, corre:3, flappy:6, coco:12,
-                 mega:10, burger:14, survivor:15, jeep:5, mappy:2, circo:9};
+                 mega:10, burger:14, survivor:15, jeep:5, mappy:2, circo:9,
+                 patos:3, isla:7, galaxia:11, lucha:0, vagoneta:6, jam:12,
+                 fcero:1, bananas:8, quake:4};
 function amigoDeNivel(juego, n){
   /* en Kong mamá princesa ya espera arriba, así que ella no entra en el sorteo */
   const lista = juego==='kong' ? AMIGOS.filter(a=>a.id!=='mama') : AMIGOS;
@@ -3890,10 +3910,1435 @@ function drawCirco(){
 }
 
 /* ============================================================
+   20) FERNANDO CAZAPATOS  (estilo Duck Hunt)
+   ============================================================ */
+const PA = { mira:{x:0,y:0}, patos:[], cazados:0, meta:0, balas:0, t:0, sustos:0,
+             dispPrev:false, doble:0, dobleCd:0, doblePrev:false, amigo:null, risa:0, ronda:0 };
+const PASUELO = 430, DOBLE_CD = 380;
+function iniciarPatos(){
+  const N = nivelDe('patos');
+  PA.mira = {x:W/2, y:260}; PA.patos = []; PA.cazados = 0; PA.balas = 3;
+  PA.t = 0; PA.sustos = 0; PA.dispPrev = false; PA.doble = 0; PA.dobleCd = 0;
+  PA.doblePrev = false; PA.risa = 0; PA.ronda = 0;
+  PA.meta = 6 + N*2;                                  /* de 8 a 18 patos */
+  PA.amigo = nuevoRescate('patos', 0, 0);
+  PA.amigo.puesto = false;
+  aviso('¡Toca los pájaros para cazarlos! B dispara · A = escopeta doble', 4);
+}
+function sueltaPato(){
+  const N = nivelDe('patos');
+  const dcha = Math.random() < 0.5;
+  PA.patos.push({x: dcha ? -40 : W+40, y: 120 + Math.random()*190,
+                 vx: (dcha?1:-1)*(2.4 + N*0.5), vy: (Math.random()-0.5)*2.2,
+                 vivo:true, t:0, cae:0});
+  PA.balas = 3; PA.ronda++;
+}
+function dispararPatos(mx, my){
+  if (PA.balas <= 0) return;
+  PA.balas--; sfx.fuego(); sacudir(2);
+  const radio = PA.doble > 0 ? 110 : 42;
+  let dio = false;
+  for(const p of PA.patos){
+    if (!p.vivo || p.cae) continue;
+    if (Math.hypot(p.x-mx, p.y-my) < radio){
+      p.cae = 1; p.vy = 0; dio = true;
+      PA.cazados++; sumar(500); sfx.pisoton();
+      for(let i=0;i<7;i++) parts.push({tipo:'estrellita', x:p.x, y:p.y,
+        vx:(Math.random()-0.5)*5, vy:-1-Math.random()*2, t:30});
+    }
+  }
+  /* el globo del amigo: al tocarlo baja sano y salvo */
+  if (PA.amigo.puesto && !PA.amigo.salvado &&
+      Math.hypot(PA.amigo.x+13-mx, PA.amigo.y+18-my) < radio+16){
+    rescatar(PA.amigo, PA.amigo.x+13, PA.amigo.y+18, 9999);
+    dio = true;
+  }
+  if (!dio && PA.balas <= 0){ PA.risa = 110; sfx.dano(); susto(PA, '¡Se te escapó! Penny se ríe'); }
+}
+function updatePatos(){
+  PA.t++;
+  const N = nivelDe('patos');
+  if (PA.doble > 0) PA.doble--;
+  if (PA.dobleCd > 0) PA.dobleCd--;
+  if (PA.risa > 0) PA.risa--;
+  /* PODER: la escopeta doble agranda muchísimo el tiro */
+  if (mSalta() && !PA.doblePrev && PA.dobleCd <= 0){
+    PA.doble = 300; PA.dobleCd = DOBLE_CD; sfx.poder();
+    aviso('🔫 ¡ESCOPETA DOBLE! Casi no hay que apuntar', 2);
+  }
+  PA.doblePrev = mSalta();
+  /* apuntar: con el dedo directamente, o con las flechas */
+  if (pt.abajo || pt.soltado){ PA.mira.x = pt.x; PA.mira.y = pt.y; }
+  if (mIzq()) PA.mira.x -= 6; if (mDer()) PA.mira.x += 6;
+  if (mArr()) PA.mira.y -= 6; if (mAbj()) PA.mira.y += 6;
+  PA.mira.x = Math.max(10, Math.min(W-10, PA.mira.x));
+  PA.mira.y = Math.max(60, Math.min(PASUELO-10, PA.mira.y));
+  if (pt.soltado){ pt.soltado = false; dispararPatos(pt.x, pt.y); }
+  if (mAccion() && !PA.dispPrev) dispararPatos(PA.mira.x, PA.mira.y);
+  PA.dispPrev = mAccion();
+  /* sueltan pájaros mientras queden por cazar */
+  if (PA.patos.filter(p=>p.vivo && !p.cae).length === 0 &&
+      PA.cazados + PA.patos.length < PA.meta + 3 && PA.t % 40 === 0) sueltaPato();
+  for(const p of PA.patos){
+    if (!p.vivo) continue;
+    if (p.cae){ p.cae++; p.y += 5.5; if (p.y > PASUELO){ p.vivo = false; } continue; }
+    p.t++;
+    p.x += p.vx; p.y += p.vy;
+    if (p.y < 90 || p.y > 330) p.vy *= -1;
+    if (p.t % 70 === 0) p.vy = (Math.random()-0.5)*2.4;
+    if (p.x < -70 || p.x > W+70){          /* se escapó */
+      p.vivo = false; PA.risa = 110;
+      susto(PA, '¡Voló! Vidas infinitas: viene otro');
+    }
+  }
+  PA.patos = PA.patos.filter(p=>p.vivo);
+  /* el amigo cruza en globo a mitad de la partida */
+  if (!PA.amigo.puesto && PA.cazados >= Math.floor(PA.meta/2)){
+    PA.amigo.puesto = true; PA.amigo.x = -60; PA.amigo.y = 120;
+  }
+  if (PA.amigo.puesto && !PA.amigo.salvado){
+    PA.amigo.x += 1.5;
+    if (PA.amigo.x > W+60){ PA.amigo.x = -60; PA.amigo.y = 100 + Math.random()*120; }
+  }
+  if (PA.cazados >= PA.meta) pasarNivel('patos', iniciarPatos, 'finPatos', VOZ.pichungazo);
+}
+function drawPatos(){
+  const g = ctx.createLinearGradient(0,0,0,PASUELO);
+  g.addColorStop(0,'#2a6ad0'); g.addColorStop(1,'#bfe8ff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,PASUELO);
+  for(let i=0;i<6;i++){
+    ctx.fillStyle='rgba(255,255,255,0.8)';
+    ctx.beginPath(); ctx.ellipse(120+i*180-((PA.t*0.2)%1200), 100+(i%3)*44, 48, 16, 0, 0, Math.PI*2); ctx.fill();
+  }
+  rect(0, PASUELO, W, H-PASUELO, '#2f8f22');
+  rect(0, PASUELO, W, 8, '#3fae2f');
+  for(let i=0;i<9;i++){                                  /* juncos */
+    ctx.fillStyle='#1c6a18';
+    ctx.beginPath(); ctx.moveTo(60+i*110, PASUELO+8);
+    ctx.lineTo(66+i*110, PASUELO-38); ctx.lineTo(74+i*110, PASUELO+8); ctx.fill();
+  }
+  if (PA.amigo.puesto && !PA.amigo.salvado){
+    dibGlobitos(PA.amigo.x+13, PA.amigo.y+34, 2, '#ff6ec0');
+    dibRescate(PA.amigo);
+  }
+  for(const p of PA.patos){
+    ctx.save(); ctx.translate(p.x, p.y);
+    if (p.cae) ctx.rotate(Math.PI);
+    else if (p.vx < 0) ctx.scale(-1,1);
+    const al = p.cae ? -8 : Math.sin(PA.t/4)*10;
+    ctx.fillStyle='#3a3a5a';
+    ctx.beginPath(); ctx.ellipse(0, 0, 20, 12, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-4,-4); ctx.lineTo(6, -14+al); ctx.lineTo(12,-2); ctx.fill();
+    ctx.fillStyle='#5a5a8a';
+    ctx.beginPath(); ctx.arc(15, -6, 9, 0, Math.PI*2); ctx.fill();
+    rect(20, -9, 9, 4, '#f0a020');
+    rect(16, -9, 3, 3, '#fff');
+    ctx.restore();
+  }
+  /* Penny abajo, riéndose si fallas */
+  ctx.save(); ctx.translate(70, PASUELO-6 - (PA.risa>0 ? Math.abs(Math.sin(PA.t/4))*14 : 0));
+  ctx.scale(1.5,1.5); ctx.translate(-13,-10); dibPerroSolo('#222'); ctx.restore();
+  if (PA.risa > 0) texto('¡JA JA JA!', 78, PASUELO-56, 20, '#ffe36e', true);
+  /* la mira */
+  const r = PA.doble > 0 ? 110 : 42;
+  ctx.strokeStyle = PA.doble>0 ? '#ffe36e' : '#fff'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(PA.mira.x, PA.mira.y, r*0.32, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(PA.mira.x-r*0.5, PA.mira.y); ctx.lineTo(PA.mira.x+r*0.5, PA.mira.y);
+  ctx.moveTo(PA.mira.x, PA.mira.y-r*0.5); ctx.lineTo(PA.mira.x, PA.mira.y+r*0.5);
+  ctx.stroke();
+  for(let i=0;i<PA.balas;i++) texto('🔫', 26+i*26, H-16, 20, '#fff');
+  hudMJ('🦆 PATOS', etiquetaNivel('patos')+'  '+PA.cazados+'/'+PA.meta+'  '+corazonesInf(PA), 'toca para disparar');
+  barraPoder(PA.doble>0 ? '🔫 ¡ESCOPETA DOBLE!' : (PA.dobleCd<=0 ? '🔫 ESCOPETA DOBLE (A)' : '🔫 recargando...'),
+             PA.doble>0 ? 1 : 1-PA.dobleCd/DOBLE_CD, PA.doble>0);
+}
+
+/* ============================================================
+   21) FERNANDO ISLA  (estilo Adventure Island)
+   ============================================================ */
+const IS = { x:0, y:0, vy:0, suelo:false, avance:0, meta:0, energia:0, obs:[], frutas:[], hachas:[],
+             tabla:0, t:0, sustos:0, inv:0, saltoPrev:false, tiraPrev:false, amigo:null };
+const ISSUELO = 448;
+function iniciarIsla(){
+  const N = nivelDe('isla');
+  IS.x = 120; IS.y = ISSUELO; IS.vy = 0; IS.suelo = true;
+  IS.avance = 0; IS.meta = 3000 + N*600; IS.energia = 100;
+  IS.obs = []; IS.frutas = []; IS.hachas = []; IS.tabla = 0;
+  IS.t = 0; IS.sustos = 0; IS.inv = 0; IS.saltoPrev = false; IS.tiraPrev = false;
+  IS.amigo = nuevoRescate('isla', 0, 0);
+  IS.amigo.puesto = false;
+  aviso('¡La energía baja sola! Come fruta · A salta · B lanza · 🛹 te hace correr', 4.4);
+}
+function updateIsla(){
+  IS.t++;
+  const N = nivelDe('isla');
+  if (IS.inv>0) IS.inv--;
+  /* la energía baja sola: hay que ir comiendo */
+  if (IS.t % 14 === 0) IS.energia -= 1;
+  if (IS.energia <= 0){
+    IS.energia = 60; IS.inv = 90;
+    susto(IS, '¡Sin energía! Vidas infinitas: come más fruta');
+  }
+  const v = (2.6 + N*0.18) * (IS.tabla>0 ? 2 : 1);
+  if (mDer() || IS.tabla>0) IS.avance += v;
+  else if (mIzq()) IS.avance = Math.max(0, IS.avance - v*0.7);
+  if (IS.tabla>0) IS.tabla--;
+  if (mSalta() && IS.suelo && !IS.saltoPrev){ IS.vy = -12.4; IS.suelo = false; sfx.salto(); }
+  IS.saltoPrev = mSalta();
+  IS.vy = Math.min(IS.vy+0.62, 15); IS.y += IS.vy;
+  if (IS.y >= ISSUELO){ IS.y = ISSUELO; IS.vy = 0; IS.suelo = true; }
+  /* lanzar el pichungazo */
+  if (mAccion() && !IS.tiraPrev){
+    IS.hachas.push({x: IS.x, y: IS.y-26, vx: 7, vy: -4});
+    sfx.fuego();
+  }
+  IS.tiraPrev = mAccion();
+  for(const h of IS.hachas){ h.vy += 0.3; h.x += h.vx - v; h.y += h.vy; }
+  IS.hachas = IS.hachas.filter(h=>h.x < W+40 && h.y < H && !h.usada);
+  /* van saliendo obstáculos, fruta y la tabla */
+  if (IS.t % Math.max(30, 62 - N*4) === 0)
+    IS.obs.push({x: W+40, tipo: Math.random()<0.4 ? 'fuego' : 'caracol', vivo:true});
+  if (IS.t % 90 === 20) IS.frutas.push({x: W+40, y: ISSUELO - 40 - Math.random()*90, tipo:'fruta'});
+  if (IS.t % 520 === 100) IS.frutas.push({x: W+40, y: ISSUELO-30, tipo:'tabla'});
+  if (!IS.amigo.puesto && IS.avance >= IS.meta*0.55){
+    IS.amigo.puesto = true; IS.amigo.x = W+40; IS.amigo.y = ISSUELO-44;
+  }
+  for(const o of IS.obs){
+    o.x -= v;
+    if (!o.vivo) continue;
+    for(const h of IS.hachas){
+      if (!h.usada && Math.abs(h.x-o.x)<22 && Math.abs(h.y-(ISSUELO-14))<28){
+        h.usada = true; o.vivo = false; sumar(200); sfx.pisoton();
+      }
+    }
+    if (IS.inv<=0 && o.vivo && Math.abs(o.x-IS.x)<22 && IS.y > ISSUELO-34){
+      o.vivo = false; IS.inv = 80;
+      if (IS.tabla>0){ IS.tabla = 0; aviso('¡Adiós monopatín!', 1.4); }
+      else susto(IS, '¡Auch! Vidas infinitas: sigue');
+    }
+  }
+  IS.obs = IS.obs.filter(o=>o.x > -50 && o.vivo);
+  for(const f of IS.frutas){
+    f.x -= v;
+    if (f.usada) continue;
+    if (Math.abs(f.x-IS.x)<28 && Math.abs(f.y-(IS.y-20))<34){
+      f.usada = true; sfx.moneda();
+      if (f.tipo==='tabla'){ IS.tabla = 420; sumar(400); aviso('🛹 ¡MONOPATÍN!', 1.8); }
+      else { IS.energia = Math.min(100, IS.energia+18); sumar(120); }
+    }
+  }
+  IS.frutas = IS.frutas.filter(f=>!f.usada && f.x > -40);
+  if (IS.amigo.puesto && !IS.amigo.salvado){
+    IS.amigo.x -= v;
+    rescatar(IS.amigo, IS.x, IS.y-20, 36);
+    if (IS.amigo.x < -60) IS.amigo.x = W+60;
+  }
+  if (IS.avance >= IS.meta) pasarNivel('isla', iniciarIsla, 'finIsla', VOZ.pichungazo);
+}
+function drawIsla(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#4aa0e8'); g.addColorStop(0.7,'#bfe8ff'); g.addColorStop(1,'#f0e0a0');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<7;i++){                                  /* palmeras de fondo */
+    const px = ((i*180 - IS.avance*0.35) % (W+200) + (W+200)) % (W+200) - 100;
+    rect(px, ISSUELO-90, 10, 90, '#8a5a2a');
+    ctx.fillStyle='#2a8a3a';
+    for(const a of [-1,-0.4,0.4,1]){
+      ctx.beginPath(); ctx.ellipse(px+5+a*26, ISSUELO-92, 26, 9, a*0.5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  rect(0, ISSUELO+14, W, H-ISSUELO, '#e8d090');
+  rect(0, ISSUELO+14, W, 6, '#f6e6b0');
+  for(const f of IS.frutas){
+    if (f.tipo==='tabla'){ rect(f.x-20, f.y+8, 40, 8, '#e03434'); rect(f.x-14, f.y+16, 8, 8, '#222'); rect(f.x+6, f.y+16, 8, 8, '#222'); }
+    else { ctx.fillStyle='#ff5a5a'; ctx.beginPath(); ctx.arc(f.x, f.y, 12, 0, Math.PI*2); ctx.fill();
+           rect(f.x-2, f.y-18, 4, 8, '#2a8a3a'); }
+  }
+  for(const o of IS.obs){
+    if (o.tipo==='fuego'){
+      ctx.fillStyle = (IS.t>>1)%2 ? '#ff8a20' : '#ffd020';
+      ctx.beginPath(); ctx.moveTo(o.x, ISSUELO-40); ctx.lineTo(o.x-14, ISSUELO+8); ctx.lineTo(o.x+14, ISSUELO+8); ctx.fill();
+    } else {
+      ctx.fillStyle='#c8a060';
+      ctx.beginPath(); ctx.arc(o.x, ISSUELO-10, 15, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#8a5a2a';
+      ctx.beginPath(); ctx.arc(o.x-4, ISSUELO-12, 9, 0, Math.PI*2); ctx.fill();
+      rect(o.x+10, ISSUELO-22, 4, 10, '#c8a060');
+    }
+  }
+  for(const h of IS.hachas){
+    ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(IS.t*0.4);
+    texto('🪃', 0, 6, 20, '#fff', true);
+    ctx.restore();
+  }
+  if (IS.amigo.puesto && !IS.amigo.salvado) dibRescate(IS.amigo);
+  if (!(IS.inv>0 && (IS.t>>2)%2)){
+    sombra(IS.x, ISSUELO+14, 16);
+    ctx.save(); ctx.translate(IS.x-12, IS.y-40);
+    dibFernandoSolo();
+    rect(0, -6, 24, 6, '#2a8a3a');                       /* sombrerito de hojas */
+    ctx.restore();
+    if (IS.tabla>0){ rect(IS.x-22, IS.y+2, 44, 7, '#e03434');
+      rect(IS.x-16, IS.y+9, 8, 8, '#222'); rect(IS.x+8, IS.y+9, 8, 8, '#222'); }
+  }
+  /* barra de energía */
+  rect(24, H-30, 240, 16, 'rgba(0,0,0,0.45)');
+  rect(24, H-30, 240*Math.max(0,IS.energia)/100, 16, IS.energia>30 ? '#5ee08a' : '#ff6a4a');
+  texto('ENERGÍA', 26, H-36, 12, '#fff');
+  const frac = Math.min(1, IS.avance/IS.meta);
+  hudMJ('🏝️ ISLA', etiquetaNivel('isla')+'  '+Math.round(frac*100)+'%  '+corazonesInf(IS), 'A salta · B lanza');
+  barraPoder(IS.tabla>0 ? '🛹 ¡MONOPATÍN!' : '🍎 come fruta o se acaba la energía',
+             IS.tabla>0 ? IS.tabla/420 : IS.energia/100, IS.tabla>0);
+}
+
+/* ============================================================
+   22) FERNANDO GALAXIA  (estilo Gradius, con su barra de mejoras)
+   ============================================================ */
+const MEJORAS_G = ['VELOCIDAD','MISIL','DOBLE','LÁSER','OPCIÓN','ESCUDO'];
+const GX = { x:0, y:0, balas:[], enem:[], balasE:[], capsulas:[], t:0, sustos:0, inv:0,
+             sel:0, tengo:{}, avance:0, meta:0, jefe:null, dispPrev:false, mejPrev:false,
+             escudo:0, amigo:null };
+function iniciarGalaxia(){
+  const N = nivelDe('galaxia');
+  GX.x = 140; GX.y = H/2; GX.balas = []; GX.enem = []; GX.balasE = []; GX.capsulas = [];
+  GX.t = 0; GX.sustos = 0; GX.inv = 0; GX.sel = 0; GX.escudo = 0;
+  GX.tengo = {VELOCIDAD:0, MISIL:0, DOBLE:0, 'LÁSER':0, 'OPCIÓN':0, ESCUDO:0};
+  GX.avance = 0; GX.meta = 2400 + N*420; GX.jefe = null;
+  GX.dispPrev = false; GX.mejPrev = false;
+  GX.amigo = nuevoRescate('galaxia', 0, 0);
+  GX.amigo.puesto = false;
+  aviso('¡Recoge cápsulas y pulsa A para gastar la mejora marcada! B dispara', 4.4);
+}
+function usarMejoraGX(){
+  const m = MEJORAS_G[GX.sel];
+  if (GX.sel === 0 && GX.capsulas.gastadas === undefined) { /* nada */ }
+  GX.tengo[m] = (GX.tengo[m]||0) + 1;
+  GX.sel = 0;
+  sfx.poder();
+  aviso('⚡ ¡'+m+'!', 1.8);
+  if (m === 'ESCUDO') GX.escudo = 600;
+}
+function updateGalaxia(){
+  GX.t++;
+  const N = nivelDe('galaxia');
+  if (GX.inv>0) GX.inv--;
+  if (GX.escudo>0) GX.escudo--;
+  GX.avance += 2;
+  const v = 3.2 + GX.tengo.VELOCIDAD*1.1;
+  if (mIzq()) GX.x -= v; if (mDer()) GX.x += v;
+  if (mArr()) GX.y -= v; if (mAbj()) GX.y += v;
+  GX.x = Math.max(30, Math.min(W-160, GX.x));
+  GX.y = Math.max(60, Math.min(H-30, GX.y));
+  /* gastar la mejora marcada en la barra */
+  if (mSalta() && !GX.mejPrev && GX.sel > 0) usarMejoraGX();
+  GX.mejPrev = mSalta();
+  /* disparo */
+  if (mAccion() && !GX.dispPrev){
+    const laser = GX.tengo['LÁSER'] > 0;
+    GX.balas.push({x:GX.x+20, y:GX.y, vx: laser ? 18 : 11, laser});
+    if (GX.tengo.DOBLE > 0) GX.balas.push({x:GX.x+20, y:GX.y, vx: 9, vy:-5});
+    if (GX.tengo.MISIL > 0) GX.balas.push({x:GX.x+10, y:GX.y+10, vx: 7, vy:3, misil:true});
+    if (GX.tengo['OPCIÓN'] > 0) GX.balas.push({x:GX.x-40, y:GX.y, vx: 11});
+    sfx.fuego();
+  }
+  GX.dispPrev = mAccion();
+  for(const b of GX.balas){
+    b.x += b.vx; b.y += b.vy||0;
+    if (b.misil && b.y < H-24) b.vy = Math.min((b.vy||0)+0.35, 6);
+  }
+  GX.balas = GX.balas.filter(b=>!b.fuera && b.x < W+40 && b.y > 0 && b.y < H);
+  /* enemigos: los rojos sueltan cápsula */
+  if (!GX.jefe && GX.t % Math.max(22, 52 - N*4) === 0 && GX.avance < GX.meta){
+    const rojo = Math.random() < 0.3;
+    GX.enem.push({x:W+30, y: 80 + Math.random()*(H-140), vida: 1+Math.floor(N/2), rojo,
+                  vy:(Math.random()-0.5)*2, cd: 70+((Math.random()*70)|0)});
+  }
+  for(const e of GX.enem){
+    if (e.muerto) continue;
+    e.x -= 2.6 + N*0.2; e.y += e.vy;
+    if (e.y < 70 || e.y > H-30) e.vy *= -1;
+    if (--e.cd <= 0){ e.cd = 110; GX.balasE.push({x:e.x, y:e.y, vx:-5}); }
+    for(const b of GX.balas){
+      if (b.fuera) continue;
+      if (Math.abs(b.x-e.x)<24 && Math.abs(b.y-e.y)<22){
+        e.vida--; if (!b.laser) b.fuera = true;
+        if (e.vida<=0){
+          e.muerto = true; sumar(250); sfx.pisoton();
+          if (e.rojo) GX.capsulas.push({x:e.x, y:e.y});
+          for(let i=0;i<5;i++) parts.push({tipo:'estrellita', x:e.x, y:e.y,
+            vx:(Math.random()-0.5)*4, vy:(Math.random()-0.5)*4, t:26});
+        }
+      }
+    }
+    if (Math.abs(e.x-GX.x)<24 && Math.abs(e.y-GX.y)<22 && !e.muerto) golpeGX();
+  }
+  GX.enem = GX.enem.filter(e=>!e.muerto && e.x > -50);
+  for(const b of GX.balasE){
+    b.x += b.vx;
+    if (Math.abs(b.x-GX.x)<18 && Math.abs(b.y-GX.y)<18 && !b.fuera){ b.fuera = true; golpeGX(); }
+  }
+  GX.balasE = GX.balasE.filter(b=>!b.fuera && b.x > -30);
+  for(const c of GX.capsulas){
+    c.x -= 2.2;
+    if (Math.abs(c.x-GX.x)<28 && Math.abs(c.y-GX.y)<26 && !c.usada){
+      c.usada = true; sfx.moneda(); sumar(150);
+      GX.sel = (GX.sel % MEJORAS_G.length) + 1;
+      if (GX.sel > MEJORAS_G.length) GX.sel = 1;
+    }
+  }
+  GX.capsulas = GX.capsulas.filter(c=>!c.usada && c.x > -30);
+  /* el amigo flota en una cápsula grande */
+  if (!GX.amigo.puesto && GX.avance >= GX.meta*0.5){
+    GX.amigo.puesto = true; GX.amigo.x = W+40; GX.amigo.y = 100 + Math.random()*260;
+  }
+  if (GX.amigo.puesto && !GX.amigo.salvado){
+    GX.amigo.x -= 2.2;
+    rescatar(GX.amigo, GX.x, GX.y, 40);
+    if (GX.amigo.x < -60){ GX.amigo.x = W+60; GX.amigo.y = 100 + Math.random()*260; }
+  }
+  /* jefe final */
+  if (!GX.jefe && GX.avance >= GX.meta && GX.enem.length === 0){
+    GX.jefe = {x: W-170, y: H/2, vy: 2, vida: 20+N*5, max: 20+N*5, golpe:0, t:0};
+    aviso('👑 ¡NAVE MADRE!', 2.4); sfx.heroe();
+  }
+  if (GX.jefe){
+    const j = GX.jefe;
+    j.t++; j.y += j.vy;
+    if (j.y < 110 || j.y > H-110) j.vy *= -1;
+    if (j.t % Math.max(24, 54 - N*4) === 0)
+      for(const dy of [-4,0,4]) GX.balasE.push({x:j.x-40, y:j.y, vx:-5.4, vy:dy});
+    for(const b of GX.balas){
+      if (b.fuera) continue;
+      if (Math.abs(b.x-j.x)<58 && Math.abs(b.y-j.y)<52){
+        j.vida--; j.golpe = 6; if (!b.laser) b.fuera = true; sumar(60);
+      }
+    }
+    if (j.golpe>0) j.golpe--;
+    if (j.vida<=0) pasarNivel('galaxia', iniciarGalaxia, 'finGalaxia', VOZ.gane);
+  }
+  for(const b of GX.balasE) b.y += b.vy||0;
+}
+function golpeGX(){
+  if (GX.inv>0) return;
+  if (GX.escudo>0){ GX.escudo = 0; GX.inv = 60; sfx.romper(); aviso('🛡️ ¡El escudo aguantó!', 1.6); return; }
+  GX.inv = 90;
+  susto(GX, '¡Tocado! Vidas infinitas: sigue volando');
+}
+function drawGalaxia(){
+  ctx.fillStyle='#05061e'; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<70;i++){
+    const sx = ((i*137 - GX.avance*(1+(i%3))) % W + W) % W;
+    ctx.fillStyle='rgba(255,255,255,'+(0.2+(i%4)*0.16)+')';
+    ctx.fillRect(sx, (i*89)%H, 2, 2);
+  }
+  if (GX.amigo.puesto && !GX.amigo.salvado){
+    ctx.strokeStyle='#8ecbff'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(GX.amigo.x+13, GX.amigo.y+18, 34, 0, Math.PI*2); ctx.stroke();
+    dibRescate(GX.amigo);
+  }
+  for(const c of GX.capsulas){
+    ctx.fillStyle = (GX.t>>2)%2 ? '#ffe36e' : '#ff8a20';
+    ctx.beginPath(); ctx.roundRect(c.x-14, c.y-9, 28, 18, 8); ctx.fill();
+    texto('P', c.x, c.y+5, 14, '#2a1a00', true);
+  }
+  for(const e of GX.enem){
+    ctx.fillStyle = e.rojo ? '#e03434' : '#8a8ad0';
+    ctx.beginPath(); ctx.moveTo(e.x-18, e.y); ctx.lineTo(e.x+14, e.y-13);
+    ctx.lineTo(e.x+14, e.y+13); ctx.fill();
+    rect(e.x-2, e.y-4, 9, 8, '#ffe36e');
+  }
+  for(const b of GX.balas){
+    ctx.fillStyle = b.misil ? '#ff8a20' : b.laser ? '#8ecbff' : '#ffe36e';
+    if (b.laser) ctx.fillRect(b.x-16, b.y-3, 34, 6);
+    else { ctx.beginPath(); ctx.arc(b.x, b.y, b.misil?6:5, 0, Math.PI*2); ctx.fill(); }
+  }
+  for(const b of GX.balasE){
+    ctx.fillStyle='#ff6a4a';
+    ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI*2); ctx.fill();
+  }
+  if (GX.jefe){
+    const j = GX.jefe;
+    if (!(j.golpe>0 && (GX.t>>1)%2)){
+      ctx.fillStyle='#6a3a8a';
+      ctx.beginPath(); ctx.ellipse(j.x, j.y, 58, 46, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#c86ad0';
+      ctx.beginPath(); ctx.arc(j.x-20, j.y, 16, 0, Math.PI*2); ctx.fill();
+      rect(j.x-8, j.y-30, 50, 12, '#3a1a4a');
+      rect(j.x-8, j.y+18, 50, 12, '#3a1a4a');
+    }
+    rect(j.x-58, j.y-60, 116, 9, '#3a0a0a');
+    rect(j.x-58, j.y-60, 116*Math.max(0,j.vida)/j.max, 9, '#e03434');
+  }
+  /* la nave de Fernando */
+  if (!(GX.inv>0 && (GX.t>>2)%2)){
+    if (GX.tengo['OPCIÓN'] > 0){
+      ctx.fillStyle='#8ecbff';
+      ctx.beginPath(); ctx.arc(GX.x-40, GX.y, 9, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='#d8d8e8';
+    ctx.beginPath(); ctx.moveTo(GX.x+24, GX.y); ctx.lineTo(GX.x-18, GX.y-14);
+    ctx.lineTo(GX.x-10, GX.y); ctx.lineTo(GX.x-18, GX.y+14); ctx.fill();
+    rect(GX.x-2, GX.y-5, 12, 10, '#3a6ad0');
+    ctx.fillStyle=(GX.t>>1)%2 ? '#ffb020' : '#ffe36e';
+    ctx.beginPath(); ctx.moveTo(GX.x-18, GX.y-6); ctx.lineTo(GX.x-34, GX.y); ctx.lineTo(GX.x-18, GX.y+6); ctx.fill();
+    ctx.save(); ctx.translate(GX.x-8, GX.y-24); ctx.scale(0.6,0.6); dibFernandoSolo(); ctx.restore();
+    if (GX.escudo>0){
+      ctx.strokeStyle='rgba(140,200,255,'+(0.4+Math.sin(GX.t/5)*0.25)+')'; ctx.lineWidth=4;
+      ctx.beginPath(); ctx.arc(GX.x, GX.y, 34, 0, Math.PI*2); ctx.stroke();
+    }
+  }
+  /* la barra de mejoras, como en el original */
+  /* cabe entera a la izquierda de la barra de poder, sin pisarla */
+  const anc = 104, y0 = H-34;
+  MEJORAS_G.forEach((m,i)=>{
+    const x = 20 + i*(anc+6);
+    const activa = GX.sel === i+1;
+    ctx.fillStyle = activa ? '#e0a020' : 'rgba(255,255,255,0.14)';
+    ctx.beginPath(); ctx.roundRect(x, y0, anc, 24, 6); ctx.fill();
+    ctx.strokeStyle = activa ? '#fff' : 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = activa ? 3 : 2; ctx.stroke();
+    texto(m + (GX.tengo[m] ? ' x'+GX.tengo[m] : ''), x+anc/2, y0+17, 12,
+          activa ? '#2a1a00' : '#cfd8ff', true);
+  });
+  hudMJ('👾 GALAXIA', etiquetaNivel('galaxia')+'  '+Math.round(Math.min(1,GX.avance/GX.meta)*100)+'%  '+corazonesInf(GX),
+        'B dispara · A mejora');
+  barraPoder(GX.sel > 0 ? '⚡ PULSA A: '+MEJORAS_G[GX.sel-1] : '⚡ recoge cápsulas P',
+             GX.sel/MEJORAS_G.length, GX.sel > 0);
+}
+
+/* ============================================================
+   23) FERNANDO LUCHA  (estilo Street Fighter II)
+   ============================================================ */
+const LU2 = { x:0, y:0, vy:0, suelo:true, vida:0, max:0, golpe:0, agacha:false, guardia:0,
+              rival:null, t:0, sustos:0, inv:0, saltoPrev:false, golpePrev:false,
+              especial:0, especialCd:0, amigo:null, ganadas:0 };
+const LSUELO = 430, ESP_CD = 300;
+const RIVALES = [
+  {nombre:'BOWSER',      dib:(x,y,t)=>dibBowser(x-16,y-58,t,0),      vida:22, vel:1.9, alcance:52},
+  {nombre:'TÍO FRAN',    dib:(x,y,t)=>dibTioFran(x-14,y-52,t,false), vida:26, vel:2.3, alcance:46},
+  {nombre:'RÓMULO',      dib:(x,y,t)=>dibRomulo(x-14,y-50,t),        vida:30, vel:2.6, alcance:44},
+  {nombre:'TÍO NACHO',   dib:(x,y,t)=>dibNacho(x-14,y-52,t),         vida:34, vel:2.8, alcance:48},
+  {nombre:'TÍO BETO',    dib:(x,y,t)=>dibBeto(x-14,y-52,t),          vida:38, vel:3.0, alcance:50},
+  {nombre:'BOWSER FINAL',dib:(x,y,t)=>dibBowser(x-16,y-58,t,0),      vida:46, vel:3.2, alcance:56},
+];
+function iniciarLucha(){
+  const N = nivelDe('lucha');
+  const r = RIVALES[Math.min(N-1, RIVALES.length-1)];
+  LU2.x = 220; LU2.y = LSUELO; LU2.vy = 0; LU2.suelo = true;
+  LU2.max = 30; LU2.vida = LU2.max; LU2.golpe = 0; LU2.agacha = false; LU2.guardia = 0;
+  LU2.t = 0; LU2.sustos = 0; LU2.inv = 0; LU2.saltoPrev = false; LU2.golpePrev = false;
+  LU2.especial = 0; LU2.especialCd = 0;
+  LU2.rival = {r, x: W-240, y: LSUELO, vida: r.vida, max: r.vida, golpe:0, cd: 70, salta:0, vy:0};
+  LU2.amigo = nuevoRescate('lucha', 60, LSUELO-46);
+  LU2.amigo.salvado = true;                 /* aquí el amigo anima desde la esquina */
+  aviso('¡A pelear contra '+r.nombre+'! ←→ te mueves · A salta · B golpea · ▼+B = especial', 4.6);
+}
+function updateLucha(){
+  LU2.t++;
+  const N = nivelDe('lucha'), rv = LU2.rival;
+  if (LU2.inv>0) LU2.inv--;
+  if (LU2.golpe>0) LU2.golpe--;
+  if (LU2.guardia>0) LU2.guardia--;
+  if (LU2.especial>0) LU2.especial--;
+  if (LU2.especialCd>0) LU2.especialCd--;
+  LU2.agacha = mAbj() && LU2.suelo;
+  if (!LU2.agacha){
+    if (mIzq()){ LU2.x -= 3.6; LU2.guardia = 6; }        /* ir hacia atrás es cubrirse */
+    if (mDer()) LU2.x += 3.6;
+  }
+  LU2.x = Math.max(40, Math.min(W-40, LU2.x));
+  if (mSalta() && LU2.suelo && !LU2.saltoPrev){ LU2.vy = -12.4; LU2.suelo = false; sfx.salto(); }
+  LU2.saltoPrev = mSalta();
+  LU2.vy = Math.min(LU2.vy+0.62, 15); LU2.y += LU2.vy;
+  if (LU2.y >= LSUELO){ LU2.y = LSUELO; LU2.vy = 0; LU2.suelo = true; }
+  /* golpear, y el especial si está agachado */
+  if (mAccion() && !LU2.golpePrev){
+    if (LU2.agacha && LU2.especialCd<=0){
+      LU2.especial = 40; LU2.especialCd = ESP_CD;
+      sfx.pedo(); sacudir(6); nubePedo(LU2.x+30, LU2.y-24, 14);
+      hablar(VOZ.pedo);
+      aviso('💨 ¡PICHUNGAZO ESPECIAL!', 1.8);
+      if (Math.abs(rv.x-LU2.x) < 210){ rv.vida -= 7; rv.golpe = 14; rv.x += 46; }
+    } else {
+      LU2.golpe = 16; sfx.fuego();
+      if (Math.abs(rv.x-LU2.x) < 62 && Math.abs(rv.y-LU2.y) < 60){
+        rv.vida -= 3; rv.golpe = 10; rv.x += 16; sfx.pisoton(); sumar(120);
+      }
+    }
+  }
+  LU2.golpePrev = mAccion();
+  /* el rival */
+  if (rv.golpe>0) rv.golpe--;
+  else {
+    const d = LU2.x - rv.x;
+    if (Math.abs(d) > rv.r.alcance) rv.x += Math.sign(d) * rv.r.vel;
+    if (--rv.cd <= 0){
+      rv.cd = Math.max(28, 92 - N*8);
+      if (Math.abs(d) <= rv.r.alcance + 16){
+        /* pega, salvo que Fernando esté cubriéndose o agachado */
+        if (LU2.guardia>0 || LU2.agacha){ sfx.romper(); aviso('🛡️ ¡Cubierto!', 1); }
+        else if (LU2.inv<=0){
+          LU2.vida -= 3; LU2.inv = 40; LU2.x -= 24; sfx.dano(); sacudir(3);
+        }
+      } else if (rv.y >= LSUELO){ rv.salta = 1; rv.vy = -11; }
+    }
+  }
+  /* la gravedad manda siempre: el salto acaba al tocar el suelo, no por un contador */
+  if (rv.salta>0 || rv.y < LSUELO){
+    rv.vy = Math.min(rv.vy+0.62, 15); rv.y += rv.vy;
+    if (rv.y >= LSUELO){ rv.y = LSUELO; rv.vy = 0; rv.salta = 0; }
+  }
+  rv.x = Math.max(40, Math.min(W-40, rv.x));
+  /* vidas infinitas: si le tumban, se levanta con la barra llena */
+  if (LU2.vida <= 0){
+    LU2.vida = LU2.max; LU2.inv = 100; LU2.x = 220;
+    susto(LU2, '¡Te tumbó! Vidas infinitas: otra vez en pie');
+  }
+  if (rv.vida <= 0) pasarNivel('lucha', iniciarLucha, 'finLucha', VOZ.gane);
+}
+function drawLucha(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#f0a020'); g.addColorStop(0.6,'#e05a20'); g.addColorStop(1,'#6a2a10');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<12;i++){                                 /* público */
+    for(let k=0;k<3;k++){
+      ctx.fillStyle='rgba(0,0,0,'+(0.18+k*0.08)+')';
+      ctx.beginPath(); ctx.arc(50+i*80+k*20, 120+k*26+Math.sin(LU2.t/16+i+k)*4, 15, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  rect(0, LSUELO+16, W, H-LSUELO, '#8a5a2a');
+  rect(0, LSUELO+16, W, 8, '#c8853a');
+  /* el amigo animando en la esquina */
+  if (LU2.amigo){
+    LU2.amigo.a.dib(40, LSUELO-46+Math.sin(LU2.t/8)*4, T);
+    letrero(53, LSUELO-60, '¡VAMOS!', '#ffe36e');
+  }
+  const rv = LU2.rival;
+  /* rival */
+  if (!(rv.golpe>0 && (LU2.t>>1)%2)){
+    sombra(rv.x, LSUELO+16, 20);
+    ctx.save(); ctx.translate(rv.x, rv.y); ctx.scale(-1,1); ctx.translate(-rv.x, -rv.y);
+    rv.r.dib(2*rv.x - rv.x, rv.y, T);
+    ctx.restore();
+  }
+  /* Fernando */
+  if (!(LU2.inv>0 && (LU2.t>>2)%2)){
+    sombra(LU2.x, LSUELO+16, 18);
+    ctx.save(); ctx.translate(LU2.x, LU2.y);
+    ctx.scale(1, LU2.agacha ? 0.7 : 1);
+    ctx.translate(-12, -40); dibFernandoSolo();
+    if (LU2.golpe>0) rect(24, 14, 26, 8, '#ffc8a0');      /* el puñetazo */
+    ctx.restore();
+  }
+  if (LU2.especial>0){
+    ctx.fillStyle='rgba(120,220,90,'+(0.25+Math.sin(LU2.t/3)*0.15)+')';
+    ctx.beginPath(); ctx.arc(LU2.x+70, LU2.y-24, 90, 0, Math.PI*2); ctx.fill();
+  }
+  /* barras de vida, como en los de pelea */
+  const bw = 380;
+  rect(24, 56, bw, 24, '#3a0a0a'); rect(24, 56, bw*Math.max(0,LU2.vida)/LU2.max, 24, '#5ee08a');
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.strokeRect(24, 56, bw, 24);
+  rect(W-24-bw, 56, bw, 24, '#3a0a0a');
+  rect(W-24-bw*Math.max(0,rv.vida)/rv.max, 56, bw*Math.max(0,rv.vida)/rv.max, 24, '#e03434');
+  ctx.strokeRect(W-24-bw, 56, bw, 24);
+  texto('FERNANDO', 28, 100, 16, '#fff');
+  ctx.textAlign='right'; ctx.font='bold 16px monospace';
+  ctx.fillStyle='#000'; ctx.fillText(rv.r.nombre, W-26, 101);
+  ctx.fillStyle='#fff'; ctx.fillText(rv.r.nombre, W-28, 100);
+  ctx.textAlign='left';
+  hudMJ('🥊 LUCHA', etiquetaNivel('lucha')+'  '+corazonesInf(LU2), 'B golpea · ▼+B especial');
+  barraPoder(LU2.especialCd<=0 ? '💨 ESPECIAL LISTO (▼ + B)' : '💨 tomando aire...',
+             1-LU2.especialCd/ESP_CD, LU2.especialCd<=0);
+}
+
+/* ============================================================
+   24) VAGONETA DE SHELDON  (estilo Donkey Kong Country)
+   ============================================================ */
+const VG = { x:0, y:0, vy:0, suelo:false, avance:0, meta:0, vias:[], obs:[], monedas:[],
+             t:0, sustos:0, inv:0, saltoPrev:false, estrella:0, estCd:0, estPrev:false, amigo:null };
+const VGBASE = 430, EST_VG = 420;
+function iniciarVagoneta(){
+  const N = nivelDe('vagoneta');
+  VG.x = 200; VG.y = VGBASE; VG.vy = 0; VG.suelo = true;
+  VG.avance = 0; VG.meta = 3200 + N*700;
+  VG.vias = []; VG.obs = []; VG.monedas = [];
+  VG.t = 0; VG.sustos = 0; VG.inv = 0; VG.saltoPrev = false;
+  VG.estrella = 0; VG.estCd = 0; VG.estPrev = false;
+  /* la vía: tramos a distintas alturas con huecos entre medias */
+  let x = 0, y = VGBASE;
+  while (x < VG.meta + 1400){
+    const largo = 260 + Math.random()*280;
+    VG.vias.push({x0:x, x1:x+largo, y});
+    x += largo + (60 + Math.random()*(50 + N*9));      /* el hueco que hay que saltar */
+    y = Math.max(250, Math.min(VGBASE, y + (Math.random()<0.5 ? -60 : 60)));
+  }
+  VG.amigo = nuevoRescate('vagoneta', 0, 0);
+  VG.amigo.puesto = false;
+  aviso('¡Solo hay que saltar! A salta los huecos · B = estrella invencible', 4);
+}
+const alturaVia = xm => {
+  for(const v of VG.vias) if (xm >= v.x0 && xm <= v.x1) return v.y;
+  return null;
+};
+function updateVagoneta(){
+  VG.t++;
+  const N = nivelDe('vagoneta');
+  if (VG.inv>0) VG.inv--;
+  if (VG.estrella>0) VG.estrella--;
+  if (VG.estCd>0) VG.estCd--;
+  if (mAccion() && !VG.estPrev && VG.estCd<=0){
+    VG.estrella = 300; VG.estCd = EST_VG; sfx.poder();
+    aviso('⭐ ¡ESTRELLA! Nada te para', 2); hablar(VOZ.ataque);
+  }
+  VG.estPrev = mAccion();
+  const v = (5.4 + N*0.55) * (VG.estrella>0 ? 1.4 : 1);
+  VG.avance += v;
+  if (mSalta() && VG.suelo && !VG.saltoPrev){ VG.vy = -13.6; VG.suelo = false; sfx.salto(); }
+  VG.saltoPrev = mSalta();
+  VG.vy = Math.min(VG.vy+0.66, 16); VG.y += VG.vy;
+  const yv = alturaVia(VG.avance + VG.x);
+  VG.suelo = false;
+  if (yv !== null && VG.vy >= 0 && VG.y >= yv && VG.y < yv + 40){ VG.y = yv; VG.vy = 0; VG.suelo = true; }
+  if (VG.y > H + 60){                                   /* se cayó al vacío */
+    const yy = alturaVia(VG.avance + VG.x) ;
+    VG.y = (yy !== null ? yy : VGBASE) - 120; VG.vy = 0; VG.inv = 70;
+    susto(VG, '¡Al vacío! Vidas infinitas: de vuelta a la vía');
+  }
+  /* obstáculos y monedas sobre la vía */
+  if (VG.t % Math.max(34, 74 - N*5) === 0){
+    const xm = VG.avance + W + 60;
+    const yy = alturaVia(xm);
+    if (yy !== null) VG.obs.push({x:xm, y:yy, vivo:true});
+  }
+  if (VG.t % 46 === 0){
+    const xm = VG.avance + W + 40;
+    const yy = alturaVia(xm);
+    if (yy !== null) VG.monedas.push({x:xm, y:yy-46});
+  }
+  if (!VG.amigo.puesto && VG.avance >= VG.meta*0.55){
+    const xm = VG.avance + W + 60, yy = alturaVia(xm);
+    if (yy !== null){ VG.amigo.puesto = true; VG.amigo.x = xm; VG.amigo.y = yy-46; }
+  }
+  for(const o of VG.obs){
+    if (!o.vivo) continue;
+    if (Math.abs((o.x-VG.avance)-VG.x) < 24 && Math.abs(o.y-VG.y) < 34){
+      o.vivo = false;
+      if (VG.estrella>0){ sumar(300); sfx.pisoton(); }
+      else if (VG.inv<=0){ VG.inv = 80; susto(VG, '¡Un barril! Vidas infinitas: sigue'); }
+    }
+  }
+  VG.obs = VG.obs.filter(o=>o.vivo && o.x > VG.avance - 80);
+  VG.monedas = VG.monedas.filter(m=>{
+    if (m.x < VG.avance - 60) return false;
+    if (Math.abs((m.x-VG.avance)-VG.x) < 28 && Math.abs(m.y-VG.y) < 46){ sumar(120); sfx.moneda(); return false; }
+    return true;
+  });
+  if (VG.amigo.puesto && !VG.amigo.salvado)
+    rescatar(VG.amigo, VG.avance + VG.x, VG.y - 18, 40);
+  if (VG.avance >= VG.meta) pasarNivel('vagoneta', iniciarVagoneta, 'finVagoneta', VOZ.pichungazo);
+}
+function drawVagoneta(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#2a1408'); g.addColorStop(1,'#0e0604');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<10;i++){                                  /* antorchas del fondo */
+    const fx = ((i*220 - VG.avance*0.3) % (W+240) + (W+240)) % (W+240) - 120;
+    rect(fx, 120, 8, 40, '#5a3a1a');
+    ctx.fillStyle=(VG.t>>2)%2 ? '#ffb020' : '#ff7020';
+    ctx.beginPath(); ctx.arc(fx+4, 114, 11, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.save(); ctx.translate(-VG.avance, 0);
+  for(const via of VG.vias){
+    if (via.x1 < VG.avance-60 || via.x0 > VG.avance+W+60) continue;
+    rect(via.x0, via.y+10, via.x1-via.x0, 10, '#8a5a2a');
+    rect(via.x0, via.y+8, via.x1-via.x0, 5, '#c8853a');
+    for(let x=via.x0; x<via.x1; x+=28) rect(x, via.y+20, 16, 26, '#5a3a1a');
+  }
+  for(const m of VG.monedas){
+    ctx.save(); ctx.translate(m.x, m.y); ctx.scale(0.9,0.9); dibBurger(-11,-10); ctx.restore();
+  }
+  for(const o of VG.obs){
+    ctx.save(); ctx.translate(o.x, o.y-16); ctx.rotate(VG.t*0.12);
+    ctx.fillStyle='#c87838';
+    ctx.beginPath(); ctx.roundRect(-16,-13,32,26,8); ctx.fill();
+    rect(-16,-5,32,4,'#8a4a18'); rect(-16,2,32,3,'#8a4a18');
+    ctx.restore();
+  }
+  if (VG.amigo.puesto && !VG.amigo.salvado) dibRescate(VG.amigo);
+  ctx.restore();
+  /* la vagoneta con Fernando y Sheldon */
+  if (!(VG.inv>0 && (VG.t>>2)%2)){
+    ctx.save(); ctx.translate(VG.x, VG.y);
+    if (VG.estrella>0){
+      ctx.globalAlpha = 0.4+Math.sin(VG.t/4)*0.25; ctx.fillStyle='#ffe36e';
+      ctx.beginPath(); ctx.arc(0,-24,48,0,Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+    }
+    ctx.save(); ctx.translate(-16, -50); ctx.scale(0.85,0.85); dibFernandoSolo(); ctx.restore();
+    ctx.save(); ctx.translate(4, -30); dibPerroSolo('#8a5a2a'); ctx.restore();
+    rect(-26, -18, 52, 22, '#8a4a18');
+    rect(-26, -18, 52, 6, '#c87838');
+    ctx.fillStyle='#3a3a44';
+    ctx.beginPath(); ctx.arc(-14, 8, 9, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(14, 8, 9, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  const frac = Math.min(1, VG.avance/VG.meta);
+  rect(24, H-24, W-280, 12, 'rgba(0,0,0,0.45)');
+  rect(24, H-24, (W-280)*frac, 12, '#5ee08a');
+  hudMJ('🚃 VAGONETA', etiquetaNivel('vagoneta')+'  '+Math.round(frac*100)+'%  '+corazonesInf(VG), 'A salta');
+  barraPoder(VG.estrella>0 ? '⭐ ¡ESTRELLA!' : (VG.estCd<=0 ? '⭐ ESTRELLA (B)' : '⭐ brillando...'),
+             VG.estrella>0 ? 1 : 1-VG.estCd/EST_VG, VG.estrella>0);
+}
+
+/* ============================================================
+   25) FERNANDO JAM  (estilo NBA Jam, 2 contra 2)
+   ============================================================ */
+const JM = { x:0, y:0, conBalon:true, balon:{x:0,y:0,vx:0,vy:0,vuela:false,alto:0},
+             socio:null, rivales:[], puntos:0, meta:0, t:0, sustos:0, fuego:0, seguidas:0,
+             tiraPrev:false, pasaPrev:false, amigo:null, aro:{x:0,y:0}, aviso2:0 };
+const JMY0 = 130, JMY1 = 470;
+function iniciarJam(){
+  const N = nivelDe('jam');
+  JM.x = 240; JM.y = 300; JM.conBalon = true;
+  JM.balon = {x:JM.x, y:JM.y, vx:0, vy:0, vuela:false, alto:0};
+  JM.puntos = 0; JM.meta = 8 + N*2; JM.t = 0; JM.sustos = 0;
+  JM.fuego = 0; JM.seguidas = 0; JM.tiraPrev = false; JM.pasaPrev = false; JM.aviso2 = 0;
+  JM.aro = {x: W-70, y: 250};
+  JM.socio = {x: 180, y: 380, tipo:'tiojuan'};
+  JM.rivales = [
+    {x: W-320, y: 240, vel: 1.9 + N*0.22},
+    {x: W-260, y: 360, vel: 1.7 + N*0.22},
+  ];
+  JM.amigo = nuevoRescate('jam', 60, JMY1-70);
+  JM.amigo.salvado = true;               /* anima desde la banda */
+  aviso('¡Encesta '+JM.meta+' puntos! A tira · B pasa a tío Juan · 3 seguidas = ¡FUEGO!', 4.4);
+}
+function updateJam(){
+  JM.t++;
+  const N = nivelDe('jam');
+  if (JM.fuego>0) JM.fuego--;
+  if (JM.aviso2>0) JM.aviso2--;
+  const vel = 3.6 + (JM.fuego>0 ? 1.4 : 0);
+  if (mIzq()) JM.x -= vel; if (mDer()) JM.x += vel;
+  if (mArr()) JM.y -= vel; if (mAbj()) JM.y += vel;
+  JM.x = Math.max(40, Math.min(W-40, JM.x));
+  JM.y = Math.max(JMY0, Math.min(JMY1, JM.y));
+  /* tirar a canasta */
+  if (mSalta() && !JM.tiraPrev && JM.conBalon){
+    JM.conBalon = false;
+    const b = JM.balon;
+    b.x = JM.x; b.y = JM.y; b.vuela = true; b.alto = 0;
+    const d = Math.hypot(JM.aro.x-JM.x, JM.aro.y-JM.y);
+    const fallo = JM.fuego>0 ? 0 : Math.min(0.62, d/1500 + 0.06*N);
+    b.acierta = Math.random() > fallo;
+    b.destinoX = JM.aro.x + (b.acierta ? 0 : (Math.random()<0.5?-46:46));
+    b.destinoY = JM.aro.y + (b.acierta ? 0 : 40);
+    b.t = 0; b.dur = Math.max(24, d/16);
+    b.ox = JM.x; b.oy = JM.y;
+    sfx.salto();
+  }
+  JM.tiraPrev = mSalta();
+  /* pasar a tío Juan */
+  if (mAccion() && !JM.pasaPrev && JM.conBalon){
+    JM.conBalon = false;
+    const b = JM.balon;
+    b.x = JM.x; b.y = JM.y; b.vuela = true; b.pase = true; b.t = 0; b.dur = 20;
+    b.ox = JM.x; b.oy = JM.y; b.destinoX = JM.socio.x; b.destinoY = JM.socio.y;
+    sfx.moneda();
+  }
+  JM.pasaPrev = mAccion();
+  /* el balón en el aire */
+  const b = JM.balon;
+  if (b.vuela){
+    b.t++;
+    const f = Math.min(1, b.t/b.dur);
+    b.x = b.ox + (b.destinoX-b.ox)*f;
+    b.y = b.oy + (b.destinoY-b.oy)*f;
+    b.alto = Math.sin(f*Math.PI) * (b.pase ? 30 : 110);
+    if (f >= 1){
+      b.vuela = false;
+      if (b.pase){ b.pase = false; JM.socioTiene = 40; }
+      else if (b.acierta){
+        const tres = Math.hypot(b.ox-JM.aro.x, b.oy-JM.aro.y) > 330;
+        const pts = tres ? 3 : 2;
+        JM.puntos += pts; JM.seguidas++;
+        sumar(pts*300); sfx.meta();
+        JM.aviso2 = 90;
+        if (JM.seguidas >= 3 && JM.fuego<=0){
+          JM.fuego = 480; sfx.heroe(); hablar(VOZ.gane);
+          aviso('🔥 ¡EN LLAMAS! No fallas ni una', 2.4);
+        }
+        for(let i=0;i<10;i++) parts.push({tipo:'estrellita', x:JM.aro.x, y:JM.aro.y,
+          vx:(Math.random()-0.5)*6, vy:-1-Math.random()*3, t:34});
+      } else {
+        JM.seguidas = 0;
+        susto(JM, '¡Rebotó en el aro! Vidas infinitas: otra vez');
+      }
+      /* el balón vuelve a Fernando */
+      JM.conBalon = true;
+      JM.x = Math.max(60, Math.min(W-260, JM.x));
+    }
+  }
+  /* tío Juan devuelve el balón */
+  if (JM.socioTiene){ if (--JM.socioTiene <= 0){ JM.conBalon = true; } }
+  /* tío Juan se coloca */
+  JM.socio.x += Math.sign((JM.x-120) - JM.socio.x) * 1.6;
+  JM.socio.y += Math.sign(JM.y - JM.socio.y) * 1.2;
+  /* rivales: intentan quitarte el balón */
+  for(const r of JM.rivales){
+    const d = Math.hypot(JM.x-r.x, JM.y-r.y) || 1;
+    r.x += (JM.x-r.x)/d*r.vel; r.y += (JM.y-r.y)/d*r.vel;
+    if (JM.conBalon && JM.fuego<=0 && d < 26 && !r.cd){
+      r.cd = 120; JM.conBalon = false; JM.socioTiene = 60; JM.seguidas = 0;
+      JM.x = Math.max(60, JM.x - 90);
+      susto(JM, '¡Te lo quitaron! Vidas infinitas: tío Juan te lo devuelve');
+    }
+    if (r.cd) r.cd--;
+  }
+  if (JM.puntos >= JM.meta) pasarNivel('jam', iniciarJam, 'finJam', VOZ.gane);
+}
+function drawJam(){
+  rect(0,0,W,H,'#c8853a');
+  rect(0,JMY0-30,W,JMY1-JMY0+70,'#e0a860');
+  ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=4;
+  ctx.strokeRect(30, JMY0-24, W-60, JMY1-JMY0+58);
+  ctx.beginPath(); ctx.arc(W/2, (JMY0+JMY1)/2, 66, 0, Math.PI*2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(JM.aro.x, JM.aro.y, 150, Math.PI*0.55, Math.PI*1.45); ctx.stroke();
+  /* la canasta */
+  rect(JM.aro.x+16, JM.aro.y-70, 12, 140, '#8a8a96');
+  rect(JM.aro.x-6, JM.aro.y-46, 34, 46, 'rgba(255,255,255,0.85)');
+  ctx.strokeStyle='#e03434'; ctx.lineWidth=6;
+  ctx.beginPath(); ctx.arc(JM.aro.x, JM.aro.y, 20, 0, Math.PI*2); ctx.stroke();
+  /* el amigo animando en la banda */
+  if (JM.amigo){ JM.amigo.a.dib(46, JMY1-46+Math.sin(JM.t/8)*4, T);
+                 letrero(59, JMY1-60, '¡VAMOS!', '#ffe36e'); }
+  for(const r of JM.rivales){ sombra(r.x, r.y+16, 15); dibGoomba(r.x-13, r.y-12, T); }
+  ctx.save(); ctx.translate(JM.socio.x-14, JM.socio.y-30); dibTioJuan(0,0,T); ctx.restore();
+  /* Fernando */
+  ctx.save(); ctx.translate(JM.x-12, JM.y-34);
+  if (JM.fuego>0){
+    ctx.globalAlpha = 0.4+Math.sin(JM.t/3)*0.25;
+    ctx.fillStyle=(JM.t>>1)%2 ? '#ff8a20' : '#ffe36e';
+    ctx.beginPath(); ctx.arc(12, 20, 34, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  dibFernandoSolo(); ctx.restore();
+  /* el balón */
+  const b = JM.balon;
+  const bx = JM.conBalon ? JM.x+16 : b.x, by = (JM.conBalon ? JM.y-10 : b.y) - (b.vuela ? b.alto : 0);
+  if (!JM.socioTiene || !JM.conBalon){
+    ctx.fillStyle = JM.fuego>0 ? ((JM.t>>1)%2 ? '#ff8a20' : '#ffe36e') : '#e07a20';
+    ctx.beginPath(); ctx.arc(bx, by, 11, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#8a3a10'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(bx, by, 11, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx-11, by); ctx.lineTo(bx+11, by);
+    ctx.moveTo(bx, by-11); ctx.lineTo(bx, by+11); ctx.stroke();
+  }
+  if (JM.aviso2>0) texto('¡CANASTA!', W/2, 220, 44, '#ffe36e', true);
+  hudMJ('🏀 JAM', etiquetaNivel('jam')+'  '+JM.puntos+'/'+JM.meta+'  '+corazonesInf(JM), 'A tira · B pasa');
+  barraPoder(JM.fuego>0 ? '🔥 ¡EN LLAMAS!' : '🔥 '+JM.seguidas+'/3 seguidas para el fuego',
+             JM.fuego>0 ? JM.fuego/480 : JM.seguidas/3, JM.fuego>0);
+}
+
+/* ============================================================
+   26) FERNANDO F-CERO  (carrera futurista en perspectiva)
+   ============================================================ */
+const FZ = { x:0, vel:0, avance:0, meta:0, curva:0, curvaObj:0, rivales:[], t:0, sustos:0,
+             turbo:0, turboCd:0, turboPrev:false, energia:0, amigo:null };
+const FZHOR = 200, FZSUELO = 470, TURBO_FZ = 360;
+function iniciarFcero(){
+  const N = nivelDe('fcero');
+  FZ.x = 0; FZ.vel = 0; FZ.avance = 0; FZ.meta = 4200 + N*900;
+  FZ.curva = 0; FZ.curvaObj = 0; FZ.t = 0; FZ.sustos = 0;
+  FZ.turbo = 0; FZ.turboCd = 0; FZ.turboPrev = false; FZ.energia = 100;
+  FZ.rivales = [];
+  for(let i=0;i<5;i++)
+    FZ.rivales.push({z: 260 + i*230, x:(i%2?1:-1)*0.45, vel: 7.2 + N*0.35 + i*0.25,
+                     a: AMIGOS[(i + N*2) % AMIGOS.length]});
+  FZ.amigo = nuevoRescate('fcero', 0, 0);
+  FZ.amigo.puesto = false;
+  aviso('¡Carrera futurista! ←→ giras · B turbo · sal de la pista y pierdes energía', 4.2);
+}
+const fzp = z => 1/(1 + Math.max(0,z)*0.011);
+const fzY = z => FZHOR + (FZSUELO-FZHOR)*fzp(z);
+const fzX = (desv, z) => W/2 + (desv - FZ.x)*300*fzp(z) - FZ.curva*z*z*0.010*fzp(z);
+function updateFcero(){
+  FZ.t++;
+  const N = nivelDe('fcero');
+  if (FZ.turbo>0) FZ.turbo--;
+  if (FZ.turboCd>0) FZ.turboCd--;
+  if (mAccion() && !FZ.turboPrev && FZ.turboCd<=0 && FZ.energia > 20){
+    FZ.turbo = 130; FZ.turboCd = TURBO_FZ; FZ.energia -= 15;
+    sfx.poder(); aviso('🔥 ¡TURBO!', 1.6); hablar(VOZ.hamburguesa);
+  }
+  FZ.turboPrev = mAccion();
+  /* la pista serpentea sola */
+  if (FZ.t % 150 === 0) FZ.curvaObj = (Math.random()-0.5) * (1.6 + N*0.2);
+  FZ.curva += (FZ.curvaObj - FZ.curva) * 0.02;
+  const vMax = (9.5 + N*0.5) * (FZ.turbo>0 ? 1.7 : 1);
+  FZ.vel += (vMax - FZ.vel) * 0.03;
+  FZ.avance += FZ.vel;
+  /* girar; la curva empuja hacia fuera */
+  if (mIzq()) FZ.x -= 0.026; if (mDer()) FZ.x += 0.026;
+  FZ.x += FZ.curva * 0.0016 * FZ.vel;
+  FZ.x = Math.max(-2.2, Math.min(2.2, FZ.x));
+  /* fuera de la pista: frena y gasta energía */
+  if (Math.abs(FZ.x) > 1){
+    FZ.vel *= 0.965;
+    FZ.energia -= 0.35;
+    if (FZ.t % 8 === 0) parts.push({tipo:'estrellita', x:W/2+FZ.x*90, y:FZSUELO-10,
+      vx:(Math.random()-0.5)*4, vy:-1, t:20});
+    if (FZ.energia <= 0){
+      FZ.energia = 60; FZ.x = 0; FZ.vel *= 0.5;
+      susto(FZ, '¡Te saliste! Vidas infinitas: de vuelta a la pista');
+    }
+  } else if (FZ.energia < 100) FZ.energia += 0.06;
+  /* rivales */
+  for(const r of FZ.rivales){
+    r.z -= (FZ.vel - r.vel);
+    if (r.z < -30){ r.z += 1500; sumar(300); }
+    if (r.z > 1500) r.z -= 1500;
+    if (r.z < 22 && r.z > -6 && Math.abs(r.x - FZ.x) < 0.42){
+      r.z = 60; FZ.vel *= 0.55;
+      susto(FZ, '¡Choque! Vidas infinitas: acelera otra vez');
+    }
+  }
+  if (!FZ.amigo.puesto && FZ.avance >= FZ.meta*0.5){
+    FZ.amigo.puesto = true; FZ.amigo.z = 900; FZ.amigo.desv = (Math.random()-0.5)*1.2;
+  }
+  if (FZ.amigo.puesto && !FZ.amigo.salvado){
+    FZ.amigo.z -= FZ.vel;
+    if (FZ.amigo.z < 22 && FZ.amigo.z > -10 && Math.abs(FZ.amigo.desv - FZ.x) < 0.5){
+      FZ.amigo.x = 0; FZ.amigo.y = 0;
+      rescatar(FZ.amigo, 0, 0, 9999);
+    }
+    if (FZ.amigo.z < -40){ FZ.amigo.z = 900; FZ.amigo.desv = (Math.random()-0.5)*1.2; }
+  }
+  if (FZ.avance >= FZ.meta) pasarNivel('fcero', iniciarFcero, 'finFcero', VOZ.gane);
+}
+function drawFcero(){
+  const g = ctx.createLinearGradient(0,0,0,FZHOR);
+  g.addColorStop(0,'#12063a'); g.addColorStop(1,'#8a2a8a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,FZHOR);
+  for(let i=0;i<40;i++){
+    ctx.fillStyle='rgba(255,255,255,'+(0.2+Math.sin(FZ.t/20+i)*0.16)+')';
+    ctx.fillRect((i*137 - FZ.curva*40)%W, (i*53)%FZHOR, 2, 2);
+  }
+  /* ciudad futurista al fondo */
+  for(let i=0;i<14;i++){
+    const bx = ((i*90 - FZ.curva*90) % (W+120) + (W+120)) % (W+120) - 60;
+    const bh = 30 + (i*47)%80;
+    rect(bx, FZHOR-bh, 56, bh, '#2a1050');
+    for(let k=0;k<3;k++) rect(bx+8+k*16, FZHOR-bh+8, 8, 8, 'rgba(255,120,220,0.5)');
+  }
+  rect(0, FZHOR, W, H-FZHOR, '#1a0a2a');
+  /* la pista, franja a franja */
+  for(let i=28;i>=0;i--){
+    const z0 = i*32, z1 = (i+1)*32;
+    const y0 = fzY(z0), y1 = fzY(z1);
+    const claro = (Math.floor((FZ.avance+z0)/40) % 2) === 0;
+    ctx.fillStyle = claro ? '#3a3a6a' : '#32325e';
+    ctx.beginPath();
+    ctx.moveTo(fzX(-1,z0), y0); ctx.lineTo(fzX(1,z0), y0);
+    ctx.lineTo(fzX(1,z1), y1); ctx.lineTo(fzX(-1,z1), y1);
+    ctx.fill();
+    ctx.fillStyle = claro ? '#ff4aa0' : '#8ecbff';
+    ctx.beginPath();
+    ctx.moveTo(fzX(-1.1,z0), y0); ctx.lineTo(fzX(-1,z0), y0);
+    ctx.lineTo(fzX(-1,z1), y1); ctx.lineTo(fzX(-1.1,z1), y1); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(fzX(1,z0), y0); ctx.lineTo(fzX(1.1,z0), y0);
+    ctx.lineTo(fzX(1.1,z1), y1); ctx.lineTo(fzX(1,z1), y1); ctx.fill();
+  }
+  /* rivales y el amigo, de lejos a cerca */
+  const cosas = FZ.rivales.map(r=>({z:r.z, dib:()=>{
+    const p = fzp(r.z), x = fzX(r.x, r.z), y = fzY(r.z);
+    ctx.save(); ctx.translate(x, y); ctx.scale(p*2.4, p*2.4);
+    ctx.fillStyle='#e03434';
+    ctx.beginPath(); ctx.moveTo(-22,0); ctx.lineTo(0,-16); ctx.lineTo(22,0); ctx.lineTo(0,8); ctx.fill();
+    ctx.restore();
+    if (p > 0.34) r.a.dib(x-13*p*2.4, y-40*p*2.4, T);
+  }}));
+  if (FZ.amigo.puesto && !FZ.amigo.salvado) cosas.push({z:FZ.amigo.z, dib:()=>{
+    const p = fzp(FZ.amigo.z), x = fzX(FZ.amigo.desv, FZ.amigo.z), y = fzY(FZ.amigo.z);
+    ctx.save(); ctx.translate(x, y); ctx.scale(p*2.6, p*2.6); ctx.translate(-13, -30);
+    FZ.amigo.a.dib(0, 0, T);
+    ctx.restore();
+    if (p > 0.3) letrero(x, y-46*p*2.6, FZ.amigo.a.nombre, '#ffe36e');
+  }});
+  cosas.sort((a,b)=>b.z-a.z).forEach(c=>c.dib());
+  /* la nave de Fernando */
+  const nx = W/2 + FZ.x*90;
+  ctx.save(); ctx.translate(nx, FZSUELO-6);
+  ctx.rotate((mIzq()?-0.1:0) + (mDer()?0.1:0));
+  if (FZ.turbo>0){
+    ctx.fillStyle=(FZ.t>>1)%2 ? '#ffb020' : '#8ecbff';
+    ctx.beginPath(); ctx.moveTo(-26,10); ctx.lineTo(0, 54+Math.random()*20); ctx.lineTo(26,10); ctx.fill();
+  }
+  ctx.fillStyle='#3a6ad0';
+  ctx.beginPath(); ctx.moveTo(-52,16); ctx.lineTo(-22,-18); ctx.lineTo(22,-18); ctx.lineTo(52,16); ctx.fill();
+  ctx.fillStyle='#8ecbff';
+  ctx.beginPath(); ctx.ellipse(0,-8,18,10,0,0,Math.PI*2); ctx.fill();
+  rect(-56, 12, 18, 12, '#e03434'); rect(38, 12, 18, 12, '#e03434');
+  ctx.save(); ctx.translate(-11, -40); ctx.scale(0.75,0.75); dibFernandoSolo(); ctx.restore();
+  ctx.restore();
+  /* energía y avance */
+  rect(24, H-32, 240, 16, 'rgba(0,0,0,0.5)');
+  rect(24, H-32, 240*Math.max(0,FZ.energia)/100, 16, FZ.energia>35 ? '#8ecbff' : '#ff6a4a');
+  texto('ENERGÍA', 26, H-38, 12, '#8ecbff');
+  const frac = Math.min(1, FZ.avance/FZ.meta);
+  hudMJ('🏎️ F-CERO', etiquetaNivel('fcero')+'  '+Math.round(frac*100)+'%  '+corazonesInf(FZ), '←→ giran · B turbo');
+  barraPoder(FZ.turbo>0 ? '🔥 ¡TURBO!' : (FZ.turboCd<=0 ? '🔥 TURBO (B)' : '🔥 recargando...'),
+             FZ.turbo>0 ? 1 : 1-FZ.turboCd/TURBO_FZ, FZ.turbo>0);
+}
+
+/* ============================================================
+   27) BANANAS DE TÍO FRAN  (estilo Gorillas de QBasic)
+   ============================================================ */
+const BA = { edificios: [], turno:0, ang:45, fza:50, banana:null, viento:0, t:0,
+             aciertos:[0,0], meta:0, sustos:0, fase:'angulo', ajustePrev:null,
+             tiraPrev:false, amigo:null, jug:[{x:0,y:0},{x:0,y:0}], msgT:0, msg2:'' };
+function iniciarBananas(){
+  const N = nivelDe('bananas');
+  BA.edificios = [];
+  let x = 0;
+  while (x < W){
+    const an = 70 + Math.random()*44;
+    BA.edificios.push({x, an, alto: 90 + Math.random()*230,
+                       color: ['#3a4a8a','#8a3a5a','#3a6a5a','#6a4a2a'][(BA.edificios.length)%4]});
+    x += an;
+  }
+  BA.turno = 0; BA.ang = 45; BA.fza = 50; BA.banana = null;
+  BA.viento = (Math.random()-0.5) * (0.06 + N*0.02);
+  BA.t = 0; BA.aciertos = [0,0]; BA.meta = 2 + Math.min(3, Math.floor(N/2));
+  BA.sustos = 0; BA.fase = 'angulo'; BA.ajustePrev = null; BA.tiraPrev = false;
+  BA.msgT = 0;
+  const e0 = BA.edificios[1], e1 = BA.edificios[BA.edificios.length-2];
+  BA.jug[0] = {x: e0.x + e0.an/2, y: H - e0.alto};
+  BA.jug[1] = {x: e1.x + e1.an/2, y: H - e1.alto};
+  BA.amigo = nuevoRescate('bananas', BA.jug[0].x-13, BA.jug[0].y-92);
+  BA.amigo.salvado = true;              /* mira desde el tejado */
+  aviso('¡Ángulo con ←→, fuerza con ▲▼ y B para lanzar! Gana quien acierte '+BA.meta+' veces', 4.6);
+}
+function updateBananas(){
+  BA.t++;
+  const N = nivelDe('bananas');
+  if (BA.msgT>0) BA.msgT--;
+  if (BA.banana){
+    const b = BA.banana;
+    b.vx += BA.viento; b.vy += 0.28;
+    b.x += b.vx; b.y += b.vy; b.giro += 0.3;
+    /* ¿le dio a alguien? */
+    for(let k=0;k<2;k++){
+      if (Math.abs(b.x-BA.jug[k].x) < 22 && Math.abs(b.y-(BA.jug[k].y-24)) < 30){
+        BA.banana = null;
+        sfx.pedo(); sacudir(7); nubePedo(BA.jug[k].x, BA.jug[k].y-24, 16);
+        if (k === b.de){ BA.msg2 = '¡Te diste a ti mismo!'; BA.msgT = 110; }
+        else {
+          BA.aciertos[b.de]++;
+          if (b.de === 0){ sumar(900); BA.msg2 = '¡LE DISTE A TÍO FRAN!'; hablar(VOZ.pedo); }
+          else { BA.msg2 = '¡Te dio tío Fran!'; susto(BA, '¡Te dio! Vidas infinitas: te toca'); }
+          BA.msgT = 110;
+        }
+        if (BA.aciertos[0] >= BA.meta){ pasarNivel('bananas', iniciarBananas, 'finBananas', VOZ.gane); return; }
+        if (BA.aciertos[1] >= BA.meta){ BA.aciertos = [0,0]; BA.msg2 = '¡Empezamos de nuevo!'; }
+        BA.turno = 1 - b.de; BA.fase = 'angulo';
+        BA.viento = (Math.random()-0.5) * (0.06 + N*0.02);
+        return;
+      }
+    }
+    /* ¿le dio a un edificio? */
+    for(const e of BA.edificios){
+      if (b.x > e.x && b.x < e.x+e.an && b.y > H-e.alto){
+        BA.banana = null; sfx.romper(); sacudir(3);
+        for(let i=0;i<8;i++) parts.push({tipo:'ladrillo', x:b.x, y:b.y,
+          vx:(Math.random()-0.5)*6, vy:-2-Math.random()*3, t:34});
+        BA.turno = 1 - b.de; BA.fase = 'angulo';
+        return;
+      }
+    }
+    if (b.y > H+60 || b.x < -300 || b.x > W+300){ BA.banana = null; BA.turno = 1 - b.de; BA.fase = 'angulo'; }
+    return;
+  }
+  /* le toca a tío Fran: apunta él solito */
+  if (BA.turno === 1){
+    if (!BA.penso){ BA.penso = 40; }
+    if (--BA.penso <= 0){
+      BA.penso = 0;
+      const dx = BA.jug[0].x - BA.jug[1].x, dy = BA.jug[0].y - BA.jug[1].y;
+      const ang = (135 + (Math.random()-0.5)*(34 - N*3)) * Math.PI/180;
+      const f = (Math.min(96, Math.hypot(dx,dy)/7.5) + (Math.random()-0.5)*(20 - N*2));
+      BA.banana = {x: BA.jug[1].x, y: BA.jug[1].y-34, vx: Math.cos(ang)*f*0.22,
+                   vy: -Math.abs(Math.sin(ang))*f*0.22, giro:0, de:1};
+      sfx.salto();
+    }
+    return;
+  }
+  /* turno de Fernando: ángulo y fuerza */
+  const dirH = mIzq() ? 'i' : mDer() ? 'd' : null;
+  const dirV = mArr() ? 'a' : mAbj() ? 'b' : null;
+  if (dirH){ BA.ang = Math.max(5, Math.min(89, BA.ang + (dirH==='i' ? 0.7 : -0.7))); }
+  if (dirV){ BA.fza = Math.max(10, Math.min(100, BA.fza + (dirV==='a' ? 0.7 : -0.7))); }
+  if (mAccion() && !BA.tiraPrev){
+    const a = BA.ang*Math.PI/180;
+    BA.banana = {x: BA.jug[0].x, y: BA.jug[0].y-34,
+                 vx: Math.cos(a)*BA.fza*0.22, vy: -Math.sin(a)*BA.fza*0.22, giro:0, de:0};
+    sfx.salto();
+  }
+  BA.tiraPrev = mAccion();
+}
+function drawBananas(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1030'); g.addColorStop(1,'#3a1a5a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<50;i++){
+    ctx.fillStyle='rgba(255,255,255,'+(0.25+Math.sin(BA.t/22+i)*0.2)+')';
+    ctx.fillRect((i*137)%W, (i*61)%260, 2, 2);
+  }
+  for(const e of BA.edificios){
+    rect(e.x, H-e.alto, e.an-4, e.alto, e.color);
+    for(let y=H-e.alto+14; y<H-16; y+=26)
+      for(let x=e.x+10; x<e.x+e.an-16; x+=22)
+        rect(x, y, 12, 14, ((x+y)%3) ? 'rgba(255,227,110,0.75)' : 'rgba(0,0,0,0.35)');
+  }
+  /* Fernando y tío Fran, cada uno en su tejado */
+  ctx.save(); ctx.translate(BA.jug[0].x-12, BA.jug[0].y-40); dibFernandoSolo(); ctx.restore();
+  dibTioFran(BA.jug[1].x-14, BA.jug[1].y-52, T, false);
+  if (BA.amigo){ BA.amigo.a.dib(BA.jug[0].x-52, BA.jug[0].y-40+Math.sin(BA.t/10)*3, T); }
+  /* la banana */
+  if (BA.banana){
+    const b = BA.banana;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.giro);
+    ctx.fillStyle='#ffe36e';
+    ctx.beginPath(); ctx.arc(0,0,10,0.6,Math.PI+0.2); ctx.arc(2,-3,10,Math.PI+0.2,0.6,true); ctx.fill();
+    ctx.restore();
+  }
+  /* mandos de ángulo y fuerza */
+  if (BA.turno === 0 && !BA.banana){
+    const a = BA.ang*Math.PI/180;
+    ctx.strokeStyle='rgba(255,227,110,0.8)'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(BA.jug[0].x, BA.jug[0].y-34);
+    ctx.lineTo(BA.jug[0].x + Math.cos(a)*BA.fza*1.5, BA.jug[0].y-34 - Math.sin(a)*BA.fza*1.5);
+    ctx.stroke();
+    rect(24, H-84, 240, 26, 'rgba(0,0,0,0.55)');
+    texto('ÁNGULO  '+BA.ang.toFixed(0)+'°   (←→)', 32, H-65, 15, '#ffe36e');
+    rect(24, H-52, 240, 26, 'rgba(0,0,0,0.55)');
+    rect(26, H-50, 236*BA.fza/100, 22, 'rgba(94,224,138,0.55)');
+    texto('FUERZA  '+BA.fza.toFixed(0)+'   (▲▼)', 32, H-33, 15, '#5ee08a');
+  } else if (BA.turno === 1 && !BA.banana){
+    texto('💨 Apunta tío Fran...', W/2, 120, 24, '#ffe36e', true);
+  }
+  /* el viento */
+  const vx = BA.viento*900;
+  texto('VIENTO', W/2-46, 118, 13, '#8ecbff');
+  ctx.strokeStyle='#8ecbff'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.moveTo(W/2, 128); ctx.lineTo(W/2+vx, 128);
+  ctx.lineTo(W/2+vx-Math.sign(vx)*8, 122); ctx.moveTo(W/2+vx, 128);
+  ctx.lineTo(W/2+vx-Math.sign(vx)*8, 134); ctx.stroke();
+  if (BA.msgT>0) texto(BA.msg2, W/2, 180, 30, '#ffe36e', true);
+  hudMJ('🍌 BANANAS', etiquetaNivel('bananas')+'  TÚ '+BA.aciertos[0]+' - '+BA.aciertos[1]+' FRAN  (a '+BA.meta+')  '+corazonesInf(BA),
+        'B lanza');
+  barraPoder(BA.turno===0 ? '🍌 ¡TE TOCA! ángulo y fuerza' : '💨 tira tío Fran...', BA.aciertos[0]/BA.meta, BA.turno===0);
+}
+
+/* ============================================================
+   28) FERNANDO 3D  (primera persona, estilo Quake / Wolfenstein)
+   ============================================================ */
+const MAPA_3D = [
+  '###################',
+  '#........#........#',
+  '#.##.###.#.###.##.#',
+  '#.#............#..#',
+  '#.#.##.#####.#.##.#',
+  '#...#...#...#....##',
+  '##..###.#.###...###',
+  '#........#........#',
+  '#.##.###...###.##.#',
+  '#.................#',
+  '###################',
+];
+const Q3 = { x:0, y:0, ang:0, mapa:[], bichos:[], balas:[], quedan:0, t:0, sustos:0, inv:0,
+             dispPrev:false, metralla:0, metCd:0, metPrev:false, amigo:null, meneo:0 };
+const Q3W = 19, Q3H = 11, Q3PASO = 4, MET_CD = 420;
+const q3Muro = (cx,cy) => (cx<0||cy<0||cx>=Q3W||cy>=Q3H) ? true : Q3.mapa[cy][cx]==='#';
+function iniciarQuake(){
+  const N = nivelDe('quake');
+  Q3.mapa = MAPA_3D.map(f=>f.split(''));
+  Q3.x = 1.5; Q3.y = 1.5; Q3.ang = 0; Q3.balas = []; Q3.t = 0; Q3.sustos = 0; Q3.inv = 0;
+  Q3.dispPrev = false; Q3.metralla = 0; Q3.metCd = 0; Q3.metPrev = false; Q3.meneo = 0;
+  Q3.bichos = [];
+  const sitios = [[9,1],[17,1],[3,5],[15,5],[9,9],[1,9],[13,3],[5,7],[17,9],[11,7]];
+  for(let i=0;i<Math.min(sitios.length, 3+N); i++){
+    const s = sitios[i];
+    if (q3Muro(s[0], s[1])) continue;
+    Q3.bichos.push({x:s[0]+0.5, y:s[1]+0.5, vida:1+Math.floor(N/2), vivo:true, cd: 60+i*25});
+  }
+  Q3.quedan = Q3.bichos.length;
+  /* el amigo espera en un rincón del laberinto */
+  const rin = [[17,1],[1,9],[17,9],[9,1],[1,1],[9,9]][(N-1)%6];
+  Q3.amigo = nuevoRescate('quake', 0, 0);
+  Q3.amigo.cx = rin[0]+0.5; Q3.amigo.cy = rin[1]+0.5;
+  aviso('¡Primera persona! ←→ giras · ▲▼ andas · B dispara · A = metralleta', 4.4);
+}
+function updateQuake(){
+  Q3.t++;
+  const N = nivelDe('quake');
+  if (Q3.inv>0) Q3.inv--;
+  if (Q3.metralla>0) Q3.metralla--;
+  if (Q3.metCd>0) Q3.metCd--;
+  if (mIzq()) Q3.ang -= 0.052;
+  if (mDer()) Q3.ang += 0.052;
+  let av = 0;
+  if (mArr()) av = 0.072;
+  if (mAbj()) av = -0.055;
+  if (av){
+    Q3.meneo += 0.22;
+    const nx = Q3.x + Math.cos(Q3.ang)*av, ny = Q3.y + Math.sin(Q3.ang)*av;
+    if (!q3Muro(Math.floor(nx), Math.floor(Q3.y))) Q3.x = nx;
+    if (!q3Muro(Math.floor(Q3.x), Math.floor(ny))) Q3.y = ny;
+  }
+  /* PODER: la metralleta dispara sola y muy seguido */
+  if (mSalta() && !Q3.metPrev && Q3.metCd<=0){
+    Q3.metralla = 300; Q3.metCd = MET_CD; sfx.poder();
+    aviso('🔫 ¡METRALLETA PICHUNGUITO!', 2);
+  }
+  Q3.metPrev = mSalta();
+  const dispara = (mAccion() && !Q3.dispPrev) || (Q3.metralla>0 && Q3.t % 6 === 0);
+  if (dispara){
+    Q3.balas.push({x:Q3.x, y:Q3.y, dx:Math.cos(Q3.ang)*0.24, dy:Math.sin(Q3.ang)*0.24, t:60});
+    sfx.fuego();
+  }
+  Q3.dispPrev = mAccion();
+  for(const b of Q3.balas){
+    b.x += b.dx; b.y += b.dy; b.t--;
+    if (q3Muro(Math.floor(b.x), Math.floor(b.y))) b.t = 0;
+    for(const e of Q3.bichos){
+      if (!e.vivo || b.t<=0) continue;
+      if (Math.hypot(e.x-b.x, e.y-b.y) < 0.4){
+        b.t = 0; e.vida--;
+        if (e.vida<=0){ e.vivo = false; Q3.quedan--; sumar(400); sfx.pisoton(); }
+      }
+    }
+  }
+  Q3.balas = Q3.balas.filter(b=>b.t>0);
+  /* los goombas se acercan */
+  for(const e of Q3.bichos){
+    if (!e.vivo) continue;
+    const dx = Q3.x-e.x, dy = Q3.y-e.y, d = Math.hypot(dx,dy) || 1;
+    if (d < 9){
+      const v = 0.016 + N*0.0022;
+      const nx = e.x + dx/d*v, ny = e.y + dy/d*v;
+      if (!q3Muro(Math.floor(nx), Math.floor(e.y))) e.x = nx;
+      if (!q3Muro(Math.floor(e.x), Math.floor(ny))) e.y = ny;
+    }
+    if (d < 0.55 && Q3.inv<=0){
+      Q3.inv = 100;
+      Q3.x -= dx/d*0.8; Q3.y -= dy/d*0.8;
+      susto(Q3, '¡Te alcanzó! Vidas infinitas: sigue');
+    }
+  }
+  if (!Q3.amigo.salvado && Math.hypot(Q3.x-Q3.amigo.cx, Q3.y-Q3.amigo.cy) < 0.8){
+    Q3.amigo.x = 0; Q3.amigo.y = 0;
+    rescatar(Q3.amigo, 0, 0, 9999);
+  }
+  if (Q3.quedan <= 0) pasarNivel('quake', iniciarQuake, 'finQuake', VOZ.gane);
+}
+function drawQuake(){
+  /* cielo y suelo */
+  const g = ctx.createLinearGradient(0,HUD2,0,H/2);
+  g.addColorStop(0,'#101a3a'); g.addColorStop(1,'#28305a');
+  ctx.fillStyle=g; ctx.fillRect(0,HUD2,W,H/2-HUD2);
+  const g2 = ctx.createLinearGradient(0,H/2,0,H);
+  g2.addColorStop(0,'#2a2018'); g2.addColorStop(1,'#4a3a28');
+  ctx.fillStyle=g2; ctx.fillRect(0,H/2,W,H/2);
+  const bob = Math.sin(Q3.meneo)*5;
+  const zbuf = [];
+  /* trazado de rayos: una franja cada Q3PASO píxeles */
+  for(let sx=0; sx<W; sx+=Q3PASO){
+    const camX = 2*sx/W - 1;
+    const rdx = Math.cos(Q3.ang) + Math.cos(Q3.ang+Math.PI/2)*camX*0.66;
+    const rdy = Math.sin(Q3.ang) + Math.sin(Q3.ang+Math.PI/2)*camX*0.66;
+    let mx = Math.floor(Q3.x), my = Math.floor(Q3.y);
+    const ddx = Math.abs(1/(rdx||1e-6)), ddy = Math.abs(1/(rdy||1e-6));
+    let pasoX, pasoY, ladoX, ladoY;
+    if (rdx < 0){ pasoX = -1; ladoX = (Q3.x-mx)*ddx; } else { pasoX = 1; ladoX = (mx+1-Q3.x)*ddx; }
+    if (rdy < 0){ pasoY = -1; ladoY = (Q3.y-my)*ddy; } else { pasoY = 1; ladoY = (my+1-Q3.y)*ddy; }
+    let lado = 0, pasos = 0;
+    while (pasos++ < 60){
+      if (ladoX < ladoY){ ladoX += ddx; mx += pasoX; lado = 0; }
+      else { ladoY += ddy; my += pasoY; lado = 1; }
+      if (q3Muro(mx,my)) break;
+    }
+    const dist = lado===0 ? (mx-Q3.x+(1-pasoX)/2)/(rdx||1e-6) : (my-Q3.y+(1-pasoY)/2)/(rdy||1e-6);
+    zbuf.push(dist);
+    const alt = Math.min(H*3, (H-HUD2)/Math.max(0.12, dist));
+    const y0 = (H+HUD2)/2 - alt/2 + bob;
+    /* muros de ladrillo: color cálido para que se distingan bien del cielo azul */
+    const som = Math.max(0.5, Math.min(1, 3.4/Math.max(0.7, dist)));
+    const base = lado ? [214,124,86] : [168,84,64];
+    ctx.fillStyle = 'rgb('+Math.round(base[0]*som)+','+Math.round(base[1]*som)+','+Math.round(base[2]*som)+')';
+    ctx.fillRect(sx, Math.max(HUD2, y0), Q3PASO, Math.min(H-y0, alt));
+  }
+  /* goombas y el amigo, dibujados como estampas ordenadas de lejos a cerca */
+  const cosas = Q3.bichos.filter(e=>e.vivo).map(e=>({x:e.x, y:e.y, tipo:'goomba'}));
+  if (!Q3.amigo.salvado) cosas.push({x:Q3.amigo.cx, y:Q3.amigo.cy, tipo:'amigo'});
+  const co = Math.cos(Q3.ang), si = Math.sin(Q3.ang);
+  cosas.map(c=>{
+    const rx = c.x-Q3.x, ry = c.y-Q3.y;
+    return {c, prof: rx*co + ry*si, lat: -rx*si + ry*co};
+  }).filter(o=>o.prof > 0.25)
+    .sort((a,b)=>b.prof-a.prof)
+    .forEach(o=>{
+      const sx = W/2 + (o.lat/o.prof)*(W/2)/0.66;
+      const alt = (H-HUD2)/o.prof;
+      const sy = (H+HUD2)/2 + bob + alt*0.18;
+      if (sx < -80 || sx > W+80) return;
+      const col = Math.max(0, Math.min(zbuf.length-1, Math.round(sx/Q3PASO)));
+      if (zbuf[col] !== undefined && zbuf[col] < o.prof) return;   /* tapado por un muro */
+      const esc = alt/90;
+      ctx.save(); ctx.translate(sx, sy); ctx.scale(esc, esc);
+      if (o.c.tipo==='goomba') dibGoomba(-13, -26, T);
+      else { Q3.amigo.a.dib(-13, -46, T); }
+      ctx.restore();
+      if (o.c.tipo==='amigo' && esc > 0.4) letrero(sx, sy-52*esc, Q3.amigo.a.nombre, '#ffe36e');
+    });
+  /* el arma en primera persona */
+  const rec = (Q3.metralla>0 && Q3.t%6<3) ? 8 : 0;
+  ctx.save(); ctx.translate(W/2 + Math.sin(Q3.meneo)*8, H - 10 + rec + bob*0.4);
+  ctx.fillStyle='#3a3a44';
+  ctx.beginPath(); ctx.moveTo(-70, 60); ctx.lineTo(-26, -46); ctx.lineTo(26, -46); ctx.lineTo(70, 60); ctx.fill();
+  rect(-14, -74, 28, 30, '#5a5a6a');
+  rect(-8, -84, 16, 12, '#8a8a9a');
+  if (rec){ ctx.fillStyle=(Q3.t>>1)%2 ? '#ffe36e' : '#ff8a20';
+    ctx.beginPath(); ctx.arc(0, -92, 20, 0, Math.PI*2); ctx.fill(); }
+  ctx.restore();
+  /* mirilla */
+  ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(W/2-14, H/2); ctx.lineTo(W/2-5, H/2);
+  ctx.moveTo(W/2+5, H/2); ctx.lineTo(W/2+14, H/2);
+  ctx.moveTo(W/2, H/2-14); ctx.lineTo(W/2, H/2-5);
+  ctx.moveTo(W/2, H/2+5); ctx.lineTo(W/2, H/2+14);
+  ctx.stroke();
+  /* minimapa */
+  const mm = 5, mx0 = W-Q3W*mm-16, my0 = 54;
+  ctx.globalAlpha = 0.75;
+  for(let y=0;y<Q3H;y++) for(let x=0;x<Q3W;x++)
+    rect(mx0+x*mm, my0+y*mm, mm-1, mm-1, q3Muro(x,y) ? '#8ecbff' : '#12203a');
+  for(const e of Q3.bichos) if (e.vivo) rect(mx0+e.x*mm-1, my0+e.y*mm-1, 3, 3, '#e03434');
+  if (!Q3.amigo.salvado) rect(mx0+Q3.amigo.cx*mm-1, my0+Q3.amigo.cy*mm-1, 3, 3, '#ffe36e');
+  rect(mx0+Q3.x*mm-1, my0+Q3.y*mm-1, 3, 3, '#5ee08a');
+  ctx.globalAlpha = 1;
+  hudMJ('🧱 FERNANDO 3D', etiquetaNivel('quake')+'  👾'+Q3.quedan+'  '+corazonesInf(Q3), '▲▼ andas · ←→ giras');
+  barraPoder(Q3.metralla>0 ? '🔫 ¡METRALLETA!' : (Q3.metCd<=0 ? '🔫 METRALLETA (A)' : '🔫 recargando...'),
+             Q3.metralla>0 ? Q3.metralla/300 : 1-Q3.metCd/MET_CD, Q3.metralla>0);
+}
+
+/* ============================================================
    Sala arcade y orquestación
    ============================================================ */
 function cajasArcade(){
-  const anc = 174, alt = 92, hx = 12, hy = 10, x0 = 20, y0 = 98;
+  const anc = 125, alt = 86, hx = 8, hy = 9, x0 = 22, y0 = 104;
   return JUEGOS.map((j,i)=>({
     x: x0 + (i%COLS_ARCADE)*(anc+hx),
     y: y0 + ((i/COLS_ARCADE)|0)*(alt+hy),
@@ -3916,22 +5361,15 @@ function drawArcade(){
     ctx.lineWidth = s?6:3; ctx.strokeStyle = s ? '#ffe36e' : 'rgba(255,255,255,0.45)';
     ctx.stroke();
     if (s){ ctx.globalAlpha=0.3+Math.sin(T/7)*0.22; ctx.lineWidth=12; ctx.stroke(); ctx.globalAlpha=1; }
-    ctx.font='20px monospace'; ctx.textAlign='left';
-    ctx.fillText(c.j.emoji, c.x+9, c.y+26);
-    texto(c.j.corto, c.x+36, c.y+24, 13, '#fff');
-    /* la descripción se parte en líneas que quepan de verdad dentro de la tarjeta */
-    ctx.font = 'bold 10px monospace';
-    const ancho = c.w - 20;
-    const lineas = [];
-    let linea = '';
-    for(const palabra of c.j.desc.split(' ')){
-      const prueba = linea ? linea+' '+palabra : palabra;
-      if (ctx.measureText(prueba).width > ancho && linea){ lineas.push(linea); linea = palabra; }
-      else linea = prueba;
-      if (lineas.length===3) break;
-    }
-    if (linea && lineas.length<4) lineas.push(linea);
-    lineas.forEach((l,i)=> texto(l, c.x+10, c.y+45+i*13, 9.5, 'rgba(255,255,255,0.85)'));
+    /* con 28 juegos la tarjeta es solo dibujo y nombre: la explicación va abajo,
+       en una barra grande que se lee de verdad */
+    ctx.font='34px monospace'; ctx.textAlign='center';
+    ctx.fillText(c.j.emoji, c.x+c.w/2, c.y+46);
+    let tam = 13;
+    ctx.font = 'bold '+tam+'px monospace';
+    while (tam > 8 && ctx.measureText(c.j.corto).width > c.w-12){ tam -= 0.5; ctx.font='bold '+tam+'px monospace'; }
+    texto(c.j.corto, c.x+c.w/2, c.y+70, tam, '#fff', true);
+    ctx.textAlign='left';
   }
   /* botón para volver: sin él, en el celular no había manera de salir de la sala */
   const z = {x:22, y:12, w:148, h:40};
@@ -3939,7 +5377,13 @@ function drawArcade(){
   ctx.beginPath(); ctx.roundRect(z.x, z.y, z.w, z.h, 12); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=2; ctx.stroke();
   texto('✕ VOLVER', z.x+z.w/2, z.y+27, 17, '#fff', true);
-  texto('Toca un juego · flechas + ENTER · ESC o ✕ VOLVER para salir', W/2, H-12, 14, '#dfc8ff', true);
+  /* barra con la explicación del juego marcado */
+  const j = JUEGOS[sel] || JUEGOS[0];
+  ctx.fillStyle='rgba(8,10,24,0.8)';
+  ctx.beginPath(); ctx.roundRect(22, H-62, W-44, 40, 10); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2; ctx.stroke();
+  texto(j.emoji+'  '+j.nombre+' — '+j.desc, W/2, H-36, 16, '#ffe36e', true);
+  texto('Toca un juego · flechas + ENTER · ESC o ✕ VOLVER para salir', W/2, H-8, 13, '#dfc8ff', true);
 }
 function abrirArcade(){ estado = 'arcade'; modo = null; sel = 0; finDicho = false; }
 function empezar(id){
@@ -3964,6 +5408,15 @@ function empezar(id){
   else if (id==='jeep'){ iniciarJeep(); modo='jeep'; estado='mjJeep'; }
   else if (id==='mappy'){ iniciarMappy(); modo='mappy'; estado='mjMappy'; }
   else if (id==='circo'){ iniciarCirco(); modo='circo'; estado='mjCirco'; }
+  else if (id==='patos'){ iniciarPatos(); modo='patos'; estado='mjPatos'; }
+  else if (id==='isla'){ iniciarIsla(); modo='isla'; estado='mjIsla'; }
+  else if (id==='galaxia'){ iniciarGalaxia(); modo='galaxia'; estado='mjGalaxia'; }
+  else if (id==='lucha'){ iniciarLucha(); modo='lucha'; estado='mjLucha'; }
+  else if (id==='vagoneta'){ iniciarVagoneta(); modo='vagoneta'; estado='mjVagoneta'; }
+  else if (id==='jam'){ iniciarJam(); modo='jam'; estado='mjJam'; }
+  else if (id==='fcero'){ iniciarFcero(); modo='fcero'; estado='mjFcero'; }
+  else if (id==='bananas'){ iniciarBananas(); modo='bananas'; estado='mjBananas'; }
+  else if (id==='quake'){ iniciarQuake(); modo='quake'; estado='mjQuake'; }
   cortina = 40;
 }
 function activo(){ return estado==='arcade' || (typeof estado==='string' && estado.indexOf('mj')===0); }
@@ -4001,6 +5454,15 @@ function update(){
   else if (modo==='jeep') updateJeep();
   else if (modo==='mappy') updateMappy();
   else if (modo==='circo') updateCirco();
+  else if (modo==='patos') updatePatos();
+  else if (modo==='isla') updateIsla();
+  else if (modo==='galaxia') updateGalaxia();
+  else if (modo==='lucha') updateLucha();
+  else if (modo==='vagoneta') updateVagoneta();
+  else if (modo==='jam') updateJam();
+  else if (modo==='fcero') updateFcero();
+  else if (modo==='bananas') updateBananas();
+  else if (modo==='quake') updateQuake();
   else if (modo && modo.indexOf('fin')===0){
     if (pt.soltado){ pt.soltado=false; abrirArcade(); }
   }
@@ -4030,6 +5492,15 @@ function draw(){
   else if (modo==='jeep') drawJeep();
   else if (modo==='mappy') drawMappy();
   else if (modo==='circo') drawCirco();
+  else if (modo==='patos') drawPatos();
+  else if (modo==='isla') drawIsla();
+  else if (modo==='galaxia') drawGalaxia();
+  else if (modo==='lucha') drawLucha();
+  else if (modo==='vagoneta') drawVagoneta();
+  else if (modo==='jam') drawJam();
+  else if (modo==='fcero') drawFcero();
+  else if (modo==='bananas') drawBananas();
+  else if (modo==='quake') drawQuake();
   else if (modo==='finBirds') pantallaFin(resultado, resultado?'¡GANASTE!':'CASI...', resultado?'¡Todos los goombas fuera!':'Se acabaron los lanzamientos');
   else if (modo==='finDig') pantallaFin(resultado, resultado?'¡GANASTE!':'¡TE ATRAPARON!', resultado?'¡Túneles limpios!':'Inténtalo otra vez, pichunguito');
   else if (modo==='finKong') pantallaFin(resultado, resultado?'¡RESCATASTE A MAMÁ!':'¡UN BARRIL!', resultado?'«¡Te amo mamá!»':'Sube con más cuidado');
@@ -4049,6 +5520,15 @@ function draw(){
   else if (modo==='finJeep') pantallaFin(resultado, '¡TODOS RESCATADOS!', '¡Al helicóptero, pichunguitos!');
   else if (modo==='finMappy') pantallaFin(resultado, '¡TODO RECOGIDO!', '¡Ni un gato te atrapó!');
   else if (modo==='finCirco') pantallaFin(resultado, '¡GRAN FUNCIÓN!', '¡El público aplaude a Fernando!');
+  else if (modo==='finPatos') pantallaFin(resultado, '¡QUÉ PUNTERÍA!', '¡Penny ya no se ríe de ti!');
+  else if (modo==='finIsla') pantallaFin(resultado, '¡ISLA CRUZADA!', '¡Y sin quedarse sin energía!');
+  else if (modo==='finGalaxia') pantallaFin(resultado, '¡NAVE MADRE VENCIDA!', '¡Fernando salvó la galaxia!');
+  else if (modo==='finLucha') pantallaFin(resultado, '¡CAMPEÓN!', '¡Nadie puede con el pichunguito!');
+  else if (modo==='finVagoneta') pantallaFin(resultado, '¡QUÉ VIAJE!', '¡Sheldon pide otra vuelta!');
+  else if (modo==='finJam') pantallaFin(resultado, '¡PARTIDO GANADO!', '¡Fernando y tío Juan, campeones!');
+  else if (modo==='finFcero') pantallaFin(resultado, '¡PRIMER PUESTO!', '¡Nadie corre como Fernando!');
+  else if (modo==='finBananas') pantallaFin(resultado, '¡LE DISTE A TÍO FRAN!', '¡Qué puntería, pichunguito!');
+  else if (modo==='finQuake') pantallaFin(resultado, '¡LABERINTO LIMPIO!', '¡Ni un goomba quedó dentro!');
   /* partículas compartidas */
   for(const p of parts){
     if (p.tipo==='estrellita'){ ctx.fillStyle='#ffe36e'; ctx.font='16px monospace'; ctx.fillText('✦',p.x,p.y); }
@@ -4096,9 +5576,13 @@ return { activo, update, draw, tecla, abrirArcade, empezar,
                            torre:iniciarTorre, nieve:iniciarNieve, luna:iniciarLuna,
                            corre:iniciarRunner, flappy:iniciarFlappy, coco:iniciarCoco,
                            mega:iniciarMega, burger:iniciarBurger, survivor:iniciarSuper,
-                           jeep:iniciarJeep, mappy:iniciarMappy, circo:iniciarCirco}[id])(),
+                           jeep:iniciarJeep, mappy:iniciarMappy, circo:iniciarCirco,
+                           patos:iniciarPatos, isla:iniciarIsla, galaxia:iniciarGalaxia,
+                           lucha:iniciarLucha, vagoneta:iniciarVagoneta, jam:iniciarJam,
+                           fcero:iniciarFcero, bananas:iniciarBananas, quake:iniciarQuake}[id])(),
          _TD:TD, _SN:SN, _LU:LU, _RU:RU, _FL:FL, _CO:CO,
          _MG:MG, _BU:BU, _SU:SU, _JP:JP, _MP:MP, _CI:CI, _ARMAS:ARMAS,
+         _PA:PA, _IS:IS, _GX:GX, _LU2:LU2, _VG:VG, _JM:JM, _FZ:FZ, _BA:BA, _Q3:Q3,
          _amigos: AMIGOS,
          _zonaSalir: zonaSalir, _zonaVolver: zonaVolver,
          _B:B, _D:D, _K:K, _C:C, _KPL:KPL, _KESC:KESC, _G:G, _M:M, _I:I,

@@ -70,7 +70,7 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 
 ## 🕹️ Sala Arcade
 
-Diecinueve minijuegos con los personajes del juego, desde el selector de mundos.
+Veintiocho minijuegos con los personajes del juego, desde el selector de mundos.
 
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
 - **Seis niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el sexto. Arriba se ve **NIV 1/6**.
@@ -98,6 +98,15 @@ Diecinueve minijuegos con los personajes del juego, desde el selector de mundos.
 | 🚙 **Fernando Jeep** *(Jackal)* | Visto desde arriba, subiendo por el camino: dispara, cuélate por los huecos de los muros y **rescata a los amigos que están en jaulas** | **B** dispara · **A** = 💣 **bombazo** que revienta todo alrededor |
 | 🐭 **Fernando Mappy** | Recoge todo por los cinco pisos usando las **tirolinas** para subir y bajar, esquivando a los gatos | **B** = 🚪 **portazo**: si estás junto a una puerta, manda a volar a los gatos |
 | 🎪 **Fernando Circo** *(Circus Charlie)* | **Dos actos que se alternan**: en los niveles impares montas el león y saltas los aros de fuego; en los pares rebotas en el balancín para reventar los 24 globos | **B** = ⭐ **estrella mágica**: nada te toca |
+| 🦆 **Fernando Patos** *(Duck Hunt)* | Mueve la mira y caza los patos al vuelo antes de que se escapen. Si fallas, el perrito se asoma a reírse de ti | **B** dispara · **A** = 🔫 **escopeta doble**: un disparo ancho que se lleva varios patos de una |
+| 🏝️ **Fernando Isla** *(Adventure Island)* | Corre por la isla saltando obstáculos mientras **la energía baja sola**: hay que ir comiendo fruta para no quedarse sin fuerzas. Puedes lanzar hachas | **A** salta · **B** lanza el hacha · 🛹 el **monopatín** te hace correr a toda velocidad hasta que chocas |
+| 👾 **Fernando Galaxia** *(Gradius)* | Nave lateral contra oleadas de enemigos hasta la **nave madre** final. Las cápsulas **P** van moviendo la barra de mejoras | **B** dispara · **A** gasta la mejora marcada: ⚡ VELOCIDAD · 🚀 MISIL · ✌️ DOBLE · 🔴 LÁSER · 🛸 OPCIÓN · 🛡️ ESCUDO (se acumulan) |
+| 🥊 **Fernando Lucha** *(Street Fighter II)* | Pelea uno contra uno con un rival distinto en cada nivel: Bowser, tío Fran, Rómulo, tío Nacho, tío Beto… Cubrirse y agacharse paran los golpes | **←→** te mueves · **A** salta · **B** golpea · **▼ + B** = 💨 **el especial**, con su barra de recarga |
+| 🚃 **Vagoneta** *(Donkey Kong Country)* | La vagoneta de Sheldon por la mina: **solo hay que saltar** en el momento justo por encima de los huecos y las vías rotas | **A** salta · **B** = ⭐ **estrella**: invencible un ratito |
+| 🏀 **Fernando Jam** *(NBA Jam)* | **2 contra 2** en la cancha: pasa, corre y encesta hasta llegar a los puntos del nivel | **B** tira · **A** pasa · **tres canastas seguidas** y te pones 🔥 **EN LLAMAS**: no fallas ni una y corres más |
+| 🏎️ **Fernando F-Cero** *(F-Zero)* | Carrera futurista en perspectiva contra los rivales: si te sales de la pista pierdes energía | **←→** giras · **B** = 🔥 **turbo** con su barra de recarga |
+| 🍌 **Bananas** *(Gorillas de MS-DOS)* | Por turnos contra tío Fran desde los tejados: eliges **ángulo** y **fuerza** y le lanzas el plátano, con el viento moviéndolo | **←→** el ángulo · **▲▼** la fuerza · **B** lanza |
+| 🧱 **Fernando 3D** *(estilo Quake/Doom)* | **Primera persona de verdad**: laberinto en 3D con su mapita en la esquina, limpiando de bichos cada pasillo | **←→** giras · **▲▼** andas · **B** dispara · **A** = 🔫 **metralleta**: dispara sin parar un rato |
 
 Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
 
@@ -116,4 +125,4 @@ Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pi
 
 Todos los diálogos son **grabaciones con voz de niño en español** (archivos mp3), que suenan en cualquier dispositivo — incluido iPhone. Si un audio no carga, el juego usa como respaldo la voz sintética del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
 
-**En la sala arcade también hablan.** Los 13 minijuegos usan las mismas grabaciones: al empezar una partida, al subir de nivel, al rescatar a cada amigo (cada uno con su frase), al usar los poderes (la hamburguesa, el hueso, el globo, el pedo de tío Fran, el salto de papá…), cuando Rómulo eructa al comérselo en Fernando-Man, y al ganar. Las frases del código están enlazadas al texto exacto de cada mp3, y hay una prueba automática que avisa si alguna se sale del guion y caería en la voz sintética.
+**En la sala arcade también hablan.** Los 28 minijuegos usan las mismas grabaciones: al empezar una partida, al subir de nivel, al rescatar a cada amigo (cada uno con su frase), al usar los poderes (la hamburguesa, el hueso, el globo, el pedo de tío Fran, el salto de papá…), cuando Rómulo eructa al comérselo en Fernando-Man, y al ganar. Las frases del código están enlazadas al texto exacto de cada mp3, y hay una prueba automática que avisa si alguna se sale del guion y caería en la voz sintética.
