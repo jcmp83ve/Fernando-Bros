@@ -384,7 +384,9 @@ function botonEn(x, y){
     const r = el.getBoundingClientRect();
     if (!r.width || !r.height) continue;            /* oculto: ni existe */
     const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    const rel = Math.hypot(x-cx, y-cy) / (Math.max(r.width, r.height)/2);
+    let rel = Math.hypot(x-cx, y-cy) / (Math.max(r.width, r.height)/2);
+    /* si el dedo cae dentro de la zona del botón siempre vale, aunque sea en una esquina */
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) rel = Math.min(rel, 0.99);
     if (rel < mejorRel){ mejorRel = rel; mejor = b; }
   }
   return mejor;
@@ -2405,7 +2407,7 @@ function dibMenu(){
   ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v36', W-30, 18);
+  ctx.fillText('v37', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2539,7 +2541,7 @@ function dibSelPista(){
   ctx.textAlign='left';
   dibBotonAtras('✕ VOLVER');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v36', W-34, 18);
+  ctx.fillText('v37', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3313,7 +3315,7 @@ function dibMapa(){
   ctx.textAlign='left';
   dibBotonAtras('✕ MENÚ');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v36', W-34, 18);
+  ctx.fillText('v37', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
