@@ -73,7 +73,7 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 Veintiocho minijuegos con los personajes del juego, desde el selector de mundos.
 
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
-- **Seis niveles por juego**: al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el sexto. Arriba se ve **NIV 1/6**.
+- **Seis niveles por juego** (y **diez** en Fernando Torre): al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el último. Arriba se ve **NIV 1/6**.
 - **Todo el elenco tiene su momento**: en cada nivel aparece **un amigo distinto al que rescatar** — Santi, Cucú, Penny, Sheldon, Luca, Salomón, Abu, Tío Fran, Mamá, Papá, Tía Yanny, Tío Nacho, Tío Beto, Tía Giuliana, Rómulo y Tío Juan. Lleva su cartel con flecha y da **+1500 puntos** y su frase con voz de niño.
 - **Cada juego tiene su propio poder**:
 
@@ -86,7 +86,7 @@ Veintiocho minijuegos con los personajes del juego, desde el selector de mundos.
 | 🎈 **Fernando Globos** | Vuela aleteando con globos y revienta los de los koopas desde arriba | **B** = 💨 **impulso pedorro**, y hay 🎈 **globos sueltos** que dan un tercer globo |
 | 💣 **Fernando Bombas** | Pon bombas en el laberinto para atrapar goombas | **A** = 💨 **súper pedo en cruz** (no te hace daño), y las cajas rotas sueltan 🔥 más alcance, 💣 más bombas y 👟 más velocidad |
 | 🧊 **Fernando Hielo** | Rompe el hielo con la cabeza y sube los 12 pisos hasta Cucú | **B** = 🦘 **salto de papá**: sube dos pisos de un golpe y el cabezazo rompe **tres bloques** a la vez |
-| 🏰 **Fernando Torre** | **Defensa de torres**: los goombas avanzan por el caminito hacia la casa donde está tu amigo. Coloca a **Penny** (rápida), **Sheldon** (pega fuerte) y **Tío Juan** (largo alcance) en el césped para frenarlos. Ganas monedas por cada goomba que cae, y hay hasta 8 oleadas | **▲ + B** = 💨 **pedo total**: daña de golpe a todos los goombas del campo |
+| 🏰 **Fernando Torre** | **Defensa de torres, con 10 niveles y 4 mapas distintos** — ver el cuadro de abajo | **▲ + B** = 💨 **pedo total** · **▼ + B** = 🍔 **hamburguesa de tío Juan** |
 | 🎿 **Fernando Nieve** | **Bajada en tabla**: esquiva pinos y rocas, recoge hamburguesas y rescata a tu amigo a mitad de la montaña, hasta llegar a la meta | **A** salta por encima de los obstáculos · **B** = 🍔 **turbo de hamburguesa** (invencible y a toda velocidad) |
 | 🚀 **Fernando Luna** | **Alunizaje**: baja la nave con cuidado y pósala en las plataformas sin pasarte de velocidad ni de inclinación. Tres alunizajes por nivel, y en la plataforma dorada ★ espera tu amigo. Los medidores se ponen verdes cuando puedes posarte | **A** enciende el motor · **←→** giran · **B** = 🦸 **Tío Juan te sostiene** (media gravedad y no te estrellas) |
 | 🏃 **Fernando Runner** | **Carrera sin fin en tres carriles**, en perspectiva: esquiva vallas saltando, barras agachándote y trenes cambiándote de carril, recogiendo hamburguesas. A mitad de camino aparece tu amigo | **←→** cambian de carril · **A** salta · **▼** se agacha · **B** = 🦸 **Tío Juan te lleva volando** por encima de todo |
@@ -109,6 +109,28 @@ Veintiocho minijuegos con los personajes del juego, desde el selector de mundos.
 | 🧱 **Fernando 3D** *(estilo Quake/Doom)* | **Primera persona de verdad**: laberinto en 3D con su mapita en la esquina, limpiando de bichos cada pasillo | **←→** giras · **▲▼** andas · **B** dispara · **A** = 🔫 **metralleta**: dispara sin parar un rato |
 
 Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
+
+### 🏰 Fernando Torre por dentro
+
+El de defensa de torres es el más grande de todos: **10 niveles** (los demás tienen 6) y **4 mapas distintos**, que van cambiando cada dos niveles. Los goombas y koopas entran por la flecha 🔺 roja y hay que frenarlos antes de que lleguen a la casa donde espera tu amigo. En los niveles altos la última oleada trae un **jefazo**: un Bowser enorme y lentísimo que aguanta muchísimo, pero que al caer suelta un montón de monedas.
+
+**Los siete defensores**, que se van desbloqueando conforme subes de nivel:
+
+| Defensor | 🪙 | Se abre en | Qué hace |
+|---|---|---|---|
+| 🐕 **Penny** | 2 | nivel 1 | Dispara rapidísimo |
+| 🐕 **Sheldon** | 3 | nivel 1 | Pega muy fuerte, pero despacio |
+| 🦸 **Tío Juan** | 5 | nivel 1 | Llega lejísimos |
+| 👧 **Cucú** | 4 | nivel 2 | ❄️ **Los congela**: los que toca andan a la mitad de velocidad |
+| 💨 **Tío Fran** | 6 | nivel 4 | 💨 **Su pedo daña a todos** los que estén alrededor del blanco |
+| 👵 **Abu** | 4 | nivel 6 | 🪙 **Hornea una moneda** cada ratito, ella sola |
+| 🧒 **Salomón** | 7 | nivel 8 | 🪨 **Pedrada enorme** que además los deja atontados |
+
+**Mejoras ⭐**: si pones el cursor **encima de un defensor que ya está puesto** y pulsas **A**, sube de estrella (hasta ⭐⭐⭐). Cada estrella le da **+50% de daño, +14% de alcance y dispara más rápido**. Arriba de cada defensor se ven sus estrellitas.
+
+**Los dos poderes**:
+- **▲ + B** = 💨 **pedo total de tío Fran**: daña de golpe a todos los bichos del campo.
+- **▼ + B** = 🍔 **hamburguesa de tío Juan**: durante cinco segundos **todos los defensores disparan al doble** de rápido.
 
 ## 🏁 Fernando Kart
 
