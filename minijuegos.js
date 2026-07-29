@@ -120,22 +120,27 @@ const VOZ = {
    escenario más difícil, sin perder los puntos, y solo al terminar el
    tercero aparece la pantalla de victoria. */
 const MAXNIV = 6;
+/* algunos juegos dan para más: la Torre tiene diez niveles, con mapa nuevo
+   cada dos y defensores que se van desbloqueando */
+const MAXJUEGO = {torre: 10};
+const maxDe = id => MAXJUEGO[id] || MAXNIV;
 const nivel = {};
 const nivelDe = id => nivel[id] || 1;
 function pasarNivel(id, iniciar, finModo, frase){
-  if (nivelDe(id) < MAXNIV){
+  const tope = maxDe(id);
+  if (nivelDe(id) < tope){
     nivel[id] = nivelDe(id) + 1;
     sumar(1000); sfx.meta();
     hablar(VOZ.campeon);
     iniciar();
-    aviso('🏅 ¡NIVEL '+nivel[id]+' DE '+MAXNIV+'! Ahora un poquito más difícil', 2.6);
+    aviso('🏅 ¡NIVEL '+nivel[id]+' DE '+tope+'! Ahora un poquito más difícil', 2.6);
     cortina = 34;
   } else {
     resultado = 1; modo = finModo; sfx.meta();
     if (frase) hablar(frase);
   }
 }
-const etiquetaNivel = id => 'NIV '+nivelDe(id)+'/'+MAXNIV;
+const etiquetaNivel = id => 'NIV '+nivelDe(id)+'/'+maxDe(id);
 
 /* ---------- el elenco de Fernando Bros ----------
    En cada nivel de cada minijuego aparece un amigo distinto al que hay que
@@ -1811,45 +1816,114 @@ function drawHielo(){
    8) FERNANDO TORRE  (defensa de torres)
    ============================================================ */
 const TD = { cx:0, cy:0, torres:[], enem:[], oleada:0, restan:0, spawn:0, monedas:0, tipo:0,
-             t:0, sustos:0, pedoCd:0, pedoPrev:false, ponPrev:false, camPrev:false, amigo:null, bajas:0 };
-const TC = 60, TW = 15, TH = 7, TX0 = 30, TY0 = 74, PEDO_TD = 420;
-/* el caminito que recorren los goombas, en casillas */
-const CAMINO = [[0,1],[1,1],[2,1],[3,1],[4,1],[4,2],[4,3],[4,4],[5,4],[6,4],[7,4],
-                [7,3],[7,2],[7,1],[8,1],[9,1],[10,1],[10,2],[10,3],[10,4],[10,5],
-                [11,5],[12,5],[13,5],[14,5]];
-const enCamino = (cx,cy) => CAMINO.some(c=>c[0]===cx && c[1]===cy);
-const TORRES = [
-  {id:'penny',   nombre:'PENNY',    coste:2, alcance:150, dano:1, cd:26, color:'#222'},
-  {id:'sheldon', nombre:'SHELDON',  coste:3, alcance:120, dano:3, cd:54, color:'#8a5a2a'},
-  {id:'tiojuan', nombre:'TÍO JUAN', coste:5, alcance:235, dano:2, cd:40, color:'#2a6ad0'},
+             t:0, sustos:0, pedoCd:0, pedoPrev:false, ponPrev:false, camPrev:false, amigo:null, bajas:0,
+             camino:null, burgerCd:0, burger:0, dirPrev:null, repite:0, tanda:null,
+             jefeToca:false, oleadas:0 };
+const TC = 60, TW = 15, TH = 7, TX0 = 30, TY0 = 74, PEDO_TD = 420, BURGER_TD = 540;
+/* cuatro caminitos distintos: el mapa cambia cada dos niveles */
+const CAMINOS = [
+  [[0,1],[1,1],[2,1],[3,1],[4,1],[4,2],[4,3],[4,4],[5,4],[6,4],[7,4],
+   [7,3],[7,2],[7,1],[8,1],[9,1],[10,1],[10,2],[10,3],[10,4],[10,5],
+   [11,5],[12,5],[13,5],[14,5]],
+  [[0,5],[1,5],[2,5],[2,4],[2,3],[2,2],[2,1],[3,1],[4,1],[5,1],[6,1],
+   [6,2],[6,3],[6,4],[6,5],[7,5],[8,5],[9,5],[10,5],[10,4],[10,3],[10,2],[10,1],
+   [11,1],[12,1],[13,1],[14,1],[14,2],[14,3],[14,4],[14,5]],
+  [[0,3],[1,3],[2,3],[3,3],[3,2],[3,1],[4,1],[5,1],[5,2],[5,3],[5,4],[5,5],
+   [6,5],[7,5],[8,5],[8,4],[8,3],[8,2],[8,1],[9,1],[10,1],[11,1],[11,2],[11,3],
+   [11,4],[11,5],[12,5],[13,5],[14,5]],
+  [[0,0],[1,0],[2,0],[3,0],[3,1],[3,2],[3,3],[3,4],[2,4],[1,4],[1,5],[1,6],
+   [2,6],[3,6],[4,6],[5,6],[6,6],[6,5],[6,4],[6,3],[6,2],[7,2],[8,2],[9,2],
+   [9,3],[9,4],[9,5],[10,5],[11,5],[12,5],[12,4],[12,3],[13,3],[14,3],[14,4],[14,5]],
 ];
+/* el mapa de cada nivel, y dónde queda la casa que hay que defender */
+const caminoDe = n => CAMINOS[Math.floor((n-1)/2) % CAMINOS.length];
+const enCamino = (cx,cy) => TD.camino.some(c=>c[0]===cx && c[1]===cy);
+/* Los defensores. Cada uno tiene su gracia, y se van desbloqueando por nivel. */
+const TORRES = [
+  {id:'penny',   nombre:'PENNY',    coste:2, alcance:150, dano:1, cd:26, color:'#222',
+   desde:1, hab:'', gracia:'dispara rapidísimo'},
+  {id:'sheldon', nombre:'SHELDON',  coste:3, alcance:120, dano:3, cd:54, color:'#8a5a2a',
+   desde:1, hab:'', gracia:'pega muy fuerte'},
+  {id:'tiojuan', nombre:'TÍO JUAN', coste:5, alcance:235, dano:2, cd:40, color:'#2a6ad0',
+   desde:1, hab:'', gracia:'llega lejísimos'},
+  {id:'cucu',    nombre:'CUCÚ',     coste:4, alcance:145, dano:1, cd:38, color:'#e8a0c0',
+   desde:2, hab:'hielo',  gracia:'❄️ los congela y andan a la mitad'},
+  {id:'tiofran', nombre:'TÍO FRAN', coste:6, alcance:155, dano:2, cd:64, color:'#7ac040',
+   desde:4, hab:'pedo',   gracia:'💨 su pedo daña a todos los de alrededor'},
+  {id:'abu',     nombre:'ABU',      coste:4, alcance:0,   dano:0, cd:0,  color:'#c8a0d0',
+   desde:6, hab:'moneda', gracia:'🪙 hornea una moneda cada ratito'},
+  {id:'salomon', nombre:'SALOMÓN',  coste:7, alcance:180, dano:9, cd:115, color:'#d0a060',
+   desde:8, hab:'piedra', gracia:'🪨 pedrada enorme que los deja atontados'},
+];
+const torresDe = n => TORRES.filter(t => n >= t.desde);
+/* cada estrella de mejora: más daño, más alcance y menos espera */
+const MAX_ESTRELLA = 3;
+const danoDe   = (d,e) => d.dano * (1 + 0.5*e);
+const alcanceDe= (d,e) => d.alcance * (1 + 0.14*e);
+const cdDe     = (d,e) => Math.max(8, Math.round(d.cd * Math.pow(0.82, e)));
+const costeMejora = (d,e) => d.coste + e*2;
+/* los bichos que atacan */
+const BICHOS = {
+  goomba: {nombre:'goomba', vida:1,   vel:1,   monedas:1, desde:1},
+  koopa:  {nombre:'koopa',  vida:0.7, vel:1.7, monedas:1, desde:3},
+  jefe:   {nombre:'jefazo', vida:9,   vel:0.55,monedas:6, desde:5},
+};
 const celPix = (cx,cy) => ({x: TX0 + cx*TC + TC/2, y: TY0 + cy*TC + TC/2});
+/* la casa a defender está siempre al final del camino de ese mapa */
+function casaTorre(){
+  const f = TD.camino[TD.camino.length-1];
+  return celPix(f[0], f[1]);
+}
 function iniciarTorre(){
   const N = nivelDe('torre');
+  TD.camino = caminoDe(N);
   TD.torres = []; TD.enem = []; TD.t = 0; TD.sustos = 0; TD.bajas = 0;
-  TD.cx = 2; TD.cy = 3; TD.tipo = 0;
+  TD.tipo = 0;
   TD.monedas = 5 + N;
-  TD.oleada = 0; TD.restan = 0; TD.spawn = 40;
-  TD.oleadas = 2 + N;                       /* de 3 a 8 oleadas */
+  TD.oleada = 0; TD.restan = 0; TD.spawn = 40; TD.tanda = null;
+  TD.oleadas = 2 + N;                       /* de 3 a 12 oleadas */
   TD.pedoCd = 0; TD.pedoPrev = false; TD.ponPrev = false; TD.camPrev = false;
-  const casa = celPix(14,5);
+  TD.burger = 0; TD.burgerCd = 0; TD.dirPrev = null; TD.repite = 0;
+  /* el cursor arranca en una casilla libre, nunca encima del camino */
+  TD.cx = 2; TD.cy = 3;
+  for(let k=0; k<TW*TH && enCamino(TD.cx, TD.cy); k++){ TD.cx = (TD.cx+1)%TW; if (!TD.cx) TD.cy = (TD.cy+1)%TH; }
+  const casa = casaTorre();
   TD.amigo = nuevoRescate('torre', casa.x-13, casa.y-46);
   TD.amigo.salvado = true;                  /* aquí no se rescata: se DEFIENDE */
-  aviso('¡Defiende a '+TD.amigo.a.nombre+'! Flechas mueven · A pone · B cambia', 4.2);
+  aviso('¡Defiende a '+TD.amigo.a.nombre+'! A pone y mejora ⭐ · B cambia', 4.2);
 }
 function ponerTorre(){
+  const N = nivelDe('torre');
+  /* si ya hay un defensor en la casilla, A lo MEJORA en vez de dar error */
+  const ya = TD.torres.find(o=>o.cx===TD.cx && o.cy===TD.cy);
+  if (ya){
+    const d = TORRES[ya.t];
+    if (ya.est >= MAX_ESTRELLA){ aviso(d.nombre+' ya está al máximo ⭐⭐⭐', 1.6); return; }
+    const precio = costeMejora(d, ya.est);
+    if (TD.monedas < precio){ aviso('La mejora de '+d.nombre+' cuesta 🪙'+precio, 1.6); sfx.dano(); return; }
+    TD.monedas -= precio; ya.est++; ya.brillo = 30;
+    sfx.poder(); sacudir(3);
+    aviso('⭐ ¡'+d.nombre+' sube a '+'⭐'.repeat(ya.est)+'!', 1.8);
+    hablar(VOZ.campeon);
+    return;
+  }
   const t = TORRES[TD.tipo];
+  if (N < t.desde){ aviso(t.nombre+' se abre en el nivel '+t.desde, 1.6); sfx.dano(); return; }
   if (TD.monedas < t.coste){ aviso('Te faltan monedas para '+t.nombre, 1.4); sfx.dano(); return; }
   if (enCamino(TD.cx, TD.cy)){ aviso('Ahí pasan los goombas', 1.4); sfx.dano(); return; }
-  if (TD.torres.some(o=>o.cx===TD.cx && o.cy===TD.cy)){ aviso('Ya hay alguien ahí', 1.4); return; }
   TD.monedas -= t.coste;
-  TD.torres.push({cx:TD.cx, cy:TD.cy, t:TD.tipo, cd:0, tiro:0, blanco:null});
+  TD.torres.push({cx:TD.cx, cy:TD.cy, t:TD.tipo, cd:0, tiro:0, blanco:null, est:0, brillo:20, horno:0});
   sfx.poder(); sacudir(2);
-  hablar(t.id==='tiojuan' ? VOZ.tioJuan : VOZ.vamos);
-  aviso('¡'+t.nombre+' a defender!', 1.4);
+  hablar(t.id==='tiojuan' ? VOZ.tioJuan
+       : t.id==='cucu'    ? VOZ.cucu
+       : t.id==='tiofran' ? VOZ.pedo
+       : t.id==='abu'     ? VOZ.abu
+       : t.id==='salomon' ? VOZ.salomon : VOZ.vamos);
+  aviso('¡'+t.nombre+' a defender! '+t.gracia, 1.8);
 }
 function posEnem(e){
-  const a = CAMINO[Math.min(e.i, CAMINO.length-1)], b = CAMINO[Math.min(e.i+1, CAMINO.length-1)];
+  const C = TD.camino;
+  const a = C[Math.min(e.i, C.length-1)], b = C[Math.min(e.i+1, C.length-1)];
   const pa = celPix(a[0], a[1]), pb = celPix(b[0], b[1]);
   return {x: pa.x + (pb.x-pa.x)*e.p, y: pa.y + (pb.y-pa.y)*e.p};
 }
@@ -1872,10 +1946,16 @@ function updateTorre(){
   TD.dirPrev = dir;
   if (mSalta() && !TD.ponPrev) ponerTorre();
   TD.ponPrev = mSalta();
-  /* B: cambia de defensor, o suelta el pedo si se mantiene */
-  if (mAccion() && !TD.camPrev){ TD.tipo = (TD.tipo+1) % TORRES.length; sfx.huevo(); }
+  /* B: cambia de defensor, saltándose los que aún no se han desbloqueado */
+  if (mAccion() && !TD.camPrev && !mArr() && !mAbj()){
+    for(let v=0; v<TORRES.length; v++){
+      TD.tipo = (TD.tipo+1) % TORRES.length;
+      if (N >= TORRES[TD.tipo].desde) break;
+    }
+    sfx.huevo();
+  }
   TD.camPrev = mAccion();
-  /* PODER: el pedo de tío Fran daña a todos los goombas del mapa */
+  /* PODER 1: el pedo de tío Fran daña a todos los goombas del mapa */
   if (TD.pedoCd>0) TD.pedoCd--;
   if (mArr() && mAccion() && TD.pedoCd<=0){
     TD.pedoCd = PEDO_TD; sfx.pedo(); sacudir(7);
@@ -1883,58 +1963,111 @@ function updateTorre(){
     hablar(VOZ.pedo);
     for(const e of TD.enem){ e.vida -= 3; const p = posEnem(e); nubePedo(p.x, p.y, 6); }
   }
-  /* oleadas */
+  /* PODER 2: la hamburguesa de tío Juan pone a TODOS los defensores a mil */
+  if (TD.burgerCd>0) TD.burgerCd--;
+  if (TD.burger>0) TD.burger--;
+  if (mAbj() && mAccion() && TD.burgerCd<=0 && TD.burger<=0){
+    TD.burgerCd = BURGER_TD; TD.burger = 300; sfx.poder(); sacudir(4);
+    aviso('🍔 ¡HAMBURGUESA DE TÍO JUAN! Todos disparan al doble', 2.4);
+    hablar(VOZ.hamburguesa);
+  }
+  /* oleadas: cada una trae su mezcla de bichos, y las últimas traen jefazo */
   if (TD.restan<=0 && TD.enem.length===0 && TD.oleada < TD.oleadas && TD.spawn<=0){
     TD.oleada++;
     TD.restan = 4 + N + TD.oleada*2;
-    aviso('🌊 ¡OLEADA '+TD.oleada+' DE '+TD.oleadas+'!', 2);
+    /* qué bichos salen en esta oleada */
+    TD.tanda = ['goomba'];
+    if (N >= BICHOS.koopa.desde && TD.oleada >= 2) TD.tanda.push('koopa');
+    TD.jefeToca = (N >= BICHOS.jefe.desde && TD.oleada === TD.oleadas);
+    aviso('🌊 ¡OLEADA '+TD.oleada+' DE '+TD.oleadas+'!'+(TD.jefeToca ? ' ¡Y VIENE EL JEFAZO!' : ''), 2);
     sfx.heroe();
   }
   if (TD.spawn>0) TD.spawn--;
   if (TD.restan>0 && TD.spawn<=0){
     TD.restan--;
     TD.spawn = Math.max(22, 48 - N*3 - TD.oleada);
-    TD.enem.push({i:0, p:0, vida:2 + N + Math.floor(TD.oleada*0.8),
-                  max:2 + N + Math.floor(TD.oleada*0.8), vel:0.010 + N*0.0008 + TD.oleada*0.0004});
+    /* el jefazo sale el último de su oleada, para que dé tiempo a prepararse */
+    const clase = (TD.jefeToca && TD.restan === 0) ? 'jefe'
+                : TD.tanda[(Math.random()*TD.tanda.length)|0];
+    const B = BICHOS[clase];
+    const vida = Math.max(1, Math.round((2 + N + Math.floor(TD.oleada*0.8)) * B.vida));
+    TD.enem.push({clase, i:0, p:0, vida, max:vida, hielo:0, atonta:0,
+                  vel:(0.010 + N*0.0008 + TD.oleada*0.0004) * B.vel});
+    if (clase === 'jefe'){ sfx.heroe(); sacudir(5); }
   }
-  /* goombas por el camino */
+  /* bichos por el camino */
   for(const e of TD.enem){
-    e.p += e.vel;
+    if (e.hielo>0) e.hielo--;
+    if (e.atonta>0){ e.atonta--; continue; }     /* la pedrada los deja clavados */
+    e.p += e.vel * (e.hielo>0 ? 0.5 : 1);
     while (e.p >= 1){ e.p -= 1; e.i++; }
-    if (e.i >= CAMINO.length-1){
+    if (e.i >= TD.camino.length-1){
       e.fuera = true;
-      susto(TD, '¡Un goomba llegó a la casa! Vidas infinitas: sigue');
+      susto(TD, '¡Un '+BICHOS[e.clase].nombre+' llegó a la casa! Vidas infinitas: sigue');
     }
   }
   TD.enem = TD.enem.filter(e=>{
     if (e.fuera) return false;
     if (e.vida<=0){
       const p = posEnem(e);
-      sumar(250); sfx.pisoton();
-      for(let i=0;i<6;i++) parts.push({tipo:'estrellita', x:p.x, y:p.y, vx:(Math.random()-0.5)*4, vy:-2-Math.random()*3, t:30});
-      if (++TD.bajas % 4 === 0){ TD.monedas++; aviso('🪙 ¡Una moneda más!', 1.2); }
+      sumar(e.clase==='jefe' ? 1200 : 250); sfx.pisoton();
+      for(let i=0;i<(e.clase==='jefe'?16:6);i++) parts.push({tipo:'estrellita', x:p.x, y:p.y, vx:(Math.random()-0.5)*4, vy:-2-Math.random()*3, t:30});
+      /* el jefazo suelta un buen puñado de monedas de golpe */
+      if (e.clase === 'jefe'){
+        TD.monedas += BICHOS.jefe.monedas; sacudir(6);
+        aviso('🪙 ¡El jefazo soltó '+BICHOS.jefe.monedas+' monedas!', 2);
+      } else if (++TD.bajas % 4 === 0){ TD.monedas++; aviso('🪙 ¡Una moneda más!', 1.2); }
       return false;
     }
     return true;
   });
-  /* las torres disparan al goomba más adelantado que tengan a tiro */
+  /* los defensores hacen lo suyo con el bicho más adelantado que tengan a tiro */
   for(const to of TD.torres){
     const d = TORRES[to.t];
+    if (to.brillo>0) to.brillo--;
     if (to.cd>0) to.cd--;
     if (to.tiro>0) to.tiro--;
+    /* ABU no dispara: hornea monedas */
+    if (d.hab === 'moneda'){
+      if (++to.horno >= Math.round(300 / (1 + 0.5*to.est))){
+        to.horno = 0; TD.monedas++; to.brillo = 22; sfx.moneda();
+      }
+      continue;
+    }
     const c = celPix(to.cx, to.cy);
+    const alc = alcanceDe(d, to.est);
     let mejor = null, mejorAvance = -1;
     for(const e of TD.enem){
       const p = posEnem(e);
-      if (Math.hypot(p.x-c.x, p.y-c.y) > d.alcance) continue;
+      if (Math.hypot(p.x-c.x, p.y-c.y) > alc) continue;
       const avance = e.i + e.p;
       if (avance > mejorAvance){ mejorAvance = avance; mejor = e; }
     }
     to.blanco = mejor ? posEnem(mejor) : null;
     if (mejor && to.cd<=0){
-      to.cd = d.cd; to.tiro = 7;
-      mejor.vida -= d.dano;
-      sfx.fuego();
+      to.cd = Math.max(6, Math.round(cdDe(d, to.est) * (TD.burger>0 ? 0.5 : 1)));
+      to.tiro = 7;
+      const golpe = danoDe(d, to.est);
+      mejor.vida -= golpe;
+      /* y ahora la gracia de cada uno */
+      if (d.hab === 'hielo'){ mejor.hielo = 110 + to.est*40; }
+      else if (d.hab === 'pedo'){
+        const p0 = posEnem(mejor), radio = 74 + to.est*14;
+        nubePedo(p0.x, p0.y, 5);
+        for(const o of TD.enem){
+          if (o === mejor) continue;
+          const po = posEnem(o);
+          if (Math.hypot(po.x-p0.x, po.y-p0.y) <= radio) o.vida -= golpe*0.6;
+        }
+        sfx.pedo();
+      }
+      else if (d.hab === 'piedra'){
+        mejor.atonta = 55 + to.est*18; sacudir(3);
+        const p0 = posEnem(mejor);
+        for(let i=0;i<7;i++) parts.push({tipo:'ladrillo', x:p0.x, y:p0.y,
+          vx:(Math.random()-0.5)*6, vy:-2-Math.random()*4, t:26});
+      }
+      if (d.hab !== 'pedo') sfx.fuego();
     }
   }
   /* fin del nivel */
@@ -1950,12 +2083,15 @@ function drawTorre(){
     rect(TX0+x*TC, TY0+y*TC, TC, TC, (x+y)%2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)');
   }
   /* el camino */
-  for(const [cx,cy] of CAMINO){
+  for(const [cx,cy] of TD.camino){
     rect(TX0+cx*TC, TY0+cy*TC, TC, TC, '#b08a50');
     rect(TX0+cx*TC, TY0+cy*TC, TC, 5, '#c8a068');
   }
+  /* por dónde entran los bichos */
+  const ent = celPix(TD.camino[0][0], TD.camino[0][1]);
+  texto('▶', ent.x-2+Math.sin(T/9)*4, ent.y+7, 26, 'rgba(255,90,90,0.9)', true);
   /* la casa que hay que defender, con el amigo dentro */
-  const casa = celPix(14,5);
+  const casa = casaTorre();
   rect(casa.x-28, casa.y-30, 56, 52, '#d8d0c0');
   ctx.fillStyle='#c8402a';
   ctx.beginPath(); ctx.moveTo(casa.x-34, casa.y-30); ctx.lineTo(casa.x, casa.y-58);
@@ -1970,38 +2106,104 @@ function drawTorre(){
   for(const to of TD.torres){
     const c = celPix(to.cx, to.cy), d = TORRES[to.t];
     sombra(c.x, c.y+18, 15);
-    if (d.id==='tiojuan') dibTioJuan(c.x-14, c.y-30, T);
-    else { ctx.save(); ctx.translate(c.x-13, c.y-8); dibPerroSolo(d.color); ctx.restore(); }
+    if (to.brillo>0){                       /* fogonazo al ponerlo o al mejorarlo */
+      ctx.globalAlpha = 0.35*(to.brillo/30);
+      ctx.fillStyle='#ffe36e';
+      ctx.beginPath(); ctx.arc(c.x, c.y, 34, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    dibDefensor(d, c.x, c.y);
+    /* las estrellitas de mejora, encima de la cabeza */
+    for(let s=0; s<to.est; s++)
+      texto('⭐', c.x - (to.est-1)*7 + s*14, c.y-38, 13, '#ffe36e', true);
     if (to.tiro>0 && to.blanco){
-      ctx.strokeStyle='#ffe36e'; ctx.lineWidth=3;
+      ctx.strokeStyle = d.hab==='hielo' ? '#8ecbff' : d.hab==='piedra' ? '#d0a060' : '#ffe36e';
+      ctx.lineWidth = d.hab==='piedra' ? 6 : 3;
       ctx.beginPath(); ctx.moveTo(c.x, c.y-6); ctx.lineTo(to.blanco.x, to.blanco.y); ctx.stroke();
     }
   }
-  /* goombas */
+  /* bichos */
   for(const e of TD.enem){
     const p = posEnem(e);
-    sombra(p.x, p.y+14, 13);
-    dibGoomba(p.x-13, p.y-12, T);
-    rect(p.x-15, p.y-24, 30, 5, '#3a0a0a');
-    rect(p.x-15, p.y-24, 30*Math.max(0,e.vida)/e.max, 5, '#5ee08a');
+    const esc = e.clase==='jefe' ? 1.7 : 1;
+    sombra(p.x, p.y+14, 13*esc);
+    ctx.save(); ctx.translate(p.x, p.y); ctx.scale(esc, esc); ctx.translate(-p.x, -p.y);
+    if (e.clase==='jefe') dibBowser(p.x-16, p.y-24, T, 0);
+    else if (e.clase==='koopa') dibKoopa(p.x-13, p.y-20, {vivo:true}, T);
+    else dibGoomba(p.x-13, p.y-12, T);
+    ctx.restore();
+    if (e.hielo>0){                          /* congelado: se ve azulito */
+      ctx.globalAlpha = 0.34;
+      ctx.fillStyle='#8ecbff';
+      ctx.beginPath(); ctx.arc(p.x, p.y, 19*esc, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+      texto('❄️', p.x+15*esc, p.y-16*esc, 13, '#fff', true);
+    }
+    if (e.atonta>0) texto('💫', p.x, p.y-30*esc, 15, '#fff', true);
+    /* la barrita solo cuando ya le han pegado: si no, en fila india se
+       juntan todas y parece una raya verde de punta a punta */
+    if (e.vida < e.max || e.clase==='jefe'){
+      const an = 30*esc;
+      rect(p.x-an/2, p.y-24*esc, an, 5, '#3a0a0a');
+      rect(p.x-an/2, p.y-24*esc, an*Math.max(0,e.vida)/e.max, 5, e.clase==='jefe' ? '#ff8a20' : '#5ee08a');
+    }
   }
   /* cursor y alcance del defensor elegido */
   const c = celPix(TD.cx, TD.cy), d = TORRES[TD.tipo];
-  ctx.globalAlpha = 0.16;
-  ctx.fillStyle = enCamino(TD.cx,TD.cy) ? '#ff5a5a' : '#ffe36e';
-  ctx.beginPath(); ctx.arc(c.x, c.y, d.alcance, 0, Math.PI*2); ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = enCamino(TD.cx,TD.cy) ? '#ff5a5a' : '#ffe36e';
+  const N = nivelDe('torre');
+  const encima = TD.torres.find(o=>o.cx===TD.cx && o.cy===TD.cy);
+  const malSitio = enCamino(TD.cx,TD.cy);
+  const col = malSitio ? '#ff5a5a' : encima ? '#8ecbff' : '#ffe36e';
+  const alcVista = encima ? alcanceDe(TORRES[encima.t], encima.est) : alcanceDe(d, 0);
+  if (alcVista > 0){
+    ctx.globalAlpha = 0.16;
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(c.x, c.y, alcVista, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = col;
   ctx.lineWidth = 4;
   ctx.strokeRect(TX0+TD.cx*TC+3, TY0+TD.cy*TC+3, TC-6, TC-6);
-  ctx.globalAlpha = 0.5;
-  if (d.id==='tiojuan') dibTioJuan(c.x-14, c.y-30, T);
-  else { ctx.save(); ctx.translate(c.x-13, c.y-8); dibPerroSolo(d.color); ctx.restore(); }
-  ctx.globalAlpha = 1;
+  if (!encima){
+    ctx.globalAlpha = 0.5;
+    dibDefensor(d, c.x, c.y);
+    ctx.globalAlpha = 1;
+  }
   hudMJ('🏰 TORRE', etiquetaNivel('torre')+'  🌊'+Math.max(1,TD.oleada)+'/'+TD.oleadas+'  🪙'+TD.monedas+'  '+corazonesInf(TD),
-        'A pone · B cambia');
-  texto('PONES: '+d.nombre+' (🪙'+d.coste+')', 16, H-16, 16, TD.monedas>=d.coste ? '#5ee08a' : '#ff8a8a');
-  barraPoder(TD.pedoCd<=0 ? '💨 PEDO TOTAL (▲ + B)' : '💨 cargando pedo...', 1-TD.pedoCd/PEDO_TD, TD.pedoCd<=0);
+        'A pone/mejora · B cambia');
+  /* abajo: a quién estás poniendo, o a quién puedes mejorar */
+  if (encima){
+    const de = TORRES[encima.t];
+    const tope = encima.est >= MAX_ESTRELLA;
+    const precio = costeMejora(de, encima.est);
+    texto(tope ? de.nombre+' '+'⭐'.repeat(encima.est)+' ¡al máximo!'
+               : 'A MEJORA a '+de.nombre+' '+'⭐'.repeat(encima.est+1)+' (🪙'+precio+')',
+          16, H-16, 16, tope ? '#8ecbff' : (TD.monedas>=precio ? '#5ee08a' : '#ff8a8a'));
+  } else if (N < d.desde){
+    texto(d.nombre+' se abre en el NIVEL '+d.desde, 16, H-16, 16, '#8a8ab0');
+  } else {
+    texto('PONES: '+d.nombre+' (🪙'+d.coste+') · '+d.gracia,
+          16, H-16, 16, TD.monedas>=d.coste ? '#5ee08a' : '#ff8a8a');
+  }
+  /* dos poderes: se muestra el que toca cargar */
+  if (TD.burger>0)
+    barraPoder('🍔 ¡TODOS AL DOBLE!', TD.burger/300, true);
+  else if (TD.pedoCd<=0)
+    barraPoder('💨 PEDO TOTAL (▲ + B)', 1, true);
+  else if (TD.burgerCd<=0)
+    barraPoder('🍔 HAMBURGUESA (▼ + B)', 1, true);
+  else
+    barraPoder('💨 pedo '+Math.round((1-TD.pedoCd/PEDO_TD)*100)+'% · 🍔 '+Math.round((1-TD.burgerCd/BURGER_TD)*100)+'%',
+               Math.max(1-TD.pedoCd/PEDO_TD, 1-TD.burgerCd/BURGER_TD), false);
+}
+/* cada defensor con su propio dibujo */
+function dibDefensor(d, x, y){
+  if (d.id==='tiojuan')      dibTioJuan(x-14, y-30, T);
+  else if (d.id==='cucu')    dibCucu(x-13, y-30, 1, T);
+  else if (d.id==='tiofran') dibTioFran(x-14, y-30, T, false);
+  else if (d.id==='abu')     dibAbu(x-13, y-30, 1, T, true);
+  else if (d.id==='salomon') dibSalomon(x-13, y-28, T, 1);
+  else { ctx.save(); ctx.translate(x-13, y-8); dibPerroSolo(d.color); ctx.restore(); }
 }
 
 /* ============================================================
@@ -5571,6 +5773,7 @@ function tecla(k){
 return { activo, update, draw, tecla, abrirArcade, empezar,
          _estado: ()=>modo, _juegos: JUEGOS,
          _nivel: id=>nivelDe(id), _ponNivel: (id,n)=>{ nivel[id]=n; }, _MAXNIV: MAXNIV,
+         _maxDe: maxDe, _TORRES: TORRES, _CAMINOS: CAMINOS,
          _reiniciar: id=>({birds:iniciarBirds, dig:iniciarDig, kong:iniciarKong, contra:iniciarContra,
                            globos:iniciarGlobos, bomba:iniciarBombas, hielo:iniciarHielo,
                            torre:iniciarTorre, nieve:iniciarNieve, luna:iniciarLuna,
