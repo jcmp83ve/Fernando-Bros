@@ -54,6 +54,10 @@ Los botones de la pantalla son **zonas de toque grandes** (bastante mayores que 
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
 - Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
+## 🧸 Pensado para un niño de cinco años
+
+Fernando tiene cinco años, así que hay un rincón entero hecho a su medida: en la **Sala Arcade**, las tarjetas con el osito **🧸** son juegos que **se juegan tocando la pantalla**, sin apuntar, sin correr y **sin poder perder**. Son cuatro nuevos —**🃏 Memoria**, **🎵 Música**, **🫧 Burbujas** y **🎨 Pinta**— más los que ya eran fáciles (Nieve, Flappy, Patos y Vagoneta). En todos ellos aparece un amigo distinto de la familia y todos hablan con la voz de siempre.
+
 ## 🆕 Grandes novedades
 
 - **10 mundos un 50% más largos**, incluido el **Mar de Fernando** (¡se nada!) y el **Castillo de Bowser**
@@ -70,8 +74,9 @@ Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualqu
 
 ## 🕹️ Sala Arcade
 
-Veintiocho minijuegos con los personajes del juego, desde el selector de mundos.
+Treinta y dos minijuegos con los personajes del juego, desde el selector de mundos.
 
+- **🧸 Cuatro juegos para los más peques** — los que llevan el osito 🧸 en la tarjeta están hechos a la medida de un niño de cinco años: se juegan **tocando la pantalla**, van despacio, no hay que apuntar ni correr y **no se puede perder**. Son MEMORIA, MÚSICA, BURBUJAS y PINTA (y también son fáciles NIEVE, FLAPPY, PATOS y VAGONETA).
 - **Vidas infinitas ∞** en todos: un golpe solo cuesta un susto 😵 y Fernando vuelve a un sitio seguro; ninguna partida se acaba en derrota.
 - **Seis niveles por juego** (y **diez** en Fernando Torre): al limpiar uno se vuelve a armar el escenario más difícil (más enemigos, más rápidos, más obstáculos) sin perder los puntos, y la copa sale al terminar el último. Arriba se ve **NIV 1/6**.
 - **Todo el elenco tiene su momento**: en cada nivel aparece **un amigo distinto al que rescatar** — Santi, Cucú, Penny, Sheldon, Luca, Salomón, Abu, Tío Fran, Mamá, Papá, Tía Yanny, Tío Nacho, Tío Beto, Tía Giuliana, Rómulo y Tío Juan. Lleva su cartel con flecha y da **+1500 puntos** y su frase con voz de niño.
@@ -107,6 +112,10 @@ Veintiocho minijuegos con los personajes del juego, desde el selector de mundos.
 | 🏎️ **Fernando F-Cero** *(F-Zero)* | Carrera futurista en perspectiva contra los rivales: si te sales de la pista pierdes energía | **←→** giras · **B** = 🔥 **turbo** con su barra de recarga |
 | 🍌 **Bananas** *(Gorillas de MS-DOS)* | Por turnos contra tío Fran desde los tejados: eliges **ángulo** y **fuerza** y le lanzas el plátano, con el viento moviéndolo | **←→** el ángulo · **▲▼** la fuerza · **B** lanza |
 | 🧱 **Fernando 3D** *(estilo Quake/Doom)* | **Primera persona de verdad**: laberinto en 3D con su mapita en la esquina, limpiando de bichos cada pasillo | **←→** giras · **▲▼** andas · **B** dispara · **A** = 🔫 **metralleta**: dispara sin parar un rato |
+| 🃏 **Fernando Memoria** 🧸 | **Memorama de la familia**: se voltean dos cartas y hay que ir juntando las parejas. De 4 parejas en el nivel 1 hasta 9 en el 6. El **amigo del nivel** está escondido en el mazo y al emparejarlo da **+1500** y su frase | Solo tocar · nada de prisa: las cartas esperan lo que haga falta |
+| 🎵 **Fernando Música** 🧸 *(estilo Simón)* | Penny, Sheldon, Cucú y Santi se van encendiendo con su nota y hay que **repetir la melodía** tocándolos en el mismo orden. Cada acierto la alarga una nota más | Si te equivocas **no pasa nada**: la vuelve a tocar desde el principio |
+| 🫧 **Fernando Burbujas** 🧸 | Suben burbujas del fondo del mar con 🪙 🍔 ⭐ 💗 dentro y se **revientan con el dedo**. Alguna trae un goomba (solo un susto). A mitad de partida sube una **burbuja dorada con el amigo del nivel** | **B** = 💨 **pedo de tío Fran**: revienta de golpe todas las de la pantalla |
+| 🎨 **Fernando Pinta** 🧸 | **Libro para colorear**: seis dibujos (Fernando, Penny, la hamburguesa, la casa, Cucú y Tío Juan). Se elige un color de la bandeja y se toca el dibujo; la pieza señalada se ilumina para no fallar | **Aquí no se puede perder de ninguna manera** — no hay enemigos ni reloj |
 
 Para salir de la sala arcade hay un botón **✕ VOLVER** arriba a la izquierda (también funciona la tecla ESC). Dentro de cada minijuego, el botón **✕ SALIR** del marcador regresa a la sala.
 
@@ -147,4 +156,12 @@ Carrera de 3 vueltas **en primera persona, como el Mario Kart de verdad**: la pi
 
 Todos los diálogos son **grabaciones con voz de niño en español** (archivos mp3), que suenan en cualquier dispositivo — incluido iPhone. Si un audio no carga, el juego usa como respaldo la voz sintética del navegador. La primera vez, toca la pantalla o pulsa una tecla para activar el sonido.
 
-**En la sala arcade también hablan.** Los 28 minijuegos usan las mismas grabaciones: al empezar una partida, al subir de nivel, al rescatar a cada amigo (cada uno con su frase), al usar los poderes (la hamburguesa, el hueso, el globo, el pedo de tío Fran, el salto de papá…), cuando Rómulo eructa al comérselo en Fernando-Man, y al ganar. Las frases del código están enlazadas al texto exacto de cada mp3, y hay una prueba automática que avisa si alguna se sale del guion y caería en la voz sintética.
+**En la sala arcade también hablan.** Los 32 minijuegos usan las mismas grabaciones: al empezar una partida, al subir de nivel, al rescatar a cada amigo (cada uno con su frase), al usar los poderes (la hamburguesa, el hueso, el globo, el pedo de tío Fran, el salto de papá…), cuando Rómulo eructa al comérselo en Fernando-Man, y al ganar. Las frases del código están enlazadas al texto exacto de cada mp3, y hay una prueba automática que avisa si alguna se sale del guion y caería en la voz sintética.
+
+## 🧪 Pruebas
+
+```
+node pruebas.js
+```
+
+No hace falta navegador ni instalar nada. El banco de pruebas finge la pantalla y **hace jugar solos a los 32 minijuegos**, nivel por nivel, con toques y botones al azar; además juega bien los cuatro de los peques hasta terminarlos, para comprobar que de verdad se pueden ganar, y revisa que todas las frases habladas existan tal cual en las grabaciones.

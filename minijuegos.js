@@ -26,13 +26,13 @@ const JUEGOS = [
    corto:'HIELO', desc:'Sube hasta Cucú · poder: salto de papá'},
   {id:'torre',  nombre:'FERNANDO TORRE',   emoji:'🏰', color:'#2a6f26',
    corto:'TORRE', desc:'Pon a Penny y Tío Juan a frenar goombas'},
-  {id:'nieve',  nombre:'FERNANDO NIEVE',   emoji:'🎿', color:'#3a7ab0',
+  {id:'nieve',  nombre:'FERNANDO NIEVE',   emoji:'🎿', color:'#3a7ab0', peque:true,
    corto:'NIEVE', desc:'Baja la montaña esquivando pinos'},
   {id:'luna',   nombre:'FERNANDO LUNA',    emoji:'🚀', color:'#3a2a7a',
    corto:'LUNA', desc:'Aluniza suavecito en las plataformas'},
   {id:'corre',  nombre:'FERNANDO RUNNER',  emoji:'🏃', color:'#2a4a9a',
    corto:'RUNNER', desc:'Corre sin parar por tres carriles'},
-  {id:'flappy', nombre:'FLAPPY FERNANDO',  emoji:'🐤', color:'#2a8ad0',
+  {id:'flappy', nombre:'FLAPPY FERNANDO',  emoji:'🐤', color:'#2a8ad0', peque:true,
    corto:'FLAPPY', desc:'Aletea y pasa entre los tubos'},
   {id:'coco',   nombre:'FERNANDO-MAN',     emoji:'🟡', color:'#1a2a8a',
    corto:'COCO', desc:'Cómete las hamburguesas del laberinto'},
@@ -48,7 +48,7 @@ const JUEGOS = [
    corto:'MAPPY', desc:'Tirolinas y portazos a los gatos'},
   {id:'circo',  nombre:'FERNANDO CIRCO',   emoji:'🎪', color:'#8a1a4a',
    corto:'CIRCO', desc:'Aros de fuego y balancín con globos'},
-  {id:'patos',    nombre:'FERNANDO PATOS',    emoji:'🦆', color:'#2a6ad0',
+  {id:'patos',    nombre:'FERNANDO PATOS',    emoji:'🦆', color:'#2a6ad0', peque:true,
    corto:'PATOS', desc:'Tócalos al vuelo · Penny se ríe si fallas'},
   {id:'isla',     nombre:'FERNANDO ISLA',     emoji:'🏝️', color:'#2a8a4a',
    corto:'ISLA', desc:'Corre comiendo fruta o se acaba la energía'},
@@ -56,7 +56,7 @@ const JUEGOS = [
    corto:'GALAXIA', desc:'Nave con barra de mejoras y nave madre'},
   {id:'lucha',    nombre:'FERNANDO LUCHA',    emoji:'🥊', color:'#a04a1a',
    corto:'LUCHA', desc:'Pelea uno a uno con golpe especial'},
-  {id:'vagoneta', nombre:'VAGONETA',          emoji:'🚃', color:'#6a3a1a',
+  {id:'vagoneta', nombre:'VAGONETA',          emoji:'🚃', color:'#6a3a1a', peque:true,
    corto:'VAGONETA', desc:'La vagoneta de Sheldon: solo saltar'},
   {id:'jam',      nombre:'FERNANDO JAM',      emoji:'🏀', color:'#c8853a',
    corto:'JAM', desc:'2 contra 2 y a los 3 aciertos ¡fuego!'},
@@ -66,8 +66,18 @@ const JUEGOS = [
    corto:'BANANAS', desc:'Ángulo y fuerza contra tío Fran'},
   {id:'quake',    nombre:'FERNANDO 3D',       emoji:'🧱', color:'#1a3a5a',
    corto:'3D', desc:'Laberinto en primera persona'},
+  /* --- los cuatro de abajo son los de los más peques: se juegan tocando,
+         van despacio y no se puede perder --- */
+  {id:'memoria',  nombre:'FERNANDO MEMORIA',  emoji:'🃏', color:'#8a2a7a', peque:true,
+   corto:'MEMORIA', desc:'Busca las parejas de la familia · sin prisa'},
+  {id:'musica',   nombre:'FERNANDO MÚSICA',   emoji:'🎵', color:'#1a5a8a', peque:true,
+   corto:'MÚSICA', desc:'Mira la melodía y repítela tocando'},
+  {id:'burbujas', nombre:'FERNANDO BURBUJAS', emoji:'🫧', color:'#2a8ac0', peque:true,
+   corto:'BURBUJAS', desc:'Revienta burbujas con el dedo · poder: pedo'},
+  {id:'pinta',    nombre:'FERNANDO PINTA',    emoji:'🎨', color:'#7a3a9a', peque:true,
+   corto:'PINTA', desc:'Libro para colorear · aquí nunca se pierde'},
 ];
-const COLS_ARCADE = 7;
+const COLS_ARCADE = 8;
 let sel = 0, modo = null, T = 0, msg = '', msgT = 0, resultado = 0, finDicho = false;
 /* controles: la flecha arriba sirve para SUBIR, nunca para saltar */
 const mIzq   = ()=> keys['arrowleft']||keys['a']||mando['arrowleft'];
@@ -183,7 +193,8 @@ const DESFASE = {birds:0, dig:2, kong:5, contra:7, globos:9, bomba:11, hielo:13,
                  torre:1, nieve:4, luna:8, corre:3, flappy:6, coco:12,
                  mega:10, burger:14, survivor:15, jeep:5, mappy:2, circo:9,
                  patos:3, isla:7, galaxia:11, lucha:0, vagoneta:6, jam:12,
-                 fcero:1, bananas:8, quake:4};
+                 fcero:1, bananas:8, quake:4,
+                 memoria:6, musica:10, burbujas:13, pinta:2};
 function amigoDeNivel(juego, n){
   /* en Kong mamá princesa ya espera arriba, así que ella no entra en el sorteo */
   const lista = juego==='kong' ? AMIGOS.filter(a=>a.id!=='mama') : AMIGOS;
@@ -5537,10 +5548,682 @@ function drawQuake(){
 }
 
 /* ============================================================
+   JUEGOS PARA LOS MÁS PEQUES 🧸
+   Los cuatro siguientes están hechos a la medida de un niño de cinco
+   años: se juegan TOCANDO la pantalla con el dedo (o con las flechas y
+   A si hay mando), no hay que correr ni apuntar rápido, y no se puede
+   perder de ninguna manera. Equivocarse solo cuesta un sonidito.
+   ============================================================ */
+const amigoPorId = id => AMIGOS.find(a=>a.id===id) || AMIGOS[0];
+/* Varios personajes se dibujan con su cartelito flotante encima. Dentro de
+   una tarjeta o un botón el cartel sobra y además se salía por arriba, así
+   que se apaga mientras se pinta el muñeco. */
+function sinCartel(fn){
+  const antes = letrero;
+  letrero = function(){};
+  try{ fn(); } finally { letrero = antes; }
+}
+/* un puntero grande con forma de manita, para jugar sin dedo (mando/teclado) */
+function dibManita(x, y, pulso){
+  const s = 1 + (pulso?Math.sin(T/7)*0.06:0);
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  ctx.globalAlpha = 0.35; ctx.fillStyle='#000';
+  ctx.beginPath(); ctx.ellipse(3, 6, 17, 17, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  ctx.font = '34px monospace'; ctx.textAlign='center';
+  ctx.fillText('👆', 0, 14);
+  ctx.textAlign='left';
+  ctx.restore();
+}
+/* ¿el toque cae dentro del juego? (arriba está el marcador con el botón SALIR,
+   que lo atiende la sala arcade: aquí no hay que robárselo) */
+const toqueEnJuego = () => pt.soltado && pt.y > HUD2 + 4;
+
+/* ============================================================
+   29) FERNANDO MEMORIA  🧸 (memorama de la familia)
+   ============================================================ */
+const ME = { cartas:[], abiertas:[], parejas:0, meta:0, sel:0, espera:0,
+             t:0, sustos:0, amigo:null, prevA:false, cols:4, filas:2 };
+const GRID_ME = {4:[4,2], 5:[5,2], 6:[6,2], 7:[7,2], 8:[4,4], 9:[6,3]};
+function iniciarMemoria(){
+  const N = nivelDe('memoria');
+  const pares = 3 + N;                                  /* de 4 a 9 parejas */
+  const g = GRID_ME[pares] || [pares,2];
+  ME.cols = g[0]; ME.filas = g[1];
+  ME.amigo = amigoDeNivel('memoria', N);
+  /* el elenco de la partida: siempre entra el amigo del nivel */
+  const resto = AMIGOS.filter(a=>a.id!==ME.amigo.id);
+  const desde = ((N*3) % resto.length);
+  const elenco = [ME.amigo];
+  for(let i=0;i<pares-1;i++) elenco.push(resto[(desde+i)%resto.length]);
+  /* dos cartas de cada uno, barajadas */
+  const mazo = [];
+  for(const a of elenco){ mazo.push(a); mazo.push(a); }
+  for(let i=mazo.length-1;i>0;i--){
+    const j = (Math.random()*(i+1))|0;
+    const tmp = mazo[i]; mazo[i] = mazo[j]; mazo[j] = tmp;
+  }
+  /* las cartas se reparten en una cuadrícula que siempre cabe en pantalla */
+  const zx = 40, zy = HUD2+26, zw = W-80, zh = H-zy-70;
+  const hueco = 12;
+  const cw = Math.min(132, (zw-(ME.cols-1)*hueco)/ME.cols);
+  const ch = Math.min(160, (zh-(ME.filas-1)*hueco)/ME.filas);
+  const x0 = (W - (cw*ME.cols + hueco*(ME.cols-1)))/2;
+  const y0 = zy + (zh - (ch*ME.filas + hueco*(ME.filas-1)))/2;
+  ME.cartas = mazo.map((a,i)=>({
+    a, x: x0 + (i%ME.cols)*(cw+hueco), y: y0 + ((i/ME.cols)|0)*(ch+hueco),
+    w: cw, h: ch, abierta:false, hecha:false, giro:0 }));
+  ME.abiertas = []; ME.parejas = 0; ME.meta = pares; ME.sel = 0;
+  ME.espera = 0; ME.t = 0; ME.sustos = 0; ME.prevA = false;
+  aviso('Toca dos cartas y busca las parejas 🧸', 4);
+}
+function abrirCarta(c){
+  if (!c || c.hecha || c.abierta || ME.espera>0 || ME.abiertas.length>=2) return;
+  c.abierta = true; c.giro = 10; ME.abiertas.push(c);
+  beep(520+ME.abiertas.length*180, 0.1, 'square', 0.06);
+  if (ME.abiertas.length < 2) return;
+  const [a, b] = ME.abiertas;
+  if (a.a.id === b.a.id){
+    a.hecha = b.hecha = true; ME.abiertas = []; ME.parejas++;
+    sumar(800); sfx.moneda();
+    for(const c2 of [a,b])
+      for(let i=0;i<8;i++) parts.push({tipo:'estrellita', x:c2.x+c2.w/2, y:c2.y+c2.h/2,
+        vx:(Math.random()-0.5)*5, vy:-1-Math.random()*2.5, t:32});
+    if (a.a.id === ME.amigo.id){
+      sumar(1500); sfx.poder(); sacudir(3);
+      hablar(ME.amigo.frase);
+      aviso('🤗 ¡ENCONTRASTE A '+ME.amigo.nombre+'! +1500', 2.6);
+    } else {
+      aviso('¡PAREJA! '+a.a.nombre+' y '+a.a.nombre, 1.6);
+    }
+  } else {
+    ME.espera = 52;                     /* se ven un ratito y se dan vuelta */
+  }
+}
+function updateMemoria(){
+  ME.t++;
+  for(const c of ME.cartas) if (c.giro>0) c.giro--;
+  if (ME.espera>0){
+    ME.espera--;
+    if (ME.espera===0){
+      for(const c of ME.abiertas) c.abierta = false;
+      ME.abiertas = [];
+      beep(220, 0.14, 'triangle', 0.05);
+    }
+  }
+  /* con el dedo: se toca la carta directamente */
+  if (toqueEnJuego()){
+    pt.soltado = false;
+    for(let i=0;i<ME.cartas.length;i++){
+      const c = ME.cartas[i];
+      if (pt.x>=c.x-6 && pt.x<=c.x+c.w+6 && pt.y>=c.y-6 && pt.y<=c.y+c.h+6){ ME.sel=i; abrirCarta(c); break; }
+    }
+  }
+  /* con mando o teclado: el marco amarillo se mueve con las flechas */
+  if (ME.t%7===0){
+    if (mIzq()) ME.sel = (ME.sel+ME.cartas.length-1)%ME.cartas.length;
+    else if (mDer()) ME.sel = (ME.sel+1)%ME.cartas.length;
+    else if (mArr()) ME.sel = (ME.sel+ME.cartas.length-ME.cols)%ME.cartas.length;
+    else if (mAbj()) ME.sel = (ME.sel+ME.cols)%ME.cartas.length;
+  }
+  if (mSalta() && !ME.prevA) abrirCarta(ME.cartas[ME.sel]);
+  ME.prevA = mSalta();
+  if (ME.parejas >= ME.meta && ME.espera<=0)
+    pasarNivel('memoria', iniciarMemoria, 'finMemoria', VOZ.campeon);
+}
+function drawMemoria(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#20104a'); g.addColorStop(1,'#5a2a86');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<26;i++){
+    ctx.globalAlpha = 0.10+Math.sin(ME.t/28+i)*0.05;
+    ctx.font='26px monospace';
+    ctx.fillText('♥', (i*151)%W, 90+((i*97)%(H-140)));
+    ctx.globalAlpha = 1;
+  }
+  for(let i=0;i<ME.cartas.length;i++){
+    const c = ME.cartas[i];
+    const esc = c.giro>0 ? Math.abs(Math.cos(c.giro/10*Math.PI)) : 1;
+    ctx.save();
+    ctx.translate(c.x+c.w/2, c.y+c.h/2); ctx.scale(Math.max(0.06,esc), 1);
+    ctx.translate(-c.w/2, -c.h/2);
+    if (c.hecha){
+      ctx.fillStyle = 'rgba(94,224,138,0.92)';
+    } else if (c.abierta){
+      ctx.fillStyle = '#fff4e0';
+    } else {
+      const gg = ctx.createLinearGradient(0,0,0,c.h);
+      gg.addColorStop(0,'#d82800'); gg.addColorStop(1,'#8a1400');
+      ctx.fillStyle = gg;
+    }
+    ctx.beginPath(); ctx.roundRect(0, 0, c.w, c.h, 16); ctx.fill();
+    ctx.lineWidth = (i===ME.sel) ? 6 : 3;
+    ctx.strokeStyle = (i===ME.sel) ? '#ffe36e' : 'rgba(255,255,255,0.55)';
+    ctx.stroke();
+    if (c.abierta || c.hecha){
+      /* recortado: varios personajes traen su cartelito y se salía de la carta */
+      ctx.save();
+      ctx.beginPath(); ctx.roundRect(3, 3, c.w-6, c.h-6, 14); ctx.clip();
+      ctx.save();
+      ctx.translate(c.w/2, c.h/2 - 6);
+      const s = Math.min(c.w/50, c.h/70);
+      ctx.scale(s, s);
+      sinCartel(()=>c.a.dib(-13, -20, ME.t));
+      ctx.restore();
+      let tam = 13;
+      ctx.font = 'bold '+tam+'px monospace';
+      while (tam>8 && ctx.measureText(c.a.nombre).width > c.w-12){ tam-=0.5; ctx.font='bold '+tam+'px monospace'; }
+      /* el nombre va sobre una cinta clara: así se lee aunque el muñeco
+         sea de los altos y le llegue a los pies */
+      ctx.fillStyle='rgba(255,255,255,0.86)';
+      ctx.beginPath(); ctx.roundRect(6, c.h-26, c.w-12, 21, 8); ctx.fill();
+      texto(c.a.nombre, c.w/2, c.h-10, tam, '#3a2a10', true);
+      if (c.hecha) texto('✓', c.w-16, 22, 18, '#0a5a2a', true);
+      ctx.restore();
+    } else {
+      ctx.font = 'bold '+Math.round(c.h*0.42)+'px monospace'; ctx.textAlign='center';
+      ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillText('?', c.w/2+2, c.h/2+c.h*0.16+2);
+      ctx.fillStyle='#ffe36e'; ctx.fillText('?', c.w/2, c.h/2+c.h*0.16);
+      ctx.textAlign='left';
+    }
+    ctx.restore();
+  }
+  hudMJ('🃏 MEMORIA', etiquetaNivel('memoria')+'  PAREJAS '+ME.parejas+'/'+ME.meta,
+        'busca a '+ME.amigo.nombre);
+  barraPoder('🧸 SIN PRISA: nadie pierde', ME.parejas/ME.meta, ME.parejas>=ME.meta);
+}
+
+/* ============================================================
+   30) FERNANDO MÚSICA  🧸 (repite la melodía, estilo Simón)
+   ============================================================ */
+const MU = { pads:[], sec:[], fase:'muestra', idx:0, paso:0, espera:0, t:0,
+             sustos:0, meta:0, amigo:null, prevA:false, sel:0, brillo:-1, brilloT:0 };
+const PADS_MU = [
+  {id:'penny',   color:'#e03a4a', nota:392},
+  {id:'sheldon', color:'#3aa030', nota:523},
+  {id:'cucu',    color:'#f0b020', nota:659},
+  {id:'santi',   color:'#3a7ae0', nota:784},
+];
+function iniciarMusica(){
+  const N = nivelDe('musica');
+  MU.pads = PADS_MU.map((p,i)=>({
+    ...p, a: amigoPorId(p.id),
+    x: W/2 - 210 + (i%2)*220, y: HUD2 + 34 + ((i/2)|0)*186,
+    w: 200, h: 170 }));
+  MU.sec = []; MU.fase='espera'; MU.idx=0; MU.paso=0; MU.espera=70;
+  MU.t=0; MU.sustos=0; MU.prevA=false; MU.sel=0; MU.brillo=-1; MU.brilloT=0;
+  MU.meta = 2 + N;                                   /* de 3 a 8 sonidos */
+  MU.amigo = nuevoRescate('musica', 108, H/2-30);
+  aviso('Mira la melodía y repítela tocando 🧸', 4);
+}
+function tocaPad(i, fuerte){
+  const p = MU.pads[i];
+  MU.brillo = i; MU.brilloT = fuerte ? 26 : 20;
+  beep(p.nota, 0.3, 'triangle', 0.11);
+  beep(p.nota*2, 0.16, 'sine', 0.05);
+}
+function updateMusica(){
+  MU.t++;
+  if (MU.brilloT>0) MU.brilloT--; else MU.brillo = -1;
+  if (MU.espera>0){ MU.espera--; if (MU.espera>0) return; }
+
+  if (MU.fase==='espera'){                       /* toca alargar la melodía */
+    MU.sec.push((Math.random()*MU.pads.length)|0);
+    MU.fase='muestra'; MU.paso=0; MU.espera=26;
+    aviso('👀 ¡MIRA! '+MU.sec.length+' de '+MU.meta, 1.6);
+    return;
+  }
+  if (MU.fase==='muestra'){
+    if (MU.paso < MU.sec.length){
+      tocaPad(MU.sec[MU.paso], true);
+      MU.paso++; MU.espera = 34;
+    } else {
+      MU.fase='juega'; MU.idx=0;
+      aviso('👉 ¡AHORA TÚ!', 1.6);
+    }
+    return;
+  }
+  /* fase 'juega': el niño repite */
+  let pulsado = -1;
+  if (toqueEnJuego()){
+    pt.soltado = false;
+    for(let i=0;i<MU.pads.length;i++){
+      const p = MU.pads[i];
+      if (pt.x>=p.x && pt.x<=p.x+p.w && pt.y>=p.y && pt.y<=p.y+p.h){ pulsado=i; MU.sel=i; break; }
+    }
+  }
+  if (MU.t%7===0){
+    if (mIzq()||mDer()) MU.sel = MU.sel^1;
+    else if (mArr()||mAbj()) MU.sel = MU.sel^2;
+  }
+  if (mSalta() && !MU.prevA) pulsado = MU.sel;
+  MU.prevA = mSalta();
+  if (pulsado < 0) return;
+  tocaPad(pulsado, false);
+  if (pulsado === MU.sec[MU.idx]){
+    MU.idx++; sumar(200);
+    if (MU.idx >= MU.sec.length){
+      sumar(600); sfx.moneda();
+      for(let i=0;i<14;i++) parts.push({tipo:'estrellita', x:W/2, y:H/2,
+        vx:(Math.random()-0.5)*8, vy:-1-Math.random()*4, t:38});
+      if (MU.sec.length >= MU.meta){
+        rescatar(MU.amigo, MU.amigo.x+13, MU.amigo.y+18, 9999);
+        pasarNivel('musica', iniciarMusica, 'finMusica', VOZ.campeon);
+      } else {
+        MU.fase='espera'; MU.espera=44;
+        aviso('🎵 ¡MUY BIEN! Ahora una más larga', 1.8);
+      }
+    }
+  } else {
+    susto(MU, '¡Casi! Escucha otra vez, sin prisa');
+    MU.fase='muestra'; MU.paso=0; MU.espera=60; MU.idx=0;
+  }
+}
+function drawMusica(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a1a3a'); g.addColorStop(1,'#1a4a7a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(let i=0;i<12;i++){
+    ctx.globalAlpha = 0.12+Math.sin(MU.t/20+i)*0.06;
+    ctx.font='30px monospace';
+    ctx.fillText(i%2?'♫':'♪', (i*173+((MU.t*0.4)|0))%W, 90+((i*127)%(H-160)));
+    ctx.globalAlpha = 1;
+  }
+  for(let i=0;i<MU.pads.length;i++){
+    const p = MU.pads[i];
+    const on = MU.brillo===i;
+    ctx.fillStyle = on ? '#fff' : p.color;
+    ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 22); ctx.fill();
+    ctx.globalAlpha = on ? 0.55 : 0.18;
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.roundRect(p.x+8, p.y+8, p.w-16, p.h-16, 16); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = (MU.sel===i) ? 6 : 3;
+    ctx.strokeStyle = (MU.sel===i) ? '#ffe36e' : 'rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.roundRect(p.x, p.y, p.w, p.h, 22); ctx.stroke();
+    ctx.save();
+    ctx.beginPath(); ctx.roundRect(p.x+3, p.y+3, p.w-6, p.h-6, 20); ctx.clip();
+    ctx.save();
+    ctx.translate(p.x+p.w/2, p.y+p.h/2-2);
+    ctx.scale(on?2.3:2.1, on?2.3:2.1);
+    sinCartel(()=>p.a.dib(-13, -20, MU.t));
+    ctx.restore();
+    texto(p.a.nombre, p.x+p.w/2, p.y+p.h-14, 15, '#fff', true);
+    ctx.restore();
+  }
+  /* el amigo del nivel anima desde un lado y Fernando canta desde el otro */
+  if (!MU.amigo.salvado){
+    ctx.save(); ctx.translate(0, Math.sin(MU.t/16)*4); dibRescate(MU.amigo); ctx.restore();
+  }
+  ctx.save();
+  ctx.translate(W-108, H/2 + 30 + Math.sin(MU.t/14)*5);
+  ctx.scale(2,2); ctx.translate(-12,-28); dibFernandoSolo(); ctx.restore();
+  texto('🎤', W-78, H/2 + 4, 28, '#fff', true);
+  const cual = MU.fase==='juega' ? '👉 ¡AHORA TÚ!' : '👀 MIRA Y ESCUCHA';
+  texto(cual, W/2, HUD2+20, 20, '#ffe36e', true);
+  hudMJ('🎵 MÚSICA', etiquetaNivel('musica')+'  NOTAS '+MU.sec.length+'/'+MU.meta+'  '+corazonesInf(MU),
+        'toca los botones');
+  barraPoder('🧸 EQUIVOCARSE NO CUESTA NADA', MU.sec.length/MU.meta, MU.fase==='juega');
+}
+
+/* ============================================================
+   31) FERNANDO BURBUJAS  🧸 (revienta burbujas con el dedo)
+   ============================================================ */
+const BB = { bur:[], rotas:0, meta:0, t:0, sustos:0, amigo:null,
+             pedoCd:0, prevB:false, cur:{x:W/2, y:300}, prevA:false };
+const PEDO_CD_BB = 300;
+const PREMIOS_BB = [
+  {tipo:'moneda',  emoji:'🪙', pts:300},
+  {tipo:'burger',  emoji:'🍔', pts:400},
+  {tipo:'estrella',emoji:'⭐', pts:500},
+  {tipo:'corazon', emoji:'💗', pts:300},
+];
+function iniciarBurbujas(){
+  const N = nivelDe('burbujas');
+  BB.bur = []; BB.rotas = 0; BB.t = 0; BB.sustos = 0;
+  BB.pedoCd = 0; BB.prevB = false; BB.prevA = false;
+  BB.cur = {x:W/2, y:300};
+  BB.meta = 10 + N*4;                              /* de 14 a 34 burbujas */
+  BB.amigo = nuevoRescate('burbujas', 0, 0);
+  BB.amigo.puesto = false;
+  aviso('¡Revienta las burbujas con el dedo! 🧸', 4);
+}
+function nuevaBurbuja(){
+  const N = nivelDe('burbujas');
+  const malo = Math.random() < 0.10 + N*0.02;      /* alguna trae un goomba */
+  const p = PREMIOS_BB[(Math.random()*PREMIOS_BB.length)|0];
+  BB.bur.push({x: 60 + Math.random()*(W-120), y: H+40,
+               r: 34 + Math.random()*16, vy: -(0.7 + Math.random()*0.5 + N*0.12),
+               fase: Math.random()*6.28, malo, p, pop:0, amigo:false});
+}
+function reventar(b){
+  if (b.pop) return;
+  b.pop = 1;
+  if (b.amigo){
+    rescatar(BB.amigo, BB.amigo.x+13, BB.amigo.y+18, 9999);
+    return;
+  }
+  if (b.malo){
+    susto(BB, '¡Un goomba! Vidas infinitas: sigue');
+    return;
+  }
+  BB.rotas++; sumar(b.p.pts); sfx.moneda();
+  beep(700+Math.random()*400, 0.08, 'sine', 0.07);
+  for(let i=0;i<9;i++) parts.push({tipo:'estrellita', x:b.x, y:b.y,
+    vx:(Math.random()-0.5)*5, vy:-1-Math.random()*3, t:30});
+}
+function updateBurbujas(){
+  BB.t++;
+  if (BB.pedoCd>0) BB.pedoCd--;
+  const N = nivelDe('burbujas');
+  if (BB.t % Math.max(12, 30-N*3) === 0 && BB.bur.length < 16) nuevaBurbuja();
+  /* el amigo sube dentro de una burbuja dorada a mitad de la partida */
+  if (!BB.amigo.puesto && BB.rotas >= Math.floor(BB.meta/2)){
+    BB.amigo.puesto = true;
+    BB.bur.push({x: W/2, y: H+60, r: 54, vy: -0.55, fase:0, malo:false,
+                 p: PREMIOS_BB[0], pop:0, amigo:true});
+  }
+  /* PODER: el pedo de tío Fran revienta de golpe todo lo que hay en pantalla */
+  if (mAccion() && !BB.prevB && BB.pedoCd<=0){
+    BB.pedoCd = PEDO_CD_BB; sfx.pedo(); hablar(VOZ.pedo); sacudir(4);
+    nubePedo(W/2, H/2, 26);
+    for(const b of BB.bur.slice()) if (!b.malo) reventar(b);
+    aviso('💨 ¡PEDO DE TÍO FRAN! Todas de golpe', 2);
+  }
+  BB.prevB = mAccion();
+  /* con el dedo se revienta directamente; con mando, la manita y A */
+  if (toqueEnJuego()){
+    pt.soltado = false;
+    BB.cur.x = pt.x; BB.cur.y = pt.y;
+    for(const b of BB.bur) if (!b.pop && Math.hypot(b.x-pt.x, b.y-pt.y) < b.r+14){ reventar(b); break; }
+  }
+  const v = 7;
+  if (mIzq()) BB.cur.x -= v; if (mDer()) BB.cur.x += v;
+  if (mArr()) BB.cur.y -= v; if (mAbj()) BB.cur.y += v;
+  BB.cur.x = Math.max(10, Math.min(W-10, BB.cur.x));
+  BB.cur.y = Math.max(HUD2+10, Math.min(H-10, BB.cur.y));
+  if (mSalta() && !BB.prevA)
+    for(const b of BB.bur) if (!b.pop && Math.hypot(b.x-BB.cur.x, b.y-BB.cur.y) < b.r+14){ reventar(b); break; }
+  BB.prevA = mSalta();
+
+  for(const b of BB.bur){
+    if (b.pop){ b.pop++; continue; }
+    b.fase += 0.045;
+    b.y += b.vy;
+    b.x += Math.sin(b.fase)*0.9;
+    if (b.amigo){                                   /* la dorada se queda flotando */
+      if (b.y < 200){ b.y = 200 + Math.sin(BB.t/30)*16; b.vy = 0; }
+      BB.amigo.x = b.x-13; BB.amigo.y = b.y-18;
+      if (BB.amigo.salvado) b.pop = 1;
+    } else if (b.y < HUD2 - 60){
+      b.pop = 1;                                    /* se escapó, no pasa nada */
+    }
+  }
+  BB.bur = BB.bur.filter(b=>b.pop < 12);
+  if (BB.rotas >= BB.meta) pasarNivel('burbujas', iniciarBurbujas, 'finBurbujas', VOZ.otraVez);
+}
+function drawBurbujas(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0a2a5a'); g.addColorStop(0.6,'#2a7ad0'); g.addColorStop(1,'#8ee0ff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* fondo de mar con algas */
+  for(let i=0;i<10;i++){
+    ctx.fillStyle='rgba(20,120,90,0.35)';
+    ctx.beginPath(); ctx.moveTo(40+i*100, H);
+    ctx.quadraticCurveTo(52+i*100+Math.sin(BB.t/30+i)*14, H-90, 62+i*100, H);
+    ctx.fill();
+  }
+  /* Fernando y los perritos miran desde abajo a la izquierda, para no
+     quedar debajo del marcador del poder */
+  ctx.save(); ctx.translate(52, H-60); ctx.scale(1.5,1.5); ctx.translate(-12,-28); dibFernandoSolo(); ctx.restore();
+  ctx.save(); ctx.translate(116, H-32); ctx.scale(1.25,1.25); ctx.translate(-13,-10); dibPerroSolo('#222'); ctx.restore();
+  ctx.save(); ctx.translate(172, H-32); ctx.scale(1.25,1.25); ctx.translate(-13,-10); dibPerroSolo('#8a5a2a'); ctx.restore();
+
+  for(const b of BB.bur){
+    if (b.pop){
+      const k = b.pop/12;
+      ctx.globalAlpha = Math.max(0, 1-k);
+      ctx.strokeStyle = b.amigo ? '#ffe36e' : '#fff'; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r*(1+k*0.7), 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = 1;
+      continue;
+    }
+    /* la burbuja */
+    ctx.fillStyle = b.amigo ? 'rgba(255,227,110,0.30)'
+                  : b.malo ? 'rgba(255,140,140,0.28)' : 'rgba(255,255,255,0.26)';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = b.amigo ? '#ffe36e' : b.malo ? '#ff9a9a' : 'rgba(255,255,255,0.85)';
+    ctx.lineWidth = b.amigo ? 5 : 3;
+    ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.ellipse(b.x-b.r*0.35, b.y-b.r*0.4, b.r*0.16, b.r*0.22, -0.4, 0, Math.PI*2); ctx.fill();
+    /* lo que lleva dentro */
+    if (b.amigo){ dibRescate(BB.amigo); }
+    else if (b.malo){
+      ctx.save(); ctx.translate(b.x-13, b.y-12); dibGoomba(0,0,BB.t); ctx.restore();
+    } else {
+      ctx.font = Math.round(b.r*0.95)+'px monospace'; ctx.textAlign='center';
+      ctx.fillText(b.p.emoji, b.x, b.y+b.r*0.34);
+      ctx.textAlign='left';
+    }
+  }
+  dibManita(BB.cur.x, BB.cur.y, true);
+  hudMJ('🫧 BURBUJAS', etiquetaNivel('burbujas')+'  '+BB.rotas+'/'+BB.meta+'  '+corazonesInf(BB),
+        'tócalas con el dedo');
+  barraPoder(BB.pedoCd<=0 ? '💨 PEDO DE TÍO FRAN (B)' : '💨 recargando...',
+             1-BB.pedoCd/PEDO_CD_BB, BB.pedoCd<=0);
+}
+
+/* ============================================================
+   32) FERNANDO PINTA  🧸 (libro para colorear, imposible perder)
+   ============================================================ */
+function estrellaPts(cx, cy, R, r, n){
+  const p = [];
+  for(let i=0;i<n*2;i++){
+    const ang = -Math.PI/2 + i*Math.PI/n, rad = (i%2) ? r : R;
+    p.push([cx + Math.cos(ang)*rad, cy + Math.sin(ang)*rad]);
+  }
+  return p;
+}
+/* Cada dibujo vive en una hoja de 400 x 320 y se estira para llenar la
+   pantalla. Las piezas se pintan en orden, y se tocan al revés. */
+const DIBUJOS_PI = [
+  {nombre:'FERNANDO', piezas:[
+    {t:'e', x:200, y:98, rx:62, ry:46},                              // gorra
+    {t:'p', pts:[[238,94],[302,108],[300,124],[238,118]]},           // visera
+    {t:'e', x:200, y:132, rx:58, ry:50},                             // cara
+    {t:'r', x:112, y:184, w:44, h:28},                               // brazo
+    {t:'r', x:244, y:184, w:44, h:28},                               // brazo
+    {t:'r', x:150, y:178, w:100, h:64},                              // camisa
+    {t:'r', x:154, y:238, w:92, h:44},                               // overol
+    {t:'r', x:156, y:282, w:38, h:30},                               // zapato
+    {t:'r', x:206, y:282, w:38, h:30},                               // zapato
+  ]},
+  {nombre:'PENNY', piezas:[
+    {t:'p', pts:[[104,168],[58,124],[76,182]]},                      // cola
+    {t:'e', x:180, y:196, rx:82, ry:50},                             // cuerpo
+    {t:'p', pts:[[248,124],[238,70],[274,116]]},                     // oreja
+    {t:'p', pts:[[292,116],[314,68],[318,122]]},                     // oreja
+    {t:'e', x:280, y:152, rx:46, ry:42},                             // cabeza
+    {t:'e', x:316, y:166, rx:22, ry:16},                             // hocico
+    {t:'r', x:130, y:236, w:28, h:60},                               // pata
+    {t:'r', x:208, y:236, w:28, h:60},                               // pata
+  ]},
+  {nombre:'HAMBURGUESA', piezas:[
+    {t:'e', x:200, y:132, rx:114, ry:58},                            // pan de arriba
+    {t:'p', pts:[[86,152],[112,184],[140,152],[168,184],[196,152],
+                 [224,184],[252,152],[280,184],[314,152],[314,170],[86,170]]}, // lechuga
+    {t:'p', pts:[[92,170],[308,170],[288,200],[112,200]]},           // queso
+    {t:'r', x:92, y:200, w:216, h:40},                               // carne
+    {t:'p', pts:[[92,240],[308,240],[294,282],[106,282]]},           // pan de abajo
+  ]},
+  {nombre:'LA CASA DE FERNANDO', piezas:[
+    {t:'e', x:336, y:66, rx:36, ry:36},                              // sol
+    {t:'e', x:84, y:62, rx:54, ry:26},                               // nube
+    {t:'p', pts:[[76,172],[200,84],[324,172]]},                      // techo
+    {t:'r', x:104, y:172, w:192, h:132},                             // pared
+    {t:'r', x:122, y:194, w:46, h:42},                               // ventana
+    {t:'r', x:232, y:194, w:46, h:42},                               // ventana
+    {t:'r', x:174, y:228, w:52, h:76},                               // puerta
+  ]},
+  {nombre:'CUCÚ', piezas:[
+    {t:'e', x:200, y:104, rx:68, ry:62},                             // pelo
+    {t:'e', x:124, y:116, rx:24, ry:36},                             // coleta
+    {t:'e', x:276, y:116, rx:24, ry:36},                             // coleta
+    {t:'e', x:200, y:116, rx:50, ry:46},                             // cara
+    {t:'e', x:118, y:74, rx:17, ry:15},                              // lazo
+    {t:'e', x:282, y:74, rx:17, ry:15},                              // lazo
+    {t:'p', pts:[[168,158],[232,158],[268,278],[132,278]]},          // vestido
+    {t:'r', x:160, y:278, w:26, h:34},                               // pierna
+    {t:'r', x:214, y:278, w:26, h:34},                               // pierna
+  ]},
+  {nombre:'TÍO JUAN', piezas:[
+    {t:'p', pts:[[142,152],[258,152],[304,296],[96,296]]},           // capa
+    {t:'e', x:200, y:82, rx:48, ry:28},                              // pelo
+    {t:'e', x:200, y:110, rx:44, ry:42},                             // cara
+    {t:'r', x:154, y:152, w:92, h:110},                              // traje
+    {t:'p', pts:estrellaPts(200, 196, 30, 13, 5)},                   // estrella
+    {t:'r', x:158, y:262, w:36, h:48},                               // bota
+    {t:'r', x:206, y:262, w:36, h:48},                               // bota
+  ]},
+];
+const COLORES_PI = ['#e03a3a','#f08020','#f5d020','#5ec83a','#2aa070','#3a9ae0',
+                    '#2a48c0','#9a5ad0','#f07ac0','#8a5a2a','#f5ddc0','#2a2a3a'];
+const PI = { dib:null, piezas:[], color:0, cur:{x:W/2, y:H/2}, t:0, hechas:0,
+             amigo:null, prevA:false, prevB:false, sustos:0, esc:1, ox:0, oy:0 };
+function iniciarPinta(){
+  const N = nivelDe('pinta');
+  PI.dib = DIBUJOS_PI[(N-1) % DIBUJOS_PI.length];
+  PI.piezas = PI.dib.piezas.map(p=>({...p, c:null}));
+  PI.color = 0; PI.t = 0; PI.hechas = 0; PI.prevA = false; PI.prevB = false;
+  PI.sustos = 0; PI.cur = {x:W/2, y:H/2-40};
+  /* la hoja se centra arriba y deja abajo la fila de colores */
+  PI.esc = Math.min((W-300)/400, (H-HUD2-118)/320);
+  PI.ox = (W - 400*PI.esc)/2; PI.oy = HUD2 + 10;
+  PI.amigo = nuevoRescate('pinta', W-120, HUD2+40);
+  aviso('Elige un color abajo y toca el dibujo 🧸', 4);
+}
+function zonasColorPI(){
+  const n = COLORES_PI.length, r = 22, hueco = 10;
+  const anc = n*(r*2) + (n-1)*hueco;
+  const x0 = (W - anc)/2 + r, y = H - 40;
+  return COLORES_PI.map((c,i)=>({c, i, x: x0 + i*(r*2+hueco), y, r}));
+}
+function dentroPieza(p, x, y){
+  if (p.t==='r') return x>=p.x && x<=p.x+p.w && y>=p.y && y<=p.y+p.h;
+  if (p.t==='e'){ const dx=(x-p.x)/p.rx, dy=(y-p.y)/p.ry; return dx*dx+dy*dy <= 1; }
+  let dentro = false;
+  for(let i=0, j=p.pts.length-1; i<p.pts.length; j=i++){
+    const [xi,yi] = p.pts[i], [xj,yj] = p.pts[j];
+    if ((yi>y) !== (yj>y) && x < (xj-xi)*(y-yi)/(yj-yi) + xi) dentro = !dentro;
+  }
+  return dentro;
+}
+function pintarEn(sx, sy){
+  /* de la pantalla a la hoja */
+  const x = (sx - PI.ox)/PI.esc, y = (sy - PI.oy)/PI.esc;
+  for(let i=PI.piezas.length-1; i>=0; i--){
+    const p = PI.piezas[i];
+    if (!dentroPieza(p, x, y)) continue;
+    const nuevo = COLORES_PI[PI.color];
+    if (p.c === nuevo) return;
+    if (!p.c){ PI.hechas++; sumar(400); }
+    p.c = nuevo;
+    sfx.moneda();
+    beep(500+PI.color*45, 0.09, 'sine', 0.06);
+    for(let k=0;k<6;k++) parts.push({tipo:'estrellita', x:sx, y:sy,
+      vx:(Math.random()-0.5)*4, vy:-1-Math.random()*2, t:26});
+    return;
+  }
+}
+function updatePinta(){
+  PI.t++;
+  if (toqueEnJuego()){
+    pt.soltado = false;
+    let enPaleta = false;
+    for(const z of zonasColorPI())
+      if (Math.hypot(z.x-pt.x, z.y-pt.y) < z.r+10){ PI.color = z.i; sfx.salto(); enPaleta = true; break; }
+    if (!enPaleta){ PI.cur.x = pt.x; PI.cur.y = pt.y; pintarEn(pt.x, pt.y); }
+  }
+  const v = 7;
+  if (mIzq()) PI.cur.x -= v; if (mDer()) PI.cur.x += v;
+  if (mArr()) PI.cur.y -= v; if (mAbj()) PI.cur.y += v;
+  PI.cur.x = Math.max(6, Math.min(W-6, PI.cur.x));
+  PI.cur.y = Math.max(HUD2+6, Math.min(H-70, PI.cur.y));
+  if (mSalta() && !PI.prevA) pintarEn(PI.cur.x, PI.cur.y);
+  PI.prevA = mSalta();
+  if (mAccion() && !PI.prevB){ PI.color = (PI.color+1)%COLORES_PI.length; sfx.salto(); }
+  PI.prevB = mAccion();
+  if (PI.hechas >= PI.piezas.length){
+    if (!PI.amigo.salvado) rescatar(PI.amigo, PI.amigo.x+13, PI.amigo.y+18, 9999);
+    sumar(1000);
+    pasarNivel('pinta', iniciarPinta, 'finPinta', VOZ.campeon);
+  }
+}
+function drawPinta(){
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#2a1a4a'); g.addColorStop(1,'#7a4a9a');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  /* la hoja de papel */
+  ctx.fillStyle='#fffdf6';
+  ctx.beginPath(); ctx.roundRect(PI.ox-14, PI.oy-10, 400*PI.esc+28, 320*PI.esc+20, 14); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=3; ctx.stroke();
+  ctx.save();
+  ctx.translate(PI.ox, PI.oy); ctx.scale(PI.esc, PI.esc);
+  const cursorHoja = {x:(PI.cur.x-PI.ox)/PI.esc, y:(PI.cur.y-PI.oy)/PI.esc};
+  for(const p of PI.piezas){
+    ctx.beginPath();
+    if (p.t==='r') ctx.rect(p.x, p.y, p.w, p.h);
+    else if (p.t==='e') ctx.ellipse(p.x, p.y, p.rx, p.ry, 0, 0, Math.PI*2);
+    else { ctx.moveTo(p.pts[0][0], p.pts[0][1]); for(let i=1;i<p.pts.length;i++) ctx.lineTo(p.pts[i][0], p.pts[i][1]); ctx.closePath(); }
+    ctx.fillStyle = p.c || '#fff';
+    ctx.fill();
+    /* la pieza señalada se ilumina, para saber dónde va a caer el color */
+    if (!p.c && dentroPieza(p, cursorHoja.x, cursorHoja.y)){
+      ctx.globalAlpha = 0.30+Math.sin(PI.t/8)*0.14;
+      ctx.fillStyle = COLORES_PI[PI.color]; ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=4; ctx.stroke();
+  }
+  ctx.restore();
+  texto(PI.dib.nombre, W/2, PI.oy+320*PI.esc+34, 20, '#ffe36e', true);
+  if (!PI.amigo.salvado){
+    PI.amigo.x = W-96; PI.amigo.y = HUD2+34;
+    dibRescate(PI.amigo);
+  }
+  /* la paleta de colores, sobre su bandeja */
+  const zc = zonasColorPI();
+  ctx.fillStyle='rgba(8,10,24,0.72)';
+  ctx.beginPath(); ctx.roundRect(zc[0].x-zc[0].r-12, zc[0].y-zc[0].r-9,
+    (zc[zc.length-1].x-zc[0].x)+zc[0].r*2+24, zc[0].r*2+18, 16); ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2; ctx.stroke();
+  for(const z of zc){
+    ctx.fillStyle = z.c;
+    ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI*2); ctx.fill();
+    const s = PI.color===z.i;
+    ctx.lineWidth = s?5:2; ctx.strokeStyle = s?'#ffe36e':'rgba(255,255,255,0.6)';
+    ctx.stroke();
+    if (s){
+      ctx.globalAlpha=0.3+Math.sin(PI.t/7)*0.2; ctx.lineWidth=10; ctx.stroke(); ctx.globalAlpha=1;
+    }
+  }
+  /* pincel del color elegido */
+  ctx.save(); ctx.translate(PI.cur.x, PI.cur.y);
+  ctx.fillStyle = COLORES_PI[PI.color];
+  ctx.beginPath(); ctx.arc(0, 0, 9, 0, Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke();
+  ctx.font='26px monospace'; ctx.fillText('🖍️', 6, 26);
+  ctx.restore();
+  hudMJ('🎨 PINTA', etiquetaNivel('pinta')+'  PINTADO '+PI.hechas+'/'+PI.piezas.length,
+        '🧸 aquí no se puede perder');
+}
+
+/* ============================================================
    Sala arcade y orquestación
    ============================================================ */
 function cajasArcade(){
-  const anc = 125, alt = 86, hx = 8, hy = 9, x0 = 22, y0 = 104;
+  const anc = 108, alt = 86, hx = 8, hy = 9, x0 = 22, y0 = 104;
   return JUEGOS.map((j,i)=>({
     x: x0 + (i%COLS_ARCADE)*(anc+hx),
     y: y0 + ((i/COLS_ARCADE)|0)*(alt+hy),
@@ -5555,7 +6238,7 @@ function drawArcade(){
     ctx.fillRect((i*137)%W, (i*89)%H, 3, 3);
   }
   texto('🕹️ SALA ARCADE 🕹️', W/2, 56, 32, '#ff9ed6', true);
-  texto('Los minijuegos de Fernando y sus amigos', W/2, 82, 14, '#dfc8ff', true);
+  texto('Los minijuegos de Fernando y sus amigos  ·  🧸 = fáciles para los más peques', W/2, 82, 14, '#dfc8ff', true);
   for(const c of cajasArcade()){
     const s = sel===c.idx;
     ctx.fillStyle = c.j.color;
@@ -5572,6 +6255,14 @@ function drawArcade(){
     while (tam > 8 && ctx.measureText(c.j.corto).width > c.w-12){ tam -= 0.5; ctx.font='bold '+tam+'px monospace'; }
     texto(c.j.corto, c.x+c.w/2, c.y+70, tam, '#fff', true);
     ctx.textAlign='left';
+    /* osito en la esquina: así se ven de un vistazo los juegos de los peques */
+    if (c.j.peque){
+      ctx.fillStyle='rgba(255,227,110,0.92)';
+      ctx.beginPath(); ctx.arc(c.x+c.w-15, c.y+15, 12, 0, Math.PI*2); ctx.fill();
+      ctx.font='14px monospace'; ctx.textAlign='center';
+      ctx.fillText('🧸', c.x+c.w-15, c.y+20);
+      ctx.textAlign='left';
+    }
   }
   /* botón para volver: sin él, en el celular no había manera de salir de la sala */
   const z = {x:22, y:12, w:148, h:40};
@@ -5584,7 +6275,7 @@ function drawArcade(){
   ctx.fillStyle='rgba(8,10,24,0.8)';
   ctx.beginPath(); ctx.roundRect(22, H-62, W-44, 40, 10); ctx.fill();
   ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=2; ctx.stroke();
-  texto(j.emoji+'  '+j.nombre+' — '+j.desc, W/2, H-36, 16, '#ffe36e', true);
+  texto((j.peque?'🧸 ':'')+j.emoji+'  '+j.nombre+' — '+j.desc, W/2, H-36, 16, '#ffe36e', true);
   texto('Toca un juego · flechas + ENTER · ESC o ✕ VOLVER para salir', W/2, H-8, 13, '#dfc8ff', true);
 }
 function abrirArcade(){ estado = 'arcade'; modo = null; sel = 0; finDicho = false; }
@@ -5619,6 +6310,10 @@ function empezar(id){
   else if (id==='fcero'){ iniciarFcero(); modo='fcero'; estado='mjFcero'; }
   else if (id==='bananas'){ iniciarBananas(); modo='bananas'; estado='mjBananas'; }
   else if (id==='quake'){ iniciarQuake(); modo='quake'; estado='mjQuake'; }
+  else if (id==='memoria'){ iniciarMemoria(); modo='memoria'; estado='mjMemoria'; }
+  else if (id==='musica'){ iniciarMusica(); modo='musica'; estado='mjMusica'; }
+  else if (id==='burbujas'){ iniciarBurbujas(); modo='burbujas'; estado='mjBurbujas'; }
+  else if (id==='pinta'){ iniciarPinta(); modo='pinta'; estado='mjPinta'; }
   cortina = 40;
 }
 function activo(){ return estado==='arcade' || (typeof estado==='string' && estado.indexOf('mj')===0); }
@@ -5665,6 +6360,10 @@ function update(){
   else if (modo==='fcero') updateFcero();
   else if (modo==='bananas') updateBananas();
   else if (modo==='quake') updateQuake();
+  else if (modo==='memoria') updateMemoria();
+  else if (modo==='musica') updateMusica();
+  else if (modo==='burbujas') updateBurbujas();
+  else if (modo==='pinta') updatePinta();
   else if (modo && modo.indexOf('fin')===0){
     if (pt.soltado){ pt.soltado=false; abrirArcade(); }
   }
@@ -5703,6 +6402,10 @@ function draw(){
   else if (modo==='fcero') drawFcero();
   else if (modo==='bananas') drawBananas();
   else if (modo==='quake') drawQuake();
+  else if (modo==='memoria') drawMemoria();
+  else if (modo==='musica') drawMusica();
+  else if (modo==='burbujas') drawBurbujas();
+  else if (modo==='pinta') drawPinta();
   else if (modo==='finBirds') pantallaFin(resultado, resultado?'¡GANASTE!':'CASI...', resultado?'¡Todos los goombas fuera!':'Se acabaron los lanzamientos');
   else if (modo==='finDig') pantallaFin(resultado, resultado?'¡GANASTE!':'¡TE ATRAPARON!', resultado?'¡Túneles limpios!':'Inténtalo otra vez, pichunguito');
   else if (modo==='finKong') pantallaFin(resultado, resultado?'¡RESCATASTE A MAMÁ!':'¡UN BARRIL!', resultado?'«¡Te amo mamá!»':'Sube con más cuidado');
@@ -5731,6 +6434,10 @@ function draw(){
   else if (modo==='finFcero') pantallaFin(resultado, '¡PRIMER PUESTO!', '¡Nadie corre como Fernando!');
   else if (modo==='finBananas') pantallaFin(resultado, '¡LE DISTE A TÍO FRAN!', '¡Qué puntería, pichunguito!');
   else if (modo==='finQuake') pantallaFin(resultado, '¡LABERINTO LIMPIO!', '¡Ni un goomba quedó dentro!');
+  else if (modo==='finMemoria') pantallaFin(resultado, '¡TODAS LAS PAREJAS!', '¡Qué memoria tan buena, pichunguito!');
+  else if (modo==='finMusica') pantallaFin(resultado, '¡QUÉ OÍDO!', '¡Fernando se sabe toda la melodía!');
+  else if (modo==='finBurbujas') pantallaFin(resultado, '¡NI UNA BURBUJA!', '¡Las reventaste todas!');
+  else if (modo==='finPinta') pantallaFin(resultado, '¡QUÉ DIBUJOS!', '¡Los pintaste todos, artista!');
   /* partículas compartidas */
   for(const p of parts){
     if (p.tipo==='estrellita'){ ctx.fillStyle='#ffe36e'; ctx.font='16px monospace'; ctx.fillText('✦',p.x,p.y); }
@@ -5782,10 +6489,13 @@ return { activo, update, draw, tecla, abrirArcade, empezar,
                            jeep:iniciarJeep, mappy:iniciarMappy, circo:iniciarCirco,
                            patos:iniciarPatos, isla:iniciarIsla, galaxia:iniciarGalaxia,
                            lucha:iniciarLucha, vagoneta:iniciarVagoneta, jam:iniciarJam,
-                           fcero:iniciarFcero, bananas:iniciarBananas, quake:iniciarQuake}[id])(),
+                           fcero:iniciarFcero, bananas:iniciarBananas, quake:iniciarQuake,
+                           memoria:iniciarMemoria, musica:iniciarMusica,
+                           burbujas:iniciarBurbujas, pinta:iniciarPinta}[id])(),
          _TD:TD, _SN:SN, _LU:LU, _RU:RU, _FL:FL, _CO:CO,
          _MG:MG, _BU:BU, _SU:SU, _JP:JP, _MP:MP, _CI:CI, _ARMAS:ARMAS,
          _PA:PA, _IS:IS, _GX:GX, _LU2:LU2, _VG:VG, _JM:JM, _FZ:FZ, _BA:BA, _Q3:Q3,
+         _ME:ME, _MU:MU, _BB:BB, _PI:PI,
          _amigos: AMIGOS,
          _zonaSalir: zonaSalir, _zonaVolver: zonaVolver,
          _B:B, _D:D, _K:K, _C:C, _KPL:KPL, _KESC:KESC, _G:G, _M:M, _I:I,
