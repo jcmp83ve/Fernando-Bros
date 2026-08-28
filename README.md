@@ -54,6 +54,17 @@ Los botones de la pantalla son **zonas de toque grandes** (bastante mayores que 
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
 - Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
+## 🁫 El Dominó de Tía Yany
+
+En la carpeta [`domino/`](domino/) vive un juego aparte: **dominó doble seis
+para cuatro**, donde Fernando juega contra **Salomón**, **tía Yany** y **tío
+Fran** — con los mismos monigotes, los mismos sonidos y las mismas voces
+grabadas. Se juega tocando la ficha con el dedo, la ayuda marca en verde las
+que sí pegan, y tío Fran **se echa un pedo cada vez que pone un doble**.
+
+👉 **[Jugar al dominó](https://jcmp83ve.github.io/Fernando-Bros/domino/)** ·
+[cómo funciona](domino/README.md)
+
 ## 🧸 Pensado para un niño de cinco años
 
 Fernando tiene cinco años, así que hay un rincón entero hecho a su medida: en la **Sala Arcade**, las tarjetas con el osito **🧸** son juegos que **se juegan tocando la pantalla**, sin apuntar, sin correr y **sin poder perder**. Son cuatro nuevos —**🃏 Memoria**, **🎵 Música**, **🫧 Burbujas** y **🎨 Pinta**— más los que ya eran fáciles (Nieve, Flappy, Patos y Vagoneta). En todos ellos aparece un amigo distinto de la familia y todos hablan con la voz de siempre.
