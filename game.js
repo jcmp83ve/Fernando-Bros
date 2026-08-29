@@ -247,17 +247,22 @@ function procesarTecla(k){
   if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
   else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) estado='mapa';
   else if (estado==='mapa'){
-    if (e.key==='ArrowLeft') selMapa=(selMapa+11)%12;
-    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%12;
-    else if (e.key==='ArrowUp') selMapa = selMapa>=10 ? (selMapa===10?5:8) : Math.max(selMapa-5, 0);
-    else if (e.key==='ArrowDown') selMapa = selMapa>=5 && selMapa<10 ? (selMapa<8?10:11) : Math.min(selMapa+5, 11);
+    if (e.key==='ArrowLeft') selMapa=(selMapa+12)%13;
+    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%13;
+    /* arriba y abajo saltan entre las dos filas de mundos y los tres botones */
+    else if (e.key==='ArrowUp') selMapa = selMapa>=10 ? [5,7,9][selMapa-10] : Math.max(selMapa-5, 0);
+    else if (e.key==='ArrowDown') selMapa = selMapa>=10 ? selMapa
+                                          : selMapa>=5 ? (selMapa<7 ? 10 : selMapa<9 ? 11 : 12)
+                                          : selMapa+5;
     else if (e.key>='1'&&e.key<='9') { empezarJuego(+e.key-1); }
     else if (e.key==='0') { empezarJuego(9); }
     else if (e.key==='k'||e.key==='K') iniciarKart();
     else if (e.key==='a'||e.key==='A') { if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+    else if (e.key==='d'||e.key==='D') abrirDomino();
     else if (e.key==='Enter'||e.key===' '){
       if(selMapa===10) iniciarKart();
       else if(selMapa===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+      else if(selMapa===12) abrirDomino();
       else empezarJuego(selMapa);
     }
     else if (e.key==='Escape') estado='menu';
@@ -452,6 +457,7 @@ cv.addEventListener('pointerdown', (e)=>{
         selMapa=c.idx;
         if (c.idx===10) iniciarKart();
         else if (c.idx===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
+        else if (c.idx===12) abrirDomino();
         else empezarJuego(c.idx);
         break;
       }
@@ -2407,7 +2413,7 @@ function dibMenu(){
   ctx.fillText('🎮 ¿Tienes un mando? Conéctalo por Bluetooth y juega con él', W/2, 550);
   ctx.textAlign='left';
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v38', W-30, 18);
+  ctx.fillText('v39', W-30, 18);
 }
 function dibFernandoMenu(x,y){ ctx.save(); ctx.translate(x,y); ctx.scale(1.6,1.6); dibFernandoSolo(); ctx.restore(); }
 function dibFernandoSolo(){
@@ -2541,7 +2547,7 @@ function dibSelPista(){
   ctx.textAlign='left';
   dibBotonAtras('✕ VOLVER');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v38', W-34, 18);
+  ctx.fillText('v39', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3253,12 +3259,51 @@ const enAtras = (mx,my) => { const z=zonaAtras(), m=22;
    Con fillText centrado el emoji se dibuja más ancho de lo que mide la
    fuente monoespaciada y todo el letrero acababa corrido hacia la derecha,
    así que aquí se mide el texto y se coloca cada parte por separado. */
-function rotuloConEmoji(emoji, txt, c, color){
-  const tam = 22, hueco = 10;
+function dibFichaMini(x, y, alto){
+  const anc = alto*0.58, rad = anc*0.16;
+  ctx.fillStyle = '#f6efe0';
+  ctx.beginPath(); ctx.roundRect(x, y, anc, alto, rad); ctx.fill();
+  ctx.strokeStyle = '#2a2016'; ctx.lineWidth = Math.max(1.4, alto*0.055); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x+anc*0.16, y+alto/2); ctx.lineTo(x+anc*0.84, y+alto/2); ctx.stroke();
+  ctx.fillStyle = '#2a2016';
+  const r = alto*0.065;
+  /* tres puntos arriba y dos abajo */
+  for(const [px,py] of [[0.28,0.16],[0.5,0.25],[0.72,0.34], [0.3,0.64],[0.7,0.84]]){
+    ctx.beginPath(); ctx.arc(x+anc*px, y+alto*py, r, 0, Math.PI*2); ctx.fill();
+  }
+  return anc;
+}
+/* como rotuloConEmoji, pero con la ficha dibujada en vez de un emoji */
+function rotuloConFicha(txt, c, color){
+  const hueco = 12, alto = 34;
+  let tam = 22, anchoTxt;
+  const anchoFicha = alto*0.58;
+  do {
+    ctx.font = 'bold '+tam+'px monospace';
+    anchoTxt = ctx.measureText(txt).width;
+    if (anchoFicha + hueco + anchoTxt <= c.w - 16) break;
+    tam -= 1;
+  } while (tam > 12);
+  const inicio = c.x + (c.w - (anchoFicha + hueco + anchoTxt))/2;
+  dibFichaMini(inicio, c.y + (c.h-alto)/2, alto);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = color;
   ctx.font = 'bold '+tam+'px monospace';
-  const anchoTxt = ctx.measureText(txt).width;
+  ctx.fillText(txt, inicio + anchoFicha + hueco, c.y + c.h/2 + tam*0.36);
+}
+function rotuloConEmoji(emoji, txt, c, color){
+  const hueco = 10;
   ctx.font = '26px monospace';
   const emojiW = ctx.measureText(emoji).width || 30;
+  /* el tamaño baja solo hasta que el nombre entra en la casilla */
+  let tam = 22, anchoTxt;
+  do {
+    ctx.font = 'bold '+tam+'px monospace';
+    anchoTxt = ctx.measureText(txt).width;
+    if (emojiW + hueco + anchoTxt <= c.w - 16) break;
+    tam -= 1;
+  } while (tam > 12);
   const inicio = c.x + (c.w - (emojiW + hueco + anchoTxt))/2;
   const linea = c.y + c.h/2 + tam*0.36;
   ctx.textAlign = 'left';
@@ -3274,9 +3319,20 @@ function cajasMapa(){
     const col=i%5, row=(i/5)|0;
     cajas.push({x:30+col*184, y:130+row*126, w:168, h:106, idx:i});
   }
-  cajas.push({x:W/2-330, y:400, w:320, h:64, idx:10});
-  cajas.push({x:W/2+10,  y:400, w:320, h:64, idx:11});
+  /* los tres botones de abajo: la carrera, la sala arcade y el dominó */
+  const anc = 214, hueco = 14, x0 = (W - (anc*3 + hueco*2))/2;
+  for(let i=0;i<3;i++) cajas.push({x: x0 + i*(anc+hueco), y:400, w:anc, h:64, idx:10+i});
   return cajas;
+}
+/* El dominó es una página aparte que vive en la carpeta domino/. En la
+   versión de una sola página (sin carpetas) se le pasa la dirección por
+   window.URL_DOMINO y se abre en otra pestaña. */
+function abrirDomino(){
+  const destino = (typeof window !== 'undefined' && window.URL_DOMINO) || 'domino/';
+  try{
+    if (typeof window !== 'undefined' && window.URL_DOMINO) window.open(destino, '_blank');
+    else location.href = destino;
+  }catch(e){ try{ location.href = destino; }catch(e2){} }
 }
 function dibMapa(){
   const g = ctx.createLinearGradient(0,0,0,H);
@@ -3286,10 +3342,11 @@ function dibMapa(){
   ctx.fillStyle='#f8b800'; ctx.font='bold 40px monospace';
   ctx.fillText('ELIGE TU MUNDO', W/2, 70);
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
-  ctx.fillText('Toca un mundo · o entra a la carrera y a la SALA ARCADE con sus minijuegos', W/2, 100);
+  ctx.fillText('Toca un mundo · o entra a la carrera, a la SALA ARCADE y al DOMINÓ', W/2, 100);
   for(const c of cajasMapa()){
     const sel = selMapa===c.idx;
-    ctx.fillStyle = c.idx===10 ? '#0a3a12' : c.idx===11 ? '#3a0a3a' : COLORES_MAPA[c.idx];
+    ctx.fillStyle = c.idx===10 ? '#0a3a12' : c.idx===11 ? '#3a0a3a'
+                  : c.idx===12 ? '#0d4a2a' : COLORES_MAPA[c.idx];
     ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,12); ctx.fill();
     ctx.lineWidth = sel?6:3;
     ctx.strokeStyle = sel ? '#ffe36e' : 'rgba(255,255,255,0.5)';
@@ -3301,6 +3358,7 @@ function dibMapa(){
     }
     if (c.idx===10) rotuloConEmoji('🏁', 'FERNANDO KART', c, '#7dffa0');
     else if (c.idx===11) rotuloConEmoji('🕹️', 'SALA ARCADE', c, '#ff9ed6');
+    else if (c.idx===12) rotuloConFicha('DOMINÓ', c, '#8fe8b4');
     else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
@@ -3315,7 +3373,7 @@ function dibMapa(){
   ctx.textAlign='left';
   dibBotonAtras('✕ MENÚ');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v38', W-34, 18);
+  ctx.fillText('v39', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
