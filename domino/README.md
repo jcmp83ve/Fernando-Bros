@@ -4,7 +4,8 @@ Dominó **doble seis para cuatro**, con los personajes y las voces de
 [Fernando Bros](../README.md): juega **Fernando** contra **Salomón**,
 **tía Yany** y **tío Fran**.
 
-👉 **[Jugar](https://jcmp83ve.github.io/Fernando-Bros/domino/)**
+👉 **[Jugar](https://jcmp83ve.github.io/Fernando-Bros/domino/)** — o desde
+Fernando Bros, en la casilla **🁫 DOMINÓ** de la pantalla de ELIGE TU MUNDO.
 
 ## 🕹️ Cómo jugar
 
@@ -18,6 +19,8 @@ Funciona igual en computadora, celular y tablet.
 | ← → | los dos botones morados | Elegir de qué lado la pones |
 | ESC | ✕ | Cambiar de ficha |
 | H | 💡 AYUDA | Encender o apagar la ayuda |
+| ESC | ✕ SALIR | Volver a la portada |
+| ESC (en la portada) | ◀ FERNANDO BROS | Volver a Fernando Bros |
 
 **Con el dedo es más fácil todavía:** se toca la ficha que quieres poner y ya.
 Si esa ficha pega por los dos lados, salen dos botones grandes para decir por

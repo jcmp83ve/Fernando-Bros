@@ -688,7 +688,14 @@ const enZona = (z, x, y, m) => {
   m = m===undefined ? 8 : m;
   return x>=z.x-m && x<=z.x+z.w+m && y>=z.y-m && y<=z.y+z.h+m;
 };
-const zonaAyuda = () => ({x: W-166, y: 8, w: 152, h: 30});
+const zonaAyuda  = () => ({x: W-322, y: 8, w: 150, h: 30});
+const zonaSalir  = () => ({x: W-162, y: 8, w: 146, h: 30});
+/* Volver a Fernando Bros: el dominó vive en su carpeta, así que la salida
+   es la carpeta de arriba. En la versión de una sola página no hay a dónde
+   volver, y se le avisa con window.SIN_VOLVER. */
+const zonaBros = () => ({x: 22, y: 14, w: 254, h: 42});
+const hayVuelta = () => !(typeof window !== 'undefined' && window.SIN_VOLVER);
+function volverABros(){ try{ location.href = '../'; }catch(e){} }
 const zonaIzq   = () => ({x: 150, y: 462, w: 280, h: 50});
 const zonaDer   = () => ({x: 530, y: 462, w: 280, h: 50});
 function boton(z, txt, color, encendido){
@@ -705,8 +712,9 @@ function dibHUD(){
   ctx.fillStyle = acc; ctx.fillRect(0,41,W,3);
   fichaChica(16, 9, 13, 26);
   texto('EL DOMINÓ DE TÍA YANY', 38, 29, 19, '#ffe36e');
-  texto('RONDA '+P.ronda+'  ·  GANA EL PRIMERO EN LLEGAR A '+META, 356, 29, 13, '#bfe8d4');
+  texto('RONDA '+P.ronda+'  ·  A '+META+' PUNTOS', 356, 29, 13, '#bfe8d4');
   boton(zonaAyuda(), P.ayuda ? '💡 AYUDA: SÍ' : '💡 AYUDA: NO', '#2a7a52', P.ayuda);
+  boton(zonaSalir(), '✕ SALIR', '#7a3aa8', false);
 }
 function dibJugadores(){
   for(let j=0;j<4;j++){
@@ -762,6 +770,7 @@ function dibPortada(){
   texto('TÍA YANY', W/2, 252, 54, '#40c0b0', true);
   texto('Fernando · Salomón · tía Yany · tío Fran', W/2, 296, 17, '#dff2e6', true);
   for(let j=0;j<4;j++) dibPersona(j, W/2 - 150 + j*100, 372, 2.2);
+  if (hayVuelta()) boton(zonaBros(), '◀  FERNANDO BROS', '#2a7a52', false);
   if ((P.T>>4)%2===0) texto('TOCA LA PANTALLA PARA JUGAR', W/2, 470, 22, '#fff', true);
   texto('Doble seis · siete fichas cada uno · gana quien llegue a '+META, W/2, 508, 14, '#8fc7ab', true);
 }
@@ -817,6 +826,9 @@ function update(){
   const toque = pt.soltado; pt.soltado = false;
 
   if (P.fase === 'portada'){
+    if (hayVuelta() && ((toque && enZona(zonaBros(), pt.x, pt.y)) || k === 'Escape')){
+      volverABros(); return;
+    }
     if (toque || k === 'Enter' || k === ' '){ nuevaPartida(); }
     return;
   }
@@ -826,6 +838,10 @@ function update(){
       if (P.fase === 'finPartida') nuevaPartida(); else nuevaRonda();
     }
     return;
+  }
+  /* salir a la portada, que es desde donde se vuelve a Fernando Bros */
+  if ((toque && enZona(zonaSalir(), pt.x, pt.y)) || k === 'Escape'){
+    if (P.fase !== 'lado'){ P.fase = 'portada'; sfx.elegir(); return; }
   }
   /* el botón de la ayuda se puede tocar en cualquier momento */
   if (toque && enZona(zonaAyuda(), pt.x, pt.y)){

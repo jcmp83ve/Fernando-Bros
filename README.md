@@ -62,6 +62,10 @@ Fran** — con los mismos monigotes, los mismos sonidos y las mismas voces
 grabadas. Se juega tocando la ficha con el dedo, la ayuda marca en verde las
 que sí pegan, y tío Fran **se echa un pedo cada vez que pone un doble**.
 
+Se entra **desde el propio juego**: en la pantalla de **ELIGE TU MUNDO** hay
+una casilla **🁫 DOMINÓ** al lado de Fernando Kart y la Sala Arcade (o la tecla
+**D**). Y desde el dominó se vuelve con **◀ FERNANDO BROS**.
+
 👉 **[Jugar al dominó](https://jcmp83ve.github.io/Fernando-Bros/domino/)** ·
 [cómo funciona](domino/README.md)
 
@@ -81,7 +85,7 @@ Fernando tiene cinco años, así que hay un rincón entero hecho a su medida: en
 
 ## 🗺️ Selector de mundos
 
-Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart** y a la **Sala Arcade** sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
+Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart**, a la **Sala Arcade** y al **🁫 Dominó de tía Yany** sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
 
 ## 🕹️ Sala Arcade
 
