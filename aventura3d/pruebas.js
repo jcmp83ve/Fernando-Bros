@@ -111,6 +111,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   if (!P.estrellas.includes('popo')) mal('no dio la estrella del popo');
   if (P.popo !== 0) mal('las ganas no se fueron');
   if (!tipos.plop || !tipos.descarga) mal('faltan los ruidos del baño');
+  if (P.popitos.length !== 1) mal('al salir del baño debía nacer un popo bebé ('+P.popitos.length+')'); else bien('nació un popo bebé');
 }
 /* 5) el carro: acelera, gira, choca con la orilla y cruza las seis banderas */
 {
@@ -217,7 +218,8 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   poner(P, N.INICIO.x, N.INICIO.z);
   correr(P, 60*6, {jy:1, camYaw:Math.PI});
   for (const p of P.perros) if (Math.hypot(p.x-P.J.x, p.z-P.J.z) > 9) mal(p.nombre+' se quedó atrás ('+Math.hypot(p.x-P.J.x, p.z-P.J.z).toFixed(0)+' m)');
-  bien('Penny y Sheldon lo siguen');
+  for (const p of P.popitos) if (Math.hypot(p.x-P.J.x, p.z-P.J.z) > 12) mal('el popo bebé se quedó atrás ('+Math.hypot(p.x-P.J.x, p.z-P.J.z).toFixed(0)+' m)');
+  bien('Penny, Sheldon y', P.popitos.length, 'popo bebé lo siguen');
 }
 /* 11) popo en los cuatro baños → última estrella → final */
 {
@@ -230,6 +232,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
     correr(P, 60*8, {}, (P, evs)=>evs.some(e=>e.tipo==='banoSale'));
   }
   if (P.prog.banos.length !== N.BANOS.length) mal('no hizo popo en los cuatro baños ('+P.prog.banos.length+')');
+  if (P.popitos.length !== N.BANOS.length) mal('debía haber '+N.BANOS.length+' popos bebés y hay '+P.popitos.length);
   if (!P.estrellas.includes('banos')) mal('no dio la estrella de los baños');
   if (P.estrellas.length !== N.MISIONES.length) mal('faltan estrellas: '+N.MISIONES.filter(m=>!P.estrellas.includes(m.id)).map(m=>m.id).join(', '));
   if (!tipos.final) mal('no llegó el final');
@@ -239,13 +242,13 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
 {
   const g = JSON.parse(JSON.stringify(N.exportar(P)));
   const P2 = N.crearPartida(g);
-  if (P2.estrellas.length !== P.estrellas.length || P2.puntos !== P.puntos || P2.comidas.size !== P.comidas.size) mal('la partida guardada no se recupera igual');
+  if (P2.estrellas.length !== P.estrellas.length || P2.puntos !== P.puntos || P2.comidas.size !== P.comidas.size || P2.popitos.length !== P.popitos.length) mal('la partida guardada no se recupera igual');
   else bien('la partida se guarda y se recupera');
   const o = N.objetivo(P2); if (!o || typeof o.texto !== 'string') mal('objetivo() no responde');
   const P3 = N.crearPartida(); for (let i=0;i<5;i++){ const o = N.objetivo(P3); if (!o.texto) mal('objetivo vacío'); paso(P3, {}); }
 }
 /* 13) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','bandera','aro','rampa','cofre','final','hablar','salto','chapoteo'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','aro','rampa','cofre','final','hablar','salto','chapoteo'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);
