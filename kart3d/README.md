@@ -63,8 +63,14 @@ tocan los mejores.
 - **Podio 3D** al final, con confeti y la tabla completa, y las voces de
   victoria (*«¡Gané! ¡Soy el pichunguito campeón!»*) o de ánimo (*«¡Qué
   divertido! ¡Otra vez, otra vez!»*).
-- Música 8-bits hecha con código, chispas al derrapar, fuego en el turbo, humo
-  y la capa de Tío Juan ondeando.
+- **Acabado de calidad**: sombras suaves de verdad, karts con brillo, cielo con
+  degradado, nubes, sol con resplandor, asfalto y césped con textura, gradas
+  con público en la salida, banderines por todo el circuito, chispas
+  luminosas al derrapar, fuego en el turbo, líneas de velocidad y la capa de
+  Tío Juan ondeando. Tipografía de juego y paneles de cristal en el marcador.
+- **Calidad automática**: si el aparato no da la talla, el juego apaga las
+  sombras y baja la resolución solo, para que nunca se arrastre.
+- Música 8-bits hecha con código.
 - Funciona en computadora, iPad, iPhone y Android (mejor **acostado**), y con
   mandos Bluetooth (Joy-Con, Pro Controller, PlayStation, Xbox).
 
