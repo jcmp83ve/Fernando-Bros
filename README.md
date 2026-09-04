@@ -86,6 +86,27 @@ con **◀ FERNANDO BROS**.
 👉 **[Jugar a Pichungito Kart](https://jcmp83ve.github.io/Fernando-Bros/kart3d/)** ·
 [cómo funciona](kart3d/README.md)
 
+## 🌴 Fernando y Tío Juan: La Gran Aventura (mundo abierto en 3D)
+
+En la carpeta [`aventura3d/`](aventura3d/) vive **la aventura más grande**:
+una isla entera en 3D para recorrer **a pie, en carro, en moto, en barco, en
+avión por el cielo y en submarino por el fondo del mar**, con toda la familia
+repartida por el pueblo, la playa, el puerto, el aeropuerto, el faro y la
+montaña, y **Tío Juan volando siempre al lado**. Fernando encuentra
+**hamburguesas**, se las come, **se echa un peo** y dice *«¡Quiero hacer
+popo!»*, y entonces hay que correr a uno de los cuatro baños del **Señor
+Popo** 💩🎩, el personaje nuevo. Ocho misiones dan ocho estrellas (las
+banderas con el carro, la rampa con la moto, los aros del cielo, la islita
+de Santi, el tesoro del fondo del mar, la familia…) y el progreso se guarda
+solo. Controles fáciles: la palanca mueve, **A sube, B corre**.
+
+Se entra **desde el propio juego**: en la pantalla de **ELIGE TU MUNDO** hay
+un botón **🌴 AVENTURA 3D** (o la tecla **G**). Y desde la aventura se vuelve
+con **◀ FERNANDO BROS**.
+
+👉 **[Jugar a La Gran Aventura](https://jcmp83ve.github.io/Fernando-Bros/aventura3d/)** ·
+[cómo funciona](aventura3d/README.md)
+
 ## 🧸 Pensado para un niño de cinco años
 
 Fernando tiene cinco años, así que hay un rincón entero hecho a su medida: en la **Sala Arcade**, las tarjetas con el osito **🧸** son juegos que **se juegan tocando la pantalla**, sin apuntar, sin correr y **sin poder perder**. Son cuatro nuevos —**🃏 Memoria**, **🎵 Música**, **🫧 Burbujas** y **🎨 Pinta**— más los que ya eran fáciles (Nieve, Flappy, Patos y Vagoneta). En todos ellos aparece un amigo distinto de la familia y todos hablan con la voz de siempre.
@@ -102,7 +123,7 @@ Fernando tiene cinco años, así que hay un rincón entero hecho a su medida: en
 
 ## 🗺️ Selector de mundos
 
-Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart**, a la **Sala Arcade**, al **🁫 Dominó de tía Yany** y a **🏎️ Pichungito Kart** (la carrera en 3D) sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
+Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart**, a la **Sala Arcade**, al **🁫 Dominó de tía Yany**, a **🏎️ Pichungito Kart** (la carrera en 3D) y a **🌴 La Gran Aventura** (el mundo abierto en 3D) sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
 
 ## 🕹️ Sala Arcade
 
