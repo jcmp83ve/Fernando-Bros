@@ -450,7 +450,7 @@ function pensarIA(k, R){
   let dif = Math.atan2(oz-k.z, ox-k.x) - k.ang;
   while (dif > Math.PI) dif -= Math.PI*2;
   while (dif < -Math.PI) dif += Math.PI*2;
-  const ent = {izq: dif < -0.04, der: dif > 0.04, atras:false, a:false, b:false, dirAn: Math.max(-1, Math.min(1, dif*2.5))};
+  const ent = {izq: dif < -0.04, der: dif > 0.04, atras:false, a:false, b:false, dirAn: Math.max(-1, Math.min(1, dif*3.5))};
   /* goma elástica: los que van detrás del jugador aprietan, los de delante aflojan */
   const J = R.J;
   const dif2 = (J.avance - k.avance);
@@ -471,7 +471,13 @@ function pensarIA(k, R){
 function pasoKart(k, ent, R){
   const T = R.T;
   if (k.terminado){ ent = pensarIA(k, R); ent.b = false; }   /* al acabar sigue dando la vuelta de honor */
-  const dir = ent.dirAn !== undefined ? ent.dirAn : ((ent.izq?-1:0)+(ent.der?1:0));
+  /* el volante no salta: entra progresivamente (un toque corto gira poco)
+     y vuelve solo al centro en cuanto se suelta */
+  const objetivo = ent.dirAn !== undefined ? ent.dirAn : ((ent.izq?-1:0)+(ent.der?1:0));
+  const rapidez = Math.abs(objetivo) > Math.abs(k.dir) ? 0.09 : 0.2;
+  k.dir += (objetivo - k.dir)*rapidez;
+  if (Math.abs(k.dir) < 0.01) k.dir = 0;
+  const dir = k.dir;
   const c = T.cerca(k.x, k.z, k.si);
   k.si = c.i;
   const enPista = c.d <= T.ancho/2 + 0.6;
@@ -494,8 +500,11 @@ function pasoKart(k, ent, R){
     if (k.derrape >= 45){ k.mini = 50; R.eventos.push({tipo:'mini', k}); }
     k.derrape = 0;
   }
-  let giro = 0.036 * k.giroF * Math.min(1, Math.abs(k.vel)/(VMAX*0.35));
-  if (k.derrape>0) giro *= 1.55;
+  /* gira menos cuanto más rápido va: a tope son unos 80° por segundo, y
+     derrapando bastante más */
+  const rel = Math.min(1, Math.abs(k.vel)/VMAX);
+  let giro = 0.031 * k.giroF * Math.min(1, Math.abs(k.vel)/(VMAX*0.3)) * (1 - 0.25*rel);
+  if (k.derrape>0) giro *= 1.6;
   if (k.vel < 0) giro = -giro;
   k.ang += dir*giro;
   if (k.derrape>0) k.ang += k.derrapeDir*0.012;
@@ -790,7 +799,7 @@ function leerMandos(){
     if (!gp || !gp.connected) continue;
     hay = true;
     const ax = gp.axes[0]||0, ay = gp.axes[1]||0;
-    if (Math.abs(ax) > 0.12) eje = ax;
+    if (Math.abs(ax) > 0.12){ const m = (Math.abs(ax)-0.12)/0.88; eje = Math.sign(ax)*Math.pow(m, 1.6); }
     if (ay > 0.5) ahora['arrowdown'] = true;
     const B = {0:' ',1:' ',2:'shift',3:'shift',5:'shift',7:'shift',12:'arrowup',13:'arrowdown',14:'arrowleft',15:'arrowright'};
     for (const i in B){ const b = gp.buttons[i]; if (b && (b.pressed || b.value>0.5)) ahora[B[i]] = true; }
