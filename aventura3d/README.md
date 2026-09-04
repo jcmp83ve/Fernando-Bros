@@ -57,6 +57,12 @@ cierra, la caseta tiembla con cada *plop*, suena la descarga, Fernando sale
 diciendo *«¡Ahh, qué alivio!»* y el Señor Popo brinca: *«¡Bravo, Fernando!
 ¡Qué popo tan grande!»*.
 
+**De cada popo nace un popo bebé** 💩🎀: un popito con lazo rosado y chupón
+que sale del baño detrás de Fernando y lo sigue a todas partes dando
+brinquitos, en fila con Penny y Sheldon (*«¡Mira, un popo bebé me sigue!»*).
+Cada visita al baño suma uno más (hasta diez), se guardan con la partida y
+se esconden mientras Fernando va en un vehículo.
+
 ## ⭐ Las ocho estrellas
 
 | Misión | Cómo se gana |
@@ -124,9 +130,10 @@ día, o empezar de cero desde el menú de ESC.
 - Los personajes, casas y vehículos se arman con cajitas de colores fundidas
   en una sola malla; los bosques, el pasto, las flores, las nubes, los peces
   y las algas se dibujan con instancias.
-- Las voces son los mismos mp3 de Fernando Bros; las frases nuevas de esta
-  aventura (las de Fernando sobre el popo y las del Señor Popo) las dice la
-  voz sintética del navegador con el tono de cada quien.
+- Las voces son mp3 grabados: los mismos de Fernando Bros más diez frases
+  nuevas de esta aventura (las de Fernando sobre el popo y las del Señor
+  Popo), grabadas con la misma voz de niño. Si un mp3 no carga, habla la voz
+  sintética del navegador con el tono de cada quien.
 
 ## 🧪 Pruebas
 

@@ -53,10 +53,21 @@ const CLIPS = {
   '¡Todos a bordo del barco pichunguito!': AUDIO_BASE+'hf_20260725_162327_f5fa2e64-407b-4948-a00b-b83b013b79fb.mp3',
   '¡Hola pichunguito! ¡Soy tío Beto!': AUDIO_BASE+'hf_20260725_163030_8cc540e9-df84-42a8-a3f2-43da34c8f736.mp3',
   '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!': AUDIO_BASE+'hf_20260725_163038_87ec8542-ec18-4e86-ac5c-17480516cb71.mp3',
+  /* las frases de esta aventura: Fernando y el Señor Popo, con la misma voz de niño */
+  '¡Quiero hacer popo!': AUDIO_BASE+'hf_20260904_233610_75469df0-2058-46dc-ac66-10c308254efa.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260904_233610_aea4016d-7276-448f-9872-396016fc908d.mp3',
+  '¡Uy, me eché un peo!': AUDIO_BASE+'hf_20260904_233610_fe3fbdba-d60d-47b5-89eb-090d7146c14c.mp3',
+  '¡Tesoro! ¡Encontré el tesoro!': AUDIO_BASE+'hf_20260904_233610_bfa20432-1aed-46fa-a4c3-13572d4b5b07.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260904_233610_cb88f458-b7d4-4f73-b501-0331854d0be3.mp3',
+  '¡Hola Fernando! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!': AUDIO_BASE+'hf_20260904_233610_a068155f-b5b1-4a1b-b948-4285b70851e8.mp3',
+  '¡Pasa, pasa! ¡El baño está libre!': AUDIO_BASE+'hf_20260904_233709_826bb731-f4be-4a00-a2b9-88186e358732.mp3',
+  '¡Bravo, Fernando! ¡Qué popo tan grande!': AUDIO_BASE+'hf_20260904_233610_f83490ea-524e-4d27-9258-2bb23eaf49d9.mp3',
+  '¡Hiciste popo en todos mis baños! ¡Eres el campeón del popo!': AUDIO_BASE+'hf_20260904_233610_2b076d8a-c436-4b16-91f0-b0b1c3a49fca.mp3',
+  '¡Mira, un popo bebé me sigue!': AUDIO_BASE+'hf_20260904_233709_6ef4f4e8-c3d3-4dcd-a1f9-cfb62e319947.mp3',
 };
-/* Frases nuevas de esta aventura que todavía no tienen grabación: las dice
-   el navegador con la voz sintética y el tono de cada personaje. Están
-   apuntadas aquí para que la prueba automática sepa que son a propósito. */
+/* Si un mp3 no carga, habla el navegador con la voz sintética y el tono
+   de cada personaje. SIN_GRABACION lista las frases que a propósito no
+   tienen mp3 (hoy ninguna): la prueba automática avisa si alguna se sale. */
 const TONO_TTS = {
   'Eres mi pichunguito': {pitch:0.6, rate:0.95},
   '¡Épale! ¡Aquí viene tío Nacho!': {pitch:0.85, rate:1.15},
@@ -70,15 +81,14 @@ const TONO_TTS = {
   '¡Uy, me eché un peo!': {pitch:1.9, rate:1.1},
   '¡Tesoro! ¡Encontré el tesoro!': {pitch:1.9, rate:1.05},
   '¡Salté la rampa!': {pitch:1.9, rate:1.05},
+  '¡Mira, un popo bebé me sigue!': {pitch:1.9, rate:1.05},
   /* el Señor Popo */
   '¡Hola Fernando! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!': {pitch:0.5, rate:0.92},
   '¡Pasa, pasa! ¡El baño está libre!': {pitch:0.5, rate:0.95},
   '¡Bravo, Fernando! ¡Qué popo tan grande!': {pitch:0.5, rate:0.9},
   '¡Hiciste popo en todos mis baños! ¡Eres el campeón del popo!': {pitch:0.5, rate:0.9},
 };
-const SIN_GRABACION = ['¡Quiero hacer popo!','¡Ahh, qué alivio!','¡Uy, me eché un peo!','¡Tesoro! ¡Encontré el tesoro!','¡Salté la rampa!',
-  '¡Hola Fernando! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!','¡Pasa, pasa! ¡El baño está libre!',
-  '¡Bravo, Fernando! ¡Qué popo tan grande!','¡Hiciste popo en todos mis baños! ¡Eres el campeón del popo!'];
+const SIN_GRABACION = [];
 let voces = [], reproductor = null, clipsListos = false, hablando = false, colaVoz = [];
 function cargarVoces(){ try{ voces = speechSynthesis.getVoices(); }catch(e){ voces = []; } }
 if (EN_NAVEGADOR && typeof speechSynthesis !== 'undefined'){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
@@ -534,7 +544,8 @@ function crearPartida(guardado){
     t: 0, eventos: [], puntos: 0, camYaw: Math.PI,
     J: {x: INICIO.x, z: INICIO.z, y: 0, ang: INICIO.ang, vx: 0, vz: 0, vy: 0, suelo: true, nadando: false, radio: 0.5, mov: 0, fase: 0},
     veh: null, vehiculos: VEHICULOS_DEF.map(v=>Object.assign({}, v, {y:0, vel:0, vy:0, suelo:true, aire:false, cabeceo:0, giro:0, turbo:0, pos:null})),
-    perros: PERROS_DEF.map(p=>Object.assign({}, p, {y:0, sigue:false, ang:0, mov:0, fase:0})),
+    perros: PERROS_DEF.map(p=>Object.assign({}, p, {y:0, sigue:false, ang:0, mov:0, fase:0, radio:0.4})),
+    popitos: [],
     popo: 0, ganas: false, pedoT: 0, ultimoPopoDicho: -9999, ultimaHamb: -9999,
     hamburguesas: 0, comidas: new Set(), estrellas: [], prog: {banos:[], banderas:[], aros:[], familia:[], rampa:false, santi:false, cofre:false, popo:false},
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
@@ -547,7 +558,7 @@ function crearPartida(guardado){
   return P;
 }
 function exportar(P){
-  return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas],
+  return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas], popitos: P.popitos.length,
           prog: {banos:P.prog.banos.slice(), banderas:P.prog.banderas.slice(), aros:P.prog.aros.slice(), familia:P.prog.familia.slice(),
                  rampa:P.prog.rampa, santi:P.prog.santi, cofre:P.prog.cofre, popo:P.prog.popo}};
 }
@@ -561,6 +572,7 @@ function importar(P, g){
       for (const k of ['rampa','santi','cofre','popo']) if (typeof g.prog[k]==='boolean') P.prog[k] = g.prog[k]; }
     for (const id of P.prog.familia) P.saludos[id] = true;
     for (const p of P.perros) p.sigue = false;
+    if (Number.isFinite(g.popitos)) for (let i=0;i<Math.min(g.popitos, MAX_POPITOS);i++) nacerPopito(P, P.J.x - 2 - i, P.J.z + 1);
   }catch(e){}
 }
 const evento = (P, tipo, datos)=>{ P.eventos.push(Object.assign({tipo}, datos||{})); };
@@ -809,6 +821,32 @@ function pasoPerros(P){
   });
 }
 
+/* ---- los popos bebés: nacen en el baño y van detrás de los perritos ---- */
+const MAX_POPITOS = 10;
+function nacerPopito(P, x, z){
+  if (P.popitos.length >= MAX_POPITOS) return null;
+  const p = {id: P.popitos.length, x, z, y: altura(x, z), ang: 0, mov: 0, fase: azar()*6.28, dentro: false, radio: 0.35};
+  P.popitos.push(p); return p;
+}
+function pasoPopitos(P){
+  const J = P.J, base = P.perros.filter(p=>p.sigue).length;
+  P.popitos.forEach((p, i)=>{
+    if (P.veh){ p.dentro = true; return; }
+    p.dentro = false;
+    const k = base + i, atras = 2.4 + k*1.5, lado = (k%2 ? 1 : -1)*0.9;
+    const ox = J.x - Math.sin(J.ang)*atras - Math.cos(J.ang)*lado, oz = J.z - Math.cos(J.ang)*atras + Math.sin(J.ang)*lado;
+    const dx = ox-p.x, dz = oz-p.z, d = Math.hypot(dx,dz);
+    if (d > 45){ p.x = ox; p.z = oz; }
+    else if (d > 0.8){
+      const vel = Math.min(9.5, d*2.4);
+      const m = moverChocando(p, p.x + dx/d*vel*DT, p.z + dz/d*vel*DT);
+      p.x = m.x; p.z = m.z; p.ang = envolver(p.ang + envolver(Math.atan2(dx,dz)-p.ang)*0.2); p.mov = vel;
+    } else { p.mov = 0; p.ang = envolver(p.ang + envolver(J.ang-p.ang)*0.05); }
+    const g = altura(p.x, p.z);
+    p.y = g < NIVEL_MAR - 1.1 ? NIVEL_MAR - 0.2 : g;
+    p.fase += p.mov*DT*3 + DT*3;
+  });
+}
 /* ---- hamburguesas, ganas de popo y peos ---- */
 function comerHamburguesa(P, h){
   P.comidas.add(h.id); P.hamburguesas++; P.puntos += 100;
@@ -870,6 +908,8 @@ function pasoEscena(P){
       P.escena = null; P.popo = 0; P.ganas = false; P.puntos += 500;
       if (!P.prog.banos.includes(E.bano)) P.prog.banos.push(E.bano);
       evento(P, 'banoSale', {bano:E.bano, banos:P.prog.banos.length});
+      /* de cada popo nace un popo bebé que sigue a Fernando */
+      { const b = BANOS[E.bano]; const n = nacerPopito(P, b.px + Math.sin(b.ang)*1.2, b.pz + Math.cos(b.ang)*1.2); if (n) { evento(P, 'popito', {total:P.popitos.length}); if (P.popitos.length <= 3) evento(P, 'hablar', {texto:'¡Mira, un popo bebé me sigue!', quien:'Fernando'}); } }
       evento(P, 'hablar', {texto:'¡Bravo, Fernando! ¡Qué popo tan grande!', quien:'Señor Popo'});
       P.srPopo.saludo = P.t;
       P.prog.popo = true;
@@ -963,7 +1003,7 @@ function pasoPartida(P, ent){
   const aNuevo = !!ent.a && !P.aPrev, bNuevo = !!ent.b && !P.bPrev, salirNuevo = !!ent.salir && !P.salirPrev;
   P.aPrev = !!ent.a; P.bPrev = !!ent.b; P.salirPrev = !!ent.salir;
   if (Number.isFinite(ent.camYaw)) P.camYaw = ent.camYaw;
-  if (P.escena){ pasoEscena(P); pasoPerros(P); return; }
+  if (P.escena){ pasoEscena(P); pasoPerros(P); pasoPopitos(P); return; }
   const e2 = {jx, jy, a:!!ent.a, b:!!ent.b, aNuevo, bNuevo};
   if (P.veh){
     pasoVehiculo(P, P.veh, e2);
@@ -974,14 +1014,14 @@ function pasoPartida(P, ent){
     if (P.veh) pasoVehiculo(P, P.veh, {jx:0, jy:0, a:false, b:false, aNuevo:false, bNuevo:false});
     else pasoPie(P, e2);
   }
-  pasoPerros(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
+  pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
 }
 
 if (typeof module !== 'undefined' && module.exports){
   module.exports = {CLIPS, TONO_TTS, SIN_GRABACION, MISIONES, FAMILIA, PERROS_DEF, VEHICULOS_DEF, BANOS, HAMBURGUESAS, AROS, BANDERAS, CASAS, DECOR,
     RUTA, PISTA, RAMPA, MUELLE, COFRE, ISLITA, INICIO, HANGAR, FARO, PLAYA, MONTANA, PUEBLO, CANCHA, PARQUE, FUENTE, TAM, NSEG, SEG, MALLA, LIMITE, NIVEL_MAR,
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
-    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES};
+    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2105,6 +2145,22 @@ function armarSrPopo(){
   g.partes = {cuerpo, bI, bD}; g.fase = 0; g.scale.setScalar(0.95);
   return g;
 }
+/* el popo bebé: un popito con lazo rosado y chupón */
+function armarPopito(){
+  const g = new THREE.Group(), A = new Armador();
+  const cafe = '#7a4a1e', claro = '#95602a';
+  A.bola(0.5, cafe, 0, 0.4, 0, 10, 1, 0.78, 1).bola(0.38, claro, 0.02, 0.74, 0.04, 10, 1, 0.85, 1).bola(0.26, cafe, 0.01, 1.02, 0.06, 8)
+   .cono(0.16, 0.34, claro, 0.07, 1.3, 0.1, 8, 0, 0, -0.35)
+   .bola(0.13, '#ffffff', -0.13, 0.8, 0.34, 8).bola(0.13, '#ffffff', 0.13, 0.8, 0.34, 8).bola(0.065, '#111', -0.12, 0.8, 0.45, 6).bola(0.065, '#111', 0.15, 0.8, 0.45, 6)
+   .bola(0.06, '#ff9aa0', -0.26, 0.7, 0.32, 6).bola(0.06, '#ff9aa0', 0.27, 0.7, 0.32, 6)
+   .cil(0.09, 0.09, 0.05, '#ffd23f', 0, 0.62, 0.42, Math.PI/2, 0, 0, 8).bola(0.05, '#4fc3f7', 0, 0.62, 0.47, 6)
+   .caja(0.14, 0.12, 0.06, '#ff6ec0', -0.12, 1.16, 0.12, 0, 0, 0.4).caja(0.14, 0.12, 0.06, '#ff6ec0', 0.1, 1.16, 0.12, 0, 0, -0.4).bola(0.05, '#ff6ec0', -0.01, 1.16, 0.15, 6)
+   .caja(0.2, 0.09, 0.3, '#ffffff', -0.15, 0.045, 0.28).caja(0.2, 0.09, 0.3, '#ffffff', 0.15, 0.045, 0.28);
+  const cuerpo = A.malla(matMate()); g.add(cuerpo);
+  g.partes = {cuerpo}; g.fase = 0;
+  return g;
+}
+const popitosMesh = [];
 /* la persona camina: piernas y brazos van y vienen, y el cuerpo rebota */
 function animarPersona(g, mov, fase, aire, nadando, sentado){
   const p = g.partes;
@@ -2360,6 +2416,7 @@ function atenderEventos(){
       case 'chapoteo': sfx.chapoteo(); for (let i=0;i<14;i++) particula(e.x + (azar()-0.5)*2, NIVEL_MAR+0.2, e.z + (azar()-0.5)*2, '#dff4ff', (azar()-0.5)*4, 2+azar()*4, (azar()-0.5)*4, 35, 0.2, {grav:10, alfa:0.85}); break;
       case 'saludo': sfx.saludo(); { const f = porId(e.id); for (let i=0;i<8;i++) particula(f.x + (azar()-0.5)*1.5, altura(f.x,f.z)+2+azar(), f.z + (azar()-0.5)*1.5, '#ff6ec0', (azar()-0.5)*1.5, 1+azar()*1.5, (azar()-0.5)*1.5, 50, 0.2, {alfa:0.9}); if (e.primera) grande('¡HOLA '+f.nombre.toUpperCase()+'! 💗', '#ff9ed6', 80); } break;
       case 'eructo': sfx.eructo(); break;
+      case 'popito': sfx.perro(); grande('¡UN POPO BEBÉ TE SIGUE! 💩 '+e.total, '#ffb070', 110); for (let i=0;i<8;i++) particula(J.x + (azar()-0.5)*2, J.y+1.5+azar(), J.z + (azar()-0.5)*2, '#ff6ec0', (azar()-0.5)*1.5, 1+azar()*1.5, (azar()-0.5)*1.5, 50, 0.18, {alfa:0.9}); break;
       case 'perro': sfx.perro(); grande('¡'+PERROS_DEF.find(p=>p.id===e.id).nombre.toUpperCase()+' TE SIGUE! 🐕', '#fff', 80); break;
       case 'bandera': sfx.bandera(); banderasMesh[e.id].bandera.material.color.copy(lin(0xffd23f)); { const b = BANDERAS[e.id]; chispas(b.x, altura(b.x,b.z)+5, b.z, '#ffe36e', 20, 8); } grande('🚩 BANDERA '+e.total+'/'+BANDERAS.length, '#ffe36e', 60); break;
       case 'aro': sfx.aro(); arosMesh[e.id].material.color.copy(lin(0x7dffa0)); { const a = AROS[e.id]; chispas(a.x, a.y, a.z, '#ffe36e', 26, 9); } grande('⭕ ARO '+e.total+'/'+AROS.length, '#ffe36e', 60); break;
@@ -2422,6 +2479,16 @@ function sincronizar(){
     animarPerro(m, p.sigue ? p.mov : 0, p.fase);
     if (!p.sigue) m.position.y += Math.abs(Math.sin(p.fase*2))*0.15;
     m.etiqueta.visible = !p.sigue;
+  });
+  /* los popos bebés brincan detrás */
+  while (popitosMesh.length < P.popitos.length){ const m = armarPopito(); scene.add(m); popitosMesh.push(m); }
+  popitosMesh.forEach((m, i)=>{
+    const p = P.popitos[i];
+    if (!p || p.dentro){ m.visible = false; return; }
+    m.visible = true;
+    const brinco = Math.abs(Math.sin(p.fase))*0.35*Math.min(1, p.mov/2.5);
+    m.position.set(p.x, p.y + brinco, p.z); m.rotation.y = p.ang;
+    m.scale.set(1 - brinco*0.25, 1 + brinco*0.35 + Math.sin(p.fase*0.7)*0.03, 1 - brinco*0.25);
   });
   /* Tío Juan vuela al lado de Fernando */
   {

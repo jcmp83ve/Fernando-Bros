@@ -95,7 +95,9 @@ repartida por el pueblo, la playa, el puerto, el aeropuerto, el faro y la
 montaña, y **Tío Juan volando siempre al lado**. Fernando encuentra
 **hamburguesas**, se las come, **se echa un peo** y dice *«¡Quiero hacer
 popo!»*, y entonces hay que correr a uno de los cuatro baños del **Señor
-Popo** 💩🎩, el personaje nuevo. Ocho misiones dan ocho estrellas (las
+Popo** 💩🎩, el personaje nuevo. De cada popo **nace un popo bebé** que sigue
+a Fernando dando brinquitos, y todas las frases nuevas están grabadas con la
+misma voz de niño. Ocho misiones dan ocho estrellas (las
 banderas con el carro, la rampa con la moto, los aros del cielo, la islita
 de Santi, el tesoro del fondo del mar, la familia…) y el progreso se guarda
 solo. Controles fáciles: la palanca mueve, **A sube, B corre**.
