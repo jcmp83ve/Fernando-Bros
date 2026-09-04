@@ -247,22 +247,24 @@ function procesarTecla(k){
   if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
   else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) estado='mapa';
   else if (estado==='mapa'){
-    if (e.key==='ArrowLeft') selMapa=(selMapa+12)%13;
-    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%13;
-    /* arriba y abajo saltan entre las dos filas de mundos y los tres botones */
-    else if (e.key==='ArrowUp') selMapa = selMapa>=10 ? [5,7,9][selMapa-10] : Math.max(selMapa-5, 0);
+    if (e.key==='ArrowLeft') selMapa=(selMapa+13)%14;
+    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%14;
+    /* arriba y abajo saltan entre las dos filas de mundos y los cuatro botones */
+    else if (e.key==='ArrowUp') selMapa = selMapa>=10 ? [5,7,8,9][selMapa-10] : Math.max(selMapa-5, 0);
     else if (e.key==='ArrowDown') selMapa = selMapa>=10 ? selMapa
-                                          : selMapa>=5 ? (selMapa<7 ? 10 : selMapa<9 ? 11 : 12)
+                                          : selMapa>=5 ? (selMapa<7 ? 10 : selMapa<8 ? 11 : selMapa<9 ? 12 : 13)
                                           : selMapa+5;
     else if (e.key>='1'&&e.key<='9') { empezarJuego(+e.key-1); }
     else if (e.key==='0') { empezarJuego(9); }
     else if (e.key==='k'||e.key==='K') iniciarKart();
     else if (e.key==='a'||e.key==='A') { if (typeof MJ!=='undefined') MJ.abrirArcade(); }
     else if (e.key==='d'||e.key==='D') abrirDomino();
+    else if (e.key==='p'||e.key==='P') abrirKart3D();
     else if (e.key==='Enter'||e.key===' '){
       if(selMapa===10) iniciarKart();
       else if(selMapa===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
       else if(selMapa===12) abrirDomino();
+      else if(selMapa===13) abrirKart3D();
       else empezarJuego(selMapa);
     }
     else if (e.key==='Escape') estado='menu';
@@ -458,6 +460,7 @@ cv.addEventListener('pointerdown', (e)=>{
         if (c.idx===10) iniciarKart();
         else if (c.idx===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
         else if (c.idx===12) abrirDomino();
+        else if (c.idx===13) abrirKart3D();
         else empezarJuego(c.idx);
         break;
       }
@@ -2547,7 +2550,7 @@ function dibSelPista(){
   ctx.textAlign='left';
   dibBotonAtras('✕ VOLVER');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v39', W-34, 18);
+  ctx.fillText('v40', W-34, 18);
 }
 function iniciarCarrera(idx){
   cargarPista(idx===undefined ? 0 : idx);
@@ -3319,14 +3322,23 @@ function cajasMapa(){
     const col=i%5, row=(i/5)|0;
     cajas.push({x:30+col*184, y:130+row*126, w:168, h:106, idx:i});
   }
-  /* los tres botones de abajo: la carrera, la sala arcade y el dominó */
-  const anc = 214, hueco = 14, x0 = (W - (anc*3 + hueco*2))/2;
-  for(let i=0;i<3;i++) cajas.push({x: x0 + i*(anc+hueco), y:400, w:anc, h:64, idx:10+i});
+  /* los cuatro botones de abajo: la carrera, la sala arcade, el dominó y el kart en 3D */
+  const anc = 204, hueco = 12, x0 = (W - (anc*4 + hueco*3))/2;
+  for(let i=0;i<4;i++) cajas.push({x: x0 + i*(anc+hueco), y:400, w:anc, h:64, idx:10+i});
   return cajas;
 }
 /* El dominó es una página aparte que vive en la carpeta domino/. En la
    versión de una sola página (sin carpetas) se le pasa la dirección por
    window.URL_DOMINO y se abre en otra pestaña. */
+/* Pichungito Kart, la carrera en 3D de verdad, también es una página
+   aparte: vive en la carpeta kart3d/ */
+function abrirKart3D(){
+  const destino = (typeof window !== 'undefined' && window.URL_KART3D) || 'kart3d/';
+  try{
+    if (typeof window !== 'undefined' && window.URL_KART3D) window.open(destino, '_blank');
+    else location.href = destino;
+  }catch(e){ try{ location.href = destino; }catch(e2){} }
+}
 function abrirDomino(){
   const destino = (typeof window !== 'undefined' && window.URL_DOMINO) || 'domino/';
   try{
@@ -3342,11 +3354,11 @@ function dibMapa(){
   ctx.fillStyle='#f8b800'; ctx.font='bold 40px monospace';
   ctx.fillText('ELIGE TU MUNDO', W/2, 70);
   ctx.font='15px monospace'; ctx.fillStyle='#bcd6ff';
-  ctx.fillText('Toca un mundo · o entra a la carrera, a la SALA ARCADE y al DOMINÓ', W/2, 100);
+  ctx.fillText('Toca un mundo · o entra a la carrera, a la SALA ARCADE, al DOMINÓ o a PICHUNGITO KART', W/2, 100);
   for(const c of cajasMapa()){
     const sel = selMapa===c.idx;
     ctx.fillStyle = c.idx===10 ? '#0a3a12' : c.idx===11 ? '#3a0a3a'
-                  : c.idx===12 ? '#0d4a2a' : COLORES_MAPA[c.idx];
+                  : c.idx===12 ? '#0d4a2a' : c.idx===13 ? '#4a1a0a' : COLORES_MAPA[c.idx];
     ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,12); ctx.fill();
     ctx.lineWidth = sel?6:3;
     ctx.strokeStyle = sel ? '#ffe36e' : 'rgba(255,255,255,0.5)';
@@ -3359,6 +3371,7 @@ function dibMapa(){
     if (c.idx===10) rotuloConEmoji('🏁', 'FERNANDO KART', c, '#7dffa0');
     else if (c.idx===11) rotuloConEmoji('🕹️', 'SALA ARCADE', c, '#ff9ed6');
     else if (c.idx===12) rotuloConFicha('DOMINÓ', c, '#8fe8b4');
+    else if (c.idx===13) rotuloConEmoji('🏎️', 'PICHUNGITO KART', c, '#ffb06e');
     else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
@@ -3373,7 +3386,7 @@ function dibMapa(){
   ctx.textAlign='left';
   dibBotonAtras('✕ MENÚ');
   ctx.fillStyle='#7fa8e0'; ctx.font='12px monospace';
-  ctx.fillText('v39', W-34, 18);
+  ctx.fillText('v40', W-34, 18);
 }
 /* ---- sombra suave: se dibuja UNA vez en un lienzo y se reutiliza ---- */
 let sombraImg = null;
