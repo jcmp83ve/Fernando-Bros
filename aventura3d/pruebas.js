@@ -247,7 +247,26 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   const o = N.objetivo(P2); if (!o || typeof o.texto !== 'string') mal('objetivo() no responde');
   const P3 = N.crearPartida(); for (let i=0;i<5;i++){ const o = N.objetivo(P3); if (!o.texto) mal('objetivo vacío'); paso(P3, {}); }
 }
-/* 13) los eventos que la vista necesita salieron todos */
+/* 13) jugar con amigos: los códigos de sala y los paquetes que viajan por la red */
+{
+  for (let i=0;i<50;i++){ const c = N.codigoSala(); if (c.length!==4 || c.split('').some(ch=>!N.ALFABETO_SALA.includes(ch))) mal('código de sala raro: '+c); }
+  if (N.normalizarCodigo(' ab-cd ') !== 'ABCD') mal('normalizarCodigo no limpia: '+N.normalizarCodigo(' ab-cd '));
+  if (N.normalizarCodigo('popo1') !== 'PP') mal('normalizarCodigo debía quitar la O y el 1: '+N.normalizarCodigo('popo1'));
+  if (N.normalizarCodigo('abcdefg') !== 'ABCD') mal('normalizarCodigo debía cortar a 4');
+  const Q = N.crearPartida();
+  const a = N.empaquetarEstado(Q, 'luca', 'Luca'), r1 = N.desempaquetarEstado(JSON.parse(JSON.stringify(a)));
+  if (!r1 || r1.pj!=='luca' || r1.nombre!=='Luca' || Math.abs(r1.x-Q.J.x)>0.01 || r1.veh!=='' ) mal('el paquete a pie no da la vuelta bien');
+  const v = Q.vehiculos.find(v=>v.id==='avion'); Q.veh = v; v.aire = true; v.cabeceo = 0.3; v.vel = 34; Q.J.x = v.x;
+  const b = N.empaquetarEstado(Q, 'fernando', 'Fernando'), r2 = N.desempaquetarEstado(JSON.parse(JSON.stringify(b)));
+  if (!r2 || r2.veh!=='avion' || !r2.aire || Math.abs(r2.cabeceo-0.3)>0.01 || Math.abs(r2.vel-34)>0.1) mal('el paquete en avión no da la vuelta bien');
+  if (JSON.stringify(b).length > 260) mal('el paquete pesa mucho: '+JSON.stringify(b).length+' bytes');
+  if (N.desempaquetarEstado({t:'e', x:'no', y:1, z:2}) !== null) mal('un paquete sin posición debía rechazarse');
+  const basura = N.desempaquetarEstado({t:'e', pj:'bowser', n:'<script>x'.repeat(9), x:NaN+0*0 || 0, y:1e9, z:-1e9, a:99, v:'cohete', m:-5, pp:999, es:50});
+  if (!basura || basura.pj!=='fernando' || basura.x!==0 || basura.y!==400 || basura.z!==-N.LIMITE || basura.veh!=='' || basura.mov!==0 || basura.popitos!==N.MAX_POPITOS || basura.estrellas!==8 || /[<>]/.test(basura.nombre)) mal('un paquete con basura no se limpia bien: '+JSON.stringify(basura));
+  if (N.desempaquetarEstado(null) !== null || N.desempaquetarEstado({t:'hola'}) !== null || N.desempaquetarEstado('e') !== null) mal('desempaquetar debía rechazar lo que no es estado');
+  bien('red: códigos de sala y paquetes de', JSON.stringify(a).length, 'bytes que se limpian solos');
+}
+/* 14) los eventos que la vista necesita salieron todos */
 for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','aro','rampa','cofre','final','hablar','salto','chapoteo'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');

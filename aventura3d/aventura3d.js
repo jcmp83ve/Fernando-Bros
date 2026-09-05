@@ -995,6 +995,34 @@ function objetivo(P){
   return {texto: P.final ? '¡Lo lograste todo! 🌟' : '¡Explora la isla! 🌴', x:null};
 }
 
+/* ---------------- Jugar con amigos: lo que viaja por la red ----------------
+   Cada aparato lleva su propia partida (sus hamburguesas, estrellas y popos
+   bebés) y solo comparte dónde está y qué hace, quince veces por segundo.
+   Aquí está lo puro: armar y leer esos paquetes, y los códigos de sala. */
+const PERSONAJES_RED = [
+  {id:'fernando', nombre:'Fernando', emoji:'🧢'}, {id:'luca', nombre:'Luca', emoji:'🧒'}, {id:'salomon', nombre:'Salomón', emoji:'🕶️'},
+  {id:'cucu', nombre:'Cucú', emoji:'👧'}, {id:'nacho', nombre:'Tío Nacho', emoji:'🤠'}, {id:'beto', nombre:'Tío Beto', emoji:'👓'},
+];
+const ALFABETO_SALA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   /* sin I, O, 0 ni 1, que se confunden */
+const VERSION_RED = 1;
+function codigoSala(){ let c = ''; for (let i=0;i<4;i++) c += ALFABETO_SALA[Math.floor(Math.random()*ALFABETO_SALA.length)]; return c; }
+function normalizarCodigo(t){ return String(t||'').toUpperCase().split('').filter(ch=>ALFABETO_SALA.includes(ch)).slice(0,4).join(''); }
+function empaquetarEstado(P, pj, nombre){
+  const J = P.J, v = P.veh, r = (n, d)=> Math.round(n*(d||100))/(d||100);
+  return {t:'e', pj, n:nombre, x:r(J.x), y:r(J.y), z:r(J.z), a:r(J.ang), v: v ? v.id : '', m:r(J.mov,10), f:r(J.fase,10),
+    na: J.nadando ? 1 : 0, su: J.suelo ? 1 : 0, c: v ? r(v.cabeceo) : 0, g: v ? r(v.giro) : 0, ve: v ? r(v.vel,10) : 0, ai: v && v.aire ? 1 : 0,
+    pp: P.popitos.length, ga: P.ganas ? 1 : 0, es: P.estrellas.length};
+}
+function desempaquetarEstado(m){
+  if (!m || typeof m !== 'object' || m.t !== 'e' || ![m.x, m.y, m.z].every(Number.isFinite)) return null;
+  const num = (v, a, b)=> Number.isFinite(v) ? clamp(v, a, b) : 0;
+  const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
+  const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
+  return {pj, nombre, x:num(m.x,-LIMITE,LIMITE), y:num(m.y,-60,400), z:num(m.z,-LIMITE,LIMITE), ang:num(m.a,-7,7),
+    veh: VEHICULOS_DEF.some(d=>d.id===m.v) ? m.v : '', mov:num(m.m,0,40), fase:num(m.f,0,1e7), nadando:!!m.na, suelo:!!m.su,
+    cabeceo:num(m.c,-1,1), giro:num(m.g,-1,1), vel:num(m.ve,-20,80), aire:!!m.ai, popitos:num(m.pp,0,MAX_POPITOS)|0, ganas:!!m.ga, estrellas:num(m.es,0,8)|0};
+}
+
 /* ---- un paso de la partida (60 por segundo) ---- */
 function pasoPartida(P, ent){
   ent = ent || {};
@@ -1021,7 +1049,7 @@ if (typeof module !== 'undefined' && module.exports){
   module.exports = {CLIPS, TONO_TTS, SIN_GRABACION, MISIONES, FAMILIA, PERROS_DEF, VEHICULOS_DEF, BANOS, HAMBURGUESAS, AROS, BANDERAS, CASAS, DECOR,
     RUTA, PISTA, RAMPA, MUELLE, COFRE, ISLITA, INICIO, HANGAR, FARO, PLAYA, MONTANA, PUEBLO, CANCHA, PARQUE, FUENTE, TAM, NSEG, SEG, MALLA, LIMITE, NIVEL_MAR,
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
-    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS};
+    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, PERSONAJES_RED, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2270,8 +2298,14 @@ function armarVehiculo(id){
 }
 
 /* ---------------- Todo el elenco, puesto en la isla ---------------- */
-const fer = armarPersona('fernando'); scene.add(fer);
-const ferSentado = armarPersona('fernando'); ferSentado.visible = false; scene.add(ferSentado);
+let fer = armarPersona('fernando'); scene.add(fer);
+let ferSentado = armarPersona('fernando'); ferSentado.visible = false; scene.add(ferSentado);
+function ponerPersonaje(pj){
+  if (!PERSONAJES_RED.some(p=>p.id===pj)) return;
+  if (fer.parent) fer.parent.remove(fer); if (ferSentado.parent) ferSentado.parent.remove(ferSentado);
+  fer = armarPersona(pj); scene.add(fer);
+  ferSentado = armarPersona(pj); ferSentado.visible = false; scene.add(ferSentado);
+}
 const tioJuan = armarPersona('tiojuan'); scene.add(tioJuan);
 tioJuan.partes.bI.rotation.x = -2.9; tioJuan.partes.bD.rotation.x = -2.9;
 const familiaMesh = {};
@@ -2295,8 +2329,166 @@ for (const v of VEHICULOS_DEF){
   et.position.y = v.id==='avion' ? 4.2 : v.id==='barco' ? 5.6 : v.id==='sub' ? 4.8 : 3.0; m.add(et); m.etiqueta = et;
 }
 
+/* ---------------- Jugar con amigos: PeerJS ----------------
+   Los navegadores se conectan directo entre sí (WebRTC); el servidor
+   público de PeerJS solo presenta a los dos aparatos por el código de sala.
+   El que crea la sala es el anfitrión: recibe lo de cada amigo y se lo
+   reenvía a los demás. Cada quien juega su propia partida y ve a los otros
+   corriendo, manejando y volando por la misma isla. */
+const RED = {estado:'off', peer:null, conns:new Map(), sala:'', anfitrion:false, remotos:new Map(), pj:'fernando', error:'', codigo:'', pendiente:'', entrandoCodigo:false, avisos:[]};
+try{ const g = localStorage.getItem('aventura3d.pj'); if (g && PERSONAJES_RED.some(p=>p.id===g)) RED.pj = g; }catch(e){}
+try{ const c = normalizarCodigo(new URL(location.href).searchParams.get('sala')); if (c.length===4) RED.pendiente = c; }catch(e){}
+const nombreLocal = ()=> PERSONAJES_RED.find(p=>p.id===RED.pj).nombre;
+const hayPeerJS = ()=> typeof Peer !== 'undefined';
+const redActiva = ()=> !!RED.peer && (RED.estado==='sala' || RED.estado==='conectado');
+const enlaceSala = ()=> location.origin + location.pathname + '?sala=' + RED.sala;
+function textoErrorRed(e){
+  const t = e && e.type;
+  if (t==='peer-unavailable') return 'No encontré la sala '+RED.sala+'. Revisa el código, o pide que la creen otra vez.';
+  if (t==='network' || t==='server-error' || t==='socket-error' || t==='socket-closed') return 'No pude hablar con el servidor de salas. Revisa el internet y vuelve a intentar.';
+  if (t==='browser-incompatible') return 'Este navegador no puede jugar en línea. Prueba con Chrome o Safari actualizados.';
+  return 'Algo falló en la conexión ('+(t||'?')+'). Vuelve a intentar.';
+}
+function redLimpiar(){
+  if (RED.peer){ try{ RED.peer.destroy(); }catch(e){} }
+  RED.peer = null; RED.conns.clear();
+  for (const id of [...RED.remotos.keys()]) quitarRemoto(id);
+  RED.anfitrion = false;
+}
+function redCrear(){
+  if (!hayPeerJS()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
+  redLimpiar(); RED.estado = 'creando'; RED.sala = codigoSala(); RED.anfitrion = true; RED.error = '';
+  const peer = new Peer('fernando-bros-'+RED.sala, {debug:0});
+  RED.peer = peer;
+  peer.on('open', ()=>{ if (RED.peer===peer) RED.estado = 'sala'; });
+  peer.on('connection', conn=>{ if (RED.peer===peer) prepararConn(conn); });
+  peer.on('error', e=>{ if (RED.peer!==peer) return; if (e.type==='unavailable-id'){ redCrear(); return; } RED.estado = 'error'; RED.error = textoErrorRed(e); RED.anfitrion = false; });
+  peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
+  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='creando'){ RED.estado = 'error'; RED.error = 'El servidor de salas no respondió. Revisa el internet y vuelve a intentar.'; } }, 15000);
+}
+function redUnirse(codigo){
+  codigo = normalizarCodigo(codigo);
+  if (codigo.length !== 4){ RED.error = 'El código tiene 4 letras o números'; return; }
+  if (!hayPeerJS()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
+  redLimpiar(); RED.estado = 'uniendo'; RED.sala = codigo; RED.anfitrion = false; RED.error = ''; RED.entrandoCodigo = false;
+  const peer = new Peer({debug:0});
+  RED.peer = peer;
+  peer.on('open', ()=>{ if (RED.peer!==peer) return; prepararConn(peer.connect('fernando-bros-'+codigo, {reliable:true, serialization:'json'})); });
+  peer.on('error', e=>{ if (RED.peer!==peer) return; RED.estado = 'error'; RED.error = textoErrorRed(e); });
+  peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
+  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='uniendo'){ RED.estado = 'error'; RED.error = 'No pude entrar a la sala '+codigo+'. Revisa el internet de los dos aparatos y que el código sea el mismo.'; } }, 20000);
+}
+function redSalir(){ if (RED.conns.size) redEnviar({t:'chau'}); redLimpiar(); RED.estado = 'off'; RED.sala = ''; }
+function prepararConn(conn){
+  conn.on('open', ()=>{
+    RED.conns.set(conn.peer, conn);
+    try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED}); }catch(e){}
+    if (!RED.anfitrion){ RED.estado = 'conectado'; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
+  });
+  conn.on('data', m=>redRecibir(conn.peer, m));
+  const cerrar = ()=>{
+    if (!RED.conns.has(conn.peer)) return;
+    RED.conns.delete(conn.peer);
+    const r = RED.remotos.get(conn.peer);
+    if (r) aviso(r.nombre+' se fue de la isla 👋');
+    quitarRemoto(conn.peer);
+    if (RED.anfitrion) redEnviar({t:'r', de:conn.peer, m:{t:'chau'}});
+    else { aviso('Se cerró la sala; sigues jugando solo'); redLimpiar(); RED.estado = 'off'; RED.sala = ''; }
+  };
+  conn.on('close', cerrar); conn.on('error', cerrar);
+}
+function redEnviar(m){ for (const [,c] of RED.conns){ try{ if (c.open) c.send(m); }catch(e){} } }
+function redEvento(tipo, datos){ if (RED.conns.size) redEnviar(Object.assign({t:'ev', tipo}, datos||{})); }
+function redRecibir(id, m){
+  if (!m || typeof m !== 'object') return;
+  if (m.t==='r'){ if (!RED.anfitrion && typeof m.de==='string' && m.m && typeof m.m==='object') redRecibir(m.de, m.m); return; }
+  if (RED.anfitrion){ for (const [pid, c] of RED.conns) if (pid!==id){ try{ if (c.open) c.send({t:'r', de:id, m}); }catch(e){} } }
+  if (m.t==='chau'){ const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
+  if (m.t==='hola'){
+    const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
+    const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
+    if (!RED.remotos.has(id)) crearRemoto(id, {pj, nombre, x:P.J.x, y:P.J.y, z:P.J.z, ang:0, veh:'', mov:0, fase:0, nadando:false, suelo:true, cabeceo:0, giro:0, vel:0, aire:false, popitos:0, ganas:false, estrellas:0});
+    aviso('👋 '+nombre+' entró a la isla'); sfx.saludo();
+    return;
+  }
+  if (m.t==='e'){
+    const e = desempaquetarEstado(m); if (!e) return;
+    let r = RED.remotos.get(id);
+    if (!r) r = crearRemoto(id, e);
+    else if (r.pj !== e.pj || r.nombre !== e.nombre){ quitarRemoto(id); r = crearRemoto(id, e); }
+    r.obj = e; r.t = tick;
+    return;
+  }
+  if (m.t==='ev'){
+    const r = RED.remotos.get(id); if (!r) return;
+    const x = Number.isFinite(m.x) ? m.x : r.act.x, y = Number.isFinite(m.y) ? m.y : r.act.y, z = Number.isFinite(m.z) ? m.z : r.act.z;
+    const cerca = Math.hypot(x-P.J.x, z-P.J.z) < 80;
+    if (m.tipo==='pedo'){ nubePeo(x, y, z, !!m.grande); if (cerca) sfx.pedo(!!m.grande); }
+    else if (m.tipo==='hamburguesa'){ chispas(x, y, z, '#ffe36e', 10, 4); if (cerca) sfx.hamburguesa(); }
+    else if (m.tipo==='estrella'){ confeti(x, y, z, 30); aviso('⭐ '+r.nombre+' ganó una estrella'); sfx.estrella(); }
+    else if (m.tipo==='popo'){ confeti(x, y, z, 12); aviso('💩 '+r.nombre+' hizo popo'); }
+    else if (m.tipo==='salto' && cerca){ sfx.salto(); }
+  }
+}
+function crearRemoto(id, e){
+  const r = {id, pj:e.pj, nombre:e.nombre, obj:e, act:{x:e.x, y:e.y, z:e.z, ang:e.ang}, t:tick, fase:0, vehs:{}};
+  r.g = armarPersona(e.pj); r.g.visible = false; scene.add(r.g);
+  r.gs = armarPersona(e.pj); r.gs.visible = false; scene.add(r.gs);
+  r.etiqueta = letrero('👤 '+e.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); r.etiqueta.position.y = 2.6/r.g.esc; r.g.add(r.etiqueta);
+  RED.remotos.set(id, r); return r;
+}
+function quitarRemoto(id){
+  const r = RED.remotos.get(id); if (!r) return;
+  scene.remove(r.g); if (r.gs.parent) r.gs.parent.remove(r.gs);
+  for (const k in r.vehs) scene.remove(r.vehs[k]);
+  RED.remotos.delete(id);
+}
+function sincronizarRemotos(){
+  for (const [id, r] of RED.remotos){
+    if (tick - r.t > 60*12){ quitarRemoto(id); continue; }
+    const o = r.obj, a = r.act;
+    a.x += (o.x-a.x)*0.22; a.y += (o.y-a.y)*0.22; a.z += (o.z-a.z)*0.22; a.ang = envolver(a.ang + envolver(o.ang-a.ang)*0.22);
+    r.fase += o.mov*DT*2.2 + DT*0.5;
+    if (o.veh){
+      let vm = r.vehs[o.veh];
+      if (!vm){ vm = armarVehiculo(o.veh); const et = letrero('👤 '+r.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); et.position.y = o.veh==='avion' ? 4.2 : o.veh==='barco' ? 5.6 : o.veh==='sub' ? 4.8 : 3.0; vm.add(et); scene.add(vm); r.vehs[o.veh] = vm; }
+      for (const k in r.vehs) r.vehs[k].visible = k===o.veh;
+      vm.position.set(a.x, a.y, a.z);
+      vm.rotation.set(-o.cabeceo, a.ang, o.veh==='avion' && o.aire ? o.giro*0.7 : o.veh==='moto' ? o.giro*0.45 : o.giro*0.1, 'YXZ');
+      const R = vm.partes;
+      for (const w of R.ruedas){ w.giro.rotation.x += o.vel*DT/w.r; if (w.delante) w.dir.rotation.y = o.giro*0.45; }
+      if (R.helice) R.helice.rotation.z += 0.3;
+      R.sombra.visible = o.veh!=='sub';
+      if (r.gs.parent !== vm) vm.add(r.gs);
+      r.gs.visible = true; r.gs.position.set(R.asiento.x, R.asiento.y, R.asiento.z); r.gs.scale.setScalar(r.gs.esc*R.asiento.esc); r.gs.rotation.set(0,0,0);
+      animarPersona(r.gs, 0, 0, false, false, !R.asiento.parado);
+      r.g.visible = false;
+    } else {
+      for (const k in r.vehs) r.vehs[k].visible = false;
+      r.gs.visible = false;
+      r.g.visible = true; r.g.position.set(a.x, a.y, a.z); r.g.rotation.set(o.nadando ? 1.2 : 0, a.ang, 0);
+      animarPersona(r.g, o.mov, r.fase, !o.suelo && !o.nadando, o.nadando);
+      r.etiqueta.visible = Math.hypot(a.x-P.J.x, a.z-P.J.z) > 3;
+    }
+  }
+}
+function redPaso(){
+  if (!redActiva() || !RED.conns.size) return;
+  if (tick % 4 === 0) redEnviar(empaquetarEstado(P, RED.pj, nombreLocal()));
+}
+function compartirSala(){
+  const url = enlaceSala(), texto = '¡Ven a jugar conmigo a la isla de Fernando! Sala '+RED.sala+': '+url;
+  try{ if (navigator.share){ navigator.share({title:'Fernando y Tío Juan: La Gran Aventura', text:texto, url}).catch(()=>{}); return; } }catch(e){}
+  copiarEnlace();
+}
+function copiarEnlace(){
+  const url = enlaceSala();
+  try{ if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(()=>aviso('📋 Enlace copiado: mándalo por WhatsApp'), ()=>aviso('Enlace: '+url)); return; } }catch(e){}
+  aviso('Enlace: '+url);
+}
+
 /* ---------------- El juego: estados, cámara, eventos y marcador ---------------- */
-let estado = 'menu';          /* menu · juego · pausa · final */
+let estado = 'menu';          /* menu · juego · pausa · final · amigos */
 let P = null;
 let camYaw = Math.PI, cortina = 40, mensajeGrande = null, sacudida = 0, ferDentro = false, sacudidaBano = 0;
 const burbujas = [];
@@ -2327,11 +2519,13 @@ function nuevaPartida(guardado){
 }
 P = crearPartida(cargarGuardado());
 nuevaPartida(cargarGuardado());
+if (RED.pj !== 'fernando') ponerPersonaje(RED.pj);
 function burbuja(txt, quien, dur){ burbujas.push({txt, quien: quien||'', t: dur||200, t0: dur||200}); if (burbujas.length > 2) burbujas.shift(); }
 function grande(txt, color, dur){ mensajeGrande = {txt, color: color||'#ffe36e', t: dur||90, t0: dur||90}; }
 function aviso(txt){ avisoTxt = txt; avisoT = 180; }
 function volverAFernandoBros(){ try{ location.href = URL_VOLVER; }catch(e){} }
 function empezar(){
+  if (RED.pendiente && RED.estado==='off'){ const c = RED.pendiente; RED.pendiente = ''; estado = 'amigos'; redUnirse(c); return; }
   estado = 'juego'; cortina = 30;
   hablar('Eres mi pichunguito'); burbuja('Eres mi pichunguito', 'Tío Juan');
   setTimeout(()=>{ if (estado==='juego'){ hablar('¡Pichunguito al ataque!'); burbuja('¡Pichunguito al ataque!', 'Fernando'); } }, 2500);
@@ -2349,9 +2543,18 @@ function procesarTecla(k){
   }
   if (estado==='pausa'){
     if (k==='Escape'||k==='p'||k==='P'){ estado = 'juego'; sfx.toque(); }
-    else if (k==='ArrowUp'){ selPausa = (selPausa+3)%4; sfx.toque(); }
-    else if (k==='ArrowDown'){ selPausa = (selPausa+1)%4; sfx.toque(); }
+    else if (k==='ArrowUp'){ selPausa = (selPausa+4)%5; sfx.toque(); }
+    else if (k==='ArrowDown'){ selPausa = (selPausa+1)%5; sfx.toque(); }
     else if (k==='Enter'||k===' ') elegirPausa(selPausa);
+    return;
+  }
+  if (estado==='amigos'){
+    if (k==='Escape'){ if (RED.entrandoCodigo){ RED.entrandoCodigo = false; } else if (RED.estado==='error'||RED.estado==='creando'||RED.estado==='uniendo'){ redSalir(); } else estado = 'juego'; sfx.toque(); return; }
+    if (RED.entrandoCodigo){
+      if (k==='Backspace'){ RED.codigo = RED.codigo.slice(0,-1); sfx.toque(); }
+      else if (k==='Enter'){ if (RED.codigo.length===4){ sfx.toque(); redUnirse(RED.codigo); } }
+      else if (k.length===1){ const c = normalizarCodigo(k); if (c && RED.codigo.length<4){ RED.codigo += c; sfx.toque(); } }
+    } else if (k==='Enter' && (RED.estado==='sala'||RED.estado==='conectado')){ estado = 'juego'; sfx.toque(); }
     return;
   }
   if (estado==='final'){
@@ -2361,21 +2564,66 @@ function procesarTecla(k){
 function elegirPausa(i){
   sfx.toque();
   if (i===0) estado = 'juego';
-  else if (i===1){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} }
-  else if (i===2){ try{ localStorage.removeItem('aventura3d.partida'); }catch(e){} nuevaPartida(null); estado = 'juego'; cortina = 30; aviso('Aventura nueva: ¡a empezar de cero!'); }
-  else if (i===3) volverAFernandoBros();
+  else if (i===1){ estado = 'amigos'; RED.entrandoCodigo = false; RED.error = ''; }
+  else if (i===2){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} }
+  else if (i===3){ try{ localStorage.removeItem('aventura3d.partida'); }catch(e){} nuevaPartida(null); estado = 'juego'; cortina = 30; aviso('Aventura nueva: ¡a empezar de cero!'); }
+  else if (i===4){ redSalir(); volverAFernandoBros(); }
 }
 const enZona = (mx,my,z,m)=>mx>=z.x-(m||0) && mx<=z.x+z.w+(m||0) && my>=z.y-(m||0) && my<=z.y+z.h+(m||0);
 const zonaAtras = ()=>({x:14, y:12, w:190, h:42});
-const zonasPausa = ()=>[0,1,2,3].map(i=>({x:W/2-150, y:H/2+40+i*46, w:300, h:40}));
+const zonasPausa = ()=>[0,1,2,3,4].map(i=>({x:W/2-150, y:H/2+24+i*41, w:300, h:36}));
+/* la pantalla de JUGAR CON AMIGOS */
+const zonaAmigos = ()=>{
+  const z = {volver: zonaAtras(), guia: {x:W-190, y:12, w:176, h:42}, pjs: [], teclas: [], borrar:null, entrar:null};
+  const n = PERSONAJES_RED.length, w = Math.min(100, (W-40)/n - 8), x0 = W/2 - (n*(w+8)-8)/2;
+  for (let i=0;i<n;i++) z.pjs.push({x: x0 + i*(w+8), y: 96, w, h: 62});
+  z.crear = {x:W/2-310, y:H/2+16, w:300, h:50}; z.unirme = {x:W/2+10, y:H/2+16, w:300, h:50};
+  z.jugar = {x:W/2-150, y:H-64, w:300, h:46}; z.salir = {x:W/2-150, y:H-64, w:300, h:46};
+  z.compartir = {x:W/2-250, y:H/2+64, w:240, h:44}; z.copiar = {x:W/2+10, y:H/2+64, w:240, h:44};
+  z.reintentar = {x:W/2-150, y:H/2+40, w:300, h:46};
+  const cols = 8, tw = Math.min(58, (W-60)/cols - 6), tx0 = W/2 - (cols*(tw+6)-6)/2, ty0 = H/2 - 30;
+  for (let i=0;i<ALFABETO_SALA.length;i++) z.teclas.push({x: tx0 + (i%cols)*(tw+6), y: ty0 + Math.floor(i/cols)*(tw*0.78+6), w: tw, h: tw*0.78, ch: ALFABETO_SALA[i]});
+  z.borrar = {x:W/2-150, y:H-64, w:140, h:46}; z.entrar = {x:W/2+10, y:H-64, w:140, h:46};
+  return z;
+};
 function clic(x, y){
   if (estado==='menu'){
     if (enZona(x, y, zonaAtras(), 6)) return volverAFernandoBros();
+    if (enZona(x, y, {x:W-190, y:12, w:176, h:42}, 6)){ sfx.toque(); estado = 'amigos'; RED.entrandoCodigo = false; if (RED.pendiente){ const c = RED.pendiente; RED.pendiente = ''; redUnirse(c); } return; }
     sfx.toque(); empezar(); return;
   }
   if (estado==='pausa'){
-    zonasPausa().forEach((z, i)=>{ if (enZona(x, y, z, 4)) elegirPausa(i); });
-    if (y < H/2) { estado = 'juego'; sfx.toque(); }
+    let dio = false;
+    zonasPausa().forEach((z, i)=>{ if (enZona(x, y, z, 4)){ elegirPausa(i); dio = true; } });
+    if (!dio && y < H/2-10) { estado = 'juego'; sfx.toque(); }
+    return;
+  }
+  if (estado==='amigos'){
+    const z = zonaAmigos();
+    if (enZona(x, y, z.volver, 6)){ sfx.toque(); if (RED.entrandoCodigo) RED.entrandoCodigo = false; else { if (RED.estado==='error'||RED.estado==='creando'||RED.estado==='uniendo') redSalir(); estado = 'juego'; } return; }
+    if (enZona(x, y, z.guia, 6)){ try{ window.open('amigos.html', '_blank'); }catch(e){} return; }
+    if (RED.entrandoCodigo){
+      for (const t of z.teclas) if (enZona(x, y, t, 2) && RED.codigo.length<4){ RED.codigo += t.ch; sfx.toque(); return; }
+      if (enZona(x, y, z.borrar, 4)){ RED.codigo = RED.codigo.slice(0,-1); sfx.toque(); return; }
+      if (enZona(x, y, z.entrar, 4) && RED.codigo.length===4){ sfx.toque(); redUnirse(RED.codigo); return; }
+      return;
+    }
+    if (RED.estado==='off' || RED.estado==='error'){
+      z.pjs.forEach((zp, i)=>{ if (enZona(x, y, zp, 2)){ const pj = PERSONAJES_RED[i].id; if (pj!==RED.pj){ RED.pj = pj; ponerPersonaje(pj); try{ localStorage.setItem('aventura3d.pj', pj); }catch(e){} sfx.toque(); } } });
+    }
+    if (RED.estado==='off'){
+      if (enZona(x, y, z.crear, 4)){ sfx.toque(); redCrear(); return; }
+      if (enZona(x, y, z.unirme, 4)){ sfx.toque(); RED.entrandoCodigo = true; RED.codigo = ''; return; }
+    } else if (RED.estado==='error'){
+      if (enZona(x, y, z.reintentar, 4)){ sfx.toque(); if (RED.anfitrion) redCrear(); else if (RED.sala) redUnirse(RED.sala); else { RED.estado = 'off'; } return; }
+    } else if (RED.estado==='sala' || RED.estado==='conectado'){
+      if (enZona(x, y, z.jugar, 4)){ sfx.toque(); estado = 'juego'; return; }
+      if (RED.estado==='sala'){
+        if (enZona(x, y, z.compartir, 4)){ sfx.toque(); compartirSala(); return; }
+        if (enZona(x, y, z.copiar, 4)){ sfx.toque(); copiarEnlace(); return; }
+      }
+      if (enZona(x, y, {x:W-190, y:H-64, w:176, h:46}, 4)){ sfx.toque(); redSalir(); aviso('Saliste de la sala'); return; }
+    }
     return;
   }
   if (estado==='final'){
@@ -2390,15 +2638,15 @@ function atenderEventos(){
   for (const e of P.eventos){
     switch (e.tipo){
       case 'hablar': hablar(e.texto); burbuja(e.texto, e.quien); break;
-      case 'hamburguesa': sfx.hamburguesa(); chispas(e.x, e.y, e.z, '#ffe36e', 16, 5); hambMesh[e.id].visible = false; grande('¡HAMBURGUESA! 🍔 '+e.total, '#ffe36e', 60); break;
-      case 'pedo': sfx.pedo(e.grande); nubePeo(e.x, e.y, e.z, e.grande); if (!e.tioFran) grande(e.grande ? '¡PRRRRRT! 💨' : '¡prrt! 💨', '#b8ec6a', 50); else grande('¡QUÉ PEDO, TÍO FRAN! 💨', '#b8ec6a', 80); break;
+      case 'hamburguesa': sfx.hamburguesa(); chispas(e.x, e.y, e.z, '#ffe36e', 16, 5); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); hambMesh[e.id].visible = false; grande('¡HAMBURGUESA! 🍔 '+e.total, '#ffe36e', 60); break;
+      case 'pedo': sfx.pedo(e.grande); nubePeo(e.x, e.y, e.z, e.grande); if (!e.tioFran) redEvento('pedo', {x:e.x, y:e.y, z:e.z, grande:!!e.grande}); if (!e.tioFran) grande(e.grande ? '¡PRRRRRT! 💨' : '¡prrt! 💨', '#b8ec6a', 50); else grande('¡QUÉ PEDO, TÍO FRAN! 💨', '#b8ec6a', 80); break;
       case 'ganas': grande('¡QUIERO HACER POPO! 🚽', '#ffb070', 120); break;
       case 'banoEntra': ferDentro = true; sfx.puerta(); banosMesh[e.bano].puertaObj = 1; break;
       case 'banoPuerta': sfx.puerta(); banosMesh[e.bano].puertaObj = e.abre ? 1 : 0; break;
       case 'plop': sfx.plop(); sacudidaBano = 14; break;
       case 'descarga': sfx.descarga(); { const b = BANOS[e.bano]; for (let i=0;i<12;i++) particula(b.x + (azar()-0.5)*2, altura(b.x,b.z)+3.2, b.z + (azar()-0.5)*2, '#8fd3ff', (azar()-0.5)*3, 2+azar()*3, (azar()-0.5)*3, 40, 0.15, {grav:10, alfa:0.8}); } break;
-      case 'banoSale': ferDentro = false; sfx.puerta(); setTimeout(()=>{ banosMesh[e.bano].puertaObj = 0; }, 900); confeti(J.x, J.y, J.z, 20); grande('¡POPO HECHO! 💩 +500', '#ffb070', 100); break;
-      case 'estrella': sfx.estrella(); confeti(J.x, J.y, J.z, 60); grande('¡ESTRELLA! ⭐ '+e.total+'/'+MISIONES.length, '#ffe36e', 150); estrellaAnim = {t:0}; guardar();
+      case 'banoSale': ferDentro = false; sfx.puerta(); redEvento('popo', {x:J.x, y:J.y, z:J.z}); setTimeout(()=>{ banosMesh[e.bano].puertaObj = 0; }, 900); confeti(J.x, J.y, J.z, 20); grande('¡POPO HECHO! 💩 +500', '#ffb070', 100); break;
+      case 'estrella': sfx.estrella(); confeti(J.x, J.y, J.z, 60); redEvento('estrella', {x:J.x, y:J.y, z:J.z}); grande('¡ESTRELLA! ⭐ '+e.total+'/'+MISIONES.length, '#ffe36e', 150); estrellaAnim = {t:0}; guardar();
         if (e.id!=='popo' && e.id!=='banos'){ hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!'); burbuja('¡Muy bien, mi pichunguito! ¡Eres un campeón!', 'Tío Juan'); }
         if (e.id==='avion') arosMesh.forEach(m=>m.material.color.copy(lin(0x7dffa0)));
         break;
@@ -2422,7 +2670,7 @@ function atenderEventos(){
       case 'aro': sfx.aro(); arosMesh[e.id].material.color.copy(lin(0x7dffa0)); { const a = AROS[e.id]; chispas(a.x, a.y, a.z, '#ffe36e', 26, 9); } grande('⭕ ARO '+e.total+'/'+AROS.length, '#ffe36e', 60); break;
       case 'rampa': aroRampa.material.color.copy(lin(0x7dffa0)); chispas(RAMPA.aro.x, RAMPA.aro.y, RAMPA.aro.z, '#ffe36e', 30, 9); grande('¡RAMPA SALTADA! 🏍️', '#ffe36e', 90); break;
       case 'cofre': sfx.cofre(); confeti(COFRE.x, altura(COFRE.x, COFRE.z)+2, COFRE.z, 40); grande('¡EL TESORO! 💎', '#ffe36e', 120); break;
-      case 'salto': sfx.salto(); break;
+      case 'salto': sfx.salto(); redEvento('salto', {x:J.x, y:J.y, z:J.z}); break;
       case 'brinco': sfx.brinco(); break;
       case 'sinGanas': aviso('Come una hamburguesa 🍔 y después ven al baño'); break;
       case 'final': sfx.final(); setTimeout(()=>{ if (estado==='juego'){ estado = 'final'; hablar('Te amo tío Juan, yo soy tu pichunguito'); burbuja('Te amo tío Juan, yo soy tu pichunguito', 'Fernando'); setTimeout(()=>{ hablar('¡Ganaste! ¡Te amo tío Juan!'); }, 3500); } }, 2500); break;
@@ -2466,7 +2714,7 @@ function sincronizar(){
     const m = vehMesh[P.veh.id], R = m.partes;
     if (ferSentado.parent !== m){ if (ferSentado.parent) ferSentado.parent.remove(ferSentado); m.add(ferSentado); }
     ferSentado.visible = true;
-    ferSentado.position.set(R.asiento.x, R.asiento.y, R.asiento.z); ferSentado.scale.setScalar(0.8*R.asiento.esc);
+    ferSentado.position.set(R.asiento.x, R.asiento.y, R.asiento.z); ferSentado.scale.setScalar(ferSentado.esc*R.asiento.esc);
     ferSentado.rotation.set(0,0,0);
     animarPersona(ferSentado, 0, 0, false, false, !R.asiento.parado);
     if (R.asiento.parado){ ferSentado.partes.bI.rotation.x = -1.3; ferSentado.partes.bD.rotation.x = -1.3; }
@@ -2626,9 +2874,11 @@ function actualizar(){
     if (P.veh) motorAjustar(P.veh.vel, P.veh.turbo); else motorParar();
     if (tick - ultimoGuardado > 600){ ultimoGuardado = tick; guardar(); }
   } else motorParar();
-  sincronizar();
+  if (estado==='juego' || estado==='pausa' || estado==='amigos') redPaso();
+  sincronizar(); sincronizarRemotos();
   pasoNubes(); pasoGaviotas(); pasoPeces(); pasoAlgas(); pasoParticulas();
   if (estado==='menu') camaraMenu(); else camaraJuego();
+  if (RED.estado==='conectado' && estado==='menu') estado = 'juego';
   ambiente();
   if (cortina > 0) cortina--;
   if (mensajeGrande && --mensajeGrande.t <= 0) mensajeGrande = null;
@@ -2704,6 +2954,7 @@ function dibujarMapa(cx, cy, r){
   for (const b of BANOS){ const p = aM(b.x, b.z); ctx.fillStyle = P.prog.banos.includes(b.id) ? '#7dffa0' : '#8fd3ff'; ctx.fillRect(p.x-2.5, p.y-2.5, 5, 5); }
   for (const v of P.vehiculos){ if (P.veh===v) continue; const p = aM(v.x, v.z); ctx.font = '9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.emoji, p.x, p.y); }
   if (obj.x !== null && obj.x !== undefined){ const p = aM(obj.x, obj.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + Math.sin(tick*0.15)*2, 0, Math.PI*2); ctx.stroke(); }
+  for (const [, r] of RED.remotos){ const q = aM(r.act.x, r.act.z); ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
   const p = aM(J.x, J.z);
   ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2); ctx.fill();
   ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.sin(J.ang)*8, p.y + Math.cos(J.ang)*8); ctx.stroke();
@@ -2748,7 +2999,73 @@ function dibujarMenu(){
   if (Math.floor(tick/30)%2===0) textoBorde(tactil ? 'TOCA PARA JUGAR' : 'PULSA ENTER PARA JUGAR', W/2, H-70, 30, '#fff', 'center', true);
   if (P.estrellas.length) textoBorde('⭐ '+P.estrellas.length+'/'+MISIONES.length+' · tu aventura sigue donde la dejaste', W/2, H-32, 16, '#ffe36e');
   botonAtras('◀ FERNANDO BROS');
-  texto('🎮 Funciona con mando · 📱 y con los dedos', W-14, 24, 13, '#bcd6ff', 'right');
+  boton(W-190, 12, 176, 42, '👥 CON AMIGOS', '#2a8ad0', '#1a4a90', 16, !!RED.pendiente);
+  if (RED.pendiente) textoBorde('🎉 Te invitaron a la sala '+RED.pendiente+' · toca para entrar', W/2, H-96, 18, '#7dffa0');
+  texto('🎮 Funciona con mando · 📱 con los dedos · 👥 en línea con amigos', W-14, 66, 13, '#bcd6ff', 'right');
+}
+function dibujarAmigos(){
+  ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
+  const z = zonaAmigos();
+  titulo('JUGAR CON AMIGOS', W/2, 44, 40, '#bfe9ff', '#2a8ad0');
+  botonAtras('◀ VOLVER');
+  boton(z.guia.x, z.guia.y, z.guia.w, z.guia.h, '📖 GUÍA', '#4a6ad0', '#2a3a90', 16);
+  if (RED.entrandoCodigo){
+    texto('Escribe el código de la sala (4 letras o números)', W/2, 100, 17, '#fff');
+    const cod = (RED.codigo + '____').slice(0,4).split('').join('  ');
+    cristal(W/2-140, 120, 280, 56, 16, 0.6); titulo(cod, W/2, 150, 40, '#fff6a0', '#ffb000');
+    for (const t of z.teclas){ boton(t.x, t.y, t.w, t.h, t.ch, '#3a4a90', '#22306a', 20); }
+    boton(z.borrar.x, z.borrar.y, z.borrar.w, z.borrar.h, '⌫ BORRAR', '#8a3a30', '#5a1a10', 16);
+    boton(z.entrar.x, z.entrar.y, z.entrar.w, z.entrar.h, '✅ ENTRAR', RED.codigo.length===4 ? '#3aa040' : '#4a4a4a', RED.codigo.length===4 ? '#1e6a24' : '#2a2a2a', 16, RED.codigo.length===4);
+    if (RED.error) texto(RED.error, W/2, H-84, 14, '#ff9e9e');
+    return;
+  }
+  if (RED.estado==='off' || RED.estado==='error'){
+    texto('¿Quién eres tú?', W/2, 84, 15, '#bcd6ff');
+    z.pjs.forEach((zp, i)=>{ const pj = PERSONAJES_RED[i], sel = pj.id===RED.pj;
+      cristal(zp.x, zp.y, zp.w, zp.h, 12, sel ? 0.8 : 0.4); if (sel){ ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(zp.x, zp.y, zp.w, zp.h, 12); ctx.stroke(); }
+      texto(pj.emoji, zp.x+zp.w/2, zp.y+24, 24, '#fff'); texto(pj.nombre, zp.x+zp.w/2, zp.y+49, 12, sel ? '#ffe36e' : '#fff'); });
+  }
+  if (RED.estado==='off'){
+    cristal(W/2-330, 176, 660, 78, 16, 0.5);
+    texto('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 200, 15, '#fff');
+    texto('Los demás entran con ese código y todos juegan en la misma isla, cada uno con su aventura.', W/2, 222, 14, '#bcd6ff');
+    texto(hayPeerJS() ? 'Gratis, sin cuentas. Los dos aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 242, 13, hayPeerJS() ? '#7dffa0' : '#ff9e9e');
+    boton(z.crear.x, z.crear.y, z.crear.w, z.crear.h, '🏝️ CREAR UNA SALA', '#3aa040', '#1e6a24', 20, true);
+    boton(z.unirme.x, z.unirme.y, z.unirme.w, z.unirme.h, '🔑 ENTRAR CON CÓDIGO', '#2a8ad0', '#1a4a90', 20);
+    return;
+  }
+  if (RED.estado==='creando' || RED.estado==='uniendo'){
+    const puntos = '.'.repeat(1 + Math.floor(tick/20)%3);
+    titulo(RED.estado==='creando' ? 'Creando la sala'+puntos : 'Entrando a la sala '+RED.sala+puntos, W/2, H/2, 34, '#fff6a0', '#ffb000');
+    texto('Esto tarda unos segundos', W/2, H/2+40, 15, '#bcd6ff');
+    return;
+  }
+  if (RED.estado==='error'){
+    cristal(W/2-330, 176, 660, 100, 16, 0.6);
+    texto('😕 No se pudo', W/2, 200, 20, '#ff9e9e');
+    ctx.font = 'bold 15px '+TXT; const palabras = RED.error.split(' '); let linea = '', y = 226;
+    for (const w of palabras){ const t = linea ? linea+' '+w : w; if (ctx.measureText(t).width > 620){ texto(linea, W/2, y, 15, '#fff'); linea = w; y += 20; } else linea = t; }
+    texto(linea, W/2, y, 15, '#fff');
+    boton(z.reintentar.x, z.reintentar.y, z.reintentar.w, z.reintentar.h, '🔁 INTENTAR DE NUEVO', '#3aa040', '#1e6a24', 18, true);
+    return;
+  }
+  /* sala creada o conectado */
+  const nombres = [nombreLocal()+' (tú)', ...[...RED.remotos.values()].map(r=>r.nombre)];
+  if (RED.estado==='sala'){
+    texto('Tu sala está lista. Diles este código:', W/2, 96, 17, '#fff');
+    cristal(W/2-170, 116, 340, 76, 20, 0.6); titulo(RED.sala.split('').join('  '), W/2, 154, 54, '#fff6a0', '#ffb000');
+    texto('o mándales el enlace por WhatsApp:', W/2, 212, 15, '#bcd6ff');
+    cristal(W/2-330, 226, 660, 34, 17, 0.5); texto(enlaceSala(), W/2, 243, 13, '#7de0ff');
+    boton(z.compartir.x, z.compartir.y, z.compartir.w, z.compartir.h, '📲 COMPARTIR', '#2a8ad0', '#1a4a90', 18);
+    boton(z.copiar.x, z.copiar.y, z.copiar.w, z.copiar.h, '📋 COPIAR ENLACE', '#4a6ad0', '#2a3a90', 18);
+  } else {
+    titulo('Estás en la sala '+RED.sala, W/2, 130, 36, '#fff6a0', '#ffb000');
+    texto('Puedes seguir jugando: tus amigos aparecen en la isla con su nombre encima.', W/2, 176, 15, '#bcd6ff');
+  }
+  cristal(W/2-330, H/2+118, 660, 34, 17, 0.5);
+  texto('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, H/2+135, 14, '#fff');
+  boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ ¡A JUGAR!', '#3aa040', '#1e6a24', 20, true);
+  boton(W-190, H-64, 176, 46, '🚪 SALIR DE LA SALA', '#8a3a30', '#5a1a10', 14);
 }
 function dibujarHUD(){
   const J = P.J;
@@ -2786,6 +3103,7 @@ function dibujarHUD(){
     if (P.veh.id==='sub') textoBorde(Math.round(-P.veh.y)+' m de profundidad', W/2, H-52, 14, '#bfe9ff');
     if (puedeBajar(P)) texto((tactil ? '🚪' : 'E')+' = bajarse', W/2, H-72, 13, '#bcd6ff');
   }
+  if (redActiva()){ const n = RED.remotos.size + 1; cristal(W/2-120, 10, 240, 30, 15, 0.55); texto('👥 sala '+RED.sala+' · '+n+(n===1 ? ' jugador (esperando…)' : ' jugadores'), W/2, 25, 14, '#bfe9ff'); }
   if (avisoT > 0){ cristal(W/2-220, 92, 440, 34, 17, 0.6); texto(avisoTxt, W/2, 109, 15, '#ffe36e'); }
   burbujas.forEach((b, i)=>{
     const y = H - 150 - i*44, alfa = Math.min(1, b.t/20);
@@ -2812,19 +3130,19 @@ function dibujarPausa(){
   ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
   titulo('LAS MISIONES', W/2, 42, 40, '#fff6a0', '#ffb000');
   const x0 = W/2-300, y0 = 76;
-  cristal(x0, y0-6, 600, MISIONES.length*26+12, 16, 0.5);
+  cristal(x0, y0-6, 600, MISIONES.length*24+12, 16, 0.5);
   MISIONES.forEach((m, i)=>{
     const ok = P.estrellas.includes(m.id);
     let extra = '';
     if (m.id==='banos') extra = P.prog.banos.length+'/'+BANOS.length; else if (m.id==='carro') extra = P.prog.banderas.length+'/'+BANDERAS.length;
     else if (m.id==='avion') extra = P.prog.aros.length+'/'+AROS.length; else if (m.id==='familia') extra = P.prog.familia.length+'/'+SALUDABLES.length;
-    texto((ok ? '⭐ ' : '☆ ')+m.emoji+'  '+m.titulo, x0+18, y0+13+i*26, 17, ok ? '#7dffa0' : '#fff', 'left');
-    if (extra && !ok) texto(extra, x0+582, y0+13+i*26, 15, '#bcd6ff', 'right');
+    texto((ok ? '⭐ ' : '☆ ')+m.emoji+'  '+m.titulo, x0+18, y0+12+i*24, 16, ok ? '#7dffa0' : '#fff', 'left');
+    if (extra && !ok) texto(extra, x0+582, y0+12+i*24, 14, '#bcd6ff', 'right');
   });
   const zs = zonasPausa();
-  const etiquetas = ['▶ SEGUIR JUGANDO', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', '◀ FERNANDO BROS'];
-  const colores = [['#3aa040','#1e6a24'],['#4a6ad0','#2a3a90'],['#c05a10','#803a08'],['#4a6ad0','#2a3a90']];
-  zs.forEach((z, i)=> boton(z.x, z.y, z.w, z.h, etiquetas[i], colores[i][0], colores[i][1], 17, selPausa===i));
+  const etiquetas = ['▶ SEGUIR JUGANDO', redActiva() ? '👥 SALA '+RED.sala+' · '+(RED.remotos.size+1)+' EN LA ISLA' : '👥 JUGAR CON AMIGOS', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', '◀ FERNANDO BROS'];
+  const colores = [['#3aa040','#1e6a24'],['#2a8ad0','#1a4a90'],['#4a6ad0','#2a3a90'],['#c05a10','#803a08'],['#4a6ad0','#2a3a90']];
+  zs.forEach((z, i)=> boton(z.x, z.y, z.w, z.h, etiquetas[i], colores[i][0], colores[i][1], 16, selPausa===i));
   texto(P.puntos.toLocaleString('es')+' puntos · '+P.hamburguesas+' hamburguesas comidas', W/2, H-12, 13, '#bcd6ff');
 }
 function dibujarFinal(){
@@ -2849,6 +3167,7 @@ function dibujar(){
   else if (estado==='juego') dibujarHUD();
   else if (estado==='pausa'){ dibujarHUD(); dibujarPausa(); }
   else if (estado==='final') dibujarFinal();
+  else if (estado==='amigos') dibujarAmigos();
   if (cortina>0){ ctx.fillStyle = 'rgba(0,0,0,'+(cortina/40)+')'; ctx.fillRect(0,0,W,H); }
   if (MANDO.avisoT>0){ cristal(W/2-160, 40, 320, 40, 20, 0.5); textoBorde('🎮 MANDO CONECTADO', W/2, 61, 20, '#7dffa0', 'center', true); }
 }
@@ -2869,6 +3188,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, get particulas(){ return particulas.length; }, get CAL(){ return CAL; } };
+window.AV = { get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; } };
 requestAnimationFrame(bucle);
 })();

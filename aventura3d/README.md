@@ -83,6 +83,24 @@ Al ganar las ocho estrellas hay fiesta con confeti y las voces de Fernando y
 Tío Juan. **El progreso se guarda solo** en el aparato: se puede seguir otro
 día, o empezar de cero desde el menú de ESC.
 
+## 👥 Jugar con amigos (en línea, gratis)
+
+Dos, tres o cuatro personas, cada una en su aparato, **juegan a la vez en la
+misma isla**: cada quien maneja su personaje (Fernando, Luca, Salomón, Cucú,
+Tío Nacho o Tío Beto) y ve a los demás corriendo, manejando, volando y
+buceando con su nombre encima. Uno toca **👥 CON AMIGOS → 🏝️ CREAR UNA
+SALA**, sale un **código de 4 letras** y un enlace para mandar por WhatsApp
+(**📲 COMPARTIR**); los demás abren el enlace, o escriben el código en el
+teclado grande de **🔑 ENTRAR CON CÓDIGO**. Cada uno conserva sus
+hamburguesas, estrellas y popos bebés; se comparten las posiciones, los peos,
+las hamburguesas comidas, las estrellas y los popos (con aviso).
+
+Por dentro es **WebRTC con PeerJS**: los navegadores se conectan directo
+entre sí y el servidor público de PeerJS solo los presenta por el código.
+Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
+
+👉 **[Guía paso a paso para jugar con amigos](https://jcmp83ve.github.io/Fernando-Bros/aventura3d/amigos.html)**
+
 ## 🗺️ La isla
 
 - **El pueblo**: la casa de Fernando (donde empieza, con Mamá, Papá, Penny y
@@ -124,7 +142,12 @@ día, o empezar de cero desde el menú de ESC.
   las misiones; no toca la pantalla) y la **vista** (Three.js y el marcador en
   2D).
 - El motor 3D es el mismo `three.min.js` (r128, MIT) de la carpeta
-  `kart3d/`, así que no se repite.
+  `kart3d/`, así que no se repite. La red usa `peerjs.min.js` (1.5.4, MIT,
+  licencia en `PEERJS-LICENSE.txt`), también incluido en la carpeta.
+- Para jugar con amigos, cada aparato manda quince veces por segundo un
+  paquete chiquito (posición, vehículo, animación) al anfitrión, que se lo
+  reenvía a los demás; los paquetes se limpian al llegar (números acotados,
+  personajes y vehículos conocidos, nombres sin símbolos).
 - El terreno se calcula **una sola vez** en una malla de 241×241 alturas, y
   de esa misma malla salen lo que se ve y lo que se pisa.
 - Los personajes, casas y vehículos se arman con cajitas de colores fundidas
@@ -149,4 +172,5 @@ submarino hasta el cofre, saluda a toda la familia y hace popo en los cuatro
 baños. Además comprueba que la isla esté bien armada (nada en el agua que
 deba estar en tierra, la pista plana, la carretera sin cuestas imposibles),
 que la partida se guarde y se recupere, y que cada frase hablada exista en
-las grabaciones o esté apuntada a propósito como voz sintética.
+las grabaciones o esté apuntada a propósito como voz sintética, y que los
+códigos de sala y los paquetes de red se armen, se lean y se limpien bien.
