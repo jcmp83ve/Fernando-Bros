@@ -22,6 +22,7 @@ Controles pensados para manos pequeñas: **la palanca mueve, A sube, B corre**.
 | ESPACIO / Z | Botón inferior (A/B) | **A** | **Saltar** · **montarse** en un vehículo · brinco del carro y la moto · **subir** el submarino |
 | MAYÚS / X | Botón lateral (X/Y) o gatillos | **B** | **Correr** · **turbo** del carro, la moto, el barco y el avión · **bajar** el submarino |
 | E / ENTER | Hombros (L/R) o − | **🚪** | **Bajarse** del vehículo (parado, en tierra o en la superficie) |
+| V (mantener) | Palanca izquierda apretada (L3) | **🎙️** (mantener) | **Hablar** por walkie-talkie con los amigos de la sala |
 | ESC / P | + / Start | **☰** | Las misiones, la música y volver |
 | M | — | — | Música sí/no |
 
@@ -94,6 +95,13 @@ SALA**, sale un **código de 4 letras** y un enlace para mandar por WhatsApp
 teclado grande de **🔑 ENTRAR CON CÓDIGO**. Cada uno conserva sus
 hamburguesas, estrellas y popos bebés; se comparten las posiciones, los peos,
 las hamburguesas comidas, las estrellas y los popos (con aviso).
+
+**Walkie-talkie 🎙️**: en la sala aparece un botón de micrófono al lado de B
+(tecla **V** en computadora, palanca izquierda apretada en el mando). Se habla
+**mientras se mantiene apretado** y al soltar se calla; la primera vez el
+aparato pide permiso para el micrófono. Sale «🔊 Luca está hablando», un
+altavoz flota sobre su cabeza, los amigos lejanos se oyen más bajito, y en la
+pantalla de amigos se pueden silenciar todos con un toque.
 
 Por dentro es **WebRTC con PeerJS**: los navegadores se conectan directo
 entre sí y el servidor público de PeerJS solo los presenta por el código.

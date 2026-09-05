@@ -104,7 +104,8 @@ solo. Controles fáciles: la palanca mueve, **A sube, B corre**.
 
 **Se puede jugar con amigos en línea, gratis**: uno crea una sala, sale un
 código de 4 letras y un enlace para WhatsApp, y hasta cuatro jugadores (cada
-uno en su aparato, con su personaje) recorren la misma isla a la vez. Hay una
+uno en su aparato, con su personaje) recorren la misma isla a la vez, y se
+hablan por **walkie-talkie 🎙️** manteniendo apretado un botón. Hay una
 [guía paso a paso](https://jcmp83ve.github.io/Fernando-Bros/aventura3d/amigos.html).
 
 Se entra **desde el propio juego**: en la pantalla de **ELIGE TU MUNDO** hay

@@ -1274,9 +1274,10 @@ addEventListener('keydown', e=>{
   keys[e.key.toLowerCase()] = true; pulsadas.add(e.key.toLowerCase());
   if (e.repeat) return;
   audio();
+  if ((e.key==='v'||e.key==='V') && estado==='juego'){ vozEmpezar(); return; }
   procesarTecla(e.key);
 });
-addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; if (e.key==='v'||e.key==='V') vozParar(); });
 addEventListener('blur', ()=>{ for (const k in keys) keys[k] = false; });
 /* la palanca táctil: aparece donde se pone el dedo en la mitad izquierda */
 const TOQUE = {palanca:null, botones:new Map()};
@@ -1285,11 +1286,13 @@ const BOTONES_TACTILES = [
   {id:'B', k:'b', txt:'B', color:'rgba(110,170,255,.40)', borde:'rgba(180,210,255,.9)', r:34, pos:()=>({x:W-130, y:H-52})},
   {id:'salir', k:'salir', txt:'🚪', color:'rgba(255,230,110,.40)', borde:'rgba(255,240,180,.9)', r:28, pos:()=>({x:W-52, y:H-210}), solo:'veh'},
   {id:'menu', k:'menu', txt:'☰', color:'rgba(255,255,255,.25)', borde:'rgba(255,255,255,.7)', r:20, pos:()=>({x:W-30, y:30})},
+  {id:'voz', k:'voz', txt:'🎙️', color:'rgba(120,230,150,.40)', borde:'rgba(180,255,200,.9)', r:34, pos:()=>({x:W-218, y:H-64}), solo:'red'},
 ];
 function botonTactilEn(x, y){
   let mejor = null, md = 1e9;
   for (const b of BOTONES_TACTILES){
     if (b.solo==='veh' && !(P && P.veh)) continue;
+    if (b.solo==='red' && !redActiva()) continue;
     const p = b.pos(), d = Math.hypot(x-p.x, y-p.y);
     if (d < b.r*1.5 && d < md){ md = d; mejor = b; }
   }
@@ -1301,7 +1304,7 @@ document.addEventListener('pointerdown', ev=>{
   const p = aLogico(ev);
   if (estado==='juego' && !P.escena){
     const b = botonTactilEn(p.x, p.y);
-    if (b){ TOQUE.botones.set(ev.pointerId, b); pulsadas.add(b.k); if (b.k==='a') procesarTecla(' '); if (b.k==='b') procesarTecla('Shift'); if (b.k==='salir') procesarTecla('e'); if (b.k==='menu') procesarTecla('Escape'); ev.preventDefault(); return; }
+    if (b){ TOQUE.botones.set(ev.pointerId, b); pulsadas.add(b.k); if (b.k==='voz'){ vozEmpezar(); ev.preventDefault(); return; } if (b.k==='a') procesarTecla(' '); if (b.k==='b') procesarTecla('Shift'); if (b.k==='salir') procesarTecla('e'); if (b.k==='menu') procesarTecla('Escape'); ev.preventDefault(); return; }
     if (p.x < W*0.5 && !TOQUE.palanca && ev.pointerType!=='mouse'){ TOQUE.palanca = {id:ev.pointerId, x0:p.x, y0:p.y, x:p.x, y:p.y}; ev.preventDefault(); return; }
     if (p.x < W*0.5 && !TOQUE.palanca && ev.pointerType==='mouse'){ TOQUE.palanca = {id:ev.pointerId, x0:p.x, y0:p.y, x:p.x, y:p.y}; ev.preventDefault(); return; }
   }
@@ -1313,11 +1316,12 @@ document.addEventListener('pointermove', ev=>{
 }, true);
 const soltar = ev=>{
   if (TOQUE.palanca && TOQUE.palanca.id===ev.pointerId) TOQUE.palanca = null;
+  const b = TOQUE.botones.get(ev.pointerId); if (b && b.k==='voz') vozParar();
   TOQUE.botones.delete(ev.pointerId);
 };
 document.addEventListener('pointerup', soltar, true);
 document.addEventListener('pointercancel', soltar, true);
-addEventListener('blur', ()=>{ TOQUE.palanca = null; TOQUE.botones.clear(); });
+addEventListener('blur', ()=>{ TOQUE.palanca = null; TOQUE.botones.clear(); vozParar(); });
 function palancaTactil(){
   const p = TOQUE.palanca; if (!p) return {jx:0, jy:0};
   const R = 46;
@@ -1334,6 +1338,7 @@ function leerMandos(){
   if (!navigator.getGamepads) return;
   let gps; try{ gps = navigator.getGamepads(); }catch(e){ return; }
   let hay = false, jx = 0, jy = 0, a = false, b = false, salir = false;
+  const vozAntes = MANDO.voz; MANDO.voz = false;
   for (const gp of gps){
     if (!gp || !gp.connected) continue;
     hay = true;
@@ -1344,6 +1349,7 @@ function leerMandos(){
     if (pulsado(0)||pulsado(1)) a = true;
     if (pulsado(2)||pulsado(3)||pulsado(7)||pulsado(6)) b = true;
     if (pulsado(4)||pulsado(5)||pulsado(8)) salir = true;
+    if (pulsado(10)) MANDO.voz = true;
     if (pulsado(14)) jx -= 1; if (pulsado(15)) jx += 1; if (pulsado(12)) jy += 1; if (pulsado(13)) jy -= 1;
     const P_ = {0:' ',1:' ',2:'Shift',3:'Shift',4:'e',5:'e',8:'e',9:'Escape',12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'};
     for (const i in P_){
@@ -1359,6 +1365,7 @@ function leerMandos(){
   }
   if (hay !== MANDO.activo){ MANDO.activo = hay; document.body.classList.toggle('conMando', hay); }
   MANDO.jx = hay ? clamp(jx,-1,1) : 0; MANDO.jy = hay ? clamp(jy,-1,1) : 0; MANDO.a = a; MANDO.b = b; MANDO.salir = salir;
+  if (MANDO.voz && !vozAntes) vozEmpezar(); else if (!MANDO.voz && vozAntes) vozParar();
 }
 addEventListener('gamepadconnected', ()=>{ MANDO.avisoT = 200; });
 /* la entrada de este cuadro, juntando teclado, palanca táctil, botones y mando */
@@ -2351,6 +2358,7 @@ function textoErrorRed(e){
   return 'Algo falló en la conexión ('+(t||'?')+'). Vuelve a intentar.';
 }
 function redLimpiar(){
+  vozCortarTodo();
   if (RED.peer){ try{ RED.peer.destroy(); }catch(e){} }
   RED.peer = null; RED.conns.clear();
   for (const id of [...RED.remotos.keys()]) quitarRemoto(id);
@@ -2362,6 +2370,7 @@ function redCrear(){
   const peer = new Peer('fernando-bros-'+RED.sala, {debug:0});
   RED.peer = peer;
   peer.on('open', ()=>{ if (RED.peer===peer) RED.estado = 'sala'; });
+  peer.on('call', c=>{ if (RED.peer===peer) atenderLlamada(c); });
   peer.on('connection', conn=>{
     if (RED.peer!==peer) return;
     if (RED.conns.size >= MAX_JUGADORES-1){ conn.on('open', ()=>{ try{ conn.send({t:'llena', max:MAX_JUGADORES}); }catch(e){} setTimeout(()=>{ try{ conn.close(); }catch(e){} }, 800); }); return; }
@@ -2378,6 +2387,7 @@ function redUnirse(codigo){
   redLimpiar(); RED.estado = 'uniendo'; RED.sala = codigo; RED.anfitrion = false; RED.error = ''; RED.entrandoCodigo = false;
   const peer = new Peer({debug:0});
   RED.peer = peer;
+  peer.on('call', c=>{ if (RED.peer===peer) atenderLlamada(c); });
   peer.on('open', ()=>{ if (RED.peer!==peer) return; prepararConn(peer.connect('fernando-bros-'+codigo, {reliable:true, serialization:'json'})); });
   peer.on('error', e=>{ if (RED.peer!==peer) return; RED.estado = 'error'; RED.error = textoErrorRed(e); });
   peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
@@ -2388,6 +2398,7 @@ function prepararConn(conn){
   conn.on('open', ()=>{
     RED.conns.set(conn.peer, conn);
     try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED}); }catch(e){}
+    if (VOZ.stream) vozLlamar(conn.peer);
     if (!RED.anfitrion){ RED.estado = 'conectado'; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
   });
   conn.on('data', m=>redRecibir(conn.peer, m));
@@ -2409,6 +2420,7 @@ function redRecibir(id, m){
   if (m.t==='r'){ if (!RED.anfitrion && typeof m.de==='string' && m.m && typeof m.m==='object') redRecibir(m.de, m.m); return; }
   if (RED.anfitrion){ for (const [pid, c] of RED.conns) if (pid!==id){ try{ if (c.open) c.send({t:'r', de:id, m}); }catch(e){} } }
   if (m.t==='llena'){ if (!RED.anfitrion){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
+  if (m.t==='voz'){ const r = RED.remotos.get(id); if (r){ r.hablando = !!m.on; r.hablaT = tick; } return; }
   if (m.t==='chau'){ const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
   if (m.t==='hola'){
     const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
@@ -2421,7 +2433,7 @@ function redRecibir(id, m){
     const e = desempaquetarEstado(m); if (!e) return;
     let r = RED.remotos.get(id);
     if (!r) r = crearRemoto(id, e);
-    else if (r.pj !== e.pj || r.nombre !== e.nombre){ quitarRemoto(id); r = crearRemoto(id, e); }
+    else if (r.pj !== e.pj || r.nombre !== e.nombre){ const hab = r.hablando; quitarRemoto(id); r = crearRemoto(id, e); r.hablando = hab; r.hablaT = tick; }
     r.obj = e; r.t = tick;
     return;
   }
@@ -2441,9 +2453,12 @@ function crearRemoto(id, e){
   r.g = armarPersona(e.pj); r.g.visible = false; scene.add(r.g);
   r.gs = armarPersona(e.pj); r.gs.visible = false; scene.add(r.gs);
   r.etiqueta = letrero('👤 '+e.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); r.etiqueta.position.y = 2.6/r.g.esc; r.g.add(r.etiqueta);
-  RED.remotos.set(id, r); return r;
+  r.bocina = letrero('🔊', '#fff', 'rgba(40,160,80,0.9)', 0.9); r.bocina.position.y = 3.4/r.g.esc; r.bocina.visible = false; r.g.add(r.bocina);
+  r.hablando = false; r.hablaT = 0;
+  RED.remotos.set(id, r); if (VOZ.stream) vozLlamar(id); return r;
 }
 function quitarRemoto(id){
+  vozCortar(id);
   const r = RED.remotos.get(id); if (!r) return;
   scene.remove(r.g); if (r.gs.parent) r.gs.parent.remove(r.gs);
   for (const k in r.vehs) scene.remove(r.vehs[k]);
@@ -2476,11 +2491,91 @@ function sincronizarRemotos(){
       animarPersona(r.g, o.mov, r.fase, !o.suelo && !o.nadando, o.nadando);
       r.etiqueta.visible = Math.hypot(a.x-P.J.x, a.z-P.J.z) > 3;
     }
+    r.bocina.visible = r.hablando && !o.veh;
   }
 }
 function redPaso(){
   if (!redActiva() || !RED.conns.size) return;
   if (tick % 4 === 0) redEnviar(empaquetarEstado(P, RED.pj, nombreLocal()));
+}
+/* ---- el walkie-talkie: mantener 🎙️ (o V) para hablar; la voz viaja por WebRTC ----
+   El micrófono se pide una sola vez, la primera que se aprieta el botón. Los
+   sonidos del micro se apagan al soltar (push-to-talk), así nadie se oye sin
+   querer. Cada jugador llama a los demás por PeerJS; la voz sale del parlante
+   con volumen según la distancia en la isla. */
+const VOZ = {stream:null, permiso:'', hablando:false, pidiendo:false, llamadas:new Map(), audios:new Map(), silencio:false, quiere:false, avisoT:0};
+try{ VOZ.silencio = localStorage.getItem('aventura3d.silencio') === 'si'; }catch(e){}
+const hayMicrofono = ()=> !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+function vozEmpezar(){
+  VOZ.quiere = true;
+  if (!redActiva()){ if (estado==='juego') aviso('Para hablar, primero entra a una sala 👥 (menú ☰)'); return; }
+  if (!hayMicrofono()){ aviso('Este navegador no deja usar el micrófono'); return; }
+  if (VOZ.permiso==='negado'){ aviso('Sin permiso de micrófono: actívalo en Ajustes → Safari → Micrófono y recarga'); VOZ.pidiendo = false; }
+  if (VOZ.stream){ vozAbrir(); return; }
+  if (VOZ.pidiendo) return;
+  VOZ.pidiendo = true;
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}, video:false}).then(st=>{
+    VOZ.pidiendo = false; VOZ.stream = st; VOZ.permiso = 'ok';
+    for (const t of st.getAudioTracks()) t.enabled = false;
+    aviso('🎙️ Micrófono listo: mantén apretado para hablar');
+    vozLlamarATodos();
+    if (VOZ.quiere) vozAbrir();
+  }).catch(e=>{
+    VOZ.pidiendo = false; VOZ.permiso = 'negado';
+    aviso(e && e.name==='NotFoundError' ? 'No encontré micrófono en este aparato' : 'Sin permiso de micrófono: toca "Permitir" cuando lo pida');
+  });
+}
+function vozAbrir(){
+  if (!VOZ.stream || VOZ.hablando) return;
+  for (const t of VOZ.stream.getAudioTracks()) t.enabled = true;
+  VOZ.hablando = true; sfx.toque();
+  redEnviar({t:'voz', on:1});
+}
+function vozParar(){
+  VOZ.quiere = false;
+  if (!VOZ.hablando) return;
+  if (VOZ.stream) for (const t of VOZ.stream.getAudioTracks()) t.enabled = false;
+  VOZ.hablando = false;
+  redEnviar({t:'voz', on:0});
+}
+function vozLlamar(id){
+  if (!VOZ.stream || !RED.peer || VOZ.llamadas.has(id)) return;
+  try{ const c = RED.peer.call(id, VOZ.stream); if (!c) return; VOZ.llamadas.set(id, c); prepararLlamada(id, c); }catch(e){}
+}
+function vozLlamarATodos(){ for (const id of RED.conns.keys()) vozLlamar(id); for (const id of RED.remotos.keys()) vozLlamar(id); }
+function atenderLlamada(c){
+  /* llega la voz de un amigo: se contesta con el micro propio si ya se pidió, o sin nada (solo se escucha) */
+  try{ c.answer(VOZ.stream || undefined); }catch(e){ return; }
+  prepararLlamada(c.peer, c);
+}
+function prepararLlamada(id, c){
+  c.on('stream', st=>{
+    let a = VOZ.audios.get(id);
+    if (a && a.el){ try{ a.el.pause(); }catch(e){} }
+    const el = new Audio(); el.autoplay = true; el.playsInline = true; el.srcObject = st; el.muted = VOZ.silencio;
+    const p = el.play(); if (p && p.catch) p.catch(()=>{});
+    VOZ.audios.set(id, {el, st});
+  });
+  const fin = ()=>{ if (VOZ.llamadas.get(id)===c) VOZ.llamadas.delete(id); const a = VOZ.audios.get(id); if (a && a.el){ try{ a.el.pause(); a.el.srcObject = null; }catch(e){} VOZ.audios.delete(id); } };
+  c.on('close', fin); c.on('error', fin);
+}
+function vozCortar(id){
+  const c = VOZ.llamadas.get(id); if (c){ try{ c.close(); }catch(e){} VOZ.llamadas.delete(id); }
+  const a = VOZ.audios.get(id); if (a && a.el){ try{ a.el.pause(); a.el.srcObject = null; }catch(e){} VOZ.audios.delete(id); }
+}
+function vozCortarTodo(){ for (const id of [...new Set([...VOZ.llamadas.keys(), ...VOZ.audios.keys()])]) vozCortar(id); vozParar(); }
+function vozSilencio(si){
+  VOZ.silencio = si; for (const [,a] of VOZ.audios) if (a.el) a.el.muted = si;
+  try{ localStorage.setItem('aventura3d.silencio', si ? 'si' : 'no'); }catch(e){}
+}
+function vozPaso(){
+  /* el volumen baja con la distancia (en iPhone el navegador lo ignora; no pasa nada) */
+  for (const [id, a] of VOZ.audios){
+    const r = RED.remotos.get(id); if (!r || !a.el) continue;
+    const d = Math.hypot(r.act.x-P.J.x, r.act.z-P.J.z);
+    try{ a.el.volume = clamp(1.05 - d/260, 0.3, 1); }catch(e){}
+  }
+  for (const [,r] of RED.remotos) if (r.hablando && tick - r.hablaT > 60*20) r.hablando = false;
 }
 function compartirSala(){
   const url = enlaceSala(), texto = '¡Ven a jugar conmigo a la isla de Fernando! Sala '+RED.sala+': '+url;
@@ -2629,6 +2724,7 @@ function clic(x, y){
         if (enZona(x, y, z.copiar, 4)){ sfx.toque(); copiarEnlace(); return; }
       }
       if (enZona(x, y, {x:W-190, y:H-64, w:176, h:46}, 4)){ sfx.toque(); redSalir(); aviso('Saliste de la sala'); return; }
+      if (enZona(x, y, {x:14, y:H-64, w:190, h:46}, 4)){ sfx.toque(); vozSilencio(!VOZ.silencio); return; }
     }
     return;
   }
@@ -2880,7 +2976,7 @@ function actualizar(){
     if (P.veh) motorAjustar(P.veh.vel, P.veh.turbo); else motorParar();
     if (tick - ultimoGuardado > 600){ ultimoGuardado = tick; guardar(); }
   } else motorParar();
-  if (estado==='juego' || estado==='pausa' || estado==='amigos') redPaso();
+  if (estado==='juego' || estado==='pausa' || estado==='amigos'){ redPaso(); vozPaso(); }
   sincronizar(); sincronizarRemotos();
   pasoNubes(); pasoGaviotas(); pasoPeces(); pasoAlgas(); pasoParticulas();
   if (estado==='menu') camaraMenu(); else camaraJuego();
@@ -2986,10 +3082,12 @@ function dibujarPalancaYBotones(){
   const activos = new Set([...TOQUE.botones.values()].map(b=>b.id));
   for (const b of BOTONES_TACTILES){
     if (b.solo==='veh' && !P.veh) continue;
+    if (b.solo==='red' && !redActiva()) continue;
     const pos = b.pos(), on = activos.has(b.id);
     ctx.fillStyle = b.color; ctx.beginPath(); ctx.arc(pos.x, pos.y, b.r*(on ? 1.1 : 1), 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = b.borde; ctx.lineWidth = 2.5; ctx.stroke();
     textoBorde(b.txt, pos.x, pos.y+1, b.r*0.9, '#fff', 'center', b.id==='A'||b.id==='B');
+    if (b.id==='voz'){ if (VOZ.hablando){ ctx.strokeStyle = '#7dffa0'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(pos.x, pos.y, b.r+6+Math.sin(tick*0.3)*2, 0, Math.PI*2); ctx.stroke(); } texto(VOZ.permiso==='negado' ? 'sin micro' : 'mantén', pos.x, pos.y+b.r+12, 11, '#fff'); }
   }
 }
 function dibujarMenu(){
@@ -3072,6 +3170,8 @@ function dibujarAmigos(){
   texto('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, H/2+135, 14, '#fff');
   boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ ¡A JUGAR!', '#3aa040', '#1e6a24', 20, true);
   boton(W-190, H-64, 176, 46, '🚪 SALIR DE LA SALA', '#8a3a30', '#5a1a10', 14);
+  boton(14, H-64, 190, 46, VOZ.silencio ? '🔇 AMIGOS EN SILENCIO' : '🔊 OÍR A LOS AMIGOS', VOZ.silencio ? '#8a3a30' : '#3aa040', VOZ.silencio ? '#5a1a10' : '#1e6a24', 13);
+  texto('🎙️ Para hablar: mantén apretado el botón del micrófono (o la tecla V)', W/2, H/2+100, 13, '#bcd6ff');
 }
 function dibujarHUD(){
   const J = P.J;
@@ -3109,8 +3209,15 @@ function dibujarHUD(){
     if (P.veh.id==='sub') textoBorde(Math.round(-P.veh.y)+' m de profundidad', W/2, H-52, 14, '#bfe9ff');
     if (puedeBajar(P)) texto((tactil ? '🚪' : 'E')+' = bajarse', W/2, H-72, 13, '#bcd6ff');
   }
-  if (redActiva()){ const n = RED.remotos.size + 1; cristal(W/2-120, 10, 240, 30, 15, 0.55); texto('👥 sala '+RED.sala+' · '+n+(n===1 ? ' jugador (esperando…)' : ' jugadores'), W/2, 25, 14, '#bfe9ff'); }
-  if (avisoT > 0){ cristal(W/2-220, 92, 440, 34, 17, 0.6); texto(avisoTxt, W/2, 109, 15, '#ffe36e'); }
+  if (redActiva()){
+    const n = RED.remotos.size + 1; cristal(W/2-120, 10, 240, 30, 15, 0.55); texto('👥 sala '+RED.sala+' · '+n+(n===1 ? ' jugador (esperando…)' : ' jugadores'), W/2, 25, 14, '#bfe9ff');
+    const hablan = [...RED.remotos.values()].filter(r=>r.hablando).map(r=>r.nombre);
+    let y = 48;
+    if (VOZ.hablando){ cristal(W/2-110, y, 220, 26, 13, 0.6); texto('🎙️ Hablando…', W/2, y+13, 14, '#7dffa0'); y += 30; }
+    if (hablan.length && !VOZ.silencio){ cristal(W/2-150, y, 300, 26, 13, 0.6); texto('🔊 '+hablan.join(', ')+(hablan.length===1 ? ' está hablando' : ' están hablando'), W/2, y+13, 14, '#fff'); }
+    if (!tactil && !MANDO.activo && !VOZ.hablando) texto('V = hablar 🎙️', W-14, H-30, 12, 'rgba(255,255,255,0.6)', 'right');
+  }
+  if (avisoT > 0){ const ay = redActiva() ? 134 : 92; cristal(W/2-220, ay, 440, 34, 17, 0.6); texto(avisoTxt, W/2, ay+17, 15, '#ffe36e'); }
   burbujas.forEach((b, i)=>{
     const y = H - 150 - i*44, alfa = Math.min(1, b.t/20);
     ctx.globalAlpha = alfa;
@@ -3194,6 +3301,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; } };
+window.AV = { get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; } };
 requestAnimationFrame(bucle);
 })();
