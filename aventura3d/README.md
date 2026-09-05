@@ -85,7 +85,7 @@ día, o empezar de cero desde el menú de ESC.
 
 ## 👥 Jugar con amigos (en línea, gratis)
 
-Dos, tres o cuatro personas, cada una en su aparato, **juegan a la vez en la
+Hasta cuatro personas (el anfitrión y tres amigos), cada una en su aparato, **juegan a la vez en la
 misma isla**: cada quien maneja su personaje (Fernando, Luca, Salomón, Cucú,
 Tío Nacho o Tío Beto) y ve a los demás corriendo, manejando, volando y
 buceando con su nombre encima. Uno toca **👥 CON AMIGOS → 🏝️ CREAR UNA

@@ -1005,6 +1005,7 @@ const PERSONAJES_RED = [
 ];
 const ALFABETO_SALA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   /* sin I, O, 0 ni 1, que se confunden */
 const VERSION_RED = 1;
+const MAX_JUGADORES = 4;          /* el anfitrión y tres amigos */
 function codigoSala(){ let c = ''; for (let i=0;i<4;i++) c += ALFABETO_SALA[Math.floor(Math.random()*ALFABETO_SALA.length)]; return c; }
 function normalizarCodigo(t){ return String(t||'').toUpperCase().split('').filter(ch=>ALFABETO_SALA.includes(ch)).slice(0,4).join(''); }
 function empaquetarEstado(P, pj, nombre){
@@ -1049,7 +1050,7 @@ if (typeof module !== 'undefined' && module.exports){
   module.exports = {CLIPS, TONO_TTS, SIN_GRABACION, MISIONES, FAMILIA, PERROS_DEF, VEHICULOS_DEF, BANOS, HAMBURGUESAS, AROS, BANDERAS, CASAS, DECOR,
     RUTA, PISTA, RAMPA, MUELLE, COFRE, ISLITA, INICIO, HANGAR, FARO, PLAYA, MONTANA, PUEBLO, CANCHA, PARQUE, FUENTE, TAM, NSEG, SEG, MALLA, LIMITE, NIVEL_MAR,
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
-    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, PERSONAJES_RED, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
+    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2361,7 +2362,11 @@ function redCrear(){
   const peer = new Peer('fernando-bros-'+RED.sala, {debug:0});
   RED.peer = peer;
   peer.on('open', ()=>{ if (RED.peer===peer) RED.estado = 'sala'; });
-  peer.on('connection', conn=>{ if (RED.peer===peer) prepararConn(conn); });
+  peer.on('connection', conn=>{
+    if (RED.peer!==peer) return;
+    if (RED.conns.size >= MAX_JUGADORES-1){ conn.on('open', ()=>{ try{ conn.send({t:'llena', max:MAX_JUGADORES}); }catch(e){} setTimeout(()=>{ try{ conn.close(); }catch(e){} }, 800); }); return; }
+    prepararConn(conn);
+  });
   peer.on('error', e=>{ if (RED.peer!==peer) return; if (e.type==='unavailable-id'){ redCrear(); return; } RED.estado = 'error'; RED.error = textoErrorRed(e); RED.anfitrion = false; });
   peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
   setTimeout(()=>{ if (RED.peer===peer && RED.estado==='creando'){ RED.estado = 'error'; RED.error = 'El servidor de salas no respondió. Revisa el internet y vuelve a intentar.'; } }, 15000);
@@ -2403,6 +2408,7 @@ function redRecibir(id, m){
   if (!m || typeof m !== 'object') return;
   if (m.t==='r'){ if (!RED.anfitrion && typeof m.de==='string' && m.m && typeof m.m==='object') redRecibir(m.de, m.m); return; }
   if (RED.anfitrion){ for (const [pid, c] of RED.conns) if (pid!==id){ try{ if (c.open) c.send({t:'r', de:id, m}); }catch(e){} } }
+  if (m.t==='llena'){ if (!RED.anfitrion){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
   if (m.t==='chau'){ const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
   if (m.t==='hola'){
     const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
@@ -3029,7 +3035,7 @@ function dibujarAmigos(){
     cristal(W/2-330, 176, 660, 78, 16, 0.5);
     texto('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 200, 15, '#fff');
     texto('Los demás entran con ese código y todos juegan en la misma isla, cada uno con su aventura.', W/2, 222, 14, '#bcd6ff');
-    texto(hayPeerJS() ? 'Gratis, sin cuentas. Los dos aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 242, 13, hayPeerJS() ? '#7dffa0' : '#ff9e9e');
+    texto(hayPeerJS() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 242, 13, hayPeerJS() ? '#7dffa0' : '#ff9e9e');
     boton(z.crear.x, z.crear.y, z.crear.w, z.crear.h, '🏝️ CREAR UNA SALA', '#3aa040', '#1e6a24', 20, true);
     boton(z.unirme.x, z.unirme.y, z.unirme.w, z.unirme.h, '🔑 ENTRAR CON CÓDIGO', '#2a8ad0', '#1a4a90', 20);
     return;
