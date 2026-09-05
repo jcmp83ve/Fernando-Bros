@@ -33,12 +33,19 @@
   var s = document.createElement('script');
   s.src = '../kart3d/three.min.js';
   s.onload = function(){
+    /* la parte de red (PeerJS, MIT) es opcional: si no carga, se juega solo */
+    var r = document.createElement('script');
+    r.src = 'peerjs.min.js';
+    r.onload = juego; r.onerror = juego;
+    document.body.appendChild(r);
+  };
+  function juego(){
     var g = document.createElement('script');
     g.src = 'aventura3d.js?t=' + t;
     g.onload = function(){ var c = document.getElementById('cargando'); if (c) c.remove(); };
     g.onerror = function(){ aviso('No se pudo cargar el juego. Revisa tu conexión y recarga.'); };
     document.body.appendChild(g);
-  };
+  }
   s.onerror = function(){ aviso('No se pudo cargar el motor 3D. Revisa tu conexión y recarga.'); };
   function aviso(m){ var c = document.getElementById('cargando'); if (c) c.textContent = m; }
   document.body.appendChild(s);

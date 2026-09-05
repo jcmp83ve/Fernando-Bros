@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Gran Aventura — Guía para jugar con amigos</title>
+<style>
+  :root{ --fondo:#0b2a4a; --caja:#123a62; --linea:#2a5a8a; --texto:#eef6ff; --suave:#a9c8e6; --sol:#ffd34d; --rojo:#ff6b5e; --verde:#5ee08a; --azul:#7de0ff; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--texto);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+  .env{max-width:760px;margin:0 auto;padding:22px 18px 60px}
+  header{text-align:center;padding:26px 0 10px}
+  h1{font-size:clamp(26px,7vw,40px);margin:0;color:var(--sol);text-shadow:3px 3px 0 #00000055;letter-spacing:1px}
+  header p{color:var(--suave);margin:8px 0 0;font-size:15px}
+  h2{font-size:clamp(20px,5vw,26px);margin:38px 0 4px;display:flex;align-items:center;gap:10px}
+  .sub{color:var(--suave);margin:0 0 18px;font-size:15px}
+  .paso{background:var(--caja);border:1px solid var(--linea);border-radius:16px;padding:16px 18px 16px 62px;margin:12px 0;position:relative}
+  .paso > b{display:block;font-size:17px;margin-bottom:2px}
+  .paso p b{display:inline;font-size:inherit}
+  .paso .n{position:absolute;left:14px;top:14px;width:34px;height:34px;border-radius:50%;background:var(--sol);color:#1a1a2e;font-weight:bold;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .paso p{margin:4px 0 0;color:var(--suave);font-size:15px}
+  .aviso{border-left:5px solid var(--sol);background:#1a4a78;border-radius:0 12px 12px 0;padding:12px 16px;margin:16px 0;font-size:15px}
+  .aviso.rojo{border-left-color:var(--rojo)} .aviso.verde{border-left-color:var(--verde)}
+  .aviso b{color:var(--sol)} .aviso.rojo b{color:var(--rojo)} .aviso.verde b{color:var(--verde)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:28px;padding:0 10px;border-radius:50px;background:#245a9a;border:1px solid #4a8ad0;font-weight:bold;font-size:14px;white-space:nowrap}
+  .btn.verde{background:#2a7a34;border-color:#5ee08a} .btn.azul{background:#1a4a90;border-color:#7de0ff}
+  .pantalla{background:#071a30;border:2px solid var(--linea);border-radius:18px;padding:18px;margin:18px 0;text-align:center}
+  .pantalla .codigo{font-size:clamp(40px,12vw,64px);letter-spacing:.35em;color:var(--sol);font-weight:900;text-shadow:3px 3px 0 #00000088;margin:6px 0}
+  .pantalla small{color:var(--suave)}
+  .fila{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:15px}
+  th,td{padding:11px 10px;text-align:left;border-bottom:1px solid var(--linea);vertical-align:top}
+  th{color:var(--sol);font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+  details{background:var(--caja);border:1px solid var(--linea);border-radius:14px;padding:14px 18px;margin:10px 0}
+  summary{cursor:pointer;font-weight:bold;font-size:16px}
+  details p{margin:8px 0 0;color:var(--suave);font-size:15px}
+  a{color:var(--azul)}
+  .volver{display:inline-block;margin:10px 0 0;padding:10px 18px;border-radius:50px;background:#2a7a34;color:#fff;text-decoration:none;font-weight:bold}
+  .pjs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+  .pj{background:#1a4a78;border:1px solid var(--linea);border-radius:12px;padding:8px 12px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="env">
+<header>
+  <h1>👥 JUGAR CON AMIGOS</h1>
+  <p>Fernando y Tío Juan: La Gran Aventura · en línea, gratis, sin cuentas</p>
+  <a class="volver" href="./">🌴 Ir al juego</a>
+</header>
+
+<div class="aviso verde"><b>¿Qué es?</b> Dos, tres o cuatro personas, cada una en su iPad, teléfono o computadora, juegan <b>a la vez en la misma isla</b>. Cada quien maneja su personaje y ve a los demás corriendo, manejando, volando y buceando, con su nombre encima. Puede ser en la misma casa o en ciudades distintas: solo hace falta internet.</div>
+
+<h2>🏝️ El que invita (crea la sala)</h2>
+<p class="sub">Normalmente un adulto. Toma un minuto.</p>
+
+<div class="paso"><span class="n">1</span><b>Abre el juego y entra a la aventura</b>
+<p>En <b>ELIGE TU MUNDO</b> toca <span class="btn">🌴 AVENTURA 3D</span>. En la pantalla del título toca <span class="btn azul">👥 CON AMIGOS</span> (también está dentro del juego: <span class="btn">☰</span> o ESC → <span class="btn azul">👥 JUGAR CON AMIGOS</span>).</p></div>
+
+<div class="paso"><span class="n">2</span><b>Elige quién eres</b>
+<p>Arriba están los personajes. Cada jugador puede ser distinto:</p>
+<div class="pjs"><span class="pj">🧢 Fernando</span><span class="pj">🧒 Luca</span><span class="pj">🕶️ Salomón</span><span class="pj">👧 Cucú</span><span class="pj">🤠 Tío Nacho</span><span class="pj">👓 Tío Beto</span></div>
+<p>El juego se acuerda de tu elección para la próxima vez.</p></div>
+
+<div class="paso"><span class="n">3</span><b>Toca <span class="btn verde">🏝️ CREAR UNA SALA</span></b>
+<p>En unos segundos aparece un <b>código de 4 letras</b> y un enlace. Así se ve:</p>
+<div class="pantalla">
+  <small>Tu sala está lista. Diles este código:</small>
+  <div class="codigo">P4LM</div>
+  <small>o mándales el enlace por WhatsApp</small>
+  <div class="fila"><span class="btn azul">📲 COMPARTIR</span><span class="btn">📋 COPIAR ENLACE</span></div>
+</div></div>
+
+<div class="paso"><span class="n">4</span><b>Mándalo por WhatsApp</b>
+<p>Toca <span class="btn azul">📲 COMPARTIR</span> y elige WhatsApp (o <span class="btn">📋 COPIAR ENLACE</span> y pégalo donde quieras). El otro solo tiene que <b>abrir el enlace</b>: el juego entra a la sala solito. Si prefieres, dícteles el código por teléfono.</p></div>
+
+<div class="paso"><span class="n">5</span><b>Toca <span class="btn verde">▶ ¡A JUGAR!</span></b>
+<p>No hace falta esperar: cuando alguien entre, sale un aviso <i>«👋 Luca entró a la isla»</i> y aparece a tu lado, cerca de la casa de Fernando. Arriba en el medio se ve <b>👥 sala P4LM · 2 jugadores</b>.</p></div>
+
+<h2>🔑 El que entra</h2>
+<p class="sub">Dos maneras, la primera es la más fácil.</p>
+
+<div class="paso"><span class="n">A</span><b>Con el enlace</b>
+<p>Abre el enlace que te mandaron. Se abre el juego con un cartel <i>«🎉 Te invitaron a la sala P4LM · toca para entrar»</i>. Toca la pantalla y listo: ya estás en la isla con tu amigo.</p>
+<p>Si quieres cambiar de personaje, hazlo antes desde <span class="btn azul">👥 CON AMIGOS</span>; el juego lo recuerda.</p></div>
+
+<div class="paso"><span class="n">B</span><b>Con el código</b>
+<p>Abre el juego → <span class="btn azul">👥 CON AMIGOS</span> → <span class="btn azul">🔑 ENTRAR CON CÓDIGO</span>. Toca las 4 letras en el teclado grande de la pantalla (no distingue mayúsculas, y no hay I, O, 0 ni 1 para que no se confundan) y toca <span class="btn verde">✅ ENTRAR</span>.</p></div>
+
+<h2>🎮 Mientras juegan</h2>
+<table>
+<tr><th>Se comparte</th><th>Cada quien tiene lo suyo</th></tr>
+<tr><td>Dónde está cada uno y qué hace: caminar, nadar, saltar, manejar el carro, la moto, el barco, el avión y el submarino</td><td>Sus hamburguesas, sus estrellas, sus puntos, sus popos bebés y su progreso guardado</td></tr>
+<tr><td>Los peos 💨 (se ven y se oyen si estás cerca), las hamburguesas que come, las estrellas que gana y cuando hace popo (sale un aviso)</td><td>Los vehículos: cada jugador tiene su propio carro, moto, barco, avión y submarino, así nadie se los quita</td></tr>
+<tr><td>Los puntitos azules en el mapita de arriba a la derecha son tus amigos</td><td>Los perritos y Tío Juan acompañan a cada uno en su pantalla</td></tr>
+</table>
+
+<div class="aviso"><b>Para encontrarse:</b> mira el mapita (los amigos son puntos azules) y ve hacia ellos; también se ven de lejos por el nombre flotando encima. Un buen plan: quedar en la fuente del pueblo o en el aeropuerto.</div>
+
+<h2>🔧 ¿No funciona?</h2>
+
+<details><summary>Dice «No pude hablar con el servidor de salas»</summary><p>Revisa que el aparato tenga internet y vuelve a intentar con <span class="btn verde">🔁 INTENTAR DE NUEVO</span>. El servidor que presenta a los jugadores es público y gratis (PeerJS); a veces tarda unos segundos o está ocupado: espera un minuto y prueba otra vez.</p></details>
+
+<details><summary>Dice «No encontré la sala»</summary><p>El código no coincide o el que creó la sala ya cerró el juego. Revisa las 4 letras (se confunden la B y la 8, la S y la 5) o pídele que cree la sala otra vez y te mande el enlace nuevo. Cada vez que se crea una sala, el código cambia.</p></details>
+
+<details><summary>Se queda en «Entrando a la sala…»</summary><p>Casi siempre es la red: algunas redes de datos móviles o wifis muy cerradas (oficinas, hoteles) no dejan que dos aparatos se conecten directo. Prueba con el wifi de casa o compartiendo internet desde el teléfono. Si uno de los dos está en una red así, no va a funcionar por más que se reintente.</p></details>
+
+<details><summary>Mi amigo se ve a saltos o se queda quieto</summary><p>Es que a él se le está trabando el juego o la conexión. Si no manda señal en 12 segundos, desaparece de tu isla; cuando vuelva, reaparece solo.</p></details>
+
+<details><summary>¿Cuántos pueden jugar?</summary><p>Hasta cuatro va bien. El que crea la sala hace de «anfitrión» y reparte lo de los demás: si cierra el juego, la sala se cierra y los otros siguen jugando solos (con aviso).</p></details>
+
+<details><summary>¿Cuesta algo? ¿Hay que registrarse?</summary><p>No. No hay cuentas, contraseñas ni pagos. El juego vive en GitHub Pages y la conexión va directa entre los navegadores.</p></details>
+
+<details><summary>¿Pueden jugar dos en el mismo aparato?</summary><p>No; cada jugador necesita su propio aparato con el juego abierto. Sí pueden estar en la misma casa y en el mismo wifi.</p></details>
+
+<div class="aviso rojo"><b>Un consejo de seguridad:</b> el código de sala es la llave. Si lo publicas en un lugar abierto, cualquiera con el juego podría entrar a tu isla (solo vería a los jugadores, no puede tocar tu progreso). Compártelo solo con la gente que quieres que juegue.</div>
+
+<p style="text-align:center;margin-top:30px"><a class="volver" href="./">🌴 Volver al juego</a> &nbsp; <a href="../mando.html" style="color:var(--suave)">🎮 Guía del mando</a></p>
+</div>
+</body>
+</html>
