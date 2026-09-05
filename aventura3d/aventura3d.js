@@ -2680,7 +2680,7 @@ const zonaAmigos = ()=>{
   for (let i=0;i<n;i++) z.pjs.push({x: x0 + i*(w+8), y: 96, w, h: 62});
   z.crear = {x:W/2-310, y:H/2+16, w:300, h:50}; z.unirme = {x:W/2+10, y:H/2+16, w:300, h:50};
   z.jugar = {x:W/2-150, y:H-64, w:300, h:46}; z.salir = {x:W/2-150, y:H-64, w:300, h:46};
-  z.compartir = {x:W/2-250, y:H/2+64, w:240, h:44}; z.copiar = {x:W/2+10, y:H/2+64, w:240, h:44};
+  z.compartir = {x:W/2-250, y:274, w:240, h:44}; z.copiar = {x:W/2+10, y:274, w:240, h:44};
   z.reintentar = {x:W/2-150, y:H/2+40, w:300, h:46};
   const cols = 8, tw = Math.min(58, (W-60)/cols - 6), tx0 = W/2 - (cols*(tw+6)-6)/2, ty0 = H/2 - 30;
   for (let i=0;i<ALFABETO_SALA.length;i++) z.teclas.push({x: tx0 + (i%cols)*(tw+6), y: ty0 + Math.floor(i/cols)*(tw*0.78+6), w: tw, h: tw*0.78, ch: ALFABETO_SALA[i]});
@@ -3010,6 +3010,27 @@ function titulo(t, x, y, tam, c1, c2, alin){
   const g = ctx.createLinearGradient(0, y-tam/2, 0, y+tam/2); g.addColorStop(0, c1||'#fff6a0'); g.addColorStop(1, c2||'#ffb000');
   ctx.fillStyle = g; ctx.fillText(t, x, y);
 }
+/* un título que se encoge hasta caber en un ancho */
+function tituloAjustado(t, x, y, tam, anchoMax, c1, c2){
+  ctx.font = tam+'px '+TIT;
+  while (ctx.measureText(t).width > anchoMax && tam > 14){ tam -= 2; ctx.font = tam+'px '+TIT; }
+  titulo(t, x, y, tam, c1, c2); return tam;
+}
+function textoAjustado(t, x, y, tam, anchoMax, color, alin, borde){
+  ctx.font = 'bold '+tam+'px '+TXT;
+  while (ctx.measureText(t).width > anchoMax && tam > 9){ tam -= 1; ctx.font = 'bold '+tam+'px '+TXT; }
+  if (borde) textoBorde(t, x, y, tam, color, alin); else texto(t, x, y, tam, color, alin);
+  return tam;
+}
+/* una cápsula del ancho justo del texto, centrada en x */
+function pastilla(t, x, y, tam, color, alfa, anchoMax){
+  ctx.font = 'bold '+tam+'px '+TXT;
+  while (ctx.measureText(t).width > (anchoMax||W-40)-36 && tam > 9){ tam -= 1; ctx.font = 'bold '+tam+'px '+TXT; }
+  const w = ctx.measureText(t).width + 36, h = tam*2;
+  cristal(x-w/2, y-h/2, w, h, h/2, alfa===undefined ? 0.6 : alfa);
+  texto(t, x, y+1, tam, color||'#fff');
+  return h;
+}
 function cristal(x,y,w,h,r,alfa){
   ctx.fillStyle = 'rgba(15,20,45,'+(alfa===undefined?0.5:alfa)+')';
   ctx.beginPath(); ctx.roundRect(x,y,w,h,r||12); ctx.fill();
@@ -3094,23 +3115,26 @@ function dibujarMenu(){
   vineta(0.35);
   const g = ctx.createLinearGradient(0, 0, 0, 150); g.addColorStop(0, 'rgba(10,20,60,0.7)'); g.addColorStop(1, 'rgba(10,20,60,0)');
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, 150);
-  titulo('FERNANDO Y TÍO JUAN', W/2, 78 + Math.sin(tick*0.04)*3, Math.min(64, W*0.075), '#fff6a0', '#ffb000');
-  titulo('LA GRAN AVENTURA', W/2, 140, Math.min(44, W*0.05), '#bfe9ff', '#2a8ad0');
-  cristal(W/2-250, H-190, 500, 84, 18, 0.55);
-  texto('Una isla entera para explorar: carro 🚗 · moto 🏍️ · barco 🚤 · avión ✈️ · submarino 🤿', W/2, H-165, 15, '#fff');
-  texto('Come hamburguesas 🍔, corre al baño 🚽 del Señor Popo 💩 y saluda a toda la familia 👨‍👩‍👧', W/2, H-140, 15, '#ffe36e');
-  texto(tactil ? 'Palanca a la izquierda · A salta y monta · B corre y turbo · 🚪 para bajarte' : 'Flechas o WASD · ESPACIO salta y monta · MAYÚS corre y turbo · E para bajarte · ESC menú', W/2, H-118, 13, '#bcd6ff');
-  if (Math.floor(tick/30)%2===0) textoBorde(tactil ? 'TOCA PARA JUGAR' : 'PULSA ENTER PARA JUGAR', W/2, H-70, 30, '#fff', 'center', true);
-  if (P.estrellas.length) textoBorde('⭐ '+P.estrellas.length+'/'+MISIONES.length+' · tu aventura sigue donde la dejaste', W/2, H-32, 16, '#ffe36e');
+  /* fila de arriba: los dos botones; debajo, el título a todo lo ancho */
   botonAtras('◀ FERNANDO BROS');
   boton(W-190, 12, 176, 42, '👥 CON AMIGOS', '#2a8ad0', '#1a4a90', 16, !!RED.pendiente);
-  if (RED.pendiente) textoBorde('🎉 Te invitaron a la sala '+RED.pendiente+' · toca para entrar', W/2, H-96, 18, '#7dffa0');
-  texto('🎮 Funciona con mando · 📱 con los dedos · 👥 en línea con amigos', W-14, 66, 13, '#bcd6ff', 'right');
+  tituloAjustado('FERNANDO Y TÍO JUAN', W/2, 112 + Math.sin(tick*0.04)*3, 64, W-60, '#fff6a0', '#ffb000');
+  tituloAjustado('LA GRAN AVENTURA', W/2, 166, 42, W-120, '#bfe9ff', '#2a8ad0');
+  /* el cartel de abajo: tres líneas con aire */
+  const aw = Math.min(600, W-40), ay = H-206;
+  cristal(W/2-aw/2, ay, aw, 96, 18, 0.55);
+  textoAjustado('Una isla entera para explorar: carro 🚗 · moto 🏍️ · barco 🚤 · avión ✈️ · submarino 🤿', W/2, ay+22, 15, aw-30, '#fff');
+  textoAjustado('Come hamburguesas 🍔, corre al baño 🚽 del Señor Popo 💩 y saluda a toda la familia 👨‍👩‍👧', W/2, ay+48, 15, aw-30, '#ffe36e');
+  textoAjustado(tactil ? 'Palanca a la izquierda · A salta y monta · B corre y turbo · 🚪 para bajarte' : 'Flechas o WASD · ESPACIO salta y monta · MAYÚS corre y turbo · E para bajarte · ESC menú', W/2, ay+74, 13, aw-30, '#bcd6ff');
+  if (RED.pendiente) textoBorde('🎉 Te invitaron a la sala '+RED.pendiente+' · toca para entrar', W/2, H-84, 18, '#7dffa0');
+  else if (Math.floor(tick/30)%2===0) textoBorde(tactil ? 'TOCA PARA JUGAR' : 'PULSA ENTER PARA JUGAR', W/2, H-78, 30, '#fff', 'center', true);
+  if (P.estrellas.length) textoBorde('⭐ '+P.estrellas.length+'/'+MISIONES.length+' · tu aventura sigue donde la dejaste', W/2, H-36, 15, '#ffe36e');
+  texto('🎮 mando · 📱 dedos · 👥 en línea con amigos', W/2, H-14, 12, 'rgba(255,255,255,0.6)');
 }
 function dibujarAmigos(){
   ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
   const z = zonaAmigos();
-  titulo('JUGAR CON AMIGOS', W/2, 44, 40, '#bfe9ff', '#2a8ad0');
+  tituloAjustado('JUGAR CON AMIGOS', W/2, 40, 40, W-420, '#bfe9ff', '#2a8ad0');
   botonAtras('◀ VOLVER');
   boton(z.guia.x, z.guia.y, z.guia.w, z.guia.h, '📖 GUÍA', '#4a6ad0', '#2a3a90', 16);
   if (RED.entrandoCodigo){
@@ -3130,10 +3154,10 @@ function dibujarAmigos(){
       texto(pj.emoji, zp.x+zp.w/2, zp.y+24, 24, '#fff'); texto(pj.nombre, zp.x+zp.w/2, zp.y+49, 12, sel ? '#ffe36e' : '#fff'); });
   }
   if (RED.estado==='off'){
-    cristal(W/2-330, 176, 660, 78, 16, 0.5);
-    texto('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 200, 15, '#fff');
-    texto('Los demás entran con ese código y todos juegan en la misma isla, cada uno con su aventura.', W/2, 222, 14, '#bcd6ff');
-    texto(hayPeerJS() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 242, 13, hayPeerJS() ? '#7dffa0' : '#ff9e9e');
+    { const cw = Math.min(660, W-40); cristal(W/2-cw/2, 176, cw, 78, 16, 0.5);
+    textoAjustado('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 200, 15, cw-30, '#fff');
+    textoAjustado('Los demás entran con ese código y todos juegan en la misma isla, cada uno con su aventura.', W/2, 222, 14, cw-30, '#bcd6ff');
+    textoAjustado(hayPeerJS() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 242, 13, cw-30, hayPeerJS() ? '#7dffa0' : '#ff9e9e'); }
     boton(z.crear.x, z.crear.y, z.crear.w, z.crear.h, '🏝️ CREAR UNA SALA', '#3aa040', '#1e6a24', 20, true);
     boton(z.unirme.x, z.unirme.y, z.unirme.w, z.unirme.h, '🔑 ENTRAR CON CÓDIGO', '#2a8ad0', '#1a4a90', 20);
     return;
@@ -3145,10 +3169,11 @@ function dibujarAmigos(){
     return;
   }
   if (RED.estado==='error'){
-    cristal(W/2-330, 176, 660, 100, 16, 0.6);
+    const ew = Math.min(660, W-40);
+    cristal(W/2-ew/2, 176, ew, 100, 16, 0.6);
     texto('😕 No se pudo', W/2, 200, 20, '#ff9e9e');
     ctx.font = 'bold 15px '+TXT; const palabras = RED.error.split(' '); let linea = '', y = 226;
-    for (const w of palabras){ const t = linea ? linea+' '+w : w; if (ctx.measureText(t).width > 620){ texto(linea, W/2, y, 15, '#fff'); linea = w; y += 20; } else linea = t; }
+    for (const w of palabras){ const t = linea ? linea+' '+w : w; if (ctx.measureText(t).width > ew-40){ texto(linea, W/2, y, 15, '#fff'); linea = w; y += 20; } else linea = t; }
     texto(linea, W/2, y, 15, '#fff');
     boton(z.reintentar.x, z.reintentar.y, z.reintentar.w, z.reintentar.h, '🔁 INTENTAR DE NUEVO', '#3aa040', '#1e6a24', 18, true);
     return;
@@ -3159,19 +3184,18 @@ function dibujarAmigos(){
     texto('Tu sala está lista. Diles este código:', W/2, 96, 17, '#fff');
     cristal(W/2-170, 116, 340, 76, 20, 0.6); titulo(RED.sala.split('').join('  '), W/2, 154, 54, '#fff6a0', '#ffb000');
     texto('o mándales el enlace por WhatsApp:', W/2, 212, 15, '#bcd6ff');
-    cristal(W/2-330, 226, 660, 34, 17, 0.5); texto(enlaceSala(), W/2, 243, 13, '#7de0ff');
+    { const lw = Math.min(660, W-40); cristal(W/2-lw/2, 226, lw, 34, 17, 0.5); textoAjustado(enlaceSala(), W/2, 243, 13, lw-30, '#7de0ff'); }
     boton(z.compartir.x, z.compartir.y, z.compartir.w, z.compartir.h, '📲 COMPARTIR', '#2a8ad0', '#1a4a90', 18);
     boton(z.copiar.x, z.copiar.y, z.copiar.w, z.copiar.h, '📋 COPIAR ENLACE', '#4a6ad0', '#2a3a90', 18);
   } else {
-    titulo('Estás en la sala '+RED.sala, W/2, 130, 36, '#fff6a0', '#ffb000');
-    texto('Puedes seguir jugando: tus amigos aparecen en la isla con su nombre encima.', W/2, 176, 15, '#bcd6ff');
+    tituloAjustado('Estás en la sala '+RED.sala, W/2, 150, 36, W-80, '#fff6a0', '#ffb000');
+    textoAjustado('Puedes seguir jugando: tus amigos aparecen en la isla con su nombre encima.', W/2, 200, 15, W-60, '#bcd6ff');
   }
-  cristal(W/2-330, H/2+118, 660, 34, 17, 0.5);
-  texto('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, H/2+135, 14, '#fff');
+  texto(tactil ? '🎙️ Para hablar: mantén apretado el botón del micrófono' : '🎙️ Para hablar: mantén apretada la tecla V (o el botón del micrófono)', W/2, 342, 13, '#bcd6ff');
+  pastilla('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, 376, 14, '#fff', 0.5, Math.min(660, W-40));
   boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ ¡A JUGAR!', '#3aa040', '#1e6a24', 20, true);
-  boton(W-190, H-64, 176, 46, '🚪 SALIR DE LA SALA', '#8a3a30', '#5a1a10', 14);
+  boton(W-190, H-64, 176, 46, '🚪 SALIR DE LA SALA', '#8a3a30', '#5a1a10', 13);
   boton(14, H-64, 190, 46, VOZ.silencio ? '🔇 AMIGOS EN SILENCIO' : '🔊 OÍR A LOS AMIGOS', VOZ.silencio ? '#8a3a30' : '#3aa040', VOZ.silencio ? '#5a1a10' : '#1e6a24', 13);
-  texto('🎙️ Para hablar: mantén apretado el botón del micrófono (o la tecla V)', W/2, H/2+100, 13, '#bcd6ff');
 }
 function dibujarHUD(){
   const J = P.J;
@@ -3192,9 +3216,7 @@ function dibujarHUD(){
   const o = objetivo(P);
   const ancho = Math.min(300, W*0.36);
   cristal(W-ancho-12, 186, ancho, 44, 12, 0.5);
-  ctx.font = 'bold 14px '+TXT; let txt = o.texto; while (ctx.measureText(txt).width > ancho-104 && txt.length > 8) txt = txt.slice(0, -2);
-  if (txt !== o.texto) txt += '…';
-  texto(txt, W-ancho+30, 208, 14, '#fff', 'left');
+  textoAjustado(o.texto, W-ancho+30, 208, 14, ancho-104, '#fff', 'left');
   if (o.x !== null && o.x !== undefined){
     const ang = envolver(Math.atan2(o.x-J.x, o.z-J.z) - camYaw);
     flecha(W-ancho+8, 208, -ang, 9, '#ffe36e');
@@ -3209,32 +3231,41 @@ function dibujarHUD(){
     if (P.veh.id==='sub') textoBorde(Math.round(-P.veh.y)+' m de profundidad', W/2, H-52, 14, '#bfe9ff');
     if (puedeBajar(P)) texto((tactil ? '🚪' : 'E')+' = bajarse', W/2, H-72, 13, '#bcd6ff');
   }
+  let yAviso = 92;
   if (redActiva()){
-    const n = RED.remotos.size + 1; cristal(W/2-120, 10, 240, 30, 15, 0.55); texto('👥 sala '+RED.sala+' · '+n+(n===1 ? ' jugador (esperando…)' : ' jugadores'), W/2, 25, 14, '#bfe9ff');
+    const n = RED.remotos.size + 1;
+    pastilla('👥 sala '+RED.sala+' · '+n+(n===1 ? ' jugador (esperando…)' : ' jugadores'), W/2, 25, 14, '#bfe9ff', 0.55);
     const hablan = [...RED.remotos.values()].filter(r=>r.hablando).map(r=>r.nombre);
-    let y = 48;
-    if (VOZ.hablando){ cristal(W/2-110, y, 220, 26, 13, 0.6); texto('🎙️ Hablando…', W/2, y+13, 14, '#7dffa0'); y += 30; }
-    if (hablan.length && !VOZ.silencio){ cristal(W/2-150, y, 300, 26, 13, 0.6); texto('🔊 '+hablan.join(', ')+(hablan.length===1 ? ' está hablando' : ' están hablando'), W/2, y+13, 14, '#fff'); }
+    const partes = [];
+    if (VOZ.hablando) partes.push('🎙️ Hablando…');
+    if (hablan.length && !VOZ.silencio) partes.push('🔊 '+hablan.join(', ')+(hablan.length===1 ? ' está hablando' : ' están hablando'));
+    if (partes.length){ pastilla(partes.join('   ·   '), W/2, 56, 14, VOZ.hablando ? '#7dffa0' : '#fff', 0.6); yAviso = 84; }
+    else yAviso = 56;
     if (!tactil && !MANDO.activo && !VOZ.hablando) texto('V = hablar 🎙️', W-14, H-30, 12, 'rgba(255,255,255,0.6)', 'right');
   }
-  if (avisoT > 0){ const ay = redActiva() ? 134 : 92; cristal(W/2-220, ay, 440, 34, 17, 0.6); texto(avisoTxt, W/2, ay+17, 15, '#ffe36e'); }
+  if (avisoT > 0) pastilla(avisoTxt, W/2, yAviso+16, 15, '#ffe36e', 0.6, Math.min(W-40, 640));
   burbujas.forEach((b, i)=>{
+    /* el nombre a la izquierda y la frase a continuación, en una cápsula del ancho justo */
     const y = H - 150 - i*44, alfa = Math.min(1, b.t/20);
     ctx.globalAlpha = alfa;
-    ctx.font = 'bold 17px '+TXT; const w = Math.min(W-40, ctx.measureText(b.txt).width + 40 + (b.quien ? 90 : 0));
-    cristal(W/2-w/2, y-18, w, 36, 18, 0.65);
-    if (b.quien) texto(b.quien+':', W/2-w/2+16, y+1, 15, '#ffe36e', 'left');
-    texto(b.txt, W/2 + (b.quien ? 40 : 0), y+1, 17, '#fff');
+    let tam = 17;
+    const medir = ()=>{ ctx.font = 'bold '+(tam-2)+'px '+TXT; const nw = b.quien ? ctx.measureText(b.quien+':').width + 10 : 0; ctx.font = 'bold '+tam+'px '+TXT; return {nw, tw: ctx.measureText(b.txt).width}; };
+    let m = medir();
+    while (m.nw + m.tw + 36 > W-40 && tam > 11){ tam--; m = medir(); }
+    const w = m.nw + m.tw + 36, x0 = W/2 - w/2;
+    cristal(x0, y-18, w, 36, 18, 0.65);
+    if (b.quien) texto(b.quien+':', x0+18, y+1, tam-2, '#ffe36e', 'left');
+    texto(b.txt, x0+18+m.nw, y+1, tam, '#fff', 'left');
     ctx.globalAlpha = 1;
   });
   if (mensajeGrande){
     const m = mensajeGrande, k = 1 - m.t/m.t0, esc_ = k < 0.1 ? k*10 : 1;
-    ctx.save(); ctx.translate(W/2, H*0.32); ctx.scale(esc_, esc_);
+    ctx.save(); ctx.translate(W/2, H*0.4); ctx.scale(esc_, esc_);
     ctx.globalAlpha = m.t < 20 ? m.t/20 : 1;
-    titulo(m.txt, 0, 0, Math.min(46, W*0.05), '#fff', m.color);
+    tituloAjustado(m.txt, 0, 0, 46, W-60, '#fff', m.color);
     ctx.restore(); ctx.globalAlpha = 1;
   }
-  if (P.escena){ if (Math.floor(tick/20)%2===0) textoBorde('💩 Fernando está haciendo popo… 🚽', W/2, H*0.2, 24, '#ffb070', 'center', true); }
+  if (P.escena){ if (Math.floor(tick/20)%2===0) textoBorde('💩 Fernando está haciendo popo… 🚽', W/2, H*0.26, 24, '#ffb070', 'center', true); }
   if (P.veh && P.veh.turbo > 0.5){ ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = 2; for (let i=0;i<10;i++){ const a = azar()*6.28, r1 = H*0.45, r2 = H*0.75; ctx.beginPath(); ctx.moveTo(W/2+Math.cos(a)*r1, H/2+Math.sin(a)*r1); ctx.lineTo(W/2+Math.cos(a)*r2, H/2+Math.sin(a)*r2); ctx.stroke(); } }
   dibujarPalancaYBotones();
   if (!tactil && !MANDO.activo){ texto('ESC = misiones', W-14, H-14, 12, 'rgba(255,255,255,0.6)', 'right'); }
@@ -3242,15 +3273,15 @@ function dibujarHUD(){
 function dibujarPausa(){
   ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
   titulo('LAS MISIONES', W/2, 42, 40, '#fff6a0', '#ffb000');
-  const x0 = W/2-300, y0 = 76;
-  cristal(x0, y0-6, 600, MISIONES.length*24+12, 16, 0.5);
+  const pw = Math.min(600, W-40), x0 = W/2-pw/2, y0 = 76;
+  cristal(x0, y0-6, pw, MISIONES.length*24+12, 16, 0.5);
   MISIONES.forEach((m, i)=>{
     const ok = P.estrellas.includes(m.id);
     let extra = '';
     if (m.id==='banos') extra = P.prog.banos.length+'/'+BANOS.length; else if (m.id==='carro') extra = P.prog.banderas.length+'/'+BANDERAS.length;
     else if (m.id==='avion') extra = P.prog.aros.length+'/'+AROS.length; else if (m.id==='familia') extra = P.prog.familia.length+'/'+SALUDABLES.length;
-    texto((ok ? '⭐ ' : '☆ ')+m.emoji+'  '+m.titulo, x0+18, y0+12+i*24, 16, ok ? '#7dffa0' : '#fff', 'left');
-    if (extra && !ok) texto(extra, x0+582, y0+12+i*24, 14, '#bcd6ff', 'right');
+    textoAjustado((ok ? '⭐ ' : '☆ ')+m.emoji+'  '+m.titulo, x0+18, y0+12+i*24, 16, pw-96, ok ? '#7dffa0' : '#fff', 'left');
+    if (extra && !ok) texto(extra, x0+pw-18, y0+12+i*24, 14, '#bcd6ff', 'right');
   });
   const zs = zonasPausa();
   const etiquetas = ['▶ SEGUIR JUGANDO', redActiva() ? '👥 SALA '+RED.sala+' · '+(RED.remotos.size+1)+' EN LA ISLA' : '👥 JUGAR CON AMIGOS', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', '◀ FERNANDO BROS'];
@@ -3260,14 +3291,15 @@ function dibujarPausa(){
 }
 function dibujarFinal(){
   ctx.fillStyle = 'rgba(5,10,30,0.55)'; ctx.fillRect(0,0,W,H);
-  titulo('¡LO LOGRASTE TODO!', W/2, 80 + Math.sin(tick*0.06)*4, Math.min(60, W*0.07), '#fff6a0', '#ffb000');
+  tituloAjustado('¡LO LOGRASTE TODO!', W/2, 96 + Math.sin(tick*0.06)*4, 60, W-60, '#fff6a0', '#ffb000');
   let s = ''; for (let i=0;i<MISIONES.length;i++) s += '⭐';
-  textoBorde(s, W/2, 150, 40, '#ffe36e');
-  cristal(W/2-260, 190, 520, 130, 18, 0.55);
-  texto('Fernando hizo popo en todos los baños, manejó el carro,', W/2, 216, 17, '#fff');
-  texto('saltó con la moto, voló por los aros, navegó hasta Santi,', W/2, 242, 17, '#fff');
-  texto('encontró el tesoro y saludó a toda la familia.', W/2, 268, 17, '#fff');
-  texto('¡Eres el pichunguito campeón de la isla! · '+P.puntos.toLocaleString('es')+' puntos', W/2, 298, 16, '#ffe36e');
+  textoBorde(s, W/2, 160, 40, '#ffe36e');
+  const fw = Math.min(560, W-40);
+  cristal(W/2-fw/2, 200, fw, 130, 18, 0.55);
+  textoAjustado('Fernando hizo popo en todos los baños, manejó el carro,', W/2, 226, 17, fw-30, '#fff');
+  textoAjustado('saltó con la moto, voló por los aros, navegó hasta Santi,', W/2, 252, 17, fw-30, '#fff');
+  textoAjustado('encontró el tesoro y saludó a toda la familia.', W/2, 278, 17, fw-30, '#fff');
+  textoAjustado('¡Eres el pichunguito campeón de la isla! · '+P.puntos.toLocaleString('es')+' puntos', W/2, 308, 16, fw-30, '#ffe36e');
   boton(W/2-150, H-90, 300, 44, '▶ SEGUIR EXPLORANDO', '#3aa040', '#1e6a24', 18, true);
   botonAtras('◀ FERNANDO BROS');
   if (tick % 4 === 0) confeti(P.J.x, P.J.y, P.J.z, 2);
@@ -3278,11 +3310,11 @@ function dibujar(){
   ctx.clearRect(0,0,W,H);
   if (estado==='menu') dibujarMenu();
   else if (estado==='juego') dibujarHUD();
-  else if (estado==='pausa'){ dibujarHUD(); dibujarPausa(); }
+  else if (estado==='pausa') dibujarPausa();
   else if (estado==='final') dibujarFinal();
   else if (estado==='amigos') dibujarAmigos();
   if (cortina>0){ ctx.fillStyle = 'rgba(0,0,0,'+(cortina/40)+')'; ctx.fillRect(0,0,W,H); }
-  if (MANDO.avisoT>0){ cristal(W/2-160, 40, 320, 40, 20, 0.5); textoBorde('🎮 MANDO CONECTADO', W/2, 61, 20, '#7dffa0', 'center', true); }
+  if (MANDO.avisoT>0) pastilla('🎮 MANDO CONECTADO', W/2, H-90, 18, '#7dffa0', 0.55);
 }
 
 /* ---------------- Bucle principal: 60 pasos por segundo, pase lo que pase ---------------- */
@@ -3301,6 +3333,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; } };
 requestAnimationFrame(bucle);
 })();
