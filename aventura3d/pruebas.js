@@ -23,6 +23,24 @@ for (const f of ['¡Qué rica hamburguesa!','¡Guau, guau! ¡Soy el perrito pich
   if (!N.CLIPS[f]) mal('sin grabación: '+f);
 for (const f of N.SIN_GRABACION){ if (N.CLIPS[f]) mal('ya está grabada, quítala de SIN_GRABACION: '+f); if (!N.TONO_TTS[f]) mal('sin tono de voz sintética: '+f); }
 bien('frases:', Object.keys(N.CLIPS).length, 'grabadas y', N.SIN_GRABACION.length, 'nuevas con voz sintética');
+/* 1b) el paquete de diálogos: cada personaje jugable tiene su frase para cada situación, y cada frase su grabación */
+{
+  let frases = 0;
+  for (const pj of N.PERSONAJES_RED){
+    const paq = N.DIALOGOS[pj.id];
+    if (!paq){ mal('sin paquete de diálogos: '+pj.nombre); continue; }
+    for (const k of N.CLAVES_DIALOGO){
+      const t = N.fraseDe(pj.id, k, 'abu');
+      if (!t) mal('sin frase '+k+' para '+pj.nombre);
+      else if (!(pj.id==='fernando' ? N.CLIPS[t] : (N.CLIPS_PJ[pj.id] && N.CLIPS_PJ[pj.id][t]))) mal('sin grabación de '+pj.nombre+': '+t);
+      else frases++;
+    }
+  }
+  if (N.fraseDe('fernando','saludo','abu') !== 'Te amo Abu') mal('Fernando debe saludar a Abu con su frase de FAMILIA');
+  if (N.fraseDe('luca','hamburguesa') === N.fraseDe('fernando','hamburguesa')) mal('Luca debería tener su propia frase de hamburguesa');
+  for (const t of ['¡Hola! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!', '¡Bravo! ¡Qué popo tan grande!']) if (!N.CLIPS[t]) mal('sin grabación: '+t);
+  bien('diálogos:', N.PERSONAJES_RED.length, 'personajes con', frases, 'frases grabadas con su voz');
+}
 
 /* 2) la isla está bien armada */
 {
@@ -107,10 +125,15 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
 /* 4) hamburguesa → peo → ganas → baño → estrella */
 {
   const h = N.HAMBURGUESAS[0];
+  /* jugando como Luca, la hamburguesa se celebra con la frase y el nombre de Luca */
+  P.pj = 'luca'; const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='hablar') dichos.push(e); return false; };
   poner(P, h.x-1.5, h.z);
-  correr(P, 60, {jx:0, jy:0});
-  correr(P, 60, {jx:0, jy:1, camYaw: Math.atan2(h.x-P.J.x, h.z-P.J.z)});
+  correr(P, 60, {jx:0, jy:0}, oir);
+  correr(P, 60, {jx:0, jy:1, camYaw: Math.atan2(h.x-P.J.x, h.z-P.J.z)}, oir);
+  P.pj = 'fernando';
   if (!tipos.hamburguesa) mal('no se comió la hamburguesa'); else bien('se comió la hamburguesa, popo al', Math.round(P.popo*100)+'%');
+  { const d = dichos.find(e=>e.k==='hamburguesa');
+    if (!d) mal('no dijo nada al comer'); else if (d.texto !== N.fraseDe('luca','hamburguesa') || d.quien !== 'Luca' || d.pj !== 'luca') mal('la frase de la hamburguesa no es la de Luca: '+JSON.stringify(d)); else bien('como Luca dijo:', d.texto); }
   if (!tipos.pedo) mal('no se echó el peo');
   const dicho = P.eventos; /* ya vaciados: se mira el contador */
   const b = N.BANOS[0];

@@ -68,6 +68,8 @@ const CLIPS = {
   '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_202155_87520206-045d-4a20-800a-304e83b3381d.mp3',
   '¡Llegué a la luna!': AUDIO_BASE+'hf_20260905_202155_5ecaea00-d580-4cb7-9de5-da1593326bc6.mp3',
   '¡Vamos, dinosaurio!': AUDIO_BASE+'hf_20260905_202154_b65da520-f47e-4fe5-93f6-534755238ff9.mp3',
+  '¡Hola! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!': AUDIO_BASE+'hf_20260905_212315_e5f05fa4-e608-45ef-9890-5970ca1fb19a.mp3',
+  '¡Bravo! ¡Qué popo tan grande!': AUDIO_BASE+'hf_20260905_212315_6ecdfe6d-f9b5-4cc9-80bb-d5ac6a250cb1.mp3',
 };
 /* Si un mp3 no carga, habla el navegador con la voz sintética y el tono
    de cada personaje. SIN_GRABACION lista las frases que a propósito no
@@ -97,7 +99,298 @@ const TONO_TTS = {
   '¡Hiciste popo en todos mis baños! ¡Eres el campeón del popo!': {pitch:0.5, rate:0.9},
 };
 const SIN_GRABACION = [];
-let voces = [], reproductor = null, clipsListos = false, hablando = false, colaVoz = [];
+/* Las grabaciones de cada personaje jugable: CLIPS_PJ[personaje][frase] (se rellenan abajo) */
+const CLIPS_PJ = {};
+CLIPS_PJ.tiojuan = {
+  '¡Tío Juan al rescate!': AUDIO_BASE+'hf_20260905_210210_199f86a0-4f49-466b-982a-44bc1cf39451.mp3',
+  '¡Arriba, arriba! ¡Tío Juan vuela!': AUDIO_BASE+'hf_20260905_210210_2ad5e405-7d4f-4270-9365-c64e41ad13b3.mp3',
+  '¡Capitán tío Juan al mando!': AUDIO_BASE+'hf_20260905_210210_15c52813-fa4a-4894-b0fc-8997998feb0b.mp3',
+  '¡Un dinosaurio! ¡Qué bestia tan bonita!': AUDIO_BASE+'hf_20260905_210316_d72237c6-b3fb-4a4f-944b-0e27201c2e4a.mp3',
+  '¡Llegué a la luna, pichunguito!': AUDIO_BASE+'hf_20260905_210210_f7a63a42-ed8c-46f2-aebf-549a6cd08941.mp3',
+  '¡Mmm, qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_210210_90e97486-b6d4-4724-985d-10b0f5c3210f.mp3',
+  '¡Qué rica arepita de agüita de sapo, pichunguito!': AUDIO_BASE+'hf_20260905_210210_d15b4555-bb66-4319-bf6c-28d3119e7b72.mp3',
+  '¡Maracaibo, tierra del sol amada!': AUDIO_BASE+'hf_20260905_210316_d81a399d-6027-4b20-9489-a686eb5a1461.mp3',
+  '¡Ay, ay! ¡Necesito un baño ya!': AUDIO_BASE+'hf_20260905_210210_edf81b35-3bcf-41a0-a98d-ca198e4f944e.mp3',
+  '¡Perdón! ¡Se me escapó un peo!': AUDIO_BASE+'hf_20260905_210316_8a7114ab-f937-487c-b1fd-7bbce0beac4d.mp3',
+  '¡Ahh, qué alivio tan grande!': AUDIO_BASE+'hf_20260905_210210_b55de65a-f266-4edc-a18f-9d037663e32c.mp3',
+  '¡Mira, un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_210210_30e4e437-5ed5-44c8-90ec-58f65c1f99fd.mp3',
+  '¡Salté la rampa como un superhéroe!': AUDIO_BASE+'hf_20260905_210238_d90a78a3-b6e7-4415-8425-8cdde2eba0dd.mp3',
+  '¡El tesoro es nuestro, pichunguito!': AUDIO_BASE+'hf_20260905_210238_f8a42e91-e580-41dc-8952-e4891795b46d.mp3',
+  '¡Hola, familia! ¡Un abrazo de tío Juan!': AUDIO_BASE+'hf_20260905_210238_218f5c52-99d2-42cc-b3a7-fdbf715e85be.mp3',
+};
+CLIPS_PJ.luca = {
+  '¡Luca al ataque!': AUDIO_BASE+'hf_20260905_210238_ba6fb1d2-d6d0-4d15-a5cf-33c1ed282620.mp3',
+  '¡Estoy volando! ¡Mírame!': AUDIO_BASE+'hf_20260905_210238_0d350cae-2737-46e4-8011-3bdc3040f339.mp3',
+  '¡Zarpamos! ¡Todos a bordo!': AUDIO_BASE+'hf_20260905_210316_a9233ea7-0cc8-400c-be99-aeba39750a44.mp3',
+  '¡Arre, dinosaurio, arre!': AUDIO_BASE+'hf_20260905_210316_cf0bb04e-998c-458c-8fa8-6a14391dcf89.mp3',
+  '¡Llegué a la luna! ¡Qué chévere!': AUDIO_BASE+'hf_20260905_210238_f2ebea6f-f85f-4359-8daf-1b5c3408ccc6.mp3',
+  '¡Ñam! ¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_210238_530284be-bdda-44b6-9856-9e326b263a1a.mp3',
+  '¡Qué rica arepa de agüita de sapo!': AUDIO_BASE+'hf_20260905_210238_ecfcc8c5-94bb-4e35-9c87-e8feacf1286c.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_210316_30e37557-5683-4977-bdcc-f11e572819ef.mp3',
+  '¡Quiero hacer popo!': AUDIO_BASE+'hf_20260905_210316_5e064751-f3dc-4071-8f12-268c251e74db.mp3',
+  '¡Uy! ¡Me eché un peo!': AUDIO_BASE+'hf_20260905_210328_b7b5526d-6dc2-4fb4-bfb3-f2e2b1d907d3.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_210328_1004018c-6540-4a96-a65c-bf9ff09f4332.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_210409_c9a4ee7a-268d-4e1f-a04a-55e8e3cb28c7.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_210409_a18a91ef-0f1e-4f77-9144-b7ba8bca309c.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_210328_ccd7bb7e-ee7c-4435-86e3-490d90875e2e.mp3',
+  '¡Hola! ¡Soy Luca, el amigo de Fernando!': AUDIO_BASE+'hf_20260905_210328_4a381a1b-9144-435d-8097-7dbf6f745d31.mp3',
+};
+CLIPS_PJ.salomon = {
+  '¡Salomón en la casa!': AUDIO_BASE+'hf_20260905_210409_da284f95-7e30-4371-9011-aabbfec471d4.mp3',
+  '¡Volando con estilo!': AUDIO_BASE+'hf_20260905_210328_7967f055-9abd-49f9-955e-6efe680b59f3.mp3',
+  '¡Al agua, marineros!': AUDIO_BASE+'hf_20260905_210328_659985d2-7c5f-4838-9230-99a91395a4f0.mp3',
+  '¡Dinosaurio, tú y yo somos un equipo!': AUDIO_BASE+'hf_20260905_210606_1449e05c-d5a0-4650-9a28-a84668f00a7c.mp3',
+  '¡La luna! ¡Qué genial!': AUDIO_BASE+'hf_20260905_210328_e8f60575-729a-4bc0-b8a6-bc8c5612f730.mp3',
+  '¡Esta hamburguesa está brutal!': AUDIO_BASE+'hf_20260905_210328_08b1f69b-2a0d-457a-8585-b10f33c9133b.mp3',
+  '¡Arepa de agüita de sapo, la mejor!': AUDIO_BASE+'hf_20260905_210409_4c7dadb8-660d-48d3-ac2c-ac145f72e0fe.mp3',
+  '¡Maracaibo, aquí estoy!': AUDIO_BASE+'hf_20260905_210409_62cf597d-844c-475a-ad9c-2b7cfaf53fce.mp3',
+  '¡Uy, uy! ¡Quiero hacer popo!': AUDIO_BASE+'hf_20260905_210409_30c7f007-a3fe-450a-87c5-f47ae5c8b024.mp3',
+  '¡Ups, se me escapó un peo!': AUDIO_BASE+'hf_20260905_210409_a0bfbdc8-9435-405b-b7f9-4e17afc27851.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_210409_c9751aa6-968b-4f33-9e83-df098176943d.mp3',
+  '¡Ja! ¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_210606_93e035f0-0311-41fd-9ae5-2b6cd6815fc7.mp3',
+  '¡Salté la rampa con estilo!': AUDIO_BASE+'hf_20260905_210409_feea14a5-bd16-4e36-aaea-83bcfc44ef31.mp3',
+  '¡El tesoro! ¡Somos ricos!': AUDIO_BASE+'hf_20260905_210409_f9185fee-a075-4ff3-94e9-6d4af89d5665.mp3',
+  '¡Hola! ¡Salomón quiere jugar!': AUDIO_BASE+'hf_20260905_210421_788c614c-5632-4785-bb97-65af9c22f654.mp3',
+};
+CLIPS_PJ.cucu = {
+  '¡Cucú! ¡Aquí estoy!': AUDIO_BASE+'hf_20260905_210703_5f221ed9-5716-4822-936a-cc9c90391de5.mp3',
+  '¡Estoy volando como un pajarito!': AUDIO_BASE+'hf_20260905_210421_337b764a-9edb-4ffd-a9d0-4d254769d80c.mp3',
+  '¡Vamos a navegar!': AUDIO_BASE+'hf_20260905_210420_a90c9a2c-8b09-4502-ad7a-f561e020b87f.mp3',
+  '¡Qué dinosaurio tan lindo!': AUDIO_BASE+'hf_20260905_210420_f37a49ba-03f2-4e18-b013-ba357d122d7a.mp3',
+  '¡Llegué a la luna! ¡Hola, estrellitas!': AUDIO_BASE+'hf_20260905_210421_3c735229-2c8c-40f3-8c38-ca5d781749b6.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_210420_568d18a0-1f06-4987-81a1-087849b62382.mp3',
+  '¡Qué rica arepita de agüita de sapo!': AUDIO_BASE+'hf_20260905_210420_f8d50d06-6bca-473c-ba5c-1114d725107a.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_210420_56426b15-35d0-4f91-9045-0d87906401dc.mp3',
+  '¡Quiero hacer popo!': AUDIO_BASE+'hf_20260905_210420_772c99af-0f37-4423-909e-390c7f5c341d.mp3',
+  '¡Ay, me eché un peo!': AUDIO_BASE+'hf_20260905_210606_950967de-ce17-468d-aca7-3df8b876234a.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_210421_8a8b78e3-75df-4de0-93b0-506cfec8e09c.mp3',
+  '¡Un popo bebé me sigue! ¡Qué tierno!': AUDIO_BASE+'hf_20260905_210606_d898820f-f13f-4c24-b348-d43abe78783a.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_210606_bebbe6ef-90c7-4493-b7aa-2e8ce1b2a43c.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_210606_29288783-0489-45a9-9832-dfabd061ebfb.mp3',
+  '¡Hola! ¡Soy Cucú! ¿Jugamos?': AUDIO_BASE+'hf_20260905_210606_dd882164-fed1-4caa-9fe0-bfba75f44245.mp3',
+};
+CLIPS_PJ.santi = {
+  '¡Tati al ataque!': AUDIO_BASE+'hf_20260905_210510_877e939b-e424-4e7e-b69a-329e78d549ae.mp3',
+  '¡A volar! ¡Uuuh!': AUDIO_BASE+'hf_20260905_210703_60d61337-32ff-4e78-8f9b-66a7a6e5b1ec.mp3',
+  '¡Barquito, barquito!': AUDIO_BASE+'hf_20260905_210510_ff58deb9-d6b0-4153-ad42-e16687330b6a.mp3',
+  '¡Dino grande!': AUDIO_BASE+'hf_20260905_210510_0d93699c-c2b7-411a-944f-4e3ab9c5ab2f.mp3',
+  '¡La luna! ¡Qué bonita!': AUDIO_BASE+'hf_20260905_210510_4461de49-20da-4a56-bc41-8d84d618f475.mp3',
+  '¡Ñam, ñam! ¡Rica!': AUDIO_BASE+'hf_20260905_210510_775a3bd4-a052-43f1-91bf-745ddb00bdfb.mp3',
+  '¡Arepita rica!': AUDIO_BASE+'hf_20260905_210510_5c45ea00-9fff-439f-8ba6-da7fd9ebf538.mp3',
+  '¡Maracaibo!': AUDIO_BASE+'hf_20260905_210510_fef7b4f3-a414-4936-bdf6-c2e47ca537aa.mp3',
+  '¡Popó! ¡Quiero popó!': AUDIO_BASE+'hf_20260905_210847_447e6a8a-272d-4c0b-b8c4-bdaca75cc1c8.mp3',
+  '¡Jiji, un peo!': AUDIO_BASE+'hf_20260905_210510_d266055e-938e-436c-af22-881994a8d010.mp3',
+  '¡Ahh, qué rico!': AUDIO_BASE+'hf_20260905_210510_d5771983-4843-4747-9153-55aff439d0ee.mp3',
+  '¡Popó bebé! ¡Amiguito!': AUDIO_BASE+'hf_20260905_210703_62861cdb-4e44-4981-8376-1f6e1443a81c.mp3',
+  '¡Salté! ¡Salté!': AUDIO_BASE+'hf_20260905_210523_20c33206-5a95-4341-a3c8-693f8a205529.mp3',
+  '¡Tesoro! ¡Brilla!': AUDIO_BASE+'hf_20260905_210733_dadf86a3-c101-4ca5-8bca-dee674fe3b48.mp3',
+  '¡Hola! ¡Soy Santi!': AUDIO_BASE+'hf_20260905_210523_f8312e04-b61c-4ee8-a639-e9274a8915a3.mp3',
+};
+CLIPS_PJ.mama = {
+  '¡Mamá está lista! ¡Vamos, mis amores!': AUDIO_BASE+'hf_20260905_210523_f82fde6b-bd57-476f-91c0-cb7e0e11c8eb.mp3',
+  '¡Estoy volando! ¡Sujétense bien!': AUDIO_BASE+'hf_20260905_210523_76fd3f78-5fef-4645-8c77-81297da02c3e.mp3',
+  '¡Todos a bordo, mis amores!': AUDIO_BASE+'hf_20260905_210703_1b8c4dd6-f195-4e10-b281-c66169fe8576.mp3',
+  '¡Un dinosaurio! ¡Qué aventura!': AUDIO_BASE+'hf_20260905_210523_d5838e14-57a7-47a6-9b7e-4b26d3b6df40.mp3',
+  '¡Llegué a la luna! ¡No lo puedo creer!': AUDIO_BASE+'hf_20260905_210523_ddb3249f-76df-4452-84a3-75316b613eec.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_210523_28e07e68-48e6-4ec5-86c4-1598fd4d931a.mp3',
+  '¡Qué rica arepita de agüita de sapo!': AUDIO_BASE+'hf_20260905_210523_a8f30e3c-f9ef-4a3d-a784-a8a46dd274e6.mp3',
+  '¡Llegamos a Maracaibo, mi tierra!': AUDIO_BASE+'hf_20260905_210523_b423185d-1ce5-4ba2-86ef-9afe7e253fb2.mp3',
+  '¡Ay, necesito un baño ahora mismo!': AUDIO_BASE+'hf_20260905_210523_e87069ca-c6fa-4506-9432-4a17feedd8b7.mp3',
+  '¡Ay, qué pena! ¡Se me escapó un peo!': AUDIO_BASE+'hf_20260905_210703_5bbbe9be-8711-42be-ad02-e4136faeb81a.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_210759_10604036-7d2d-4900-9521-5351afdba891.mp3',
+  '¡Miren, un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_210618_0d2db6fb-2d25-41b8-bdf1-6eb334e399ce.mp3',
+  '¡Salté la rampa! ¡Qué susto!': AUDIO_BASE+'hf_20260905_210847_00dc9e5f-bf50-4d99-9895-1f7b380e0f6f.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_210618_6da29cb5-2236-415f-9c44-f448912ed4b9.mp3',
+  '¡Hola, mi amor! ¡Mamá te quiere mucho!': AUDIO_BASE+'hf_20260905_210703_bb52a312-7d08-4da6-9abb-a044c1f7c58b.mp3',
+};
+CLIPS_PJ.papa = {
+  '¡Papá al volante!': AUDIO_BASE+'hf_20260905_210703_09f2c4a7-0e88-401c-82df-e2e5637ae56a.mp3',
+  '¡Papá vuela alto!': AUDIO_BASE+'hf_20260905_210703_afafa465-7cee-4f13-92b5-c5e8a68532aa.mp3',
+  '¡Capitán papá al mando!': AUDIO_BASE+'hf_20260905_210847_1ba382b2-2703-452d-8210-a592f7b925e0.mp3',
+  '¡Un dinosaurio! ¡Esto sí es una aventura!': AUDIO_BASE+'hf_20260905_210733_ad6a03b0-924e-40be-a4e5-16f319e336f6.mp3',
+  '¡Llegué a la luna! ¡Increíble!': AUDIO_BASE+'hf_20260905_210759_2a57af7f-14b6-4bac-b633-23f264b9432f.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_210759_281a92ca-da63-4344-9b30-f7d603e6f4cd.mp3',
+  '¡Qué rica arepa de agüita de sapo!': AUDIO_BASE+'hf_20260905_210733_161b8d97-d4d1-4232-aa9e-b2f391a58e6d.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_210759_1825be66-ee0b-4d70-b2cb-b890c4612823.mp3',
+  '¡Uy, tengo que ir al baño!': AUDIO_BASE+'hf_20260905_210847_f19feb26-fe5f-4dd9-a902-f6e5c9eefb6c.mp3',
+  '¡Perdón! ¡Fue un peo!': AUDIO_BASE+'hf_20260905_210733_9ccdd7e9-8c8e-4a2b-83bb-7170e33b3ba5.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_210847_cc50a33a-1e17-4da1-befe-1ff6060b8ce9.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_210935_22bffa67-5511-4895-b952-3c1ce4188ce5.mp3',
+  '¡Salté la rampa! ¡Qué salto!': AUDIO_BASE+'hf_20260905_210847_de390aa9-f3d4-4f10-9eee-7b152fe8479d.mp3',
+  '¡El tesoro! ¡Lo encontramos!': AUDIO_BASE+'hf_20260905_210847_7b9e0e7a-60f4-4821-8e23-d048dcd2aa40.mp3',
+  '¡Hola, campeón! ¡Papá está aquí!': AUDIO_BASE+'hf_20260905_210935_54408410-f3f6-4954-8784-e6cb2ab18077.mp3',
+};
+CLIPS_PJ.abu = {
+  '¡Abu está lista, mis niños!': AUDIO_BASE+'hf_20260905_210914_5e4b3335-b965-48ef-b932-4bd1226d01f7.mp3',
+  '¡Ay, Dios mío, estoy volando!': AUDIO_BASE+'hf_20260905_210914_4d55f7d3-258d-49a2-a850-8431bcbdc8de.mp3',
+  '¡Vamos a navegar, mis amores!': AUDIO_BASE+'hf_20260905_210914_a2bc3fad-bc8f-4a44-8fb0-62aee9f62b83.mp3',
+  '¡Ay, un dinosaurio! ¡Qué grande!': AUDIO_BASE+'hf_20260905_210935_f489ae75-9949-4436-97d5-1e2be080b113.mp3',
+  '¡Llegué a la luna! ¡Quién lo diría!': AUDIO_BASE+'hf_20260905_210935_722c290e-554c-4ab1-96d1-8aa1394d26be.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_210935_cf25a535-9917-4c56-b426-7381a983adaa.mp3',
+  '¡Qué rica arepita de agüita de sapo!': AUDIO_BASE+'hf_20260905_210935_d9a22459-0499-4de1-a783-540a8087539a.mp3',
+  '¡Maracaibo! ¡Qué calor tan sabroso!': AUDIO_BASE+'hf_20260905_211121_588c1a0d-3964-4a0c-92f9-598f72a03545.mp3',
+  '¡Ay, necesito un bañito!': AUDIO_BASE+'hf_20260905_211102_f9bbfe4f-0a4c-4e23-85d2-bbcc190e3dc0.mp3',
+  '¡Ay, qué pena! ¡Un peíto!': AUDIO_BASE+'hf_20260905_211122_13bd4757-b40c-4d8d-8916-ad55be63467a.mp3',
+  '¡Ahh, qué alivio, mi amor!': AUDIO_BASE+'hf_20260905_211101_df9af45f-6f09-4b91-8e2b-926c974b084d.mp3',
+  '¡Miren, un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211122_122b98f9-3a8a-4aec-b3e1-264f924fc82c.mp3',
+  '¡Salté la rampa! ¡Ay, mi corazón!': AUDIO_BASE+'hf_20260905_211102_1e867c4d-74db-4591-b573-fc33f0792d1f.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_211121_e11b2932-b5c4-428f-902b-a329bdd79504.mp3',
+  '¡Hola, mi cielo! ¡Abu te quiere!': AUDIO_BASE+'hf_20260905_211102_f7b5fee2-a1b1-4a8f-b826-0fcdfe644dc0.mp3',
+};
+CLIPS_PJ.nacho = {
+  '¡Épale! ¡Tío Nacho llegó!': AUDIO_BASE+'hf_20260905_211122_040c8ffb-f2b8-48b0-946e-f1da910c8c46.mp3',
+  '¡Épale, estoy volando!': AUDIO_BASE+'hf_20260905_211122_4f35c60a-929f-4aa4-b9e1-4163166552f5.mp3',
+  '¡Todos a bordo con tío Nacho!': AUDIO_BASE+'hf_20260905_211122_ad78fe32-f216-4c38-84a4-fad333c188ef.mp3',
+  '¡Épale, un dinosaurio!': AUDIO_BASE+'hf_20260905_211121_38beff48-309f-45f1-9ef6-35b759bbd5d5.mp3',
+  '¡Épale! ¡Llegué a la luna!': AUDIO_BASE+'hf_20260905_211145_3052c107-2860-4c41-81bb-be212081b065.mp3',
+  '¡Épale, qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_211146_0c58a5a1-fe59-4bfd-b944-8277a6c24b1c.mp3',
+  '¡Épale, qué rica arepa de agüita de sapo!': AUDIO_BASE+'hf_20260905_211210_7f685b7b-aae2-4a06-b71d-23bfbe52a8c0.mp3',
+  '¡Llegamos a Maracaibo, épale!': AUDIO_BASE+'hf_20260905_211146_8077c67b-07f6-4bdc-ba35-bf8829522ada.mp3',
+  '¡Épale, quiero hacer popo!': AUDIO_BASE+'hf_20260905_211146_01f3fffb-d45f-40e9-9b37-3eeacd13d5fa.mp3',
+  '¡Épale! ¡Se me escapó un peo!': AUDIO_BASE+'hf_20260905_211146_433c0d4d-9968-4d6a-8230-1bfdd8c75ea3.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_211210_cde9b72b-45da-4859-9f6e-84afffed07be.mp3',
+  '¡Épale, un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211210_52f9d5a9-582d-4ecc-a22e-17af7e0a54ea.mp3',
+  '¡Épale, salté la rampa!': AUDIO_BASE+'hf_20260905_211210_efec32eb-c2a5-401a-9a75-e0fd5938f842.mp3',
+  '¡Épale, el tesoro!': AUDIO_BASE+'hf_20260905_211233_cc34dd7f-6d5f-4acd-8f31-e77a91af13c5.mp3',
+  '¡Épale! ¡Aquí viene tío Nacho!': AUDIO_BASE+'hf_20260905_211233_0d2530c9-62f0-495f-9dd0-c7cd85186173.mp3',
+};
+CLIPS_PJ.yanny = {
+  '¡Hola mi amor! ¡Tía Yanny está lista!': AUDIO_BASE+'hf_20260905_211210_5ce11796-fa36-43a4-8bf8-930316ba09bf.mp3',
+  '¡Estoy volando, mi amor!': AUDIO_BASE+'hf_20260905_211210_9f201a46-e7a4-4dd7-9852-d62f14a8f10b.mp3',
+  '¡Todos a bordo, mis amores!': AUDIO_BASE+'hf_20260905_211233_09950464-6a25-4daf-b9f2-987677f4128e.mp3',
+  '¡Un dinosaurio! ¡Qué lindo!': AUDIO_BASE+'hf_20260905_211406_13cf960a-b1bb-486a-b1fe-0cb3990e8434.mp3',
+  '¡Llegué a la luna, mi amor!': AUDIO_BASE+'hf_20260905_211256_399d3cb0-cc5c-432b-a44f-d4db87d6405d.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_211233_8412902b-6506-4cdd-8118-d1cb6178a938.mp3',
+  '¡Qué rica arepita de agüita de sapo!': AUDIO_BASE+'hf_20260905_211233_a3e456c4-1900-475c-b79c-9fe8a9a9fd69.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_211233_db8d0442-7035-429d-b44a-2ff156f0634b.mp3',
+  '¡Ay, quiero hacer popo!': AUDIO_BASE+'hf_20260905_211256_1dea8b37-e000-481b-a780-1a9ffc2e5e10.mp3',
+  '¡Ay, mi amor, me eché un peo!': AUDIO_BASE+'hf_20260905_211321_e2c6a0b0-383e-4cd6-90b6-ae110c86d7e9.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_211321_03385d54-29dc-459d-8b09-1b958e701616.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211321_d3fb3c9d-e7d1-4f44-b88d-65b5562d05ec.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211321_daf0b5ae-67ac-4b23-a6f6-adbd76c75d3d.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_211256_4a72433e-92dd-4a06-8afb-205e17fba25e.mp3',
+  '¡Hola mi amor! ¡Soy tía Yanny!': AUDIO_BASE+'hf_20260905_211321_81ef2f70-8ac6-4099-ae39-dd00ef98778f.mp3',
+};
+CLIPS_PJ.tiofran = {
+  '¡Tío Fran llegó! ¡Cuidado con mis peos!': AUDIO_BASE+'hf_20260905_211321_12cb52df-4047-4462-9e01-56a3f607432b.mp3',
+  '¡Volando a pura fuerza de peo!': AUDIO_BASE+'hf_20260905_211321_14d204d3-0be3-45a0-9d53-50215b31f0a1.mp3',
+  '¡Todos a bordo! ¡Y abran las ventanas!': AUDIO_BASE+'hf_20260905_211451_45780969-5266-4128-844b-5cfef7d92aed.mp3',
+  '¡Un dinosaurio! ¡A ver quién se tira el peo más grande!': AUDIO_BASE+'hf_20260905_211342_4c957b6b-cbb4-4305-b4ae-7f252b910938.mp3',
+  '¡Llegué a la luna! ¡Mi peo me trajo hasta aquí!': AUDIO_BASE+'hf_20260905_211429_883bd556-f5d8-4631-862b-fa14021bfa98.mp3',
+  '¡Qué rica hamburguesa! ¡Ya viene el peo!': AUDIO_BASE+'hf_20260905_211406_2ba0f90a-e68e-410e-b36d-fa12cc54e4d4.mp3',
+  '¡Qué rica arepa de agüita de sapo!': AUDIO_BASE+'hf_20260905_211342_3d19d4f8-c9d9-48c3-b01d-71bc6b998e2e.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_211342_3da997f5-e443-4254-85fd-7ef2acd859e5.mp3',
+  '¡Quiero hacer popo! ¡Y no es broma!': AUDIO_BASE+'hf_20260905_211342_5b74b893-9969-4027-992c-3edf4abc0bba.mp3',
+  '¡Prrrr! ¡Ese sí fue grande!': AUDIO_BASE+'hf_20260905_211406_cb8ecf17-3fa8-423f-8147-9469aad026a0.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_211406_0c955194-3a87-4857-a607-cdae55d6b945.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211406_2615c55d-82e6-4d9c-8672-5831b5b2134d.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211406_86e8cf2b-296d-478d-aad4-7ab353933ffb.mp3',
+  '¡El tesoro! ¡Y huele a peo!': AUDIO_BASE+'hf_20260905_211429_22037325-cf57-44d3-9160-70f459ef30ba.mp3',
+  '¡Hola! ¡Soy tío Fran! ¡Prrrr!': AUDIO_BASE+'hf_20260905_211429_9b5e63a7-87c6-4323-8857-1cfa7e1d170d.mp3',
+};
+CLIPS_PJ.romulo = {
+  '¡Rómulo el mapache está listo!': AUDIO_BASE+'hf_20260905_211429_a28b6474-3174-434e-ae2f-77049161db0c.mp3',
+  '¡Estoy volando! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211429_b725a450-91f6-46e5-85c9-36466eabd3eb.mp3',
+  '¡Al barco! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211451_8a631037-875f-4344-87d8-2f1bef316fe9.mp3',
+  '¡Un dinosaurio! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211429_6f7b8308-1d09-4177-9f43-0835f654cbac.mp3',
+  '¡Llegué a la luna! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211515_4645afed-d87a-47ef-8347-104e831459d1.mp3',
+  '¡Qué rica hamburguesa! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211451_7dc9d9f9-c06d-4029-988b-84129555ad82.mp3',
+  '¡Qué rica arepa! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211451_c73c2409-6bcd-4679-a5c8-ca3751f4ccdb.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_211515_44b1bd6b-d7fa-4fe9-830d-ef4430e1118f.mp3',
+  '¡Quiero hacer popo! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211451_212bfcc1-3613-47af-b06d-623232e30164.mp3',
+  '¡Brrrp! ¡No, eso fue un peo! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211451_fedea793-88e3-4f1a-9759-68a6df11318a.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_211514_c840edb0-7d8d-4163-bbc5-a2dbb7964b7f.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211537_6b04159c-1b3b-4bb6-835c-173ca86770e6.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211515_f0069e73-2c6a-4d02-b13f-50ffe421b99c.mp3',
+  '¡El tesoro! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211515_82e3640c-8dfa-4827-b87b-a0adba2c0cc7.mp3',
+  '¡Hola! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211515_ae5f8bc5-85c8-403a-a175-8a9915c232aa.mp3',
+};
+CLIPS_PJ.beto = {
+  '¡Tío Beto está listo, pichunguito!': AUDIO_BASE+'hf_20260905_211515_44df742b-2dfb-495f-9de1-faf4fdc7a06e.mp3',
+  '¡Estoy volando!': AUDIO_BASE+'hf_20260905_211559_70e20026-8ba8-47af-b79c-99ee194c8323.mp3',
+  '¡Todos a bordo con tío Beto!': AUDIO_BASE+'hf_20260905_211537_7bf369c2-d0c3-4bfb-9b37-c62b2ba09670.mp3',
+  '¡Un dinosaurio! ¡Qué maravilla!': AUDIO_BASE+'hf_20260905_211537_fd82a045-f8f2-467a-8117-bb46fbe15dee.mp3',
+  '¡Llegué a la luna!': AUDIO_BASE+'hf_20260905_211537_c8191a27-6ae7-4a35-8673-0fcdff1c503b.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_211537_aae70218-d21b-4eac-baa1-0dfa32ef9fb8.mp3',
+  '¡Qué rica arepa de agüita de sapo!': AUDIO_BASE+'hf_20260905_211537_63651c88-f1ba-456b-bc7a-c147cd8ab65c.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_211559_b5674ce7-3434-4ce3-ae2f-e2b5ea82b3d1.mp3',
+  '¡Quiero hacer popo!': AUDIO_BASE+'hf_20260905_211624_b87ee273-5cde-417f-a7c9-bafe3696e155.mp3',
+  '¡Uy, me eché un peo!': AUDIO_BASE+'hf_20260905_211559_93e276c4-e70b-40c3-9c6d-c933e185991f.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_211559_cfe0a915-dabf-4faa-9bd9-cec26314dbc4.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211645_f6f9c7f7-aa3c-4287-9f66-c468cbd9d517.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211559_7300e511-6975-4380-94b0-c04ed043db30.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_211559_05fe0020-6eba-4c2e-8436-aca9c4a3d75e.mp3',
+  '¡Hola pichunguito! ¡Soy tío Beto!': AUDIO_BASE+'hf_20260905_211706_6cc72135-3327-4f18-acd7-6fb06b89ec5c.mp3',
+};
+CLIPS_PJ.giuliana = {
+  '¡Tía Giuliana está lista!': AUDIO_BASE+'hf_20260905_211624_7b78eff4-1245-4ca6-a493-eb5180754d4f.mp3',
+  '¡Estoy volando! ¡Qué emoción!': AUDIO_BASE+'hf_20260905_211706_b3bdb296-e18e-4b80-90d0-f68311297105.mp3',
+  '¡Todos a bordo!': AUDIO_BASE+'hf_20260905_211624_8062a0d2-2cf4-49c3-ab57-f571354c9436.mp3',
+  '¡Un dinosaurio! ¡Un abrazo, dinosaurio!': AUDIO_BASE+'hf_20260905_211645_6092c4da-69e0-4e47-8c8d-440c7924bd13.mp3',
+  '¡Llegué a la luna!': AUDIO_BASE+'hf_20260905_211706_8832106b-aa98-4789-9ec4-3e226328d3b4.mp3',
+  '¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_211645_d23626ff-7f2c-43c6-ac20-fee5c90fe01d.mp3',
+  '¡Qué rica arepita de agüita de sapo!': AUDIO_BASE+'hf_20260905_211706_a496953b-db33-452a-9db9-d6f33aad160f.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_211645_3f502409-f470-45f7-846b-710799479164.mp3',
+  '¡Quiero hacer popo!': AUDIO_BASE+'hf_20260905_211706_d6ee538a-1fcd-43cd-b8e3-9ca1b14dadba.mp3',
+  '¡Ay, me eché un peo!': AUDIO_BASE+'hf_20260905_211706_ceb5cff4-f4f4-4a57-88cf-f33799597765.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_211706_73858bd7-2c1f-4606-8a79-a99e00e96a4d.mp3',
+  '¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211706_fac13c1c-9f7d-4553-8703-1e01eac08686.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211729_92f2bd8c-0d86-489e-ad11-bb87a434fd5b.mp3',
+  '¡Encontré el tesoro!': AUDIO_BASE+'hf_20260905_211729_30621e05-6f5b-4b59-8a25-8ec4ca7ac564.mp3',
+  '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!': AUDIO_BASE+'hf_20260905_211729_580f7a89-60a3-4315-a6f3-f5c18221a592.mp3',
+};
+CLIPS_PJ.penny = {
+  '¡Guau! ¡Penny al ataque!': AUDIO_BASE+'hf_20260905_212151_8f86856b-70e0-4ecf-aea9-b2e64425eb14.mp3',
+  '¡Guau! ¡Un perrito volador!': AUDIO_BASE+'hf_20260905_211753_9d44db2a-24c7-464e-98a9-472e9880bcca.mp3',
+  '¡Guau! ¡Todos a bordo!': AUDIO_BASE+'hf_20260905_211729_6028deea-f5cd-4dfa-a62a-d68af0eb3e8a.mp3',
+  '¡Guau, guau! ¡Un dinosaurio!': AUDIO_BASE+'hf_20260905_211729_dea2fa81-e78e-45ce-b3a1-a0f8dffd89c6.mp3',
+  '¡Guau! ¡Llegué a la luna!': AUDIO_BASE+'hf_20260905_211729_64046322-a000-42ac-ad5d-8a0435cecda3.mp3',
+  '¡Guau! ¡Qué rica hamburguesa!': AUDIO_BASE+'hf_20260905_211835_f43af52f-4a2d-4731-9a6f-ba3cde7d25e6.mp3',
+  '¡Guau! ¡Qué rica arepa!': AUDIO_BASE+'hf_20260905_211835_db9e0a98-a995-4381-9ae9-85449a098636.mp3',
+  '¡Guau! ¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_211753_2414d280-c699-4ab2-9460-68dc3be59e68.mp3',
+  '¡Guau! ¡Quiero hacer popo!': AUDIO_BASE+'hf_20260905_211813_43b317e5-4b80-4f85-b770-e0a70850b696.mp3',
+  '¡Guau! ¡Me eché un peo!': AUDIO_BASE+'hf_20260905_211753_1bf7ae47-bfd6-45d0-9f28-cfd6dab50cef.mp3',
+  '¡Ahh, qué alivio! ¡Guau!': AUDIO_BASE+'hf_20260905_211813_9f23f908-bb0d-4cea-b5e2-5cd54da45d95.mp3',
+  '¡Guau! ¡Un popo bebé me sigue!': AUDIO_BASE+'hf_20260905_211835_62907712-c5f0-4907-aad9-766cd8370597.mp3',
+  '¡Guau! ¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211835_d3ba60a9-46c5-40d3-9b1b-75af80ea9110.mp3',
+  '¡Guau! ¡El tesoro!': AUDIO_BASE+'hf_20260905_211813_3acd5ede-6cad-4ac9-8347-f0d433082f22.mp3',
+  '¡Guau, guau! ¡Soy Penny!': AUDIO_BASE+'hf_20260905_211835_5309a4b6-fc7c-45bd-85ba-c1049176791d.mp3',
+};
+CLIPS_PJ.sheldon = {
+  '¡Guau! ¡Sheldon al ataque!': AUDIO_BASE+'hf_20260905_211835_ec4070eb-0629-4d71-b2fb-f72f629d493e.mp3',
+  '¡Guau! ¡Sheldon vuela!': AUDIO_BASE+'hf_20260905_211835_8f7b85b5-5d43-4411-a9b8-35f068e670ab.mp3',
+  '¡Guau! ¡Al barco!': AUDIO_BASE+'hf_20260905_211955_52ee7f72-9965-4e1a-b274-8d97da80e4b7.mp3',
+  '¡Guau, guau! ¡Un dinosaurio grande!': AUDIO_BASE+'hf_20260905_211920_7aa7683f-5dfe-4c18-b27f-080d84437e1b.mp3',
+  '¡Guau! ¡La luna!': AUDIO_BASE+'hf_20260905_212347_9e3d0331-0577-4497-98a7-c72794f9aa4a.mp3',
+  '¡Guau! ¡Hamburguesa rica!': AUDIO_BASE+'hf_20260905_211857_274df2a5-7515-4b3e-86b6-c1c141deadea.mp3',
+  '¡Guau! ¡Arepa rica!': AUDIO_BASE+'hf_20260905_211857_996619a4-f007-43c7-b31c-2496f78c401b.mp3',
+  '¡Guau! ¡Maracaibo!': AUDIO_BASE+'hf_20260905_211857_e2956d50-c260-4f45-a5cf-1c6f2709fc8d.mp3',
+  '¡Guau! ¡Popo, popo!': AUDIO_BASE+'hf_20260905_211857_8ebe0a71-3cf2-48fc-bbf2-47d4507928ec.mp3',
+  '¡Guau! ¡Un peo!': AUDIO_BASE+'hf_20260905_211955_8e62671c-ecec-4f2a-9844-c0cbeb193bf6.mp3',
+  '¡Ahh, qué alivio! ¡Guau!': AUDIO_BASE+'hf_20260905_211955_ea90ddf1-d4c9-4ce5-8e56-9f0e7cf8ecdd.mp3',
+  '¡Guau! ¡Un popo bebé!': AUDIO_BASE+'hf_20260905_211955_647ed8d5-d819-4e58-9739-a9f0aaa4bf07.mp3',
+  '¡Guau! ¡Salté la rampa!': AUDIO_BASE+'hf_20260905_211920_4ba05236-6a51-4eac-acc8-131e4b4daeb6.mp3',
+  '¡Guau! ¡Tesoro!': AUDIO_BASE+'hf_20260905_212032_e50b6e35-659e-4de1-996e-5bfeac696c10.mp3',
+  '¡Guau, guau! ¡Soy Sheldon!': AUDIO_BASE+'hf_20260905_212112_5ee66fdb-b946-4e7c-8ba1-43e6e48ba54e.mp3',
+};
+CLIPS_PJ.srpopo = {
+  '¡El Señor Popo está listo!': AUDIO_BASE+'hf_20260905_212112_974f5448-7fb2-4ad5-89ae-abe686607d2f.mp3',
+  '¡Un popo volador! ¡Increíble!': AUDIO_BASE+'hf_20260905_212032_1626c937-7d8f-4ef2-8152-3f2780344488.mp3',
+  '¡Todos a bordo del barco popo!': AUDIO_BASE+'hf_20260905_212112_b1e6caf5-f0cc-40d1-af41-262a6ebf804f.mp3',
+  '¡Un dinosaurio! ¡Seguro hace popos enormes!': AUDIO_BASE+'hf_20260905_212112_c78280fa-f52f-4834-8d26-1da7f2d9c12f.mp3',
+  '¡Llegué a la luna! ¡El primer popo en la luna!': AUDIO_BASE+'hf_20260905_212224_16a94eae-032e-40f4-9d42-e6d1a988ef44.mp3',
+  '¡Qué rica hamburguesa! ¡Vamos a hacer popo!': AUDIO_BASE+'hf_20260905_212151_a5e08679-30b5-4a40-8cd5-61f8a9136ed3.mp3',
+  '¡Qué rica arepa de agüita de sapo!': AUDIO_BASE+'hf_20260905_212151_14488cad-86f2-47b5-ac90-a28a06695371.mp3',
+  '¡Llegamos a Maracaibo!': AUDIO_BASE+'hf_20260905_212256_a0523590-9bcc-4837-a967-fc0425aa5ed3.mp3',
+  '¡Quiero hacer popo! ¡Yo, el Señor Popo!': AUDIO_BASE+'hf_20260905_212224_bf9130c6-42c8-4651-a888-b6e14d548546.mp3',
+  '¡Uy, un peo! ¡Qué orgullo!': AUDIO_BASE+'hf_20260905_212256_1e049a74-17ac-401b-8186-5ef697a1d51b.mp3',
+  '¡Ahh, qué alivio!': AUDIO_BASE+'hf_20260905_212256_ba9db399-55f5-4c40-b8e3-8f393309df18.mp3',
+  '¡Un popo bebé me sigue! ¡Es mi hijito!': AUDIO_BASE+'hf_20260905_212256_9d20a4e4-0e0d-4327-8874-91c50a990626.mp3',
+  '¡Salté la rampa!': AUDIO_BASE+'hf_20260905_212331_373d3010-93b0-4190-a607-478451a695a4.mp3',
+  '¡El tesoro! ¡Huele a popo!': AUDIO_BASE+'hf_20260905_212315_2c7a7e9c-67f7-4f45-8575-049313e84a44.mp3',
+  '¡Hola! ¡Soy el Señor Popo!': AUDIO_BASE+'hf_20260905_212315_5a252880-5200-4f1b-83d2-920ec3b59c36.mp3',
+};
+let voces = [], reproductor = null, clipsListos = false, hablando = false, colaVoz = [], vozLog = [];
 function cargarVoces(){ try{ voces = speechSynthesis.getVoices(); }catch(e){ voces = []; } }
 if (EN_NAVEGADOR && typeof speechSynthesis !== 'undefined'){ cargarVoces(); speechSynthesis.onvoiceschanged = cargarVoces; }
 function prepararClips(){
@@ -118,9 +411,11 @@ function vozEspanola(){
   return es.find(v=>/es[-_](419|MX|US|CO|VE|AR|CL)/i.test(v.lang)) || es[0] || null;
 }
 /* Cola de diálogos: cada frase espera a que termine la anterior, sea mp3 o voz sintética */
-function hablar(texto){
+function hablar(texto, pj){
   if (!EN_NAVEGADOR) return;
-  colaVoz.push({src: CLIPS[texto] || null, texto});
+  const propio = pj && CLIPS_PJ[pj] && CLIPS_PJ[pj][texto];
+  colaVoz.push({src: propio || CLIPS[texto] || null, texto, pj});
+  vozLog.push({texto, pj: pj||'', propia: !!propio}); if (vozLog.length > 30) vozLog.shift();
   if (colaVoz.length > 3) colaVoz.shift();
   reproducirCola();
 }
@@ -128,14 +423,14 @@ function reproducirCola(){
   if (hablando) return;
   const sig = colaVoz.shift();
   if (!sig) return;
-  if (!sig.src || !reproductor){ hablarTTS(sig.texto); return; }
+  if (!sig.src || !reproductor){ hablarTTS(sig.texto, sig.pj); return; }
   try{
     hablando = true;
     let sono = false;
     const fallar = ()=>{
       if (sono) return; sono = true;
       try{ reproductor.pause(); }catch(e){}
-      hablando = false; hablarTTS(sig.texto);
+      hablando = false; hablarTTS(sig.texto, sig.pj);
     };
     reproductor.onended = ()=>{ hablando = false; reproducirCola(); };
     reproductor.onerror = fallar;
@@ -145,16 +440,22 @@ function reproducirCola(){
     const p = reproductor.play();
     if (p && p.catch) p.catch(fallar);
     setTimeout(()=>{ if(!sono) fallar(); }, 2000);
-  }catch(e){ hablando = false; hablarTTS(sig.texto); }
+  }catch(e){ hablando = false; hablarTTS(sig.texto, sig.pj); }
 }
-function hablarTTS(texto){
+const TONO_PJ = {
+  fernando:{pitch:1.9, rate:1.05}, tiojuan:{pitch:0.6, rate:0.95}, luca:{pitch:1.7, rate:1.1}, salomon:{pitch:1.5, rate:1.1}, cucu:{pitch:1.9, rate:1.0},
+  santi:{pitch:2.0, rate:0.9}, mama:{pitch:1.3, rate:1.0}, papa:{pitch:0.7, rate:1.0}, abu:{pitch:1.1, rate:0.85}, nacho:{pitch:0.85, rate:1.15},
+  yanny:{pitch:1.45, rate:1.0}, tiofran:{pitch:0.65, rate:1.0}, romulo:{pitch:0.35, rate:0.8}, beto:{pitch:0.75, rate:1.0}, giuliana:{pitch:1.3, rate:1.05},
+  penny:{pitch:1.6, rate:1.2}, sheldon:{pitch:0.9, rate:1.2}, srpopo:{pitch:0.5, rate:0.92},
+};
+function hablarTTS(texto, pj){
   if (typeof speechSynthesis === 'undefined'){ hablando = false; reproducirCola(); return; }
   try{
     const u = new SpeechSynthesisUtterance(texto);
     u.lang = 'es-ES';
     const v = vozEspanola();
     if (v){ u.voice = v; u.lang = v.lang; }
-    const t = TONO_TTS[texto];
+    const t = (pj && TONO_PJ[pj]) || TONO_TTS[texto];
     u.pitch = t ? t.pitch : 1.9; u.rate = t ? t.rate : 1.05; u.volume = 1;
     hablando = true;
     let listo = false;
@@ -445,6 +746,38 @@ const FAMILIA = [
   {id:'santi',    nombre:'Santi',        x:ISLITA.x, z:ISLITA.z, ang:-Math.PI/2, frase:'Te amo Santi, mi hermanito', bebe:true},
 ];
 const porId = id => FAMILIA.find(c=>c.id===id);
+/* ---- El paquete de diálogos de cada personaje: la misma situación, la frase de cada uno.
+   Fernando saluda a cada familiar con su frase de FAMILIA (saludo: null). ---- */
+const CLAVES_DIALOGO = ['inicio', 'volar', 'barco', 'dino', 'luna', 'hamburguesa', 'arepa', 'maracaibo', 'ganas', 'peo', 'alivio', 'popito', 'rampa', 'tesoro', 'saludo'];
+const DIALOGOS = {
+  fernando: {inicio: '¡Pichunguito al ataque!', volar: '¡A volar, pichunguitos!', barco: '¡Todos a bordo del barco pichunguito!', dino: '¡Vamos, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Tesoro! ¡Encontré el tesoro!', saludo: null},
+  tiojuan: {inicio: '¡Tío Juan al rescate!', volar: '¡Arriba, arriba! ¡Tío Juan vuela!', barco: '¡Capitán tío Juan al mando!', dino: '¡Un dinosaurio! ¡Qué bestia tan bonita!', luna: '¡Llegué a la luna, pichunguito!', hamburguesa: '¡Mmm, qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo, pichunguito!', maracaibo: '¡Maracaibo, tierra del sol amada!', ganas: '¡Ay, ay! ¡Necesito un baño ya!', peo: '¡Perdón! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio tan grande!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa como un superhéroe!', tesoro: '¡El tesoro es nuestro, pichunguito!', saludo: '¡Hola, familia! ¡Un abrazo de tío Juan!'},
+  luca: {inicio: '¡Luca al ataque!', volar: '¡Estoy volando! ¡Mírame!', barco: '¡Zarpamos! ¡Todos a bordo!', dino: '¡Arre, dinosaurio, arre!', luna: '¡Llegué a la luna! ¡Qué chévere!', hamburguesa: '¡Ñam! ¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola! ¡Soy Luca, el amigo de Fernando!'},
+  salomon: {inicio: '¡Salomón en la casa!', volar: '¡Volando con estilo!', barco: '¡Al agua, marineros!', dino: '¡Dinosaurio, tú y yo somos un equipo!', luna: '¡La luna! ¡Qué genial!', hamburguesa: '¡Esta hamburguesa está brutal!', arepa: '¡Arepa de agüita de sapo, la mejor!', maracaibo: '¡Maracaibo, aquí estoy!', ganas: '¡Uy, uy! ¡Quiero hacer popo!', peo: '¡Ups, se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Ja! ¡Un popo bebé me sigue!', rampa: '¡Salté la rampa con estilo!', tesoro: '¡El tesoro! ¡Somos ricos!', saludo: '¡Hola! ¡Salomón quiere jugar!'},
+  cucu: {inicio: '¡Cucú! ¡Aquí estoy!', volar: '¡Estoy volando como un pajarito!', barco: '¡Vamos a navegar!', dino: '¡Qué dinosaurio tan lindo!', luna: '¡Llegué a la luna! ¡Hola, estrellitas!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Qué tierno!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola! ¡Soy Cucú! ¿Jugamos?'},
+  santi: {inicio: '¡Tati al ataque!', volar: '¡A volar! ¡Uuuh!', barco: '¡Barquito, barquito!', dino: '¡Dino grande!', luna: '¡La luna! ¡Qué bonita!', hamburguesa: '¡Ñam, ñam! ¡Rica!', arepa: '¡Arepita rica!', maracaibo: '¡Maracaibo!', ganas: '¡Popó! ¡Quiero popó!', peo: '¡Jiji, un peo!', alivio: '¡Ahh, qué rico!', popito: '¡Popó bebé! ¡Amiguito!', rampa: '¡Salté! ¡Salté!', tesoro: '¡Tesoro! ¡Brilla!', saludo: '¡Hola! ¡Soy Santi!'},
+  mama: {inicio: '¡Mamá está lista! ¡Vamos, mis amores!', volar: '¡Estoy volando! ¡Sujétense bien!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué aventura!', luna: '¡Llegué a la luna! ¡No lo puedo creer!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, mi tierra!', ganas: '¡Ay, necesito un baño ahora mismo!', peo: '¡Ay, qué pena! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué susto!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola, mi amor! ¡Mamá te quiere mucho!'},
+  papa: {inicio: '¡Papá al volante!', volar: '¡Papá vuela alto!', barco: '¡Capitán papá al mando!', dino: '¡Un dinosaurio! ¡Esto sí es una aventura!', luna: '¡Llegué a la luna! ¡Increíble!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Uy, tengo que ir al baño!', peo: '¡Perdón! ¡Fue un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué salto!', tesoro: '¡El tesoro! ¡Lo encontramos!', saludo: '¡Hola, campeón! ¡Papá está aquí!'},
+  abu: {inicio: '¡Abu está lista, mis niños!', volar: '¡Ay, Dios mío, estoy volando!', barco: '¡Vamos a navegar, mis amores!', dino: '¡Ay, un dinosaurio! ¡Qué grande!', luna: '¡Llegué a la luna! ¡Quién lo diría!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Maracaibo! ¡Qué calor tan sabroso!', ganas: '¡Ay, necesito un bañito!', peo: '¡Ay, qué pena! ¡Un peíto!', alivio: '¡Ahh, qué alivio, mi amor!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Ay, mi corazón!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola, mi cielo! ¡Abu te quiere!'},
+  nacho: {inicio: '¡Épale! ¡Tío Nacho llegó!', volar: '¡Épale, estoy volando!', barco: '¡Todos a bordo con tío Nacho!', dino: '¡Épale, un dinosaurio!', luna: '¡Épale! ¡Llegué a la luna!', hamburguesa: '¡Épale, qué rica hamburguesa!', arepa: '¡Épale, qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, épale!', ganas: '¡Épale, quiero hacer popo!', peo: '¡Épale! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Épale, un popo bebé me sigue!', rampa: '¡Épale, salté la rampa!', tesoro: '¡Épale, el tesoro!', saludo: '¡Épale! ¡Aquí viene tío Nacho!'},
+  yanny: {inicio: '¡Hola mi amor! ¡Tía Yanny está lista!', volar: '¡Estoy volando, mi amor!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué lindo!', luna: '¡Llegué a la luna, mi amor!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Ay, quiero hacer popo!', peo: '¡Ay, mi amor, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola mi amor! ¡Soy tía Yanny!'},
+  tiofran: {inicio: '¡Tío Fran llegó! ¡Cuidado con mis peos!', volar: '¡Volando a pura fuerza de peo!', barco: '¡Todos a bordo! ¡Y abran las ventanas!', dino: '¡Un dinosaurio! ¡A ver quién se tira el peo más grande!', luna: '¡Llegué a la luna! ¡Mi peo me trajo hasta aquí!', hamburguesa: '¡Qué rica hamburguesa! ¡Ya viene el peo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Y no es broma!', peo: '¡Prrrr! ¡Ese sí fue grande!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Y huele a peo!', saludo: '¡Hola! ¡Soy tío Fran! ¡Prrrr!'},
+  romulo: {inicio: '¡Rómulo el mapache está listo!', volar: '¡Estoy volando! ¡Brrrp!', barco: '¡Al barco! ¡Brrrp!', dino: '¡Un dinosaurio! ¡Ay, qué pena!', luna: '¡Llegué a la luna! ¡Brrrp! ¡Ay, qué pena!', hamburguesa: '¡Qué rica hamburguesa! ¡Brrrp!', arepa: '¡Qué rica arepa! ¡Brrrp! ¡Ay, qué pena!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Ay, qué pena!', peo: '¡Brrrp! ¡No, eso fue un peo! ¡Ay, qué pena!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Brrrp!', saludo: '¡Hola! ¡Brrrp! ¡Ay, qué pena!'},
+  beto: {inicio: '¡Tío Beto está listo, pichunguito!', volar: '¡Estoy volando!', barco: '¡Todos a bordo con tío Beto!', dino: '¡Un dinosaurio! ¡Qué maravilla!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola pichunguito! ¡Soy tío Beto!'},
+  giuliana: {inicio: '¡Tía Giuliana está lista!', volar: '¡Estoy volando! ¡Qué emoción!', barco: '¡Todos a bordo!', dino: '¡Un dinosaurio! ¡Un abrazo, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!'},
+  penny: {inicio: '¡Guau! ¡Penny al ataque!', volar: '¡Guau! ¡Un perrito volador!', barco: '¡Guau! ¡Todos a bordo!', dino: '¡Guau, guau! ¡Un dinosaurio!', luna: '¡Guau! ¡Llegué a la luna!', hamburguesa: '¡Guau! ¡Qué rica hamburguesa!', arepa: '¡Guau! ¡Qué rica arepa!', maracaibo: '¡Guau! ¡Llegamos a Maracaibo!', ganas: '¡Guau! ¡Quiero hacer popo!', peo: '¡Guau! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé me sigue!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡El tesoro!', saludo: '¡Guau, guau! ¡Soy Penny!'},
+  sheldon: {inicio: '¡Guau! ¡Sheldon al ataque!', volar: '¡Guau! ¡Sheldon vuela!', barco: '¡Guau! ¡Al barco!', dino: '¡Guau, guau! ¡Un dinosaurio grande!', luna: '¡Guau! ¡La luna!', hamburguesa: '¡Guau! ¡Hamburguesa rica!', arepa: '¡Guau! ¡Arepa rica!', maracaibo: '¡Guau! ¡Maracaibo!', ganas: '¡Guau! ¡Popo, popo!', peo: '¡Guau! ¡Un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡Tesoro!', saludo: '¡Guau, guau! ¡Soy Sheldon!'},
+  srpopo: {inicio: '¡El Señor Popo está listo!', volar: '¡Un popo volador! ¡Increíble!', barco: '¡Todos a bordo del barco popo!', dino: '¡Un dinosaurio! ¡Seguro hace popos enormes!', luna: '¡Llegué a la luna! ¡El primer popo en la luna!', hamburguesa: '¡Qué rica hamburguesa! ¡Vamos a hacer popo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Yo, el Señor Popo!', peo: '¡Uy, un peo! ¡Qué orgullo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Es mi hijito!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Huele a popo!', saludo: '¡Hola! ¡Soy el Señor Popo!'},
+};
+function fraseDe(pj, k, id){
+  const paq = DIALOGOS[pj] || DIALOGOS.fernando;
+  if (k==='saludo' && (!paq.saludo || pj==='fernando')){ const f = porId(id); return f ? f.frase : DIALOGOS.tiojuan.saludo; }
+  return paq[k] || DIALOGOS.fernando[k] || '';
+}
+function nombreDe(pj){ const p = PERSONAJES_RED.find(q=>q.id===pj); return p ? p.nombre : 'Fernando'; }
+/* el jugador dice la frase de su personaje para la situación k */
+function decir(P, k, id){ evento(P, 'hablar', {texto: fraseDe(P.pj, k, id), quien: nombreDe(P.pj), k, id, pj: P.pj}); }
+
 const PERROS_DEF = [
   {id:'penny',   nombre:'Penny',   color:'#222222', x:36, z:30},
   {id:'sheldon', nombre:'Sheldon', color:'#8a5a2a', x:52, z:30},
@@ -639,7 +972,7 @@ function crearPartida(guardado){
     popo: 0, ganas: false, pedoT: 0, ultimoPopoDicho: -9999, ultimaHamb: -9999,
     hamburguesas: 0, comidas: new Set(), arepas: 0, comidasArepas: new Set(), estrellas: [],
     prog: {banos:[], banderas:[], aros:[], familia:[], helipuertos:[], boyas:[], huevos:[], rampa:false, santi:false, cofre:false, popo:false, luna:false, maracaibo:false},
-    espacio: false, rugidoT: -9999,
+    espacio: false, rugidoT: -9999, pj: 'fernando',
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
   };
@@ -762,9 +1095,9 @@ function montar(P, v){
   P.J.x = v.x; P.J.z = v.z; P.J.y = v.y; P.J.ang = v.ang;
   P.cercaVeh = null;
   evento(P, 'montar', {id: v.id});
-  if (v.id==='avion' || v.id==='heli' || v.id==='nave') evento(P, 'hablar', {texto:'¡A volar, pichunguitos!', quien:'Fernando'});
-  else if (v.id==='barco' || v.id==='motoagua') evento(P, 'hablar', {texto:'¡Todos a bordo del barco pichunguito!', quien:'Fernando'});
-  else if (v.id==='dino') evento(P, 'hablar', {texto:'¡Vamos, dinosaurio!', quien:'Fernando'});
+  if (v.id==='avion' || v.id==='heli' || v.id==='nave') decir(P, 'volar');
+  else if (v.id==='barco' || v.id==='motoagua') decir(P, 'barco');
+  else if (v.id==='dino') decir(P, 'dino');
 }
 function puedeBajar(P){
   const v = P.veh; if (!v) return false;
@@ -915,7 +1248,7 @@ function pasoNave(P, v, ent, C){
   /* la luna: al llegar a su cara de abajo, se posa y se planta la bandera */
   if (!P.escena && !P.prog.luna && Math.hypot(v.x-LUNA.x, v.y-(LUNA.y-LUNA.r), v.z-LUNA.z) < 34){
     P.escena = {tipo:'luna', t:0, dur:300}; v.vy = 0; v.vel = 0;
-    evento(P, 'lunaLlega'); evento(P, 'hablar', {texto:'¡Llegué a la luna!', quien:'Fernando'});
+    evento(P, 'lunaLlega'); decir(P, 'luna');
   }
 }
 function pasoAvionAire(P, v, ent, C){
@@ -1019,12 +1352,13 @@ function comerHamburguesa(P, h){
   P.comidas.add(h.id); P.hamburguesas++; P.puntos += 100;
   P.popo = Math.min(1, P.popo + 0.34);
   evento(P, 'hamburguesa', {id:h.id, x:h.x, y:h.y, z:h.z, total:P.hamburguesas});
-  if (P.t - P.ultimaHamb > 60) evento(P, 'hablar', {texto:'¡Qué rica hamburguesa!', quien:'Fernando'});
+  if (P.t - P.ultimaHamb > 60) decir(P, 'hamburguesa');
   P.ultimaHamb = P.t;
   /* el peo de la hamburguesa, y las ganas */
   P.pedoT = 14;
   evento(P, 'pedo', {x:P.J.x, y:P.J.y, z:P.J.z, grande: P.popo >= 0.99});
-  if (P.t - P.ultimoPopoDicho > 60*7){ evento(P, 'hablar', {texto:'¡Quiero hacer popo!', quien:'Fernando'}); P.ultimoPopoDicho = P.t; }
+  if (P.popo >= 0.99 && !P.ganas) decir(P, 'peo');
+  if (P.t - P.ultimoPopoDicho > 60*7){ decir(P, 'ganas'); P.ultimoPopoDicho = P.t; }
   if (P.popo >= 0.99 && !P.ganas){ P.ganas = true; evento(P, 'ganas'); }
 }
 function pasoPopo(P){
@@ -1043,13 +1377,13 @@ function revisarRecogibles(P){
     const dx = a.x-J.x, dz = a.z-J.z, dy = a.y-(J.y+1);
     if (dx*dx+dz*dz+dy*dy < alcance*alcance) comerArepa(P, a);
   }
-  if (!P.prog.maracaibo && enMaracaibo(J.x, J.z)){ P.prog.maracaibo = true; evento(P, 'maracaibo'); evento(P, 'hablar', {texto:'¡Llegamos a Maracaibo!', quien:'Fernando'}); }
+  if (!P.prog.maracaibo && enMaracaibo(J.x, J.z)){ P.prog.maracaibo = true; evento(P, 'maracaibo'); decir(P, 'maracaibo'); }
 }
 function comerArepa(P, a){
   P.comidasArepas.add(a.id); P.arepas++; P.puntos += 150;
   P.popo = Math.min(1, P.popo + 0.34);
   evento(P, 'arepa', {id:a.id, x:a.x, y:a.y, z:a.z, total:P.arepas});
-  if (P.t - P.ultimaHamb > 60) evento(P, 'hablar', {texto:'¡Qué rica arepita de agüita de sapo!', quien:'Fernando'});
+  if (P.t - P.ultimaHamb > 60) decir(P, 'arepa');
   P.ultimaHamb = P.t;
   P.pedoT = 14;
   evento(P, 'pedo', {x:P.J.x, y:P.J.y, z:P.J.z, grande: P.popo >= 0.99});
@@ -1074,7 +1408,7 @@ function revisarBanos(P){
   const b = BANOS[P.srPopo.bano], sx = b.x + Math.sin(b.ang)*2.6 - Math.cos(b.ang)*2.2, sz = b.z + Math.cos(b.ang)*2.6 + Math.sin(b.ang)*2.2;
   if (P.srPopo.visible && Math.hypot(sx-J.x, sz-J.z) < 3.2 && P.t - P.srPopo.saludo > 60*12){
     P.srPopo.saludo = P.t;
-    evento(P, 'hablar', {texto: P.popo > 0.01 ? '¡Pasa, pasa! ¡El baño está libre!' : '¡Hola Fernando! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!', quien:'Señor Popo'});
+    evento(P, 'hablar', {texto: P.popo > 0.01 ? '¡Pasa, pasa! ¡El baño está libre!' : (P.pj==='fernando' ? '¡Hola Fernando! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!' : '¡Hola! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!'), quien:'Señor Popo'});
   }
 }
 function posSrPopo(P){
@@ -1095,14 +1429,14 @@ function pasoEscena(P){
     if (E.t === 40) evento(P, 'banoPuerta', {abre:false, bano:E.bano});
     if (E.t > 70 && E.t < 210 && E.t % 28 === 0) evento(P, 'plop', {bano:E.bano});
     if (E.t === 225) evento(P, 'descarga', {bano:E.bano});
-    if (E.t === 285){ evento(P, 'banoPuerta', {abre:true, bano:E.bano}); evento(P, 'hablar', {texto:'¡Ahh, qué alivio!', quien:'Fernando'}); }
+    if (E.t === 285){ evento(P, 'banoPuerta', {abre:true, bano:E.bano}); decir(P, 'alivio'); }
     if (E.t >= E.dur){
       P.escena = null; P.popo = 0; P.ganas = false; P.puntos += 500;
       if (!P.prog.banos.includes(E.bano)) P.prog.banos.push(E.bano);
       evento(P, 'banoSale', {bano:E.bano, banos:P.prog.banos.length});
       /* de cada popo nace un popo bebé que sigue a Fernando */
-      { const b = BANOS[E.bano]; const n = nacerPopito(P, b.px + Math.sin(b.ang)*1.2, b.pz + Math.cos(b.ang)*1.2); if (n) { evento(P, 'popito', {total:P.popitos.length}); if (P.popitos.length <= 3) evento(P, 'hablar', {texto:'¡Mira, un popo bebé me sigue!', quien:'Fernando'}); } }
-      evento(P, 'hablar', {texto:'¡Bravo, Fernando! ¡Qué popo tan grande!', quien:'Señor Popo'});
+      { const b = BANOS[E.bano]; const n = nacerPopito(P, b.px + Math.sin(b.ang)*1.2, b.pz + Math.cos(b.ang)*1.2); if (n) { evento(P, 'popito', {total:P.popitos.length}); if (P.popitos.length <= 3) decir(P, 'popito'); } }
+      evento(P, 'hablar', {texto: P.pj==='fernando' ? '¡Bravo, Fernando! ¡Qué popo tan grande!' : '¡Bravo! ¡Qué popo tan grande!', quien:'Señor Popo'});
       P.srPopo.saludo = P.t;
       P.prog.popo = true;
       darEstrella(P, 'popo');
@@ -1120,7 +1454,7 @@ function revisarFamilia(P){
     const primera = !P.saludos[f.id];
     P.saludos[f.id] = true; P.saludos[f.id+'T'] = P.t;
     evento(P, 'saludo', {id:f.id, primera});
-    evento(P, 'hablar', {texto:f.frase, quien:'Fernando'});
+    decir(P, 'saludo', f.id);
     if (f.pedo) evento(P, 'pedo', {x:f.x, y:altura(f.x,f.z), z:f.z, grande:true, tioFran:true});
     if (f.eructo) evento(P, 'eructo');
     if (primera){
@@ -1145,7 +1479,7 @@ function revisarMisiones(P){
   } else if (v.id==='moto'){
     if (!P.prog.rampa && !v.suelo){
       const a = RAMPA.aro;
-      if (Math.hypot(v.x-a.x, v.z-a.z) < a.r && Math.abs(v.y+1 - a.y) < a.r){ P.prog.rampa = true; P.puntos += 500; evento(P, 'rampa'); evento(P, 'hablar', {texto:'¡Salté la rampa!', quien:'Fernando'}); darEstrella(P, 'moto'); }
+      if (Math.hypot(v.x-a.x, v.z-a.z) < a.r && Math.abs(v.y+1 - a.y) < a.r){ P.prog.rampa = true; P.puntos += 500; evento(P, 'rampa'); decir(P, 'rampa'); darEstrella(P, 'moto'); }
     }
   } else if (v.id==='avion'){
     AROS.forEach((a, i)=>{
@@ -1157,7 +1491,7 @@ function revisarMisiones(P){
     });
   } else if (v.id==='sub'){
     if (!P.prog.cofre && Math.hypot(v.x-COFRE.x, v.z-COFRE.z) < 9 && v.y < altura(COFRE.x, COFRE.z)+8){
-      P.prog.cofre = true; P.puntos += 1000; evento(P, 'cofre'); evento(P, 'hablar', {texto:'¡Tesoro! ¡Encontré el tesoro!', quien:'Fernando'}); darEstrella(P, 'sub');
+      P.prog.cofre = true; P.puntos += 1000; evento(P, 'cofre'); decir(P, 'tesoro'); darEstrella(P, 'sub');
     }
   } else if (v.id==='heli'){
     if (v.suelo && Math.abs(v.vel) < 2.5) for (const h of HELIPUERTOS){
@@ -1270,7 +1604,7 @@ if (typeof module !== 'undefined' && module.exports){
   module.exports = {CLIPS, TONO_TTS, SIN_GRABACION, MISIONES, FAMILIA, PERROS_DEF, VEHICULOS_DEF, BANOS, HAMBURGUESAS, AROS, BANDERAS, CASAS, DECOR,
     RUTA, PISTA, RAMPA, MUELLE, COFRE, ISLITA, INICIO, HANGAR, FARO, PLAYA, MONTANA, PUEBLO, CANCHA, PARQUE, FUENTE, TAM, NSEG, SEG, MALLA, LIMITE, NIVEL_MAR,
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
-    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
+    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2704,6 +3038,7 @@ let fer = armarJugador('fernando'); scene.add(fer);
 let ferSentado = armarJugador('fernando'); ferSentado.visible = false; scene.add(ferSentado);
 function ponerPersonaje(pj){
   if (!PERSONAJES_RED.some(p=>p.id===pj)) return;
+  if (P) P.pj = pj;
   if (fer.parent) fer.parent.remove(fer); if (ferSentado.parent) ferSentado.parent.remove(ferSentado);
   fer = armarJugador(pj); scene.add(fer);
   ferSentado = armarJugador(pj); ferSentado.visible = false; scene.add(ferSentado);
@@ -2842,6 +3177,7 @@ function redRecibir(id, m){
     else if (m.tipo==='estrella'){ confeti(x, y, z, 30); sfx.estrella(); recibirEstrella(m.id, r.nombre); }
     else if (m.tipo==='popo'){ confeti(x, y, z, 12); aviso('💩 '+r.nombre+' hizo popo'); }
     else if (m.tipo==='salto' && cerca){ sfx.salto(); }
+    else if (m.tipo==='habla' && cerca && CLAVES_DIALOGO.includes(m.k)){ const texto = fraseDe(r.pj, m.k, String(m.id||'')); if (texto){ hablar(texto, r.pj); burbuja(texto, r.nombre); } }
   }
 }
 /* una estrella ganada por un amigo también es tuya */
@@ -3041,6 +3377,7 @@ function cargarGuardado(){ try{ const g = localStorage.getItem('aventura3d.parti
 function guardar(){ try{ localStorage.setItem('aventura3d.partida', JSON.stringify(exportar(P))); }catch(e){} }
 function nuevaPartida(guardado){
   P = crearPartida(guardado);
+  P.pj = RED.pj;
   camYaw = envolver(P.J.ang + Math.PI) ; camYaw = P.J.ang;
   ferDentro = false;
   for (const id in vehMesh){ const v = P.vehiculos.find(v=>v.id===id); vehMesh[id].position.set(v.x, v.y, v.z); vehMesh[id].rotation.set(0, v.ang, 0); }
@@ -3064,7 +3401,7 @@ function empezar(){
   if (RED.pendiente && RED.estado==='off'){ const c = RED.pendiente; RED.pendiente = ''; estado = 'amigos'; redUnirse(c); return; }
   estado = 'juego'; cortina = 30;
   hablar('Eres mi pichunguito'); burbuja('Eres mi pichunguito', 'Tío Juan');
-  setTimeout(()=>{ if (estado==='juego'){ hablar('¡Pichunguito al ataque!'); burbuja('¡Pichunguito al ataque!', 'Fernando'); } }, 2500);
+  setTimeout(()=>{ if (estado==='juego'){ const t = fraseDe(RED.pj, 'inicio'); hablar(t, RED.pj); burbuja(t, nombreLocal()); } }, 2500);
 }
 function procesarTecla(k){
   if (estado==='menu'){
@@ -3179,7 +3516,7 @@ function atenderEventos(){
   const J = P.J;
   for (const e of P.eventos){
     switch (e.tipo){
-      case 'hablar': hablar(e.texto); burbuja(e.texto, e.quien); break;
+      case 'hablar': hablar(e.texto, e.pj); burbuja(e.texto, e.quien); if (e.k) redEvento('habla', {k:e.k, id:e.id||'', x:J.x, y:J.y, z:J.z}); break;
       case 'hamburguesa': sfx.hamburguesa(); chispas(e.x, e.y, e.z, '#ffe36e', 16, 5); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); hambMesh[e.id].visible = false; grande('¡HAMBURGUESA! 🍔 '+e.total, '#ffe36e', 60); break;
       case 'pedo': sfx.pedo(e.grande); nubePeo(e.x, e.y, e.z, e.grande); if (!e.tioFran) redEvento('pedo', {x:e.x, y:e.y, z:e.z, grande:!!e.grande}); if (!e.tioFran) grande(e.grande ? '¡PRRRRRT! 💨' : '¡prrt! 💨', '#b8ec6a', 50); else grande('¡QUÉ PEDO, TÍO FRAN! 💨', '#b8ec6a', 80); break;
       case 'ganas': grande('¡QUIERO HACER POPO! 🚽', '#ffb070', 120); break;
@@ -3817,6 +4154,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF };
 requestAnimationFrame(bucle);
 })();

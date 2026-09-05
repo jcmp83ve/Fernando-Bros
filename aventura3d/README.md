@@ -186,10 +186,22 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 - Los personajes, casas y vehículos se arman con cajitas de colores fundidas
   en una sola malla; los bosques, el pasto, las flores, las nubes, los peces
   y las algas se dibujan con instancias.
-- Las voces son mp3 grabados: los mismos de Fernando Bros más diez frases
-  nuevas de esta aventura (las de Fernando sobre el popo y las del Señor
-  Popo), grabadas con la misma voz de niño. Si un mp3 no carga, habla la voz
-  sintética del navegador con el tono de cada quien.
+- Las voces son mp3 grabados: los mismos de Fernando Bros más las frases
+  nuevas de esta aventura (las de Fernando sobre el popo, la luna y
+  Maracaibo, y las del Señor Popo), grabadas con la misma voz de niño.
+- **Cada personaje jugable tiene su paquete de diálogos con su propia voz**:
+  `DIALOGOS` guarda, para los 18 personajes, una frase por situación
+  (`inicio`, `volar`, `barco`, `dino`, `luna`, `hamburguesa`, `arepa`,
+  `maracaibo`, `ganas`, `peo`, `alivio`, `popito`, `rampa`, `tesoro` y
+  `saludo`), y `CLIPS_PJ` la grabación de cada una (255 mp3, una voz distinta
+  por personaje: Tío Juan grave y cariñoso, Luca y Salomón de niño, Cucú de
+  niña, Santi de bebé, Abu de abuela, Rómulo con eructos, los perros con
+  guau…). El juego llama a `decir(P, situación)` y sale la frase del
+  personaje elegido; en multijugador el evento `habla` viaja a los amigos y
+  cada uno oye al personaje del otro con su voz si está a menos de 80 m.
+  Fernando saluda a cada familiar con su frase de siempre; los demás tienen
+  un saludo propio. Si un mp3 no carga, habla la voz sintética del navegador
+  con el tono de cada quien.
 
 ## 🧪 Pruebas
 
