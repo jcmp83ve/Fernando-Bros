@@ -23,6 +23,7 @@ Controles pensados para manos pequeñas: **la palanca mueve, A sube, B corre**.
 | MAYÚS / X | Botón lateral (X/Y) o gatillos | **B** | **Correr** · **turbo** del carro, la moto, el barco y el avión · **bajar** el submarino |
 | E / ENTER | Hombros (L/R) o − | **🚪** | **Bajarse** del vehículo (parado, en tierra o en la superficie) |
 | V (mantener) | Palanca izquierda apretada (L3) | **🎙️** (mantener) | **Hablar** por walkie-talkie con los amigos de la sala |
+| T | Palanca derecha apretada (R3) | **🚀 IR CON…** | Tío Juan te lleva de un salto al lado del amigo |
 | ESC / P | + / Start | **☰** | Las misiones, la música y volver |
 | M | — | — | Música sí/no |
 
@@ -87,9 +88,12 @@ día, o empezar de cero desde el menú de ESC.
 ## 👥 Jugar con amigos (en línea, gratis)
 
 Hasta cuatro personas (el anfitrión y tres amigos), cada una en su aparato, **juegan a la vez en la
-misma isla**: cada quien maneja su personaje (Fernando, Luca, Salomón, Cucú,
-Tío Nacho o Tío Beto) y ve a los demás corriendo, manejando, volando y
-buceando con su nombre encima. Uno toca **👥 CON AMIGOS → 🏝️ CREAR UNA
+misma isla**: cada quien elige **el personaje que quiera** (los quince de la
+familia, Penny, Sheldon o el Señor Popo) y ve a los demás corriendo,
+manejando, volando y buceando con su nombre encima. **Las estrellas se
+comparten**: la misión que complete cualquiera cuenta para todos, y al entrar
+a la sala se igualan. Si se pierden, el botón **🚀 IR CON…** (tecla T) hace
+que Tío Juan te lleve de un salto al lado del amigo. Uno toca **👥 CON AMIGOS → 🏝️ CREAR UNA
 SALA**, sale un **código de 4 letras** y un enlace para mandar por WhatsApp
 (**📲 COMPARTIR**); los demás abren el enlace, o escriben el código en el
 teclado grande de **🔑 ENTRAR CON CÓDIGO**. Cada uno conserva sus

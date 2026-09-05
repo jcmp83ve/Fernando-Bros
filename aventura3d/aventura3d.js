@@ -1000,8 +1000,12 @@ function objetivo(P){
    bebés) y solo comparte dónde está y qué hace, quince veces por segundo.
    Aquí está lo puro: armar y leer esos paquetes, y los códigos de sala. */
 const PERSONAJES_RED = [
-  {id:'fernando', nombre:'Fernando', emoji:'🧢'}, {id:'luca', nombre:'Luca', emoji:'🧒'}, {id:'salomon', nombre:'Salomón', emoji:'🕶️'},
-  {id:'cucu', nombre:'Cucú', emoji:'👧'}, {id:'nacho', nombre:'Tío Nacho', emoji:'🤠'}, {id:'beto', nombre:'Tío Beto', emoji:'👓'},
+  {id:'fernando', nombre:'Fernando', emoji:'🧢'}, {id:'tiojuan', nombre:'Tío Juan', emoji:'🦸'}, {id:'luca', nombre:'Luca', emoji:'🧒'},
+  {id:'salomon', nombre:'Salomón', emoji:'🕶️'}, {id:'cucu', nombre:'Cucú', emoji:'👧'}, {id:'santi', nombre:'Santi', emoji:'👶'},
+  {id:'mama', nombre:'Mamá', emoji:'💋'}, {id:'papa', nombre:'Papá', emoji:'🧔'}, {id:'abu', nombre:'Abu', emoji:'👵'},
+  {id:'nacho', nombre:'Tío Nacho', emoji:'🤠'}, {id:'yanny', nombre:'Tía Yanny', emoji:'👩'}, {id:'tiofran', nombre:'Tío Fran', emoji:'💨'},
+  {id:'romulo', nombre:'Rómulo', emoji:'🦝'}, {id:'beto', nombre:'Tío Beto', emoji:'👓'}, {id:'giuliana', nombre:'Tía Giuliana', emoji:'🧡'},
+  {id:'penny', nombre:'Penny', emoji:'🐕', perro:'#222222'}, {id:'sheldon', nombre:'Sheldon', emoji:'🐕', perro:'#8a5a2a'}, {id:'srpopo', nombre:'Señor Popo', emoji:'💩'},
 ];
 const ALFABETO_SALA = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   /* sin I, O, 0 ni 1, que se confunden */
 const VERSION_RED = 1;
@@ -1351,7 +1355,7 @@ function leerMandos(){
     if (pulsado(4)||pulsado(5)||pulsado(8)) salir = true;
     if (pulsado(10)) MANDO.voz = true;
     if (pulsado(14)) jx -= 1; if (pulsado(15)) jx += 1; if (pulsado(12)) jy += 1; if (pulsado(13)) jy -= 1;
-    const P_ = {0:' ',1:' ',2:'Shift',3:'Shift',4:'e',5:'e',8:'e',9:'Escape',12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'};
+    const P_ = {0:' ',1:' ',2:'Shift',3:'Shift',4:'e',5:'e',8:'e',9:'Escape',11:'t',12:'ArrowUp',13:'ArrowDown',14:'ArrowLeft',15:'ArrowRight'};
     for (const i in P_){
       const p = pulsado(+i), clave = gp.index+':'+i;
       if (p && !MANDO.prev[clave]){ audio(); procesarTecla(P_[i]); }
@@ -2197,6 +2201,20 @@ function armarPopito(){
   return g;
 }
 const popitosMesh = [];
+/* cualquier personaje elegible: persona, perrito o el Señor Popo */
+function armarJugador(pj){
+  const def = PERSONAJES_RED.find(p=>p.id===pj) || PERSONAJES_RED[0];
+  let g;
+  if (def.perro){ g = armarPerro(def.perro); g.tipo = 'perro'; g.esc = 0.9; }
+  else if (def.id==='srpopo'){ g = armarSrPopo(); g.tipo = 'popo'; g.esc = 0.95; }
+  else { g = armarPersona(def.id); g.tipo = 'persona'; }
+  return g;
+}
+function animarModelo(g, mov, fase, aire, nadando, sentado){
+  if (g.tipo==='perro'){ animarPerro(g, sentado ? 0 : mov, fase); g.partes.cuerpo.position.y = 0; return; }
+  if (g.tipo==='popo'){ const amp = Math.min(1, mov/2.5); g.partes.cuerpo.position.y = sentado ? 0 : Math.abs(Math.sin(fase))*0.3*amp; g.partes.bD.rotation.z = 0.5 + (amp > 0.2 ? Math.sin(fase*2)*0.4 : 0); return; }
+  animarPersona(g, mov, fase, aire, nadando, sentado);
+}
 /* la persona camina: piernas y brazos van y vienen, y el cuerpo rebota */
 function animarPersona(g, mov, fase, aire, nadando, sentado){
   const p = g.partes;
@@ -2306,13 +2324,13 @@ function armarVehiculo(id){
 }
 
 /* ---------------- Todo el elenco, puesto en la isla ---------------- */
-let fer = armarPersona('fernando'); scene.add(fer);
-let ferSentado = armarPersona('fernando'); ferSentado.visible = false; scene.add(ferSentado);
+let fer = armarJugador('fernando'); scene.add(fer);
+let ferSentado = armarJugador('fernando'); ferSentado.visible = false; scene.add(ferSentado);
 function ponerPersonaje(pj){
   if (!PERSONAJES_RED.some(p=>p.id===pj)) return;
   if (fer.parent) fer.parent.remove(fer); if (ferSentado.parent) ferSentado.parent.remove(ferSentado);
-  fer = armarPersona(pj); scene.add(fer);
-  ferSentado = armarPersona(pj); ferSentado.visible = false; scene.add(ferSentado);
+  fer = armarJugador(pj); scene.add(fer);
+  ferSentado = armarJugador(pj); ferSentado.visible = false; scene.add(ferSentado);
 }
 const tioJuan = armarPersona('tiojuan'); scene.add(tioJuan);
 tioJuan.partes.bI.rotation.x = -2.9; tioJuan.partes.bD.rotation.x = -2.9;
@@ -2397,7 +2415,7 @@ function redSalir(){ if (RED.conns.size) redEnviar({t:'chau'}); redLimpiar(); RE
 function prepararConn(conn){
   conn.on('open', ()=>{
     RED.conns.set(conn.peer, conn);
-    try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED}); }catch(e){}
+    try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED, es:P.estrellas.slice()}); }catch(e){}
     if (VOZ.stream) vozLlamar(conn.peer);
     if (!RED.anfitrion){ RED.estado = 'conectado'; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
   });
@@ -2427,6 +2445,8 @@ function redRecibir(id, m){
     const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
     if (!RED.remotos.has(id)) crearRemoto(id, {pj, nombre, x:P.J.x, y:P.J.y, z:P.J.z, ang:0, veh:'', mov:0, fase:0, nadando:false, suelo:true, cabeceo:0, giro:0, vel:0, aire:false, popitos:0, ganas:false, estrellas:0});
     aviso('👋 '+nombre+' entró a la isla'); sfx.saludo();
+    /* las estrellas se comparten: lo que ya ganó cualquiera es de todos */
+    if (Array.isArray(m.es)){ let nuevas = 0; for (const eid of m.es.slice(0, 12)) if (MISIONES.some(mi=>mi.id===eid) && !P.estrellas.includes(eid)){ P.estrellas.push(eid); P.puntos += 2000; nuevas++; } if (nuevas){ guardar(); pintarMisiones(); aviso('⭐ '+nombre+' te compartió '+nuevas+(nuevas===1 ? ' estrella' : ' estrellas')); } }
     return;
   }
   if (m.t==='e'){
@@ -2443,15 +2463,29 @@ function redRecibir(id, m){
     const cerca = Math.hypot(x-P.J.x, z-P.J.z) < 80;
     if (m.tipo==='pedo'){ nubePeo(x, y, z, !!m.grande); if (cerca) sfx.pedo(!!m.grande); }
     else if (m.tipo==='hamburguesa'){ chispas(x, y, z, '#ffe36e', 10, 4); if (cerca) sfx.hamburguesa(); }
-    else if (m.tipo==='estrella'){ confeti(x, y, z, 30); aviso('⭐ '+r.nombre+' ganó una estrella'); sfx.estrella(); }
+    else if (m.tipo==='estrella'){ confeti(x, y, z, 30); sfx.estrella(); recibirEstrella(m.id, r.nombre); }
     else if (m.tipo==='popo'){ confeti(x, y, z, 12); aviso('💩 '+r.nombre+' hizo popo'); }
     else if (m.tipo==='salto' && cerca){ sfx.salto(); }
   }
 }
+/* una estrella ganada por un amigo también es tuya */
+function recibirEstrella(id, nombre){
+  const mi = MISIONES.find(m=>m.id===id);
+  if (!mi){ aviso('⭐ '+nombre+' ganó una estrella'); return; }
+  if (P.estrellas.includes(id)){ aviso('⭐ '+nombre+' también ganó la estrella '+mi.emoji); return; }
+  P.estrellas.push(id); P.puntos += 2000; guardar(); pintarMisiones();
+  grande('⭐ '+nombre.toUpperCase()+' GANÓ UNA ESTRELLA: ¡ES DE LOS DOS!', '#ffe36e', 150); estrellaAnim = {t:0};
+  if (P.estrellas.length === MISIONES.length && !P.final){ P.final = true; P.eventos.push({tipo:'final'}); }
+}
+function pintarMisiones(){
+  if (P.estrellas.includes('avion')) arosMesh.forEach(m=>m.material.color.copy(lin(0x7dffa0)));
+  if (P.estrellas.includes('moto')) aroRampa.material.color.copy(lin(0x7dffa0));
+  if (P.estrellas.includes('carro')) banderasMesh.forEach(g=>g.bandera.material.color.copy(lin(0xffd23f)));
+}
 function crearRemoto(id, e){
   const r = {id, pj:e.pj, nombre:e.nombre, obj:e, act:{x:e.x, y:e.y, z:e.z, ang:e.ang}, t:tick, fase:0, vehs:{}};
-  r.g = armarPersona(e.pj); r.g.visible = false; scene.add(r.g);
-  r.gs = armarPersona(e.pj); r.gs.visible = false; scene.add(r.gs);
+  r.g = armarJugador(e.pj); r.g.visible = false; scene.add(r.g);
+  r.gs = armarJugador(e.pj); r.gs.visible = false; scene.add(r.gs);
   r.etiqueta = letrero('👤 '+e.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); r.etiqueta.position.y = 2.6/r.g.esc; r.g.add(r.etiqueta);
   r.bocina = letrero('🔊', '#fff', 'rgba(40,160,80,0.9)', 0.9); r.bocina.position.y = 3.4/r.g.esc; r.bocina.visible = false; r.g.add(r.bocina);
   r.hablando = false; r.hablaT = 0;
@@ -2482,13 +2516,13 @@ function sincronizarRemotos(){
       R.sombra.visible = o.veh!=='sub';
       if (r.gs.parent !== vm) vm.add(r.gs);
       r.gs.visible = true; r.gs.position.set(R.asiento.x, R.asiento.y, R.asiento.z); r.gs.scale.setScalar(r.gs.esc*R.asiento.esc); r.gs.rotation.set(0,0,0);
-      animarPersona(r.gs, 0, 0, false, false, !R.asiento.parado);
+      animarModelo(r.gs, 0, 0, false, false, !R.asiento.parado);
       r.g.visible = false;
     } else {
       for (const k in r.vehs) r.vehs[k].visible = false;
       r.gs.visible = false;
-      r.g.visible = true; r.g.position.set(a.x, a.y, a.z); r.g.rotation.set(o.nadando ? 1.2 : 0, a.ang, 0);
-      animarPersona(r.g, o.mov, r.fase, !o.suelo && !o.nadando, o.nadando);
+      r.g.visible = true; r.g.position.set(a.x, a.y, a.z); r.g.rotation.set(o.nadando ? (r.g.tipo==='persona' ? 1.2 : 0.3) : 0, a.ang, 0);
+      animarModelo(r.g, o.mov, r.fase, !o.suelo && !o.nadando, o.nadando);
       r.etiqueta.visible = Math.hypot(a.x-P.J.x, a.z-P.J.z) > 3;
     }
     r.bocina.visible = r.hablando && !o.veh;
@@ -2577,6 +2611,26 @@ function vozPaso(){
   }
   for (const [,r] of RED.remotos) if (r.hablando && tick - r.hablaT > 60*20) r.hablando = false;
 }
+/* el botón 🚀 IR CON…: Tío Juan te lleva de un salto hasta el amigo */
+function irCon(id){
+  const r = RED.remotos.get(id); if (!r) return;
+  const J = P.J;
+  if (P.veh){ P.veh.vel = 0; P.veh = null; motorParar(); vozParar(); }
+  const a = r.act, ang = Math.random()*6.28;
+  J.x = clamp(a.x + Math.cos(ang)*2.5, -LIMITE, LIMITE); J.z = clamp(a.z + Math.sin(ang)*2.5, -LIMITE, LIMITE);
+  J.nadando = enAgua(J.x, J.z); J.suelo = !J.nadando; J.vx = J.vz = J.vy = 0;
+  J.y = J.nadando ? NIVEL_MAR - 0.35 : altura(J.x, J.z);
+  J.ang = Math.atan2(a.x-J.x, a.z-J.z); camYaw = J.ang;
+  camPos.set(J.x - Math.sin(J.ang)*7, J.y + 3, J.z - Math.cos(J.ang)*7); camMira.set(J.x, J.y+1.4, J.z);
+  P.escena = null; ferDentro = false;
+  sfx.despegue(); confeti(J.x, J.y, J.z, 30); chispas(J.x, J.y+1, J.z, '#bfe9ff', 20, 6);
+  grande('🦸 ¡TÍO JUAN TE LLEVÓ CON '+r.nombre.toUpperCase()+'!', '#bfe9ff', 110);
+  hablar('Eres mi pichunguito'); burbuja('Eres mi pichunguito', 'Tío Juan');
+}
+const zonasIrCon = ()=>{
+  const lista = [...RED.remotos.values()].slice(0, 3), ancho = Math.min(300, W*0.36);
+  return lista.map((r, i)=>({x:W-ancho-12, y:238+i*40, w:ancho, h:34, id:r.id, nombre:r.nombre, d:Math.hypot(r.act.x-P.J.x, r.act.z-P.J.z)}));
+};
 function compartirSala(){
   const url = enlaceSala(), texto = '¡Ven a jugar conmigo a la isla de Fernando! Sala '+RED.sala+': '+url;
   try{ if (navigator.share){ navigator.share({title:'Fernando y Tío Juan: La Gran Aventura', text:texto, url}).catch(()=>{}); return; } }catch(e){}
@@ -2638,7 +2692,8 @@ function procesarTecla(k){
     return;
   }
   if (estado==='juego'){
-    if (k==='Escape'||k==='p'||k==='P'){ estado = 'pausa'; selPausa = 0; sfx.toque(); }
+    if ((k==='t'||k==='T') && redActiva() && !P.escena){ const r = [...RED.remotos.values()][0]; if (r){ sfx.toque(); irCon(r.id); } }
+    else if (k==='Escape'||k==='p'||k==='P'){ estado = 'pausa'; selPausa = 0; sfx.toque(); }
     else if (k==='m'||k==='M'){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} aviso(musicaOn ? '🎵 Música encendida' : '🔇 Música apagada'); }
     return;
   }
@@ -2676,18 +2731,22 @@ const zonasPausa = ()=>[0,1,2,3,4].map(i=>({x:W/2-150, y:H/2+24+i*41, w:300, h:3
 /* la pantalla de JUGAR CON AMIGOS */
 const zonaAmigos = ()=>{
   const z = {volver: zonaAtras(), guia: {x:W-190, y:12, w:176, h:42}, pjs: [], teclas: [], borrar:null, entrar:null};
-  const n = PERSONAJES_RED.length, w = Math.min(100, (W-40)/n - 8), x0 = W/2 - (n*(w+8)-8)/2;
-  for (let i=0;i<n;i++) z.pjs.push({x: x0 + i*(w+8), y: 96, w, h: 62});
-  z.crear = {x:W/2-310, y:H/2+16, w:300, h:50}; z.unirme = {x:W/2+10, y:H/2+16, w:300, h:50};
+  const n = PERSONAJES_RED.length, ncol = Math.ceil(n/2), w = Math.min(96, (W-40)/ncol - 6), x0 = W/2 - (ncol*(w+6)-6)/2;
+  for (let i=0;i<n;i++) z.pjs.push({x: x0 + (i%ncol)*(w+6), y: 96 + Math.floor(i/ncol)*60, w, h: 54});
+  z.crear = {x:W/2-310, y:H-96, w:300, h:50}; z.unirme = {x:W/2+10, y:H-96, w:300, h:50};
   z.jugar = {x:W/2-150, y:H-64, w:300, h:46}; z.salir = {x:W/2-150, y:H-64, w:300, h:46};
   z.compartir = {x:W/2-250, y:274, w:240, h:44}; z.copiar = {x:W/2+10, y:274, w:240, h:44};
-  z.reintentar = {x:W/2-150, y:H/2+40, w:300, h:46};
+  z.reintentar = {x:W/2-150, y:H-96, w:300, h:46};
   const cols = 8, tw = Math.min(58, (W-60)/cols - 6), tx0 = W/2 - (cols*(tw+6)-6)/2, ty0 = H/2 - 30;
   for (let i=0;i<ALFABETO_SALA.length;i++) z.teclas.push({x: tx0 + (i%cols)*(tw+6), y: ty0 + Math.floor(i/cols)*(tw*0.78+6), w: tw, h: tw*0.78, ch: ALFABETO_SALA[i]});
   z.borrar = {x:W/2-150, y:H-64, w:140, h:46}; z.entrar = {x:W/2+10, y:H-64, w:140, h:46};
   return z;
 };
 function clic(x, y){
+  if (estado==='juego'){
+    if (redActiva() && !P.escena) for (const z of zonasIrCon()) if (enZona(x, y, z, 4)){ sfx.toque(); irCon(z.id); return; }
+    return;
+  }
   if (estado==='menu'){
     if (enZona(x, y, zonaAtras(), 6)) return volverAFernandoBros();
     if (enZona(x, y, {x:W-190, y:12, w:176, h:42}, 6)){ sfx.toque(); estado = 'amigos'; RED.entrandoCodigo = false; if (RED.pendiente){ const c = RED.pendiente; RED.pendiente = ''; redUnirse(c); } return; }
@@ -2748,7 +2807,7 @@ function atenderEventos(){
       case 'plop': sfx.plop(); sacudidaBano = 14; break;
       case 'descarga': sfx.descarga(); { const b = BANOS[e.bano]; for (let i=0;i<12;i++) particula(b.x + (azar()-0.5)*2, altura(b.x,b.z)+3.2, b.z + (azar()-0.5)*2, '#8fd3ff', (azar()-0.5)*3, 2+azar()*3, (azar()-0.5)*3, 40, 0.15, {grav:10, alfa:0.8}); } break;
       case 'banoSale': ferDentro = false; sfx.puerta(); redEvento('popo', {x:J.x, y:J.y, z:J.z}); setTimeout(()=>{ banosMesh[e.bano].puertaObj = 0; }, 900); confeti(J.x, J.y, J.z, 20); grande('¡POPO HECHO! 💩 +500', '#ffb070', 100); break;
-      case 'estrella': sfx.estrella(); confeti(J.x, J.y, J.z, 60); redEvento('estrella', {x:J.x, y:J.y, z:J.z}); grande('¡ESTRELLA! ⭐ '+e.total+'/'+MISIONES.length, '#ffe36e', 150); estrellaAnim = {t:0}; guardar();
+      case 'estrella': sfx.estrella(); confeti(J.x, J.y, J.z, 60); redEvento('estrella', {id:e.id, x:J.x, y:J.y, z:J.z}); grande('¡ESTRELLA! ⭐ '+e.total+'/'+MISIONES.length, '#ffe36e', 150); estrellaAnim = {t:0}; guardar();
         if (e.id!=='popo' && e.id!=='banos'){ hablar('¡Muy bien, mi pichunguito! ¡Eres un campeón!'); burbuja('¡Muy bien, mi pichunguito! ¡Eres un campeón!', 'Tío Juan'); }
         if (e.id==='avion') arosMesh.forEach(m=>m.material.color.copy(lin(0x7dffa0)));
         break;
@@ -2789,10 +2848,12 @@ function sincronizar(){
   fer.visible = !P.veh && !ferDentro;
   fer.position.set(J.x, J.y, J.z); fer.rotation.y = J.ang;
   const apretado = P.ganas && !J.nadando;
-  animarPersona(fer, J.mov*(apretado ? 1.8 : 1), J.fase*(apretado ? 1.6 : 1), !J.suelo && !J.nadando, J.nadando);
-  fer.rotation.x = J.nadando ? 1.2 : 0;
-  if (apretado){ fer.partes.pI.rotation.z = 0.25; fer.partes.pD.rotation.z = -0.25; fer.partes.bI.rotation.x = -1.2; fer.partes.bD.rotation.x = -1.2; fer.rotation.z = Math.sin(J.fase*1.6)*0.08; }
-  else { fer.partes.pI.rotation.z = 0; fer.partes.pD.rotation.z = 0; fer.rotation.z = 0; }
+  animarModelo(fer, J.mov*(apretado ? 1.8 : 1), J.fase*(apretado ? 1.6 : 1), !J.suelo && !J.nadando, J.nadando);
+  fer.rotation.x = J.nadando ? (fer.tipo==='persona' ? 1.2 : 0.3) : 0;
+  if (fer.tipo==='persona'){
+    if (apretado){ fer.partes.pI.rotation.z = 0.25; fer.partes.pD.rotation.z = -0.25; fer.partes.bI.rotation.x = -1.2; fer.partes.bD.rotation.x = -1.2; fer.rotation.z = Math.sin(J.fase*1.6)*0.08; }
+    else { fer.partes.pI.rotation.z = 0; fer.partes.pD.rotation.z = 0; fer.rotation.z = 0; }
+  } else fer.rotation.z = apretado ? Math.sin(J.fase*1.6)*0.08 : 0;
   /* los vehículos */
   for (const v of P.vehiculos){
     const m = vehMesh[v.id], R = m.partes;
@@ -2818,8 +2879,8 @@ function sincronizar(){
     ferSentado.visible = true;
     ferSentado.position.set(R.asiento.x, R.asiento.y, R.asiento.z); ferSentado.scale.setScalar(ferSentado.esc*R.asiento.esc);
     ferSentado.rotation.set(0,0,0);
-    animarPersona(ferSentado, 0, 0, false, false, !R.asiento.parado);
-    if (R.asiento.parado){ ferSentado.partes.bI.rotation.x = -1.3; ferSentado.partes.bD.rotation.x = -1.3; }
+    animarModelo(ferSentado, 0, 0, false, false, !R.asiento.parado);
+    if (R.asiento.parado && ferSentado.tipo==='persona'){ ferSentado.partes.bI.rotation.x = -1.3; ferSentado.partes.bD.rotation.x = -1.3; }
   } else ferSentado.visible = false;
   /* los perritos */
   P.perros.forEach(p=>{
@@ -2851,6 +2912,7 @@ function sincronizar(){
     const vel = Math.hypot(tmpV.x - tioJuan.position.x, tmpV.z - tioJuan.position.z);
     tioJuan.rotation.set(0.9 + Math.min(0.4, vel*0.02), ang, 0, 'YXZ');
     tioJuan.partes.pI.rotation.x = 0.2 + Math.sin(t*3)*0.1; tioJuan.partes.pD.rotation.x = 0.2 - Math.sin(t*3)*0.1;
+    tioJuan.visible = RED.pj !== 'tiojuan';
     ondearCapa(tioJuan.partes.capa, t, 0.6 + Math.min(1, vel));
   }
   /* la familia mira a Fernando cuando se acerca */
@@ -2898,7 +2960,7 @@ function sincronizar(){
     if (!estrellaAnim.m){ estrellaAnim.m = new THREE.Mesh(geoEstrella, matEstrella); estrellaAnim.m.scale.setScalar(1.6); scene.add(estrellaAnim.m); }
     estrellaAnim.t++;
     const k = estrellaAnim.t/150;
-    estrellaAnim.m.position.set(J.x, J.y + 2.5 + k*4, J.z); estrellaAnim.m.rotation.y = estrellaAnim.t*0.08; estrellaAnim.m.scale.setScalar(1.6*(1 + Math.sin(k*Math.PI)*0.4));
+    estrellaAnim.m.position.set(J.x, J.y + 3.2 + k*4, J.z); estrellaAnim.m.rotation.y = estrellaAnim.t*0.08; estrellaAnim.m.scale.setScalar(1.1*(1 + Math.sin(k*Math.PI)*0.4));
     if (estrellaAnim.t % 6 === 0) chispas(estrellaAnim.m.position.x, estrellaAnim.m.position.y, estrellaAnim.m.position.z, '#ffe36e', 3, 3);
     if (estrellaAnim.t > 150){ scene.remove(estrellaAnim.m); estrellaAnim = null; }
   }
@@ -3151,13 +3213,13 @@ function dibujarAmigos(){
     texto('¿Quién eres tú?', W/2, 84, 15, '#bcd6ff');
     z.pjs.forEach((zp, i)=>{ const pj = PERSONAJES_RED[i], sel = pj.id===RED.pj;
       cristal(zp.x, zp.y, zp.w, zp.h, 12, sel ? 0.8 : 0.4); if (sel){ ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(zp.x, zp.y, zp.w, zp.h, 12); ctx.stroke(); }
-      texto(pj.emoji, zp.x+zp.w/2, zp.y+24, 24, '#fff'); texto(pj.nombre, zp.x+zp.w/2, zp.y+49, 12, sel ? '#ffe36e' : '#fff'); });
+      texto(pj.emoji, zp.x+zp.w/2, zp.y+20, 20, '#fff'); textoAjustado(pj.nombre, zp.x+zp.w/2, zp.y+42, 11, zp.w-8, sel ? '#ffe36e' : '#fff'); });
   }
   if (RED.estado==='off'){
-    { const cw = Math.min(660, W-40); cristal(W/2-cw/2, 176, cw, 78, 16, 0.5);
-    textoAjustado('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 200, 15, cw-30, '#fff');
-    textoAjustado('Los demás entran con ese código y todos juegan en la misma isla, cada uno con su aventura.', W/2, 222, 14, cw-30, '#bcd6ff');
-    textoAjustado(hayPeerJS() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 242, 13, cw-30, hayPeerJS() ? '#7dffa0' : '#ff9e9e'); }
+    { const cw = Math.min(660, W-40); cristal(W/2-cw/2, 226, cw, 78, 16, 0.5);
+    textoAjustado('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 250, 15, cw-30, '#fff');
+    textoAjustado('Los demás entran con ese código y juegan en la misma isla; las estrellas que gane uno son de todos.', W/2, 272, 14, cw-30, '#bcd6ff');
+    textoAjustado(hayPeerJS() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 292, 13, cw-30, hayPeerJS() ? '#7dffa0' : '#ff9e9e'); }
     boton(z.crear.x, z.crear.y, z.crear.w, z.crear.h, '🏝️ CREAR UNA SALA', '#3aa040', '#1e6a24', 20, true);
     boton(z.unirme.x, z.unirme.y, z.unirme.w, z.unirme.h, '🔑 ENTRAR CON CÓDIGO', '#2a8ad0', '#1a4a90', 20);
     return;
@@ -3170,9 +3232,9 @@ function dibujarAmigos(){
   }
   if (RED.estado==='error'){
     const ew = Math.min(660, W-40);
-    cristal(W/2-ew/2, 176, ew, 100, 16, 0.6);
-    texto('😕 No se pudo', W/2, 200, 20, '#ff9e9e');
-    ctx.font = 'bold 15px '+TXT; const palabras = RED.error.split(' '); let linea = '', y = 226;
+    cristal(W/2-ew/2, 226, ew, 100, 16, 0.6);
+    texto('😕 No se pudo', W/2, 250, 20, '#ff9e9e');
+    ctx.font = 'bold 15px '+TXT; const palabras = RED.error.split(' '); let linea = '', y = 276;
     for (const w of palabras){ const t = linea ? linea+' '+w : w; if (ctx.measureText(t).width > ew-40){ texto(linea, W/2, y, 15, '#fff'); linea = w; y += 20; } else linea = t; }
     texto(linea, W/2, y, 15, '#fff');
     boton(z.reintentar.x, z.reintentar.y, z.reintentar.w, z.reintentar.h, '🔁 INTENTAR DE NUEVO', '#3aa040', '#1e6a24', 18, true);
@@ -3189,7 +3251,7 @@ function dibujarAmigos(){
     boton(z.copiar.x, z.copiar.y, z.copiar.w, z.copiar.h, '📋 COPIAR ENLACE', '#4a6ad0', '#2a3a90', 18);
   } else {
     tituloAjustado('Estás en la sala '+RED.sala, W/2, 150, 36, W-80, '#fff6a0', '#ffb000');
-    textoAjustado('Puedes seguir jugando: tus amigos aparecen en la isla con su nombre encima.', W/2, 200, 15, W-60, '#bcd6ff');
+    textoAjustado('Tus amigos aparecen en la isla con su nombre; el botón 🚀 IR CON… te lleva a su lado.', W/2, 200, 15, W-60, '#bcd6ff');
   }
   texto(tactil ? '🎙️ Para hablar: mantén apretado el botón del micrófono' : '🎙️ Para hablar: mantén apretada la tecla V (o el botón del micrófono)', W/2, 342, 13, '#bcd6ff');
   pastilla('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, 376, 14, '#fff', 0.5, Math.min(660, W-40));
@@ -3223,6 +3285,7 @@ function dibujarHUD(){
     const d = Math.hypot(o.x-J.x, o.z-J.z);
     texto(d > 999 ? (d/1000).toFixed(1)+' km' : Math.round(d)+' m', W-24, 208, 12, '#bcd6ff', 'right');
   }
+  if (redActiva()) for (const z of zonasIrCon()){ boton(z.x, z.y, z.w, z.h, '🚀 IR CON '+z.nombre.toUpperCase()+' · '+(z.d > 999 ? (z.d/1000).toFixed(1)+' km' : Math.round(z.d)+' m'), '#2a8ad0', '#1a4a90', 13, z.d > 60 && Math.floor(tick/30)%2===0); }
   /* avisos y frases */
   if (P.cercaVeh && !P.veh && !P.escena) textoBorde((tactil ? 'A' : 'ESPACIO')+' = MONTAR '+P.cercaVeh.emoji, W/2, H-96, 22, '#fff', 'center', true);
   if (P.veh){
