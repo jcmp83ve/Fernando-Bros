@@ -39,20 +39,31 @@ Controles pensados para manos pequeñas: **la palanca mueve, A sube, B corre**.
 - **Barco**: navega por el mar; la playa lo frena.
 - **Submarino**: A sube y B baja; solo se puede bajar de él en la superficie.
   Debajo del agua todo se pone azul, con peces, algas, corales y burbujas.
+- **Helicóptero** (en el aeropuerto): A sube, B baja, la palanca lo mueve y
+  se posa donde sea.
+- **Moto de agua** (en el muelle): como el barco pero rapidísima, y con A
+  brinca sobre las olas.
+- **Nave espacial** (en la plataforma del aeropuerto): mantén A para
+  encender los motores y subir; en el aire la palanca la mueve. Pasando los
+  260 m el cielo se vuelve espacio con estrellas, y arriba del todo está
+  **la luna**: al llegar a su cara de abajo se planta la bandera. Al soltar A
+  baja solita.
+- **Dinosaurio** (en su nido, cerca de la montaña): corre, salta altísimo
+  con A, ruge con B y **pasa por encima de árboles y rocas**.
 - **Tío Juan** vuela siempre al lado de Fernando, con su capa ondeando.
 - **Penny y Sheldon** lo siguen a todas partes en cuanto los toca.
 
 ## 🍔💩 Las hamburguesas y el Señor Popo
 
-Hay **49 hamburguesas** repartidas por la isla, la carretera, la playa, el
+Hay **49 hamburguesas** repartidas por la isla (y **10 arepas** en Maracaibo), la carretera, la playa, el
 cielo (dentro de los aros) y el fondo del mar. Al comer una, Fernando dice
 *«¡Qué rica hamburguesa!»*, **se echa un peo** (nube verde incluida) y dice
 *«¡Quiero hacer popo!»*. Cada hamburguesa llena un tercio del medidor 💩; con
 el medidor lleno camina apretadito y se sigue echando peos hasta que llega a
 un baño.
 
-Los **cuatro baños** (el del pueblo, el de la playa, el de la montaña y el del
-aeropuerto) son del **Señor Popo**, un señor de popo con sombrero de copa,
+Los **cinco baños** (el del pueblo, el de la playa, el de la montaña, el del
+aeropuerto y el de Maracaibo) son del **Señor Popo**, un señor de popo con sombrero de copa,
 monóculo y corbatín, que espera al lado de la puerta: *«¡Hola Fernando! Soy
 el Señor Popo. ¡Come hamburguesas y ven a mi baño!»*. Al entrar, la puerta se
 cierra, la caseta tiembla con cada *plop*, suena la descarga, Fernando sale
@@ -65,7 +76,7 @@ brinquitos, en fila con Penny y Sheldon (*«¡Mira, un popo bebé me sigue!»*).
 Cada visita al baño suma uno más (hasta diez), se guardan con la partida y
 se esconden mientras Fernando va en un vehículo.
 
-## ⭐ Las ocho estrellas
+## ⭐ Las trece estrellas
 
 | Misión | Cómo se gana |
 |---|---|
@@ -76,7 +87,12 @@ se esconden mientras Fernando va en un vehículo.
 | ✈️ **Los 7 aros del cielo** | Volar con el avión por los siete aros numerados que rodean la isla |
 | 🚤 **La islita de Santi** | Ir en barco hasta la islita del este y abrazar a Santi |
 | 🤿 **El tesoro** | Bajar con el submarino hasta el cofre del fondo del mar (hay un haz de luz que lo señala) |
-| 👨‍👩‍👧 **Toda la familia** | Saludar a Abu, Cucú, Luca, Salomón, Tío Fran, Mamá, Papá, Tío Nacho, Tía Yanny, Rómulo, Tío Beto y Tía Giuliana |
+| 👨‍👩‍👧 **Toda la familia** | Saludar a Abu, Cucú, Luca, Salomón, Tío Fran, Mamá, Papá, Tío Nacho, Tía Yanny, Rómulo, Tío Beto y Tía Giuliana. En el menú de ESC dice **quién falta** |
+| 🚁 **Los 4 helipuertos** | Posar el helicóptero en los helipuertos de la montaña, el faro, la islita y Maracaibo |
+| 🛥️ **Las 6 boyas** | Dar la vuelta a la isla con la moto de agua pasando por las seis boyas naranjas |
+| 🦖 **Los 8 huevos** | Montado en el dinosaurio (que pasa por encima de los árboles), recoger los ocho huevos con manchas que hay por los bosques |
+| 🚀 **La luna** | Encender la nave espacial (mantener A), subir hasta el espacio, llegar a la luna y plantar la bandera de Fernando |
+| 🫓 **Maracaibo** | Cruzar el puente sobre el lago hasta Maracaibo y comerse cinco arepas de agüita de sapo |
 
 Arriba a la derecha hay un **mapita de la isla** y el **objetivo de ahora**,
 con una flecha y los metros que faltan: si tiene ganas de popo apunta al baño
@@ -115,6 +131,11 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 
 ## 🗺️ La isla
 
+- **Maracaibo**: una isla aparte al noroeste, unida por **el puente sobre
+  el lago** (alto, para que pasen los barcos). Tiene su plaza con el sol,
+  la arepera con la arepa gigante en el techo, casas de colores, palmeras, un
+  baño del Señor Popo y **arepas de agüita de sapo** en vez de hamburguesas:
+  al comerlas Fernando dice *«¡Qué rica arepita de agüita de sapo!»*.
 - **El pueblo**: la casa de Fernando (donde empieza, con Mamá, Papá, Penny y
   Sheldon), la casa de Abu, la hamburguesería con la hamburguesa gigante en
   el techo, el bar de Rómulo, la fuente, la cancha (Luca y Salomón) y el
@@ -177,11 +198,13 @@ node pruebas.js
 ```
 
 Sin navegador: se carga el núcleo y **Fernando juega solo hasta ganar las
-ocho estrellas** — camina y salta, come y hace popo, da la vuelta a la isla
+trece estrellas** — camina y salta, come y hace popo, da la vuelta a la isla
 en carro cruzando las banderas, salta la rampa en moto, despega, cruza los
 siete aros y aterriza, navega hasta Santi bordeando la costa, baja con el
-submarino hasta el cofre, saluda a toda la familia y hace popo en los cuatro
-baños. Además comprueba que la isla esté bien armada (nada en el agua que
+submarino hasta el cofre, se posa en los cuatro helipuertos, pasa las seis
+boyas en moto de agua, recoge los huevos con el dinosaurio, sube a la luna
+en la nave y vuelve, cruza el puente a Maracaibo en carro y se come las
+arepas, saluda a toda la familia y hace popo en los cinco baños. Además comprueba que la isla esté bien armada (nada en el agua que
 deba estar en tierra, la pista plana, la carretera sin cuestas imposibles),
 que la partida se guarde y se recupere, y que cada frase hablada exista en
 las grabaciones o esté apuntada a propósito como voz sintética, y que los

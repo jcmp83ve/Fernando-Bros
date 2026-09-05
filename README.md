@@ -97,10 +97,12 @@ montaña, y **Tío Juan volando siempre al lado**. Fernando encuentra
 popo!»*, y entonces hay que correr a uno de los cuatro baños del **Señor
 Popo** 💩🎩, el personaje nuevo. De cada popo **nace un popo bebé** que sigue
 a Fernando dando brinquitos, y todas las frases nuevas están grabadas con la
-misma voz de niño. Ocho misiones dan ocho estrellas (las
+misma voz de niño. Trece misiones dan trece estrellas (las
 banderas con el carro, la rampa con la moto, los aros del cielo, la islita
-de Santi, el tesoro del fondo del mar, la familia…) y el progreso se guarda
-solo. Controles fáciles: la palanca mueve, **A sube, B corre**.
+de Santi, el tesoro del fondo del mar, los helipuertos en helicóptero, las
+boyas en moto de agua, los huevos montado en el dinosaurio, **la luna en la
+nave espacial**, las arepas de **Maracaibo** cruzando el puente sobre el
+lago, la familia…) y el progreso se guarda solo. Controles fáciles: la palanca mueve, **A sube, B corre**.
 
 **Se puede jugar con amigos en línea, gratis**: uno crea una sala, sale un
 código de 4 letras y un enlace para WhatsApp, y hasta cuatro jugadores (cada
