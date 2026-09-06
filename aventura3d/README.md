@@ -94,7 +94,7 @@ se esconden mientras Fernando va en un vehículo.
 | 🚀 **La luna** | Encender la nave espacial (mantener A), subir hasta el espacio, llegar a la luna y plantar la bandera de Fernando |
 | 🫓 **Maracaibo** | Cruzar el puente sobre el lago hasta Maracaibo y comerse cinco arepas de agüita de sapo |
 
-Arriba a la derecha hay un **mapita de la isla** y el **objetivo de ahora**,
+Arriba a la derecha hay un **radar grande de la isla** y el **objetivo de ahora**,
 con una flecha y los metros que faltan: si tiene ganas de popo apunta al baño
 más cercano, si va en un vehículo apunta a su misión, y si no, a lo que sigue.
 Al ganar las ocho estrellas hay fiesta con confeti y las voces de Fernando y
@@ -184,6 +184,9 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 
 ## ⭐ Detalles
 
+- **Personajes estilizados**: cabezas redondas, cuerpos en forma de cápsula,
+  brazos y piernas cilíndricos, con nariz, orejas y cachetes; los perritos
+  también son redonditos. Al **correr con B** se va un 30 % más rápido.
 - **Vidas infinitas de verdad**: aquí nada hace daño. Los choques solo
   frenan, el avión rebota en vez de estrellarse, del mar se sale nadando.
 - **Cámara suave** detrás de Fernando o del vehículo, que se abre con la
