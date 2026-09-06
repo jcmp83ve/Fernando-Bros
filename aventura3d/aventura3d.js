@@ -3412,6 +3412,16 @@ const nombreLocal = ()=> PERSONAJES_RED.find(p=>p.id===RED.pj).nombre;
 const hayPeerJS = ()=> typeof Peer !== 'undefined';
 const redActiva = ()=> !!RED.peer && (RED.estado==='sala' || RED.estado==='conectado');
 const enlaceSala = ()=> location.origin + location.pathname + '?sala=' + RED.sala + (MAPA===2 ? '&mapa=2' : '');
+/* Los servidores que ayudan a que dos aparatos se encuentren: STUN para
+   descubrir la dirección de cada uno, y TURN (relevo gratuito de Open Relay)
+   para cuando el router no deja hablar directo, por ejemplo en WiFi con
+   aislamiento entre aparatos o cuando uno está con datos móviles. */
+const RED_CONFIG = {debug:0, config:{iceServers:[
+  {urls:'stun:stun.l.google.com:19302'}, {urls:'stun:stun1.l.google.com:19302'}, {urls:'stun:stun.relay.metered.ca:80'},
+  {urls:'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443', username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
+]}};
 function textoErrorRed(e){
   const t = e && e.type;
   if (t==='peer-unavailable') return 'No encontré la sala '+RED.sala+'. Revisa el código, o pide que la creen otra vez.';
@@ -3429,7 +3439,7 @@ function redLimpiar(){
 function redCrear(){
   if (!hayPeerJS()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
   redLimpiar(); RED.estado = 'creando'; RED.sala = codigoSala(); RED.anfitrion = true; RED.error = '';
-  const peer = new Peer('fernando-bros-'+RED.sala, {debug:0});
+  const peer = new Peer('fernando-bros-'+RED.sala, RED_CONFIG);
   RED.peer = peer;
   peer.on('open', ()=>{ if (RED.peer===peer) RED.estado = 'sala'; });
   peer.on('call', c=>{ if (RED.peer===peer) atenderLlamada(c); });
@@ -3446,14 +3456,15 @@ function redUnirse(codigo){
   codigo = normalizarCodigo(codigo);
   if (codigo.length !== 4){ RED.error = 'El código tiene 4 letras o números'; return; }
   if (!hayPeerJS()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
-  redLimpiar(); RED.estado = 'uniendo'; RED.sala = codigo; RED.anfitrion = false; RED.error = ''; RED.entrandoCodigo = false;
-  const peer = new Peer({debug:0});
+  redLimpiar(); RED.estado = 'uniendo'; RED.sala = codigo; RED.anfitrion = false; RED.error = ''; RED.entrandoCodigo = false; RED.aviso_ = '';
+  const peer = new Peer(RED_CONFIG);
   RED.peer = peer;
   peer.on('call', c=>{ if (RED.peer===peer) atenderLlamada(c); });
   peer.on('open', ()=>{ if (RED.peer!==peer) return; prepararConn(peer.connect('fernando-bros-'+codigo, {reliable:true, serialization:'json'})); });
   peer.on('error', e=>{ if (RED.peer!==peer) return; RED.estado = 'error'; RED.error = textoErrorRed(e); });
   peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
-  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='uniendo'){ RED.estado = 'error'; RED.error = 'No pude entrar a la sala '+codigo+'. Revisa el internet de los dos aparatos y que el código sea el mismo.'; } }, 20000);
+  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='uniendo') RED.aviso_ = 'Encontré la sala, conectando con el anfitrión… puede tardar unos segundos'; }, 6000);
+  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='uniendo'){ RED.estado = 'error'; RED.error = 'Encontré la sala '+codigo+' pero no se abrió la conexión. Prueba: los dos en el mismo mapa · el que la creó con la sala abierta en el juego · los dos por WiFi (o los dos con datos) · y vuelve a intentar.'; } }, 25000);
 }
 function redSalir(){ if (RED.conns.size) redEnviar({t:'chau'}); redLimpiar(); RED.estado = 'off'; RED.sala = ''; }
 function prepararConn(conn){
@@ -3481,13 +3492,20 @@ function redRecibir(id, m){
   if (!m || typeof m !== 'object') return;
   if (m.t==='r'){ if (!RED.anfitrion && typeof m.de==='string' && m.m && typeof m.m==='object') redRecibir(m.de, m.m); return; }
   if (RED.anfitrion){ for (const [pid, c] of RED.conns) if (pid!==id){ try{ if (c.open) c.send({t:'r', de:id, m}); }catch(e){} } }
+  if (m.t==='mapa' && !RED.anfitrion && (m.mapa===1 || m.mapa===2) && m.mapa !== MAPA){
+    const sala = RED.sala; redLimpiar(); RED.estado = 'error';
+    RED.error = 'La sala '+sala+' está en el mapa '+(m.mapa===2 ? '2, Maracaibo de noche 🌙' : '1, la isla de día ☀️')+'. Te llevo allá…';
+    try{ localStorage.setItem('aventura3d.mapa', String(m.mapa)); }catch(e){}
+    setTimeout(()=>{ location.href = location.pathname + '?mapa=' + m.mapa + '&sala=' + sala; }, 1800);
+    return;
+  }
   if (m.t==='llena'){ if (!RED.anfitrion){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
   if (m.t==='voz'){ const r = RED.remotos.get(id); if (r){ r.hablando = !!m.on; r.hablaT = tick; } return; }
   if (m.t==='chau'){ const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
   if (m.t==='hola'){
     const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
     const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
-    if (m.mapa && m.mapa !== MAPA){ aviso('🗺️ '+nombre+' está en el otro mapa: cambien los dos al mismo'); try{ const c = RED.conns.get(id); if (c) c.close(); }catch(e){} return; }
+    if (m.mapa && m.mapa !== MAPA){ aviso('🗺️ '+nombre+' estaba en el otro mapa: lo traigo a este'); try{ const c = RED.conns.get(id); if (c){ c.send({t:'mapa', mapa:MAPA}); setTimeout(()=>{ try{ c.close(); }catch(e){} }, 1200); } }catch(e){} return; }
     if (!RED.remotos.has(id)) crearRemoto(id, {pj, nombre, x:P.J.x, y:P.J.y, z:P.J.z, ang:0, veh:'', mov:0, fase:0, nadando:false, suelo:true, cabeceo:0, giro:0, vel:0, aire:false, popitos:0, ganas:false, estrellas:0});
     aviso('👋 '+nombre+' entró a la isla'); sfx.saludo();
     /* las estrellas se comparten: lo que ya ganó cualquiera es de todos */
@@ -4408,7 +4426,7 @@ function dibujarAmigos(){
   if (RED.estado==='creando' || RED.estado==='uniendo'){
     const puntos = '.'.repeat(1 + Math.floor(tick/20)%3);
     titulo(RED.estado==='creando' ? 'Creando la sala'+puntos : 'Entrando a la sala '+RED.sala+puntos, W/2, H/2, 34, '#fff6a0', '#ffb000');
-    texto('Esto tarda unos segundos', W/2, H/2+40, 15, '#bcd6ff');
+    texto(RED.estado==='uniendo' && RED.aviso_ ? RED.aviso_ : 'Esto tarda unos segundos', W/2, H/2+40, 15, '#bcd6ff');
     return;
   }
   if (RED.estado==='error'){
