@@ -3470,7 +3470,17 @@ function empezar(){
 function procesarTecla(k){
   if (estado==='menu'){
     if (k==='Escape') return;
-    if (k==='Enter'||k===' '||k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight'||k==='Shift'){ sfx.toque(); empezar(); }
+    if (k==='Enter'||k===' '||k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight'||k==='Shift'){ if (RED.pendiente) empezar(); else abrirPersonaje('menu'); }
+    return;
+  }
+  if (estado==='personaje'){
+    const nc = zonaPersonaje().ncol;
+    if (k==='ArrowLeft'||k==='a'||k==='A'){ marcarPj(selPj-1); sfx.toque(); }
+    else if (k==='ArrowRight'||k==='d'||k==='D'){ marcarPj(selPj+1); sfx.toque(); }
+    else if (k==='ArrowUp'||k==='w'||k==='W'){ marcarPj(selPj-nc); sfx.toque(); }
+    else if (k==='ArrowDown'||k==='s'||k==='S'){ marcarPj(selPj+nc); sfx.toque(); }
+    else if (k==='Enter'||k===' ') confirmarPj();
+    else if (k==='Escape'){ sfx.toque(); if (pjOrigen==='menu') estado = 'menu'; else confirmarPj(); }
     return;
   }
   if (estado==='juego'){
@@ -3504,12 +3514,34 @@ function elegirPausa(i){
   if (i===0) estado = 'juego';
   else if (i===1){ estado = 'amigos'; RED.entrandoCodigo = false; RED.error = ''; }
   else if (i===2){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} }
-  else if (i===3){ try{ localStorage.removeItem('aventura3d.partida'); }catch(e){} nuevaPartida(null); estado = 'juego'; cortina = 30; aviso('Aventura nueva: ¡a empezar de cero!'); }
+  else if (i===3){ try{ localStorage.removeItem('aventura3d.partida'); }catch(e){} nuevaPartida(null); abrirPersonaje('nuevo'); }
   else if (i===4){ redSalir(); volverAFernandoBros(); }
 }
 const enZona = (mx,my,z,m)=>mx>=z.x-(m||0) && mx<=z.x+z.w+(m||0) && my>=z.y-(m||0) && my<=z.y+z.h+(m||0);
 const zonaAtras = ()=>({x:14, y:12, w:190, h:42});
 const zonasPausa = ()=>[0,1,2,3,4].map(i=>({x:W/2-150, y:H/2+6+i*40, w:300, h:36}));
+/* la pantalla de ¿CON QUIÉN JUEGAS?: sale al pulsar JUGAR y al empezar de cero */
+let selPj = 0, pjOrigen = 'menu';
+const zonaPersonaje = ()=>{
+  const z = {volver: zonaAtras(), pjs: []};
+  const n = PERSONAJES_RED.length, ncol = Math.ceil(n/3), w = Math.min(112, (W-40)/ncol - 6), h = 58, x0 = W/2 - (ncol*(w+6)-6)/2, y0 = 96;
+  for (let i=0;i<n;i++) z.pjs.push({x: x0 + (i%ncol)*(w+6), y: y0 + Math.floor(i/ncol)*(h+6), w, h});
+  z.ncol = ncol; z.jugar = {x:W/2-170, y:H-66, w:340, h:50};
+  return z;
+};
+function abrirPersonaje(origen){
+  pjOrigen = origen; selPj = Math.max(0, PERSONAJES_RED.findIndex(p=>p.id===RED.pj)); estado = 'personaje'; sfx.toque();
+}
+function marcarPj(i){
+  selPj = (i + PERSONAJES_RED.length) % PERSONAJES_RED.length;
+  const pj = PERSONAJES_RED[selPj].id;
+  if (pj !== RED.pj){ RED.pj = pj; ponerPersonaje(pj); try{ localStorage.setItem('aventura3d.pj', pj); }catch(e){} }
+}
+function confirmarPj(){
+  marcarPj(selPj); sfx.estrella();
+  if (pjOrigen==='nuevo'){ burbujas.length = 0; estado = 'juego'; cortina = 30; aviso('Aventura nueva: ¡a empezar de cero con '+nombreLocal()+'!'); setTimeout(()=>{ if (estado==='juego'){ const t = fraseDe(RED.pj, 'inicio'); hablar(t, RED.pj); burbuja(t, nombreLocal()); } }, 600); }
+  else empezar();
+}
 /* la pantalla de JUGAR CON AMIGOS */
 const zonaAmigos = ()=>{
   const z = {volver: zonaAtras(), guia: {x:W-190, y:12, w:176, h:42}, pjs: [], teclas: [], borrar:null, entrar:null};
@@ -3532,7 +3564,15 @@ function clic(x, y){
   if (estado==='menu'){
     if (enZona(x, y, zonaAtras(), 6)) return volverAFernandoBros();
     if (enZona(x, y, {x:W-190, y:12, w:176, h:42}, 6)){ sfx.toque(); estado = 'amigos'; RED.entrandoCodigo = false; if (RED.pendiente){ const c = RED.pendiente; RED.pendiente = ''; redUnirse(c); } return; }
-    sfx.toque(); empezar(); return;
+    if (RED.pendiente){ sfx.toque(); empezar(); } else abrirPersonaje('menu');
+    return;
+  }
+  if (estado==='personaje'){
+    const z = zonaPersonaje();
+    if (enZona(x, y, z.volver, 6)){ sfx.toque(); if (pjOrigen==='menu') estado = 'menu'; else confirmarPj(); return; }
+    z.pjs.forEach((zp, i)=>{ if (enZona(x, y, zp, 2)){ if (i===selPj) confirmarPj(); else { marcarPj(i); sfx.toque(); } } });
+    if (enZona(x, y, z.jugar, 4)) confirmarPj();
+    return;
   }
   if (estado==='pausa'){
     let dio = false;
@@ -3858,15 +3898,15 @@ function actualizar(){
   if (estado==='juego' || estado==='pausa' || estado==='amigos'){ redPaso(); vozPaso(); }
   sincronizar(); sincronizarRemotos();
   pasoNubes(); pasoGaviotas(); pasoPeces(); pasoAlgas(); pasoParticulas();
-  if (estado==='menu') camaraMenu(); else camaraJuego();
-  if (RED.estado==='conectado' && estado==='menu') estado = 'juego';
+  if (estado==='menu' || (estado==='personaje' && pjOrigen==='menu')) camaraMenu(); else camaraJuego();
+  if (RED.estado==='conectado' && (estado==='menu' || estado==='personaje')) estado = 'juego';
   ambiente();
   if (cortina > 0) cortina--;
   if (mensajeGrande && --mensajeGrande.t <= 0) mensajeGrande = null;
   for (let i=burbujas.length-1;i>=0;i--) if (--burbujas[i].t <= 0) burbujas.splice(i,1);
   if (avisoT > 0) avisoT--;
   if (MANDO.avisoT > 0) MANDO.avisoT--;
-  const tema = estado==='menu' ? TEMA_MENU : (bajoF > 0.5 ? TEMA_MAR : (P.veh && (P.veh.id==='avion' || P.veh.id==='heli' || P.veh.id==='nave') && P.veh.aire ? TEMA_CIELO : TEMA_ISLA));
+  const tema = estado==='menu' || estado==='personaje' ? TEMA_MENU : (bajoF > 0.5 ? TEMA_MAR : (P.veh && (P.veh.id==='avion' || P.veh.id==='heli' || P.veh.id==='nave') && P.veh.aire ? TEMA_CIELO : TEMA_ISLA));
   programarMusica(tema);
 }
 
@@ -4010,6 +4050,21 @@ function dibujarMenu(){
   else if (Math.floor(tick/30)%2===0) textoBorde(tactil ? 'TOCA PARA JUGAR' : 'PULSA ENTER PARA JUGAR', W/2, H-78, 30, '#fff', 'center', true);
   if (P.estrellas.length) textoBorde('⭐ '+P.estrellas.length+'/'+MISIONES.length+' · tu aventura sigue donde la dejaste', W/2, H-36, 15, '#ffe36e');
   texto('🎮 mando · 📱 dedos · 👥 en línea con amigos', W/2, H-14, 12, 'rgba(255,255,255,0.6)');
+}
+function dibujarPersonaje(){
+  ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
+  const z = zonaPersonaje(), sel = PERSONAJES_RED[selPj];
+  tituloAjustado('¿CON QUIÉN JUEGAS?', W/2, 40, 40, W-240, '#fff6a0', '#ffb000');
+  botonAtras(pjOrigen==='menu' ? '◀ VOLVER' : '◀ ASÍ ESTÁ BIEN');
+  texto('Cada personaje habla con su propia voz 🗣️', W/2, 78, 15, '#bcd6ff');
+  z.pjs.forEach((zp, i)=>{ const pj = PERSONAJES_RED[i], es = i===selPj;
+    cristal(zp.x, zp.y, zp.w, zp.h, 12, es ? 0.85 : 0.4);
+    if (es){ ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(zp.x, zp.y, zp.w, zp.h, 12); ctx.stroke(); }
+    texto(pj.emoji, zp.x+zp.w/2, zp.y+22, 22, '#fff'); textoAjustado(pj.nombre, zp.x+zp.w/2, zp.y+45, 12, zp.w-8, es ? '#ffe36e' : '#fff'); });
+  const fh = 56, fy = Math.min(z.pjs[z.pjs.length-1].y + 58 + 14, z.jugar.y - fh - 12);
+  if (fy > z.pjs[z.pjs.length-1].y + 40){ cristal(W/2-260, fy, 520, fh, 14, 0.5); textoAjustado(sel.emoji+' '+sel.nombre+' dice: «'+fraseDe(sel.id, 'inicio')+'»', W/2, fy+fh/2, 16, 500, '#fff'); }
+  boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ JUGAR CON '+sel.nombre.toUpperCase(), '#3aa040', '#1e6a24', 20, Math.floor(tick/30)%2===0);
+  if (!tactil) texto('Flechas para elegir · ENTER para jugar', W/2, H-8, 12, 'rgba(255,255,255,0.6)');
 }
 function dibujarAmigos(){
   ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
@@ -4198,6 +4253,7 @@ function dibujar(){
   else if (estado==='pausa') dibujarPausa();
   else if (estado==='final') dibujarFinal();
   else if (estado==='amigos') dibujarAmigos();
+  else if (estado==='personaje') dibujarPersonaje();
   if (cortina>0){ ctx.fillStyle = 'rgba(0,0,0,'+(cortina/40)+')'; ctx.fillRect(0,0,W,H); }
   if (MANDO.avisoT>0) pastilla('🎮 MANDO CONECTADO', W/2, H-90, 18, '#7dffa0', 0.55);
 }
@@ -4218,6 +4274,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF };
 requestAnimationFrame(bucle);
 })();
