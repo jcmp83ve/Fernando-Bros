@@ -101,6 +101,35 @@ Al ganar las ocho estrellas hay fiesta con confeti y las voces de Fernando y
 Tío Juan. **El progreso se guarda solo** en el aparato: se puede seguir otro
 día, o empezar de cero desde el menú de ESC.
 
+## 🌙 Mapa 2: Maracaibo de noche
+
+Se elige desde el menú principal (botón **🌙 MAPA 2: MARACAIBO DE NOCHE**) o
+desde la pausa, sin necesidad de terminar el mapa 1: cada mapa guarda su
+propia partida. Es la misma isla con el lago, pero de noche, con faroles y
+ventanas encendidas, y con once misiones nuevas:
+
+- **⚡ El relámpago del Catatumbo**: en la lancha o el barco, cerca de la
+  orilla de Maracaibo, cae un relámpago cada pocos segundos que ilumina todo
+  el lago; el personaje dice «¡Mira para arriba! ¡Es el relámpago del
+  Catatumbo!». Cinco relámpagos, una estrella.
+- **🍺 El bar de Rómulo**: Rómulo es el dueño del bar y siempre tiene una
+  Polarcita en la mano; al saludarlo dice «¡Qué rica Polarcita!» y eructa.
+- **🐐 Coro**: un corral lleno de chivos al este de la isla. Al llegar, el
+  personaje pregunta «¿Para qué vamos a traer más chivos a Coro?»; hay que
+  saludar a los ocho chivos.
+- **🦅 El pterodáctilo**: un dinosaurio que vuela (A sube, B baja), para
+  pasar por los seis aros violeta de la noche.
+- **🚀 Marte**: la nave espacial ya no sube a la luna sino a Marte, y allí se
+  planta la bandera.
+- **👽 La nave extraterrestre**: flota en el espacio, con sus luces y sus tres
+  extraterrestres; al acercarse con la nave te atrapa con su rayo de luz, los
+  extraterrestres saludan y cae la estrella.
+- Y de noche también: las hamburguesas y los baños, la familia, las banderas
+  con el carro y las arepas de Maracaibo.
+
+En multijugador los dos deben estar en el mismo mapa (el enlace de invitación
+ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
+
 ## 👥 Jugar con amigos (en línea, gratis)
 
 Hasta cuatro personas (el anfitrión y tres amigos), cada una en su aparato, **juegan a la vez en la
@@ -216,7 +245,8 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 ## 🧪 Pruebas
 
 ```
-node pruebas.js
+node pruebas.js          # el mapa 1: la isla de día
+node pruebas_noche.js    # el mapa 2: Maracaibo de noche
 ```
 
 Sin navegador: se carga el núcleo y **Fernando juega solo hasta ganar las

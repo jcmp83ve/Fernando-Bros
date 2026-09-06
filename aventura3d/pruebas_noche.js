@@ -1,0 +1,101 @@
+/* ============================================================
+   PRUEBAS DEL MAPA 2: MARACAIBO DE NOCHE
+   Se corre con:   node pruebas_noche.js
+   Carga el núcleo con MAPA=2 y hace jugar solo al personaje por las
+   misiones nuevas: el bar de Rómulo, Coro y sus chivos, el relámpago del
+   Catatumbo desde la moto de agua, los aros de la noche con el
+   pterodáctilo, Marte y la nave extraterrestre.
+   ============================================================ */
+process.env.MAPA = '2';
+const path = require('path');
+const N = require(path.join(__dirname, 'aventura3d.js'));
+let fallos = 0;
+const mal = m => { console.log('✗', m); fallos++; };
+const bien = (...m) => console.log('✓', ...m);
+const env = a=>{ while (a>Math.PI) a-=2*Math.PI; while (a<-Math.PI) a+=2*Math.PI; return a; };
+const tipos = {};
+function paso(P, ent){ N.pasoPartida(P, ent); for (const e of P.eventos) tipos[e.tipo] = (tipos[e.tipo]||0)+1; const lista = P.eventos.slice(); P.eventos.length = 0; return lista; }
+function correr(P, frames, ent, hasta){
+  for (let f=0; f<frames; f++){
+    const evs = paso(P, typeof ent==='function' ? ent(P, f) : ent);
+    if (![P.J.x,P.J.y,P.J.z,P.J.ang].every(Number.isFinite)){ mal('el personaje con números rotos'); return f; }
+    for (const v of P.vehiculos) if (![v.x,v.y,v.z,v.ang,v.vel,v.vy].every(Number.isFinite)){ mal(v.nombre+' con números rotos'); return f; }
+    if (hasta && hasta(P, evs)) return f;
+  }
+  return frames;
+}
+function poner(P, x, z){ P.J.x = x; P.J.z = z; P.J.y = N.altura(x,z); P.J.vx = P.J.vz = P.J.vy = 0; P.J.suelo = true; P.J.nadando = false; }
+function montar(P, id){ const v = P.vehiculos.find(v=>v.id===id); poner(P, v.x + 3, v.z); P.J.y = v.y; correr(P, 2, {}); correr(P, 1, {a:true}); if (P.veh !== v) mal('no se pudo montar en '+v.nombre); return v; }
+const hacia = (v, x, z)=>{ const d = env(Math.atan2(x-v.x, z-v.z) - v.ang); return -Math.max(-1, Math.min(1, d*2.5)); };
+
+if (N.MAPA !== 2) mal('el núcleo no cargó el mapa 2');
+if (N.MISIONES.length !== 11) mal('el mapa 2 debería tener 11 misiones, tiene '+N.MISIONES.length);
+if (!N.VEHICULOS_DEF.some(v=>v.id==='ptero')) mal('falta el pterodáctilo');
+if (N.CHIVOS.length !== 8) mal('deberían ser 8 chivos');
+for (const c of N.CHIVOS) if (N.alturaBase(c.x, c.z) < 1) mal('un chivo nació en el agua');
+bien('mapa 2:', N.MISIONES.length, 'misiones ·', N.VEHICULOS_DEF.length, 'vehículos · Coro con', N.CHIVOS.length, 'chivos');
+
+const P = N.crearPartida(); P.pj = 'luca';
+const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='hablar') dichos.push(e); return false; };
+
+/* 1) Rómulo en su bar: la Polarcita y el eructo */
+{
+  const r = N.FAMILIA.find(f=>f.id==='romulo');
+  poner(P, r.x, r.z + 8); P.J.ang = Math.PI;
+  correr(P, 60*3, {jy:1, camYaw: Math.PI}, (P, evs)=>{ oir(P, evs); return P.estrellas.includes('polarcita'); });
+  if (!P.estrellas.includes('polarcita')) mal('no dio la estrella del bar de Rómulo');
+  else if (!dichos.some(d=>d.texto==='¡Qué rica Polarcita!' && d.pj==='romulo') || !tipos.eructo) mal('Rómulo no dijo lo de la Polarcita con su eructo');
+  else bien('Rómulo en el bar:', dichos.find(d=>d.pj==='romulo').texto, '+ eructo');
+}
+/* 2) Coro: la frase al llegar y los ocho chivos */
+{
+  poner(P, N.CORO.x - N.CORO.r - 12, N.CORO.z); P.J.ang = Math.PI/2;
+  dichos.length = 0;
+  correr(P, 60*4, {jy:1, camYaw: Math.PI/2}, (P, evs)=>{ oir(P, evs); return P.prog.coroDicho; });
+  if (!P.prog.coroDicho || !dichos.some(d=>d.k==='coro')) mal('no dijo lo de los chivos al llegar a Coro'); else bien('en Coro dijo:', dichos.find(d=>d.k==='coro').texto);
+  const f = correr(P, 60*120, (P)=>{ const c = P.chivos.find(c=>!P.prog.chivos.includes(c.id)); if (!c) return {}; return {jy: 1, camYaw: Math.atan2(c.x-P.J.x, c.z-P.J.z), b:true}; }, (P)=>P.estrellas.includes('coro'));
+  if (!P.estrellas.includes('coro')) mal('no saludó a los 8 chivos ('+P.prog.chivos.length+')'); else bien('Coro: los 8 chivos en', (f/60).toFixed(0), 's');
+}
+/* 3) el Catatumbo desde la moto de agua, cerca de Maracaibo */
+{
+  const v = montar(P, 'motoagua');
+  v.x = N.MARACAIBO.x; v.z = N.MARACAIBO.z + N.MARACAIBO.r + 40; v.ang = Math.PI/2;
+  dichos.length = 0;
+  const f = correr(P, 60*60, (P)=>({jy:0.6, jx: hacia(v, N.MARACAIBO.x + Math.cos(P.t*0.01)*(N.MARACAIBO.r+45), N.MARACAIBO.z + Math.sin(P.t*0.01)*(N.MARACAIBO.r+45))}), (P, evs)=>{ oir(P, evs); return P.estrellas.includes('catatumbo'); });
+  if (!P.estrellas.includes('catatumbo')) mal('no vio los 5 relámpagos ('+P.prog.rayos+')'); else bien('Catatumbo: 5 relámpagos en', (f/60).toFixed(0), 's');
+  if (!tipos.rayo) mal('nunca cayó un rayo');
+  if (!dichos.some(d=>d.k==='catatumbo')) mal('no dijo lo del relámpago'); else bien('con el relámpago dijo:', dichos.find(d=>d.k==='catatumbo').texto);
+  correr(P, 1, {salir:true}); correr(P, 60, {});
+}
+/* 4) el pterodáctilo por los seis aros de la noche */
+{
+  const v = montar(P, 'ptero');
+  const f = correr(P, 60*180, (P)=>{ const i = N.AROS_NOCHE.findIndex((a,i)=>!P.prog.arosNoche.includes(i)); if (i<0) return {}; const a = N.AROS_NOCHE[i]; return {a: v.y < a.y - 1, b: v.y > a.y + 1, jy: 1, jx: hacia(v, a.x, a.z)}; }, (P)=>P.estrellas.includes('ptero'));
+  if (!P.estrellas.includes('ptero')) mal('el pterodáctilo no pasó los 6 aros ('+P.prog.arosNoche.length+')'); else bien('pterodáctilo: los 6 aros de la noche en', (f/60).toFixed(0), 's');
+  correr(P, 60*30, {b:true}, (P)=>v.suelo); correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó del pterodáctilo');
+}
+/* 5) la nave hasta Marte, y después la nave extraterrestre */
+{
+  const v = montar(P, 'nave');
+  dichos.length = 0;
+  const f = correr(P, 60*120, (P)=>({a:true, jy: v.y > 80 ? Math.min(1, Math.hypot(v.x-N.LUNA.x, v.z-N.LUNA.z)/30) : 0, jx: hacia(v, N.LUNA.x, N.LUNA.z)}), (P, evs)=>{ oir(P, evs); return P.estrellas.includes('luna'); });
+  if (!P.estrellas.includes('luna')) mal('la nave no llegó a Marte (y '+v.y.toFixed(0)+')'); else bien('nave: llegó a Marte en', (f/60).toFixed(0), 's');
+  if (!dichos.some(d=>d.k==='marte')) mal('no dijo lo de Marte'); else bien('en Marte dijo:', dichos.find(d=>d.k==='marte').texto);
+  dichos.length = 0;
+  const g = correr(P, 60*120, (P)=>({a: v.y < N.OVNI.y - 5, jy: Math.min(1, Math.hypot(v.x-N.OVNI.x, v.z-N.OVNI.z)/30), jx: hacia(v, N.OVNI.x, N.OVNI.z)}), (P, evs)=>{ oir(P, evs); return P.estrellas.includes('ovni'); });
+  if (!P.estrellas.includes('ovni')) mal('no encontró la nave extraterrestre (y '+v.y.toFixed(0)+', a '+Math.hypot(v.x-N.OVNI.x, v.y-N.OVNI.y, v.z-N.OVNI.z).toFixed(0)+' m)'); else bien('nave: encontró a los extraterrestres en', (g/60).toFixed(0), 's');
+  if (!tipos.ovniLuz || !tipos.extraterrestres) mal('faltan los eventos del ovni');
+  if (!dichos.some(d=>d.k==='extraterrestres')) mal('no saludó a los extraterrestres'); else bien('a los extraterrestres les dijo:', dichos.find(d=>d.k==='extraterrestres').texto);
+  const fb = correr(P, 60*150, {}, (P)=>v.suelo);
+  if (!v.suelo) mal('la nave no volvió a posarse'); else bien('nave: volvió a tierra en', (fb/60).toFixed(0), 's');
+  correr(P, 1, {salir:true});
+}
+/* 6) guardar y seguir en el mapa 2 */
+{
+  const g = N.exportar(P); const P2 = N.crearPartida(g);
+  if (P2.estrellas.length !== P.estrellas.length || P2.prog.chivos.length !== 8 || P2.prog.rayos !== P.prog.rayos || !P2.prog.ovni) mal('el guardado del mapa 2 no conserva chivos, rayos o el ovni');
+  else bien('la partida de noche se guarda y se recupera con', P2.estrellas.length, 'estrellas');
+}
+for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna']) if (!tipos[t]) mal('nunca salió el evento '+t);
+console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ Maracaibo de noche sin fallos');
+process.exit(fallos ? 1 : 0);
