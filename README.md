@@ -224,7 +224,8 @@ Todos los diálogos son **grabaciones con voz de niño en español** (archivos m
 ## 🧪 Pruebas
 
 ```
-node pruebas.js
+node pruebas.js          # el mapa 1: la isla de día
+node pruebas_noche.js    # el mapa 2: Maracaibo de noche
 ```
 
 No hace falta navegador ni instalar nada. El banco de pruebas finge la pantalla y **hace jugar solos a los 32 minijuegos**, nivel por nivel, con toques y botones al azar; además juega bien los cuatro de los peques hasta terminarlos, para comprobar que de verdad se pueden ganar, y revisa que todas las frases habladas existan tal cual en las grabaciones.

@@ -70,6 +70,10 @@ const CLIPS = {
   '¡Vamos, dinosaurio!': AUDIO_BASE+'hf_20260905_202154_b65da520-f47e-4fe5-93f6-534755238ff9.mp3',
   '¡Hola! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!': AUDIO_BASE+'hf_20260905_212315_e5f05fa4-e608-45ef-9890-5970ca1fb19a.mp3',
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_a40ff000-b963-4f36-95be-b4a12f5e797e.mp3',
+  '¡Mira para arriba! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_10430c88-cba8-4a30-8af7-a1f73d2459ad.mp3',
+  '¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_041944_c5985a02-6c52-4e1f-930b-235abedbda03.mp3',
+  '¡Llegué a Marte!': AUDIO_BASE+'hf_20260906_042143_91a087f1-64a3-407b-b753-fb4e98578b50.mp3',
+  '¡Extraterrestres! ¡Hola, amiguitos del espacio!': AUDIO_BASE+'hf_20260906_042246_63549415-875e-4da1-a2c7-0085de21164d.mp3',
   '¡Bravo! ¡Qué popo tan grande!': AUDIO_BASE+'hf_20260905_212315_6ecdfe6d-f9b5-4cc9-80bb-d5ac6a250cb1.mp3',
 };
 /* Si un mp3 no carga, habla el navegador con la voz sintética y el tono
@@ -103,6 +107,10 @@ const SIN_GRABACION = [];
 /* Las grabaciones de cada personaje jugable: CLIPS_PJ[personaje][frase] (se rellenan abajo) */
 const CLIPS_PJ = {};
 CLIPS_PJ.tiojuan = {
+  '¡Extraterrestres! ¡Un abrazo desde la Tierra, pichunguitos!': AUDIO_BASE+'hf_20260906_042246_36b1f6fe-32fa-4ae9-8a56-f7de4d09683d.mp3',
+  '¡Llegué a Marte, pichunguito!': AUDIO_BASE+'hf_20260906_042143_b60b50e8-9328-4f9c-8a0b-d6e2efc86311.mp3',
+  '¿Para qué vamos a traer más chivos a Coro, pichunguito?': AUDIO_BASE+'hf_20260906_041849_f70ae849-73df-40ac-87a3-88d399dec0b4.mp3',
+  '¡Mira para arriba, pichunguito! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_f8591927-5fa8-4f96-b3bb-089e134113f6.mp3',
   '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta, pichunguito!': AUDIO_BASE+'hf_20260906_000211_099f1701-fc60-4330-852c-5e6efdd02493.mp3',
   '¡Tío Juan al rescate!': AUDIO_BASE+'hf_20260905_210210_199f86a0-4f49-466b-982a-44bc1cf39451.mp3',
   '¡Arriba, arriba! ¡Tío Juan vuela!': AUDIO_BASE+'hf_20260905_210210_2ad5e405-7d4f-4270-9365-c64e41ad13b3.mp3',
@@ -121,6 +129,10 @@ CLIPS_PJ.tiojuan = {
   '¡Hola, familia! ¡Un abrazo de tío Juan!': AUDIO_BASE+'hf_20260905_210238_218f5c52-99d2-42cc-b3a7-fdbf715e85be.mp3',
 };
 CLIPS_PJ.luca = {
+  '¡Extraterrestres! ¡Hola, amigos del espacio!': AUDIO_BASE+'hf_20260906_042246_09a84784-985f-4ec2-adf0-89261b149a84.mp3',
+  '¡Llegué a Marte! ¡Qué chévere!': AUDIO_BASE+'hf_20260906_042143_8e606ee9-95ae-4faf-a5b9-43f05ad19190.mp3',
+  '¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_041944_8bfe372c-5c3d-42c9-801f-7799492f2a9f.mp3',
+  '¡Mira para arriba! ¡El relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_862706f9-c9b0-4285-8687-ac33b7174cf4.mp3',
   '¡Luca al ataque!': AUDIO_BASE+'hf_20260906_002445_487e6cf8-6ddd-4ce4-9cda-c46d8789c254.mp3',
   '¡Estoy volando! ¡Mírame!': AUDIO_BASE+'hf_20260906_002445_daa4df69-ac78-4c67-9c55-78985d1e4aec.mp3',
   '¡Zarpamos! ¡Todos a bordo!': AUDIO_BASE+'hf_20260906_002445_b4cfb5f1-7816-4eb6-9d69-01052f08d91b.mp3',
@@ -139,6 +151,10 @@ CLIPS_PJ.luca = {
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_002456_bbcd031a-7e38-4b54-ad2c-9515f2771bba.mp3',
 };
 CLIPS_PJ.salomon = {
+  '¡Extraterrestres! ¡Qué genial, primo!': AUDIO_BASE+'hf_20260906_042314_14dbeef8-0928-42c8-af6a-c62ca3eb8249.mp3',
+  '¡Marte! ¡Qué genial, primo!': AUDIO_BASE+'hf_20260906_042143_cb72209e-b6ad-419f-800f-9fdbd44b20e3.mp3',
+  '¿Para qué vamos a traer más chivos a Coro, primo?': AUDIO_BASE+'hf_20260906_041849_3d5071c2-447d-4dc4-b47a-40a4b67c906d.mp3',
+  '¡Mira para arriba, primo! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_3e6ca31f-ecfe-4f73-867f-bcc350973252.mp3',
   '¡Salomón en la casa!': AUDIO_BASE+'hf_20260906_002518_a0daae9f-c6d4-4f63-9ec6-3f53a5c883bf.mp3',
   '¡Volando con estilo!': AUDIO_BASE+'hf_20260906_002457_81b97a1e-c7ac-4738-b6b4-ff99b29381e6.mp3',
   '¡Al agua, marineros!': AUDIO_BASE+'hf_20260906_002456_8ac1c235-765b-44c9-af52-f35bb23daf22.mp3',
@@ -157,6 +173,10 @@ CLIPS_PJ.salomon = {
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta, primo!': AUDIO_BASE+'hf_20260906_002554_b9143e4a-6c02-43f2-be30-c3c4cca9a7b1.mp3',
 };
 CLIPS_PJ.cucu = {
+  '¡Extraterrestres! ¡Son muy lindos!': AUDIO_BASE+'hf_20260906_042314_13d0a651-6d90-4516-9d87-fd69cf02d050.mp3',
+  '¡Llegué a Marte! ¡Hola, planeta rojo!': AUDIO_BASE+'hf_20260906_042143_a14189f1-4248-4688-a0cd-906c584c6207.mp3',
+  '¿Para qué vamos a traer más chivos a Coro? ¡Ya hay muchos!': AUDIO_BASE+'hf_20260906_041944_5917f375-e9a0-4671-ace2-32b81ff7699b.mp3',
+  '¡Mira para arriba! ¡Es el relámpago del Catatumbo! ¡Qué lindo!': AUDIO_BASE+'hf_20260906_041837_69363380-43b3-427b-8b86-a5e39772d3e3.mp3',
   '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_1b04387a-e2a0-40eb-8e7a-401b0d8c267a.mp3',
   '¡Cucú! ¡Aquí estoy!': AUDIO_BASE+'hf_20260905_210703_5f221ed9-5716-4822-936a-cc9c90391de5.mp3',
   '¡Estoy volando como un pajarito!': AUDIO_BASE+'hf_20260905_210421_337b764a-9edb-4ffd-a9d0-4d254769d80c.mp3',
@@ -175,6 +195,10 @@ CLIPS_PJ.cucu = {
   '¡Hola! ¡Soy Cucú! ¿Jugamos?': AUDIO_BASE+'hf_20260905_210606_dd882164-fed1-4caa-9fe0-bfba75f44245.mp3',
 };
 CLIPS_PJ.santi = {
+  '¡Marcianitos! ¡Hola!': AUDIO_BASE+'hf_20260906_042314_2ab82c09-7770-435b-b5c0-25b72c774978.mp3',
+  '¡Marte! ¡Rojo!': AUDIO_BASE+'hf_20260906_042143_445bc306-26c6-4e7d-91c4-f45586e4f53d.mp3',
+  '¿Pa qué más chivos a Coro?': AUDIO_BASE+'hf_20260906_041944_6db6af77-29e2-4f43-a522-90f9f76d5363.mp3',
+  '¡Arriba! ¡Relámpago!': AUDIO_BASE+'hf_20260906_041837_b00edaf3-c97c-44a7-b41e-371fa97c123f.mp3',
   '¡Tati al ataque!': AUDIO_BASE+'hf_20260906_002554_15812f71-0ca3-4147-8f06-b2f4eedd63f1.mp3',
   '¡A volar! ¡Uuuh!': AUDIO_BASE+'hf_20260906_002618_8e717b13-50ab-4515-82d0-2e6bbf1cf8db.mp3',
   '¡Barquito, barquito!': AUDIO_BASE+'hf_20260906_002554_1b66d073-60e8-4a1f-bab6-fa49a4a86bb5.mp3',
@@ -193,6 +217,10 @@ CLIPS_PJ.santi = {
   '¡Qué molleja! ¡Un nudo en la garganta!': AUDIO_BASE+'hf_20260906_002642_72530e90-db7b-43c3-8406-c272d2448082.mp3',
 };
 CLIPS_PJ.mama = {
+  '¡Extraterrestres! ¡Hola, mis amores del espacio!': AUDIO_BASE+'hf_20260906_042341_47895ca8-6cf9-4b3f-a13a-cac0da83dff9.mp3',
+  '¡Llegué a Marte! ¡No lo puedo creer!': AUDIO_BASE+'hf_20260906_042143_a189e061-2215-4ef8-833f-f1524952b450.mp3',
+  '¿Para qué vamos a traer más chivos a Coro, mis amores?': AUDIO_BASE+'hf_20260906_041944_3bb56557-3993-46d0-a239-5f01f1e1a3f3.mp3',
+  '¡Miren para arriba, mis amores! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_b0a6c7a9-7e0d-4711-9bbd-32c5fbdb6c6f.mp3',
   '¡Qué molleja, mis amores! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_93c691f1-1236-4925-8afd-cc585ce52a95.mp3',
   '¡Mamá está lista! ¡Vamos, mis amores!': AUDIO_BASE+'hf_20260905_210523_f82fde6b-bd57-476f-91c0-cb7e0e11c8eb.mp3',
   '¡Estoy volando! ¡Sujétense bien!': AUDIO_BASE+'hf_20260905_210523_76fd3f78-5fef-4645-8c77-81297da02c3e.mp3',
@@ -211,6 +239,10 @@ CLIPS_PJ.mama = {
   '¡Hola, mi amor! ¡Mamá te quiere mucho!': AUDIO_BASE+'hf_20260905_210703_bb52a312-7d08-4da6-9abb-a044c1f7c58b.mp3',
 };
 CLIPS_PJ.papa = {
+  '¡Extraterrestres! ¡Hola, amigos del espacio!': AUDIO_BASE+'hf_20260906_042314_690d00b1-f647-4f3b-80ef-f61d9edc852b.mp3',
+  '¡Llegué a Marte! ¡Increíble!': AUDIO_BASE+'hf_20260906_042217_41a55601-0361-47ef-b797-35fee76b4e32.mp3',
+  '¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_041944_9a89545f-f6ef-4f99-af71-213e7f5eb7b7.mp3',
+  '¡Mira para arriba! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_c17aa7fe-148d-4129-828d-057c6ac3ed78.mp3',
   '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_202294ae-b21a-401c-9dd6-797ba3d29568.mp3',
   '¡Papá al volante!': AUDIO_BASE+'hf_20260905_210703_09f2c4a7-0e88-401c-82df-e2e5637ae56a.mp3',
   '¡Papá vuela alto!': AUDIO_BASE+'hf_20260905_210703_afafa465-7cee-4f13-92b5-c5e8a68532aa.mp3',
@@ -229,6 +261,10 @@ CLIPS_PJ.papa = {
   '¡Hola, campeón! ¡Papá está aquí!': AUDIO_BASE+'hf_20260905_210935_54408410-f3f6-4954-8784-e6cb2ab18077.mp3',
 };
 CLIPS_PJ.abu = {
+  '¡Ay, extraterrestres! ¡Hola, mis cielos del espacio!': AUDIO_BASE+'hf_20260906_042314_9e84ecdd-899e-46f5-981e-2eedfd30da54.mp3',
+  '¡Llegué a Marte! ¡Quién lo diría, mi cielo!': AUDIO_BASE+'hf_20260906_042217_6c3c1675-db59-454c-9a97-78eaa5db3a99.mp3',
+  '¡Ay, mi cielo! ¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_041944_61525261-8065-436f-8715-63e16267ed4b.mp3',
+  '¡Ay, mira para arriba, mi cielo! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_fed749fe-c45d-4221-abaa-23b65edbdc69.mp3',
   '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta, mi cielo!': AUDIO_BASE+'hf_20260906_000244_8d7a6424-c315-468c-b267-4513e1470afc.mp3',
   '¡Abu está lista, mis niños!': AUDIO_BASE+'hf_20260905_210914_5e4b3335-b965-48ef-b932-4bd1226d01f7.mp3',
   '¡Ay, Dios mío, estoy volando!': AUDIO_BASE+'hf_20260905_210914_4d55f7d3-258d-49a2-a850-8431bcbdc8de.mp3',
@@ -247,6 +283,10 @@ CLIPS_PJ.abu = {
   '¡Hola, mi cielo! ¡Abu te quiere!': AUDIO_BASE+'hf_20260905_211102_f7b5fee2-a1b1-4a8f-b826-0fcdfe644dc0.mp3',
 };
 CLIPS_PJ.nacho = {
+  '¡Épale! ¡Extraterrestres!': AUDIO_BASE+'hf_20260906_042341_7afb2ecc-8d0f-4ae8-9496-ed37f17179b2.mp3',
+  '¡Épale! ¡Llegué a Marte!': AUDIO_BASE+'hf_20260906_042217_6b5feb8f-91e4-43ad-a031-e7d9dd9a8322.mp3',
+  '¡Épale! ¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_041944_c3cb20c4-e8dc-4e5b-9542-66f3219c2cbe.mp3',
+  '¡Épale, mira para arriba! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_5e5c5716-d116-44af-8416-6d422822cc67.mp3',
   '¡Épale, qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000244_8e5e054a-3d97-4878-bd78-a127f6561834.mp3',
   '¡Épale! ¡Tío Nacho llegó!': AUDIO_BASE+'hf_20260905_211122_040c8ffb-f2b8-48b0-946e-f1da910c8c46.mp3',
   '¡Épale, estoy volando!': AUDIO_BASE+'hf_20260905_211122_4f35c60a-929f-4aa4-b9e1-4163166552f5.mp3',
@@ -265,6 +305,10 @@ CLIPS_PJ.nacho = {
   '¡Épale! ¡Aquí viene tío Nacho!': AUDIO_BASE+'hf_20260905_211233_0d2530c9-62f0-495f-9dd0-c7cd85186173.mp3',
 };
 CLIPS_PJ.yanny = {
+  '¡Extraterrestres! ¡Hola, mis amores!': AUDIO_BASE+'hf_20260906_042341_6617e3c8-c739-4037-bec7-b27795744a46.mp3',
+  '¡Llegué a Marte, mi amor!': AUDIO_BASE+'hf_20260906_042217_0345062f-b308-421b-9ea5-14d8d4722ecf.mp3',
+  '¿Para qué vamos a traer más chivos a Coro, mi amor?': AUDIO_BASE+'hf_20260906_042016_eea735f7-057b-4dff-8d1a-a732035752ec.mp3',
+  '¡Mira para arriba, mi amor! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041837_e18e2ce7-c657-4e72-b3d1-af1169f126ce.mp3',
   '¡Qué molleja, mi amor! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_120fe22f-2de6-425d-bb70-389e620d512f.mp3',
   '¡Hola mi amor! ¡Tía Yanny está lista!': AUDIO_BASE+'hf_20260905_211210_5ce11796-fa36-43a4-8bf8-930316ba09bf.mp3',
   '¡Estoy volando, mi amor!': AUDIO_BASE+'hf_20260905_211210_9f201a46-e7a4-4dd7-9852-d62f14a8f10b.mp3',
@@ -283,6 +327,10 @@ CLIPS_PJ.yanny = {
   '¡Hola mi amor! ¡Soy tía Yanny!': AUDIO_BASE+'hf_20260905_211321_81ef2f70-8ac6-4099-ae39-dd00ef98778f.mp3',
 };
 CLIPS_PJ.tiofran = {
+  '¡Extraterrestres! ¡A ver quién se tira el peo más grande!': AUDIO_BASE+'hf_20260906_042341_74adea0a-d7ff-428b-9900-a3c81d5f04f7.mp3',
+  '¡Llegué a Marte! ¡Mi peo me trajo hasta aquí!': AUDIO_BASE+'hf_20260906_042217_00d181c4-5c09-4237-aee9-450b95d3185f.mp3',
+  '¿Para qué vamos a traer más chivos a Coro? ¡Prrrr!': AUDIO_BASE+'hf_20260906_042017_fa9b5294-4fb0-4915-9fd8-f3a93a3bf510.mp3',
+  '¡Mira para arriba! ¡Es el relámpago del Catatumbo! ¿O fue mi peo?': AUDIO_BASE+'hf_20260906_041837_7008aca4-a42b-4914-9dbd-1584c41e51d0.mp3',
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y un peo del susto!': AUDIO_BASE+'hf_20260906_000210_0aaa5fa1-d871-45e9-b492-7fb2eaa58e51.mp3',
   '¡Tío Fran llegó! ¡Cuidado con mis peos!': AUDIO_BASE+'hf_20260905_211321_12cb52df-4047-4462-9e01-56a3f607432b.mp3',
   '¡Volando a pura fuerza de peo!': AUDIO_BASE+'hf_20260905_211321_14d204d3-0be3-45a0-9d53-50215b31f0a1.mp3',
@@ -301,6 +349,11 @@ CLIPS_PJ.tiofran = {
   '¡Hola! ¡Soy tío Fran! ¡Prrrr!': AUDIO_BASE+'hf_20260905_211429_9b5e63a7-87c6-4323-8857-1cfa7e1d170d.mp3',
 };
 CLIPS_PJ.romulo = {
+  '¡Qué rica Polarcita!': AUDIO_BASE+'hf_20260906_042401_d3c1b8b3-b489-41a0-8015-73ce4948e280.mp3',
+  '¡Extraterrestres! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260906_042341_c6a88b75-8414-4743-b4be-00b623af9503.mp3',
+  '¡Llegué a Marte! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260906_042217_859c2853-94d7-4cf7-b82c-79ad160f4400.mp3',
+  '¿Para qué vamos a traer más chivos a Coro? ¡Brrrp!': AUDIO_BASE+'hf_20260906_042017_70d4063f-255f-4b6f-b5f1-569e102592b3.mp3',
+  '¡Mira para arriba! ¡El relámpago del Catatumbo! ¡Brrrp!': AUDIO_BASE+'hf_20260906_041849_87fa0f22-1d3a-477f-9cd2-3a7c8b856422.mp3',
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260906_000219_788dbe27-e9af-4e47-97b6-74d23ecfd4eb.mp3',
   '¡Rómulo el mapache está listo!': AUDIO_BASE+'hf_20260905_211429_a28b6474-3174-434e-ae2f-77049161db0c.mp3',
   '¡Estoy volando! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211429_b725a450-91f6-46e5-85c9-36466eabd3eb.mp3',
@@ -319,6 +372,10 @@ CLIPS_PJ.romulo = {
   '¡Hola! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211515_ae5f8bc5-85c8-403a-a175-8a9915c232aa.mp3',
 };
 CLIPS_PJ.beto = {
+  '¡Extraterrestres! ¡Hola, amigos del espacio!': AUDIO_BASE+'hf_20260906_042341_57d37184-cfb1-4dc8-b484-d345392d0c18.mp3',
+  '¡Llegué a Marte, pichunguito!': AUDIO_BASE+'hf_20260906_042314_43cf9221-187d-4270-a007-f99c0d63b0f0.mp3',
+  '¿Para qué vamos a traer más chivos a Coro, pichunguito?': AUDIO_BASE+'hf_20260906_042017_7d278b50-0d94-4a7f-80f6-108bff238808.mp3',
+  '¡Mira para arriba, pichunguito! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041849_63bcc969-5042-4013-92d8-0acf015ea6bb.mp3',
   '¡Qué molleja, pichunguito! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_8ee6a2f9-63e7-490c-be01-b18997f187e3.mp3',
   '¡Tío Beto está listo, pichunguito!': AUDIO_BASE+'hf_20260905_211515_44df742b-2dfb-495f-9de1-faf4fdc7a06e.mp3',
   '¡Estoy volando!': AUDIO_BASE+'hf_20260905_211559_70e20026-8ba8-47af-b79c-99ee194c8323.mp3',
@@ -337,6 +394,10 @@ CLIPS_PJ.beto = {
   '¡Hola pichunguito! ¡Soy tío Beto!': AUDIO_BASE+'hf_20260905_211706_6cc72135-3327-4f18-acd7-6fb06b89ec5c.mp3',
 };
 CLIPS_PJ.giuliana = {
+  '¡Extraterrestres! ¡Un abrazo, amigos del espacio!': AUDIO_BASE+'hf_20260906_042418_73e93f8a-13bd-416d-aed6-4e846e2e734a.mp3',
+  '¡Llegué a Marte! ¡Un abrazo, planeta rojo!': AUDIO_BASE+'hf_20260906_042246_eb8d88c7-77e4-4265-8f10-7f038c6c0698.mp3',
+  '¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_042217_855cadfa-e6fc-4c29-86aa-647ad059a5e5.mp3',
+  '¡Mira para arriba! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041849_ba2db5d2-2e1b-452a-966c-df7486061296.mp3',
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_586d7b35-ba97-4317-9eca-e958f338b4bb.mp3',
   '¡Tía Giuliana está lista!': AUDIO_BASE+'hf_20260905_211624_7b78eff4-1245-4ca6-a493-eb5180754d4f.mp3',
   '¡Estoy volando! ¡Qué emoción!': AUDIO_BASE+'hf_20260905_211706_b3bdb296-e18e-4b80-90d0-f68311297105.mp3',
@@ -355,6 +416,10 @@ CLIPS_PJ.giuliana = {
   '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!': AUDIO_BASE+'hf_20260905_211729_580f7a89-60a3-4315-a6f3-f5c18221a592.mp3',
 };
 CLIPS_PJ.penny = {
+  '¡Guau! ¡Extraterrestres!': AUDIO_BASE+'hf_20260906_042401_fcbbbaef-12de-4575-a012-c6cf5baa564e.mp3',
+  '¡Guau! ¡Llegué a Marte!': AUDIO_BASE+'hf_20260906_042246_0b37eb2d-1a67-4d24-9154-3dd866fe84bc.mp3',
+  '¡Guau! ¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_042017_7235489b-728f-49d4-a332-dca674cc657e.mp3',
+  '¡Guau! ¡Mira para arriba! ¡El relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041849_164ffd54-1cf9-4e8e-88db-eb39d3a1d1dd.mp3',
   '¡Guau! ¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_c2772fa7-ef50-4f74-95f1-13ab9b31c77e.mp3',
   '¡Guau! ¡Penny al ataque!': AUDIO_BASE+'hf_20260905_212151_8f86856b-70e0-4ecf-aea9-b2e64425eb14.mp3',
   '¡Guau! ¡Un perrito volador!': AUDIO_BASE+'hf_20260905_211753_9d44db2a-24c7-464e-98a9-472e9880bcca.mp3',
@@ -373,6 +438,10 @@ CLIPS_PJ.penny = {
   '¡Guau, guau! ¡Soy Penny!': AUDIO_BASE+'hf_20260905_211835_5309a4b6-fc7c-45bd-85ba-c1049176791d.mp3',
 };
 CLIPS_PJ.sheldon = {
+  '¡Guau, guau! ¡Marcianitos!': AUDIO_BASE+'hf_20260906_042401_2d0d6792-47f7-4afc-9b46-036f55601e6f.mp3',
+  '¡Guau! ¡Marte!': AUDIO_BASE+'hf_20260906_042314_bce25eac-b938-4d3e-835d-47c0acb00920.mp3',
+  '¡Guau, guau! ¿Más chivos a Coro?': AUDIO_BASE+'hf_20260906_042017_b9a3a079-fa31-4867-9a99-b4d8bf04feeb.mp3',
+  '¡Guau, guau! ¡Arriba! ¡El relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041849_d2f0d9ad-6630-4ef5-a7ef-58046501cd7b.mp3',
   '¡Guau, guau! ¡Qué molleja! ¡Un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_b7e4b924-8114-4c00-a58a-3cb489743866.mp3',
   '¡Guau! ¡Sheldon al ataque!': AUDIO_BASE+'hf_20260905_211835_ec4070eb-0629-4d71-b2fb-f72f629d493e.mp3',
   '¡Guau! ¡Sheldon vuela!': AUDIO_BASE+'hf_20260905_211835_8f7b85b5-5d43-4411-a9b8-35f068e670ab.mp3',
@@ -391,6 +460,10 @@ CLIPS_PJ.sheldon = {
   '¡Guau, guau! ¡Soy Sheldon!': AUDIO_BASE+'hf_20260905_212112_5ee66fdb-b946-4e7c-8ba1-43e6e48ba54e.mp3',
 };
 CLIPS_PJ.srpopo = {
+  '¡Extraterrestres! ¡Seguro hacen popo verde!': AUDIO_BASE+'hf_20260906_042418_902ada31-78b2-4ec6-9c99-79c96c1f0592.mp3',
+  '¡Llegué a Marte! ¡El primer popo en Marte!': AUDIO_BASE+'hf_20260906_042246_9a0bb38f-6e74-4b87-9582-c589dcf6849d.mp3',
+  '¿Para qué vamos a traer más chivos a Coro?': AUDIO_BASE+'hf_20260906_042017_ad924a89-f55a-450c-9993-aac249f3511f.mp3',
+  '¡Mira para arriba! ¡Es el relámpago del Catatumbo!': AUDIO_BASE+'hf_20260906_041849_d6972d13-39ad-408e-9ef8-c5bf69971441.mp3',
   '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y en la barriga!': AUDIO_BASE+'hf_20260906_000219_8087f8b1-52ca-4468-8bb9-458c6afe8523.mp3',
   '¡El Señor Popo está listo!': AUDIO_BASE+'hf_20260905_212112_974f5448-7fb2-4ad5-89ae-abe686607d2f.mp3',
   '¡Un popo volador! ¡Increíble!': AUDIO_BASE+'hf_20260905_212032_1626c937-7d8f-4ef2-8152-3f2780344488.mp3',
@@ -493,6 +566,16 @@ const lerp = (a,b,t)=>a+(b-a)*t;
 const clamp = (v,a,b)=>v<a?a:v>b?b:v;
 const smooth = (a,b,x)=>{ const t = clamp((x-a)/(b-a),0,1); return t*t*(3-2*t); };
 const envolver = a=>{ while (a>Math.PI) a-=2*Math.PI; while (a<-Math.PI) a+=2*Math.PI; return a; };
+/* ---- ¿qué mapa? 1 = la isla de día · 2 = Maracaibo de noche (con el Catatumbo, Coro, Marte y la nave extraterrestre) ---- */
+const MAPA = (()=>{
+  try{
+    if (!EN_NAVEGADOR) return (typeof process !== 'undefined' && process.env && process.env.MAPA==='2') ? 2 : 1;
+    const u = new URL(location.href).searchParams.get('mapa');
+    if (u==='2') return 2; if (u==='1') return 1;
+    return localStorage.getItem('aventura3d.mapa')==='2' ? 2 : 1;
+  }catch(e){ return 1; }
+})();
+const NOCHE = MAPA===2;
 let semilla = 20260904;
 function azar(){ semilla = (Math.imul(semilla, 1103515245) + 12345) & 0x7fffffff; return semilla/0x7fffffff; }
 /* ruido suave y determinista (el mismo en cada aparato) para las colinas */
@@ -729,6 +812,15 @@ const CANCHA = {x:0, z:128, w:36, d:22};
 const PARQUE = {x:90, z:66};
 const FUENTE = {x:10, z:70, r:3.2};
 const COFRE = {x:-120, z:-470};
+/* el mapa 2: Coro con sus chivos, los aros de la noche para el pterodáctilo y la nave extraterrestre en el espacio */
+const CORO = {x:150, z:-190, r:36};
+const CHIVOS = [];
+{ semilla = 1234; for (let i=0;i<8;i++){ const a = i/8*6.283 + azar()*0.5, r = 8 + azar()*22; let x = CORO.x + Math.cos(a)*r, z = CORO.z + Math.sin(a)*r; let k = 0; while (alturaBase(x, z) < 1.5 && k < 30){ x += (CORO.x-x)*0.1; z += (CORO.z-z)*0.1; k++; } CHIVOS.push({id:i, x, z, ang: azar()*6.283}); } }
+const AROS_NOCHE = [
+  {x:-20, z:-60, y:34}, {x:-120, z:-150, y:48}, {x:-240, z:-40, y:60}, {x:-150, z:120, y:56}, {x:30, z:210, y:44}, {x:150, z:60, y:38},
+];
+for (const a of AROS_NOCHE) a.r = 7;
+const OVNI = {x:170, y:540, z:-140, r:24};
 const AROS = [
   {x:205, z:-170, y:42}, {x:120, z:-290, y:62}, {x:-30, z:-330, y:84}, {x:-190, z:-260, y:96},
   {x:-280, z:-80, y:82}, {x:-190, z:140, y:66}, {x:-10, z:290, y:50},
@@ -742,6 +834,7 @@ const VEHICULOS_DEF = [
   {id:'motoagua', nombre:'la moto de agua', emoji:'🛥️', x:MUELLE.x0 + Math.cos(MUELLE.ang)*34 + Math.sin(MUELLE.ang)*5.5, z:MUELLE.z0 + Math.sin(MUELLE.ang)*34 - Math.cos(MUELLE.ang)*5.5, ang:Math.atan2(Math.cos(MUELLE.ang), Math.sin(MUELLE.ang)), radio:1.6, agua:true},
   {id:'nave',  nombre:'la nave espacial', emoji:'🚀', x:186, z:-56, ang:Math.PI, radio:2.4, vuela:true},
   {id:'dino',  nombre:'el dinosaurio', emoji:'🦖', x:-40, z:-60, ang:Math.PI/2, radio:1.6, aplasta:true},
+  ...(MAPA===2 ? [{id:'ptero', nombre:'el pterodáctilo', emoji:'🦅', x:-72, z:-34, ang:Math.PI/2, radio:2.2, vuela:true}] : []),
   {id:'moto',  nombre:'la moto',       emoji:'🏍️', x:RAMPA.x - RAMPA.tx*70, z:RAMPA.z - RAMPA.tz*70, ang:RAMPA.ang, radio:1.2},
   {id:'avion', nombre:'el avión',      emoji:'✈️', x:PISTA.x, z:70, ang:Math.PI, radio:3},
   {id:'barco', nombre:'el barco',      emoji:'🚤', x:MUELLE.x0 + Math.cos(MUELLE.ang)*26 + Math.sin(MUELLE.ang)*5.5, z:MUELLE.z0 + Math.sin(MUELLE.ang)*26 - Math.cos(MUELLE.ang)*5.5, ang:Math.atan2(Math.cos(MUELLE.ang), Math.sin(MUELLE.ang)), radio:2.6},
@@ -766,26 +859,26 @@ const FAMILIA = [
 const porId = id => FAMILIA.find(c=>c.id===id);
 /* ---- El paquete de diálogos de cada personaje: la misma situación, la frase de cada uno.
    Fernando saluda a cada familiar con su frase de FAMILIA (saludo: null). ---- */
-const CLAVES_DIALOGO = ['inicio', 'volar', 'barco', 'dino', 'luna', 'hamburguesa', 'arepa', 'maracaibo', 'ganas', 'peo', 'alivio', 'popito', 'rampa', 'tesoro', 'puente', 'saludo'];
+const CLAVES_DIALOGO = ['inicio', 'volar', 'barco', 'dino', 'luna', 'hamburguesa', 'arepa', 'maracaibo', 'ganas', 'peo', 'alivio', 'popito', 'rampa', 'tesoro', 'puente', 'saludo', 'catatumbo', 'coro', 'marte', 'extraterrestres'];
 const DIALOGOS = {
-  fernando: {inicio: '¡Pichunguito al ataque!', volar: '¡A volar, pichunguitos!', barco: '¡Todos a bordo del barco pichunguito!', dino: '¡Vamos, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Tesoro! ¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: null},
-  tiojuan: {inicio: '¡Tío Juan al rescate!', volar: '¡Arriba, arriba! ¡Tío Juan vuela!', barco: '¡Capitán tío Juan al mando!', dino: '¡Un dinosaurio! ¡Qué bestia tan bonita!', luna: '¡Llegué a la luna, pichunguito!', hamburguesa: '¡Mmm, qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo, pichunguito!', maracaibo: '¡Maracaibo, tierra del sol amada!', ganas: '¡Ay, ay! ¡Necesito un baño ya!', peo: '¡Perdón! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio tan grande!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa como un superhéroe!', tesoro: '¡El tesoro es nuestro, pichunguito!', puente: '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta, pichunguito!', saludo: '¡Hola, familia! ¡Un abrazo de tío Juan!'},
-  luca: {inicio: '¡Luca al ataque!', volar: '¡Estoy volando! ¡Mírame!', barco: '¡Zarpamos! ¡Todos a bordo!', dino: '¡Arre, dinosaurio, arre!', luna: '¡Llegué a la luna! ¡Qué chévere!', hamburguesa: '¡Ñam! ¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola! ¡Soy Luca, el amigo de Fernando!'},
-  salomon: {inicio: '¡Salomón en la casa!', volar: '¡Volando con estilo!', barco: '¡Al agua, marineros!', dino: '¡Dinosaurio, tú y yo somos un equipo!', luna: '¡La luna! ¡Qué genial!', hamburguesa: '¡Esta hamburguesa está brutal!', arepa: '¡Arepa de agüita de sapo, la mejor!', maracaibo: '¡Maracaibo, aquí estoy!', ganas: '¡Uy, uy! ¡Quiero hacer popo!', peo: '¡Ups, se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Ja! ¡Un popo bebé me sigue!', rampa: '¡Salté la rampa con estilo!', tesoro: '¡El tesoro! ¡Somos ricos!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta, primo!', saludo: '¡Hola! ¡Salomón quiere jugar!'},
-  cucu: {inicio: '¡Cucú! ¡Aquí estoy!', volar: '¡Estoy volando como un pajarito!', barco: '¡Vamos a navegar!', dino: '¡Qué dinosaurio tan lindo!', luna: '¡Llegué a la luna! ¡Hola, estrellitas!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Qué tierno!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola! ¡Soy Cucú! ¿Jugamos?'},
-  santi: {inicio: '¡Tati al ataque!', volar: '¡A volar! ¡Uuuh!', barco: '¡Barquito, barquito!', dino: '¡Dino grande!', luna: '¡La luna! ¡Qué bonita!', hamburguesa: '¡Ñam, ñam! ¡Rica!', arepa: '¡Arepita rica!', maracaibo: '¡Maracaibo!', ganas: '¡Popó! ¡Quiero popó!', peo: '¡Jiji, un peo!', alivio: '¡Ahh, qué rico!', popito: '¡Popó bebé! ¡Amiguito!', rampa: '¡Salté! ¡Salté!', tesoro: '¡Tesoro! ¡Brilla!', puente: '¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Hola! ¡Soy Santi!'},
-  mama: {inicio: '¡Mamá está lista! ¡Vamos, mis amores!', volar: '¡Estoy volando! ¡Sujétense bien!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué aventura!', luna: '¡Llegué a la luna! ¡No lo puedo creer!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, mi tierra!', ganas: '¡Ay, necesito un baño ahora mismo!', peo: '¡Ay, qué pena! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué susto!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, mis amores! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola, mi amor! ¡Mamá te quiere mucho!'},
-  papa: {inicio: '¡Papá al volante!', volar: '¡Papá vuela alto!', barco: '¡Capitán papá al mando!', dino: '¡Un dinosaurio! ¡Esto sí es una aventura!', luna: '¡Llegué a la luna! ¡Increíble!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Uy, tengo que ir al baño!', peo: '¡Perdón! ¡Fue un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué salto!', tesoro: '¡El tesoro! ¡Lo encontramos!', puente: '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola, campeón! ¡Papá está aquí!'},
-  abu: {inicio: '¡Abu está lista, mis niños!', volar: '¡Ay, Dios mío, estoy volando!', barco: '¡Vamos a navegar, mis amores!', dino: '¡Ay, un dinosaurio! ¡Qué grande!', luna: '¡Llegué a la luna! ¡Quién lo diría!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Maracaibo! ¡Qué calor tan sabroso!', ganas: '¡Ay, necesito un bañito!', peo: '¡Ay, qué pena! ¡Un peíto!', alivio: '¡Ahh, qué alivio, mi amor!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Ay, mi corazón!', tesoro: '¡Encontré el tesoro!', puente: '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta, mi cielo!', saludo: '¡Hola, mi cielo! ¡Abu te quiere!'},
-  nacho: {inicio: '¡Épale! ¡Tío Nacho llegó!', volar: '¡Épale, estoy volando!', barco: '¡Todos a bordo con tío Nacho!', dino: '¡Épale, un dinosaurio!', luna: '¡Épale! ¡Llegué a la luna!', hamburguesa: '¡Épale, qué rica hamburguesa!', arepa: '¡Épale, qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, épale!', ganas: '¡Épale, quiero hacer popo!', peo: '¡Épale! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Épale, un popo bebé me sigue!', rampa: '¡Épale, salté la rampa!', tesoro: '¡Épale, el tesoro!', puente: '¡Épale, qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Épale! ¡Aquí viene tío Nacho!'},
-  yanny: {inicio: '¡Hola mi amor! ¡Tía Yanny está lista!', volar: '¡Estoy volando, mi amor!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué lindo!', luna: '¡Llegué a la luna, mi amor!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Ay, quiero hacer popo!', peo: '¡Ay, mi amor, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, mi amor! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola mi amor! ¡Soy tía Yanny!'},
-  tiofran: {inicio: '¡Tío Fran llegó! ¡Cuidado con mis peos!', volar: '¡Volando a pura fuerza de peo!', barco: '¡Todos a bordo! ¡Y abran las ventanas!', dino: '¡Un dinosaurio! ¡A ver quién se tira el peo más grande!', luna: '¡Llegué a la luna! ¡Mi peo me trajo hasta aquí!', hamburguesa: '¡Qué rica hamburguesa! ¡Ya viene el peo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Y no es broma!', peo: '¡Prrrr! ¡Ese sí fue grande!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Y huele a peo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y un peo del susto!', saludo: '¡Hola! ¡Soy tío Fran! ¡Prrrr!'},
-  romulo: {inicio: '¡Rómulo el mapache está listo!', volar: '¡Estoy volando! ¡Brrrp!', barco: '¡Al barco! ¡Brrrp!', dino: '¡Un dinosaurio! ¡Ay, qué pena!', luna: '¡Llegué a la luna! ¡Brrrp! ¡Ay, qué pena!', hamburguesa: '¡Qué rica hamburguesa! ¡Brrrp!', arepa: '¡Qué rica arepa! ¡Brrrp! ¡Ay, qué pena!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Ay, qué pena!', peo: '¡Brrrp! ¡No, eso fue un peo! ¡Ay, qué pena!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Brrrp!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta! ¡Brrrp! ¡Ay, qué pena!', saludo: '¡Hola! ¡Brrrp! ¡Ay, qué pena!'},
-  beto: {inicio: '¡Tío Beto está listo, pichunguito!', volar: '¡Estoy volando!', barco: '¡Todos a bordo con tío Beto!', dino: '¡Un dinosaurio! ¡Qué maravilla!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, pichunguito! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola pichunguito! ¡Soy tío Beto!'},
-  giuliana: {inicio: '¡Tía Giuliana está lista!', volar: '¡Estoy volando! ¡Qué emoción!', barco: '¡Todos a bordo!', dino: '¡Un dinosaurio! ¡Un abrazo, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!'},
-  penny: {inicio: '¡Guau! ¡Penny al ataque!', volar: '¡Guau! ¡Un perrito volador!', barco: '¡Guau! ¡Todos a bordo!', dino: '¡Guau, guau! ¡Un dinosaurio!', luna: '¡Guau! ¡Llegué a la luna!', hamburguesa: '¡Guau! ¡Qué rica hamburguesa!', arepa: '¡Guau! ¡Qué rica arepa!', maracaibo: '¡Guau! ¡Llegamos a Maracaibo!', ganas: '¡Guau! ¡Quiero hacer popo!', peo: '¡Guau! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé me sigue!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡El tesoro!', puente: '¡Guau! ¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Penny!'},
-  sheldon: {inicio: '¡Guau! ¡Sheldon al ataque!', volar: '¡Guau! ¡Sheldon vuela!', barco: '¡Guau! ¡Al barco!', dino: '¡Guau, guau! ¡Un dinosaurio grande!', luna: '¡Guau! ¡La luna!', hamburguesa: '¡Guau! ¡Hamburguesa rica!', arepa: '¡Guau! ¡Arepa rica!', maracaibo: '¡Guau! ¡Maracaibo!', ganas: '¡Guau! ¡Popo, popo!', peo: '¡Guau! ¡Un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡Tesoro!', puente: '¡Guau, guau! ¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Sheldon!'},
-  srpopo: {inicio: '¡El Señor Popo está listo!', volar: '¡Un popo volador! ¡Increíble!', barco: '¡Todos a bordo del barco popo!', dino: '¡Un dinosaurio! ¡Seguro hace popos enormes!', luna: '¡Llegué a la luna! ¡El primer popo en la luna!', hamburguesa: '¡Qué rica hamburguesa! ¡Vamos a hacer popo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Yo, el Señor Popo!', peo: '¡Uy, un peo! ¡Qué orgullo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Es mi hijito!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Huele a popo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y en la barriga!', saludo: '¡Hola! ¡Soy el Señor Popo!'},
+  fernando: {inicio: '¡Pichunguito al ataque!', volar: '¡A volar, pichunguitos!', barco: '¡Todos a bordo del barco pichunguito!', dino: '¡Vamos, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Tesoro! ¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: null, catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte!', extraterrestres: '¡Extraterrestres! ¡Hola, amiguitos del espacio!'},
+  tiojuan: {inicio: '¡Tío Juan al rescate!', volar: '¡Arriba, arriba! ¡Tío Juan vuela!', barco: '¡Capitán tío Juan al mando!', dino: '¡Un dinosaurio! ¡Qué bestia tan bonita!', luna: '¡Llegué a la luna, pichunguito!', hamburguesa: '¡Mmm, qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo, pichunguito!', maracaibo: '¡Maracaibo, tierra del sol amada!', ganas: '¡Ay, ay! ¡Necesito un baño ya!', peo: '¡Perdón! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio tan grande!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa como un superhéroe!', tesoro: '¡El tesoro es nuestro, pichunguito!', puente: '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta, pichunguito!', saludo: '¡Hola, familia! ¡Un abrazo de tío Juan!', catatumbo: '¡Mira para arriba, pichunguito! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro, pichunguito?', marte: '¡Llegué a Marte, pichunguito!', extraterrestres: '¡Extraterrestres! ¡Un abrazo desde la Tierra, pichunguitos!'},
+  luca: {inicio: '¡Luca al ataque!', volar: '¡Estoy volando! ¡Mírame!', barco: '¡Zarpamos! ¡Todos a bordo!', dino: '¡Arre, dinosaurio, arre!', luna: '¡Llegué a la luna! ¡Qué chévere!', hamburguesa: '¡Ñam! ¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola! ¡Soy Luca, el amigo de Fernando!', catatumbo: '¡Mira para arriba! ¡El relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte! ¡Qué chévere!', extraterrestres: '¡Extraterrestres! ¡Hola, amigos del espacio!'},
+  salomon: {inicio: '¡Salomón en la casa!', volar: '¡Volando con estilo!', barco: '¡Al agua, marineros!', dino: '¡Dinosaurio, tú y yo somos un equipo!', luna: '¡La luna! ¡Qué genial!', hamburguesa: '¡Esta hamburguesa está brutal!', arepa: '¡Arepa de agüita de sapo, la mejor!', maracaibo: '¡Maracaibo, aquí estoy!', ganas: '¡Uy, uy! ¡Quiero hacer popo!', peo: '¡Ups, se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Ja! ¡Un popo bebé me sigue!', rampa: '¡Salté la rampa con estilo!', tesoro: '¡El tesoro! ¡Somos ricos!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta, primo!', saludo: '¡Hola! ¡Salomón quiere jugar!', catatumbo: '¡Mira para arriba, primo! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro, primo?', marte: '¡Marte! ¡Qué genial, primo!', extraterrestres: '¡Extraterrestres! ¡Qué genial, primo!'},
+  cucu: {inicio: '¡Cucú! ¡Aquí estoy!', volar: '¡Estoy volando como un pajarito!', barco: '¡Vamos a navegar!', dino: '¡Qué dinosaurio tan lindo!', luna: '¡Llegué a la luna! ¡Hola, estrellitas!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Qué tierno!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola! ¡Soy Cucú! ¿Jugamos?', catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo! ¡Qué lindo!', coro: '¿Para qué vamos a traer más chivos a Coro? ¡Ya hay muchos!', marte: '¡Llegué a Marte! ¡Hola, planeta rojo!', extraterrestres: '¡Extraterrestres! ¡Son muy lindos!'},
+  santi: {inicio: '¡Tati al ataque!', volar: '¡A volar! ¡Uuuh!', barco: '¡Barquito, barquito!', dino: '¡Dino grande!', luna: '¡La luna! ¡Qué bonita!', hamburguesa: '¡Ñam, ñam! ¡Rica!', arepa: '¡Arepita rica!', maracaibo: '¡Maracaibo!', ganas: '¡Popó! ¡Quiero popó!', peo: '¡Jiji, un peo!', alivio: '¡Ahh, qué rico!', popito: '¡Popó bebé! ¡Amiguito!', rampa: '¡Salté! ¡Salté!', tesoro: '¡Tesoro! ¡Brilla!', puente: '¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Hola! ¡Soy Santi!', catatumbo: '¡Arriba! ¡Relámpago!', coro: '¿Pa qué más chivos a Coro?', marte: '¡Marte! ¡Rojo!', extraterrestres: '¡Marcianitos! ¡Hola!'},
+  mama: {inicio: '¡Mamá está lista! ¡Vamos, mis amores!', volar: '¡Estoy volando! ¡Sujétense bien!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué aventura!', luna: '¡Llegué a la luna! ¡No lo puedo creer!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, mi tierra!', ganas: '¡Ay, necesito un baño ahora mismo!', peo: '¡Ay, qué pena! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué susto!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, mis amores! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola, mi amor! ¡Mamá te quiere mucho!', catatumbo: '¡Miren para arriba, mis amores! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro, mis amores?', marte: '¡Llegué a Marte! ¡No lo puedo creer!', extraterrestres: '¡Extraterrestres! ¡Hola, mis amores del espacio!'},
+  papa: {inicio: '¡Papá al volante!', volar: '¡Papá vuela alto!', barco: '¡Capitán papá al mando!', dino: '¡Un dinosaurio! ¡Esto sí es una aventura!', luna: '¡Llegué a la luna! ¡Increíble!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Uy, tengo que ir al baño!', peo: '¡Perdón! ¡Fue un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué salto!', tesoro: '¡El tesoro! ¡Lo encontramos!', puente: '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola, campeón! ¡Papá está aquí!', catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte! ¡Increíble!', extraterrestres: '¡Extraterrestres! ¡Hola, amigos del espacio!'},
+  abu: {inicio: '¡Abu está lista, mis niños!', volar: '¡Ay, Dios mío, estoy volando!', barco: '¡Vamos a navegar, mis amores!', dino: '¡Ay, un dinosaurio! ¡Qué grande!', luna: '¡Llegué a la luna! ¡Quién lo diría!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Maracaibo! ¡Qué calor tan sabroso!', ganas: '¡Ay, necesito un bañito!', peo: '¡Ay, qué pena! ¡Un peíto!', alivio: '¡Ahh, qué alivio, mi amor!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Ay, mi corazón!', tesoro: '¡Encontré el tesoro!', puente: '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta, mi cielo!', saludo: '¡Hola, mi cielo! ¡Abu te quiere!', catatumbo: '¡Ay, mira para arriba, mi cielo! ¡Es el relámpago del Catatumbo!', coro: '¡Ay, mi cielo! ¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte! ¡Quién lo diría, mi cielo!', extraterrestres: '¡Ay, extraterrestres! ¡Hola, mis cielos del espacio!'},
+  nacho: {inicio: '¡Épale! ¡Tío Nacho llegó!', volar: '¡Épale, estoy volando!', barco: '¡Todos a bordo con tío Nacho!', dino: '¡Épale, un dinosaurio!', luna: '¡Épale! ¡Llegué a la luna!', hamburguesa: '¡Épale, qué rica hamburguesa!', arepa: '¡Épale, qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, épale!', ganas: '¡Épale, quiero hacer popo!', peo: '¡Épale! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Épale, un popo bebé me sigue!', rampa: '¡Épale, salté la rampa!', tesoro: '¡Épale, el tesoro!', puente: '¡Épale, qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Épale! ¡Aquí viene tío Nacho!', catatumbo: '¡Épale, mira para arriba! ¡Es el relámpago del Catatumbo!', coro: '¡Épale! ¿Para qué vamos a traer más chivos a Coro?', marte: '¡Épale! ¡Llegué a Marte!', extraterrestres: '¡Épale! ¡Extraterrestres!'},
+  yanny: {inicio: '¡Hola mi amor! ¡Tía Yanny está lista!', volar: '¡Estoy volando, mi amor!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué lindo!', luna: '¡Llegué a la luna, mi amor!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Ay, quiero hacer popo!', peo: '¡Ay, mi amor, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, mi amor! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola mi amor! ¡Soy tía Yanny!', catatumbo: '¡Mira para arriba, mi amor! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro, mi amor?', marte: '¡Llegué a Marte, mi amor!', extraterrestres: '¡Extraterrestres! ¡Hola, mis amores!'},
+  tiofran: {inicio: '¡Tío Fran llegó! ¡Cuidado con mis peos!', volar: '¡Volando a pura fuerza de peo!', barco: '¡Todos a bordo! ¡Y abran las ventanas!', dino: '¡Un dinosaurio! ¡A ver quién se tira el peo más grande!', luna: '¡Llegué a la luna! ¡Mi peo me trajo hasta aquí!', hamburguesa: '¡Qué rica hamburguesa! ¡Ya viene el peo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Y no es broma!', peo: '¡Prrrr! ¡Ese sí fue grande!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Y huele a peo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y un peo del susto!', saludo: '¡Hola! ¡Soy tío Fran! ¡Prrrr!', catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo! ¿O fue mi peo?', coro: '¿Para qué vamos a traer más chivos a Coro? ¡Prrrr!', marte: '¡Llegué a Marte! ¡Mi peo me trajo hasta aquí!', extraterrestres: '¡Extraterrestres! ¡A ver quién se tira el peo más grande!'},
+  romulo: {inicio: '¡Rómulo el mapache está listo!', volar: '¡Estoy volando! ¡Brrrp!', barco: '¡Al barco! ¡Brrrp!', dino: '¡Un dinosaurio! ¡Ay, qué pena!', luna: '¡Llegué a la luna! ¡Brrrp! ¡Ay, qué pena!', hamburguesa: '¡Qué rica hamburguesa! ¡Brrrp!', arepa: '¡Qué rica arepa! ¡Brrrp! ¡Ay, qué pena!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Ay, qué pena!', peo: '¡Brrrp! ¡No, eso fue un peo! ¡Ay, qué pena!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Brrrp!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta! ¡Brrrp! ¡Ay, qué pena!', saludo: '¡Hola! ¡Brrrp! ¡Ay, qué pena!', catatumbo: '¡Mira para arriba! ¡El relámpago del Catatumbo! ¡Brrrp!', coro: '¿Para qué vamos a traer más chivos a Coro? ¡Brrrp!', marte: '¡Llegué a Marte! ¡Brrrp! ¡Ay, qué pena!', extraterrestres: '¡Extraterrestres! ¡Brrrp! ¡Ay, qué pena!'},
+  beto: {inicio: '¡Tío Beto está listo, pichunguito!', volar: '¡Estoy volando!', barco: '¡Todos a bordo con tío Beto!', dino: '¡Un dinosaurio! ¡Qué maravilla!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, pichunguito! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola pichunguito! ¡Soy tío Beto!', catatumbo: '¡Mira para arriba, pichunguito! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro, pichunguito?', marte: '¡Llegué a Marte, pichunguito!', extraterrestres: '¡Extraterrestres! ¡Hola, amigos del espacio!'},
+  giuliana: {inicio: '¡Tía Giuliana está lista!', volar: '¡Estoy volando! ¡Qué emoción!', barco: '¡Todos a bordo!', dino: '¡Un dinosaurio! ¡Un abrazo, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!', catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte! ¡Un abrazo, planeta rojo!', extraterrestres: '¡Extraterrestres! ¡Un abrazo, amigos del espacio!'},
+  penny: {inicio: '¡Guau! ¡Penny al ataque!', volar: '¡Guau! ¡Un perrito volador!', barco: '¡Guau! ¡Todos a bordo!', dino: '¡Guau, guau! ¡Un dinosaurio!', luna: '¡Guau! ¡Llegué a la luna!', hamburguesa: '¡Guau! ¡Qué rica hamburguesa!', arepa: '¡Guau! ¡Qué rica arepa!', maracaibo: '¡Guau! ¡Llegamos a Maracaibo!', ganas: '¡Guau! ¡Quiero hacer popo!', peo: '¡Guau! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé me sigue!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡El tesoro!', puente: '¡Guau! ¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Penny!', catatumbo: '¡Guau! ¡Mira para arriba! ¡El relámpago del Catatumbo!', coro: '¡Guau! ¿Para qué vamos a traer más chivos a Coro?', marte: '¡Guau! ¡Llegué a Marte!', extraterrestres: '¡Guau! ¡Extraterrestres!'},
+  sheldon: {inicio: '¡Guau! ¡Sheldon al ataque!', volar: '¡Guau! ¡Sheldon vuela!', barco: '¡Guau! ¡Al barco!', dino: '¡Guau, guau! ¡Un dinosaurio grande!', luna: '¡Guau! ¡La luna!', hamburguesa: '¡Guau! ¡Hamburguesa rica!', arepa: '¡Guau! ¡Arepa rica!', maracaibo: '¡Guau! ¡Maracaibo!', ganas: '¡Guau! ¡Popo, popo!', peo: '¡Guau! ¡Un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡Tesoro!', puente: '¡Guau, guau! ¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Sheldon!', catatumbo: '¡Guau, guau! ¡Arriba! ¡El relámpago del Catatumbo!', coro: '¡Guau, guau! ¿Más chivos a Coro?', marte: '¡Guau! ¡Marte!', extraterrestres: '¡Guau, guau! ¡Marcianitos!'},
+  srpopo: {inicio: '¡El Señor Popo está listo!', volar: '¡Un popo volador! ¡Increíble!', barco: '¡Todos a bordo del barco popo!', dino: '¡Un dinosaurio! ¡Seguro hace popos enormes!', luna: '¡Llegué a la luna! ¡El primer popo en la luna!', hamburguesa: '¡Qué rica hamburguesa! ¡Vamos a hacer popo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Yo, el Señor Popo!', peo: '¡Uy, un peo! ¡Qué orgullo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Es mi hijito!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Huele a popo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y en la barriga!', saludo: '¡Hola! ¡Soy el Señor Popo!', catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte! ¡El primer popo en Marte!', extraterrestres: '¡Extraterrestres! ¡Seguro hacen popo verde!'},
 };
 function fraseDe(pj, k, id){
   const paq = DIALOGOS[pj] || DIALOGOS.fernando;
@@ -962,7 +1055,19 @@ for (const [ox,oz] of [[-18,-12],[14,-18],[24,12],[-14,26],[6,4],[-40,0],[38,-24
   AREPAS.push({id:'a'+AREPAS.length, x, z, y: altura(x, z)+1.0});
 }
 /* ---------------- Las misiones (cada una da una estrella) ---------------- */
-const MISIONES = [
+const MISIONES = MAPA===2 ? [
+  {id:'popo',    emoji:'🍔', titulo:'Come hamburguesas y haz popo en un baño'},
+  {id:'banos',   emoji:'🚽', titulo:'Haz popo en los 5 baños del Señor Popo'},
+  {id:'familia', emoji:'👨‍👩‍👧', titulo:'Saluda a toda la familia de noche'},
+  {id:'polarcita', emoji:'🍺', titulo:'Visita a Rómulo en su bar'},
+  {id:'carro',   emoji:'🚗', titulo:'Cruza las 6 banderas con el carro de noche'},
+  {id:'catatumbo', emoji:'⚡', titulo:'Mira 5 relámpagos del Catatumbo desde la lancha'},
+  {id:'coro',    emoji:'🐐', titulo:'Ve a Coro y saluda a los 8 chivos'},
+  {id:'ptero',   emoji:'🦅', titulo:'Vuela con el pterodáctilo por los 6 aros de la noche'},
+  {id:'luna',    emoji:'🚀', titulo:'Vuela en la nave espacial hasta Marte'},
+  {id:'ovni',    emoji:'👽', titulo:'Encuentra la nave extraterrestre en el espacio'},
+  {id:'maracaibo', emoji:'🫓', titulo:'Cruza el puente y come 5 arepas en Maracaibo'},
+] : [
   {id:'popo',    emoji:'🍔', titulo:'Come hamburguesas y haz popo en un baño'},
   {id:'banos',   emoji:'🚽', titulo:'Haz popo en los 5 baños del Señor Popo'},
   {id:'carro',   emoji:'🚗', titulo:'Cruza las 6 banderas con el carro'},
@@ -989,7 +1094,8 @@ function crearPartida(guardado){
     popitos: [],
     popo: 0, ganas: false, pedoT: 0, ultimoPopoDicho: -9999, ultimaHamb: -9999,
     hamburguesas: 0, comidas: new Set(), arepas: 0, comidasArepas: new Set(), estrellas: [],
-    prog: {banos:[], banderas:[], aros:[], familia:[], helipuertos:[], boyas:[], huevos:[], rampa:false, santi:false, cofre:false, popo:false, luna:false, maracaibo:false},
+    prog: {banos:[], banderas:[], aros:[], familia:[], helipuertos:[], boyas:[], huevos:[], chivos:[], arosNoche:[], rayos:0, rampa:false, santi:false, cofre:false, popo:false, luna:false, maracaibo:false, ovni:false, coroDicho:false},
+    chivos: CHIVOS.map(c=>({id:c.id, x:c.x, z:c.z, ang:c.ang, t:0, saltoT:0})), ultimoRayo: -9999, catatumboDicho: -9999,
     espacio: false, rugidoT: -9999, pj: 'fernando', enPuenteT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
@@ -1002,8 +1108,9 @@ function crearPartida(guardado){
 }
 function exportar(P){
   const prog = {};
-  for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos']) prog[k] = P.prog[k].slice();
-  for (const k of ['rampa','santi','cofre','popo','luna','maracaibo']) prog[k] = P.prog[k];
+  for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos','chivos','arosNoche']) prog[k] = P.prog[k].slice();
+  for (const k of ['rampa','santi','cofre','popo','luna','maracaibo','ovni','coroDicho']) prog[k] = P.prog[k];
+  prog.rayos = P.prog.rayos;
   return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas], arepas: P.arepas, comidasArepas: [...P.comidasArepas], popitos: P.popitos.length, prog};
 }
 function importar(P, g){
@@ -1014,8 +1121,9 @@ function importar(P, g){
     if (Array.isArray(g.comidas)) P.comidas = new Set(g.comidas);
     if (Number.isFinite(g.arepas)) P.arepas = g.arepas;
     if (Array.isArray(g.comidasArepas)) P.comidasArepas = new Set(g.comidasArepas);
-    if (g.prog){ for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos']) if (Array.isArray(g.prog[k])) P.prog[k] = g.prog[k].slice();
-      for (const k of ['rampa','santi','cofre','popo','luna','maracaibo']) if (typeof g.prog[k]==='boolean') P.prog[k] = g.prog[k]; }
+    if (g.prog){ for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos','chivos','arosNoche']) if (Array.isArray(g.prog[k])) P.prog[k] = g.prog[k].slice();
+      for (const k of ['rampa','santi','cofre','popo','luna','maracaibo','ovni','coroDicho']) if (typeof g.prog[k]==='boolean') P.prog[k] = g.prog[k];
+      if (Number.isFinite(g.prog.rayos)) P.prog.rayos = g.prog.rayos; }
     for (const id of P.prog.familia) P.saludos[id] = true;
     for (const p of P.perros) p.sigue = false;
     if (Number.isFinite(g.popitos)) for (let i=0;i<Math.min(g.popitos, MAX_POPITOS);i++) nacerPopito(P, P.J.x - 2 - i, P.J.z + 1);
@@ -1113,7 +1221,7 @@ function montar(P, v){
   P.J.x = v.x; P.J.z = v.z; P.J.y = v.y; P.J.ang = v.ang;
   P.cercaVeh = null;
   evento(P, 'montar', {id: v.id});
-  if (v.id==='avion' || v.id==='heli' || v.id==='nave') decir(P, 'volar');
+  if (v.id==='avion' || v.id==='heli' || v.id==='nave' || v.id==='ptero') decir(P, 'volar');
   else if (v.id==='barco' || v.id==='motoagua') decir(P, 'barco');
   else if (v.id==='dino') decir(P, 'dino');
 }
@@ -1156,6 +1264,7 @@ const CARACT = {
   motoagua: {vmax: 32, acc: 12, freno: 12, giro: 2.0, reversa: 4, turbo: 1.35},
   nave:  {vmax: 48, acc: 14, freno: 14, giro: 1.4, reversa: 0, turbo: 1.4, empuje: 30, techo: 900},
   dino:  {vmax: 18, acc: 24, freno: 30, giro: 2.6, reversa: 3, turbo: 1.35},
+  ptero: {vmax: 30, acc: 10, freno: 10, giro: 2.1, reversa: 6, turbo: 1.4, vertical: 8, techo: 200},
 };
 function pasoVehiculo(P, v, ent){
   const C = CARACT[v.id];
@@ -1164,7 +1273,7 @@ function pasoVehiculo(P, v, ent){
   const fx = Math.sin(v.ang), fz = Math.cos(v.ang);
   if (v.id==='avion' && v.aire) return pasoAvionAire(P, v, ent, C);
   if (v.id==='sub') return pasoSub(P, v, ent, C);
-  if (v.id==='heli') return pasoHeli(P, v, ent, C);
+  if (v.id==='heli' || v.id==='ptero') return pasoHeli(P, v, ent, C);
   if (v.id==='nave') return pasoNave(P, v, ent, C);
   const esAgua = v.id==='barco' || v.agua, esDino = v.id==='dino';
   if (esDino && ent.b && P.t - P.rugidoT > 90){ P.rugidoT = P.t; evento(P, 'rugido', {x:v.x, y:v.y, z:v.z}); }
@@ -1234,7 +1343,7 @@ function pasoHeli(P, v, ent, C){
   const g2 = Math.max(altura(v.x, v.z), NIVEL_MAR + 0.3);
   if (v.y < g2) v.y = g2;
   v.cabeceo = lerp(v.cabeceo, clamp(v.vel*0.012, -0.3, 0.3), 0.08);
-  if (v.y <= g2 + 0.02 && v.vy <= 0){ v.suelo = true; v.aire = false; v.vy = 0; evento(P, 'aterriza', {id:'heli'}); }
+  if (v.y <= g2 + 0.02 && v.vy <= 0){ v.suelo = true; v.aire = false; v.vy = 0; evento(P, 'aterriza', {id:v.id}); }
   if (P.t % 3 === 0 && v.y - g2 < 6) evento(P, 'polvo', {x:v.x + (azar()-0.5)*4, z:v.z + (azar()-0.5)*4, y:g2, agua:g2 < NIVEL_MAR + 0.5});
 }
 /* la nave espacial: A enciende los motores y sube; en el aire la palanca la mueve; llega hasta la luna */
@@ -1264,9 +1373,13 @@ function pasoNave(P, v, ent, C){
     v.vel *= -0.3; evento(P, 'rebote');
   }
   /* la luna: al llegar a su cara de abajo, se posa y se planta la bandera */
+  if (NOCHE && !P.escena && !P.prog.ovni && Math.hypot(v.x-OVNI.x, v.y-OVNI.y, v.z-OVNI.z) < 42){
+    P.escena = {tipo:'ovni', t:0, dur:360}; v.vy = 0; v.vel = 0;
+    evento(P, 'ovniLlega'); return;
+  }
   if (!P.escena && !P.prog.luna && Math.hypot(v.x-LUNA.x, v.y-(LUNA.y-LUNA.r), v.z-LUNA.z) < 34){
     P.escena = {tipo:'luna', t:0, dur:300}; v.vy = 0; v.vel = 0;
-    evento(P, 'lunaLlega'); decir(P, 'luna');
+    evento(P, 'lunaLlega'); decir(P, NOCHE ? 'marte' : 'luna');
   }
 }
 function pasoAvionAire(P, v, ent, C){
@@ -1447,6 +1560,15 @@ function pasoEscena(P){
     if (E.t >= E.dur){ P.escena = null; P.prog.luna = true; P.puntos += 1000; evento(P, 'lunaLista'); darEstrella(P, 'luna'); v.vy = -6; }
     return;
   }
+  if (E.tipo==='ovni'){
+    const v = P.vehiculos.find(v=>v.id==='nave');
+    v.x = lerp(v.x, OVNI.x, 0.03); v.z = lerp(v.z, OVNI.z, 0.03); v.y = lerp(v.y, OVNI.y - 26, 0.03); v.vel = 0; v.vy = 0;
+    P.J.x = v.x; P.J.y = v.y; P.J.z = v.z;
+    if (E.t === 50) evento(P, 'ovniLuz');
+    if (E.t === 120){ evento(P, 'extraterrestres'); decir(P, 'extraterrestres'); }
+    if (E.t >= E.dur){ P.escena = null; P.prog.ovni = true; P.puntos += 1000; evento(P, 'ovniLista'); darEstrella(P, 'ovni'); v.vy = -6; }
+    return;
+  }
   if (E.tipo==='bano'){
     if (E.t === 40) evento(P, 'banoPuerta', {abre:false, bano:E.bano});
     if (E.t > 70 && E.t < 210 && E.t % 28 === 0) evento(P, 'plop', {bano:E.bano});
@@ -1479,6 +1601,7 @@ function revisarFamilia(P){
     decir(P, 'saludo', f.id);
     if (f.pedo) evento(P, 'pedo', {x:f.x, y:altura(f.x,f.z), z:f.z, grande:true, tioFran:true});
     if (f.eructo) evento(P, 'eructo');
+    if (f.id==='romulo' && NOCHE){ evento(P, 'hablar', {texto:'¡Qué rica Polarcita!', quien:'Rómulo', pj:'romulo'}); evento(P, 'polarcita'); if (!tieneEstrella(P, 'polarcita')) darEstrella(P, 'polarcita'); }
     if (primera){
       P.puntos += 500;
       if (f.bebe){ if (!P.prog.santi){ P.prog.santi = true; darEstrella(P, 'barco'); } }
@@ -1515,6 +1638,14 @@ function revisarMisiones(P){
     if (!P.prog.cofre && Math.hypot(v.x-COFRE.x, v.z-COFRE.z) < 9 && v.y < altura(COFRE.x, COFRE.z)+8){
       P.prog.cofre = true; P.puntos += 1000; evento(P, 'cofre'); decir(P, 'tesoro'); darEstrella(P, 'sub');
     }
+  } else if (v.id==='ptero'){
+    AROS_NOCHE.forEach((a, i)=>{
+      if (P.prog.arosNoche.includes(i)) return;
+      if (Math.hypot(v.x-a.x, v.z-a.z) < a.r+1 && Math.abs(v.y-a.y) < a.r+1){
+        P.prog.arosNoche.push(i); P.puntos += 300; evento(P, 'aroNoche', {id:i, total:P.prog.arosNoche.length});
+        if (P.prog.arosNoche.length >= AROS_NOCHE.length) darEstrella(P, 'ptero');
+      }
+    });
   } else if (v.id==='heli'){
     if (v.suelo && Math.abs(v.vel) < 2.5) for (const h of HELIPUERTOS){
       if (P.prog.helipuertos.includes(h.id) || Math.hypot(v.x-h.x, v.z-h.z) > 9) continue;
@@ -1550,13 +1681,20 @@ function objetivo(P){
     if (v.id==='heli' && !tieneEstrella(P,'heli')){ const h = masCerca(HELIPUERTOS.filter(h=>!P.prog.helipuertos.includes(h.id))); if (h) return {texto:'Pósate en el helipuerto de '+h.nombre+' 🚁 '+P.prog.helipuertos.length+'/'+HELIPUERTOS.length, x:h.x, z:h.z, y:h.y, emoji:'🅗'}; }
     if (v.id==='motoagua' && !tieneEstrella(P,'motoagua')){ const b = masCerca(BOYAS.filter(b=>!P.prog.boyas.includes(b.id))); if (b) return {texto:'Pasa por las boyas 🛟 '+P.prog.boyas.length+'/'+BOYAS.length, x:b.x, z:b.z, y:0, emoji:'🛟'}; }
     if (v.id==='dino' && !tieneEstrella(P,'dino')){ const h = masCerca(HUEVOS.filter(h=>!P.prog.huevos.includes(h.id))); if (h) return {texto:'Busca los huevos 🥚 '+P.prog.huevos.length+'/'+HUEVOS.length, x:h.x, z:h.z, y:altura(h.x,h.z), emoji:'🥚'}; }
-    if (v.id==='nave' && !tieneEstrella(P,'luna')) return {texto: v.aire ? '¡Sube, sube hasta la luna! 🌙' : 'Mantén A para encender los motores 🚀', x:LUNA.x, z:LUNA.z, y:LUNA.y-LUNA.r, emoji:'🌙'};
+    if (v.id==='nave' && !tieneEstrella(P,'luna')) return {texto: v.aire ? (NOCHE ? '¡Sube, sube hasta Marte! 🔴' : '¡Sube, sube hasta la luna! 🌙') : 'Mantén A para encender los motores 🚀', x:LUNA.x, z:LUNA.z, y:LUNA.y-LUNA.r, emoji: NOCHE ? '🔴' : '🌙'};
+    if (v.id==='nave' && NOCHE && !tieneEstrella(P,'ovni')) return {texto: v.aire ? 'Busca la nave extraterrestre en el espacio 👽' : 'Mantén A para subir al espacio 🚀', x:OVNI.x, z:OVNI.z, y:OVNI.y, emoji:'👽'};
+    if (v.id==='ptero' && !tieneEstrella(P,'ptero')){ const i = AROS_NOCHE.findIndex((a,i)=>!P.prog.arosNoche.includes(i)); if (i>=0){ const a = AROS_NOCHE[i]; return {texto: v.aire ? 'Pasa por los aros de la noche ⭕ '+P.prog.arosNoche.length+'/'+AROS_NOCHE.length : 'Mantén A para que el pterodáctilo despegue 🦅', x:a.x, z:a.z, y:a.y, emoji:'⭕'}; } }
+    if ((v.id==='barco' || v.id==='motoagua') && NOCHE && !tieneEstrella(P,'catatumbo')) return {texto:'Navega cerca de Maracaibo y mira el Catatumbo ⚡ '+P.prog.rayos+'/5', x:MARACAIBO.x, z:MARACAIBO.z + MARACAIBO.r + 30, y:0, emoji:'⚡'};
     return {texto:'¡Explora la isla! 🌴', x:null};
   }
   if (!tieneEstrella(P,'popo')){ const h = masCerca(HAMBURGUESAS.filter(h=>!P.comidas.has(h.id) && h.y < 30)); if (h) return {texto:'Busca hamburguesas 🍔', x:h.x, z:h.z, y:h.y, emoji:'🍔'}; }
-  const orden = ['carro','moto','familia','dino','avion','heli','barco','motoagua','sub','maracaibo','luna','banos'];
+  const orden = NOCHE ? ['familia','polarcita','carro','coro','ptero','catatumbo','maracaibo','luna','ovni','banos'] : ['carro','moto','familia','dino','avion','heli','barco','motoagua','sub','maracaibo','luna','banos'];
   for (const id of orden){
     if (tieneEstrella(P, id)) continue;
+    if (id==='polarcita'){ const r = porId('romulo'); return {texto:'Visita a Rómulo en su bar 🍺', x:r.x, z:r.z, y:altura(r.x,r.z), emoji:'🍺'}; }
+    if (id==='coro'){ const c = masCerca(P.chivos.filter(c=>!P.prog.chivos.includes(c.id))); if (c) return {texto: Math.hypot(J.x-CORO.x, J.z-CORO.z) < CORO.r + 30 ? 'Saluda a los chivos 🐐 '+P.prog.chivos.length+'/'+CHIVOS.length : 'Ve a Coro, la tierra de los chivos 🐐', x:c.x, z:c.z, y:altura(c.x,c.z), emoji:'🐐'}; continue; }
+    if (id==='catatumbo'){ const b = P.vehiculos.find(v=>v.id==='motoagua'); return {texto:'Móntate en la moto de agua y ve a Maracaibo ⚡', x:b.x, z:b.z, y:b.y, emoji:'🛥️'}; }
+    if (id==='ovni'){ const n = P.vehiculos.find(v=>v.id==='nave'); return {texto:'Móntate en la nave espacial y busca el ovni 👽', x:n.x, z:n.z, y:n.y, emoji:'🚀'}; }
     if (id==='familia'){ const f = masCerca(FAMILIA.filter(f=>!f.bebe && !P.saludos[f.id])); if (f) return {texto:'Saluda a '+f.nombre+' 👋', x:f.x, z:f.z, y:altura(f.x,f.z), emoji:'👋'}; continue; }
     if (id==='banos'){ const b = masCerca(BANOS.filter(b=>!P.prog.banos.includes(b.id))); if (b) return {texto:'Come 🍔 y ve a '+b.nombre+' 🚽', x:b.px, z:b.pz, y:altura(b.px,b.pz), emoji:'🚽'}; continue; }
     if (id==='maracaibo'){ if (enMaracaibo(J.x, J.z)){ const a = masCerca(AREPAS.filter(a=>!P.comidasArepas.has(a.id))); if (a) return {texto:'Come arepas 🫓 '+P.arepas+'/5', x:a.x, z:a.z, y:a.y, emoji:'🫓'}; } return {texto:'Cruza el puente hasta Maracaibo 🫓', x:PUENTE.x0, z:PUENTE.z0, y:altura(PUENTE.x0, PUENTE.z0), emoji:'🌉'}; }
@@ -1620,13 +1758,43 @@ function pasoPartida(P, ent){
     else pasoPie(P, e2);
   }
   pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
+  if (NOCHE) pasoNoche(P);
+}
+/* ---- lo que solo pasa de noche: el relámpago del Catatumbo sobre el lago y los chivos de Coro ---- */
+function pasoNoche(P){
+  const J = P.J, v = P.veh;
+  /* el Catatumbo: en la lancha o el barco, cerca de la orilla de Maracaibo, cae un relámpago cada pocos segundos */
+  const dM = Math.hypot(J.x-MARACAIBO.x, J.z-MARACAIBO.z);
+  if (v && (v.id==='barco' || v.id==='motoagua') && dM < MARACAIBO.r + 90 && P.t - P.ultimoRayo > 60*4){
+    P.ultimoRayo = P.t;
+    const a = azar()*6.283, r = 40 + azar()*90;
+    evento(P, 'rayo', {x: MARACAIBO.x + Math.cos(a)*r, z: MARACAIBO.z + Math.sin(a)*r});
+    if (!tieneEstrella(P, 'catatumbo')){ P.prog.rayos++; evento(P, 'catatumboCuenta', {total:P.prog.rayos}); if (P.prog.rayos >= 5) darEstrella(P, 'catatumbo'); }
+    if (P.t - P.catatumboDicho > 60*25){ P.catatumboDicho = P.t; decir(P, 'catatumbo'); }
+  }
+  /* Coro: al llegar se dice lo de los chivos, y cada chivo saludado cuenta */
+  const dC = Math.hypot(J.x-CORO.x, J.z-CORO.z);
+  if (dC < CORO.r + 6 && !P.prog.coroDicho){ P.prog.coroDicho = true; evento(P, 'coro'); decir(P, 'coro'); }
+  for (const c of P.chivos){
+    c.t++;
+    if (c.t % 240 === Math.floor(c.id*30)){ c.ang = azar()*6.283; c.saltoT = 20; }
+    const vel = c.saltoT > 0 ? 2.2 : 0.6; c.saltoT = Math.max(0, c.saltoT-1);
+    let nx = c.x + Math.sin(c.ang)*vel*DT, nz = c.z + Math.cos(c.ang)*vel*DT;
+    if (Math.hypot(nx-CORO.x, nz-CORO.z) > CORO.r || alturaBase(nx, nz) < 1.5){ c.ang = Math.atan2(CORO.x-c.x, CORO.z-c.z) + (azar()-0.5); }
+    else { c.x = nx; c.z = nz; }
+    if (dC < CORO.r + 30 && !P.prog.chivos.includes(c.id) && Math.hypot(c.x-J.x, c.z-J.z) < (v ? 4 : 2.6) && Math.abs(altura(c.x,c.z) - J.y) < 3){
+      P.prog.chivos.push(c.id); P.puntos += 300; c.saltoT = 40; c.ang = Math.atan2(c.x-J.x, c.z-J.z);
+      evento(P, 'chivo', {id:c.id, x:c.x, z:c.z, total:P.prog.chivos.length});
+      if (P.prog.chivos.length >= CHIVOS.length) darEstrella(P, 'coro');
+    }
+  }
 }
 
 if (typeof module !== 'undefined' && module.exports){
   module.exports = {CLIPS, TONO_TTS, SIN_GRABACION, MISIONES, FAMILIA, PERROS_DEF, VEHICULOS_DEF, BANOS, HAMBURGUESAS, AROS, BANDERAS, CASAS, DECOR,
     RUTA, PISTA, RAMPA, MUELLE, COFRE, ISLITA, INICIO, HANGAR, FARO, PLAYA, MONTANA, PUEBLO, CANCHA, PARQUE, FUENTE, TAM, NSEG, SEG, MALLA, LIMITE, NIVEL_MAR,
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
-    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
+    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -1671,6 +1839,9 @@ const luzCielo = new THREE.HemisphereLight(0xcfe9ff, 0x4f8a3a, 0.6);
 scene.add(luzCielo);
 const luzAmb = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(luzAmb);
+/* de noche la luz es la de la luna: azulada y tenue; el relámpago la sube un instante */
+if (NOCHE){ luzSol.color.set(0x9fb8ff); luzSol.intensity = 0.32; luzCielo.color.set(0x2a3a6a); luzCielo.groundColor.set(0x101a2a); luzCielo.intensity = 0.3; luzAmb.intensity = 0.16; }
+let rayoLuz = 0, flashT = 0;
 function enfocarLuz(x, y, z){
   luzSol.position.set(x+90, y+150, z+70);
   luzSol.target.position.set(x, y, z);
@@ -1739,6 +1910,9 @@ const sfx = {
   estrella(){ [523,659,784,1047,1319,1568,2093].forEach((f,i)=>beep(f,0.16,'square',0.07,i*0.09)); },
   pedo(grande){ const n = grande ? 18 : 10; for(let i=0;i<n;i++) beep(96-i*3+(i%2)*18, 0.11, 'sawtooth', grande ? 0.3 : 0.2, i*0.055); ruidoSonoro(0.5+(grande?0.4:0), 0.12, 300, 80); },
   eructo(){ [84,66,94,56,74,50,68,44].forEach((f,i)=>beep(f,0.15,'sawtooth',0.3,i*0.08)); },
+  trueno(){ ruidoSonoro(1.6, 0.35, 900, 60, 0.35); ruidoSonoro(0.25, 0.3, 4000, 800, 0.05); },
+  chivo(){ [660,620,700,640].forEach((f,i)=>beep(f,0.09,'sawtooth',0.12,i*0.08)); },
+  ovni(){ [440,554,659,880,1108,1318].forEach((f,i)=>beep(f,0.18,'sine',0.12,i*0.12)); },
   plop(){ beep(180,0.05,'sine',0.2); beep(90,0.14,'sine',0.25,0.05); ruidoSonoro(0.12, 0.06, 900, 200, 0.06); },
   descarga(){ ruidoSonoro(2.4, 0.22, 1200, 200); for (let i=0;i<8;i++) beep(120+i*15, 0.12, 'sine', 0.05, 0.3+i*0.2); },
   puerta(){ beep(240,0.06,'square',0.05); beep(180,0.08,'square',0.05,0.06); },
@@ -2044,9 +2218,9 @@ function letrero(txt, color, fondo, esc){
 }
 
 /* ---------------- El cielo, el sol y las nubes ---------------- */
-const CIELO = {arriba: lin(0x2f7fe0), horizonte: lin(0xd6ecff), arribaAgua: lin(0x03305e), horizonteAgua: lin(0x0b5f9c)};
+const CIELO = NOCHE ? {arriba: lin(0x050a24), horizonte: lin(0x1b2b5c), arribaAgua: lin(0x02142a), horizonteAgua: lin(0x083058)} : {arriba: lin(0x2f7fe0), horizonte: lin(0xd6ecff), arribaAgua: lin(0x03305e), horizonteAgua: lin(0x0b5f9c)};
 const cupula = new THREE.Mesh(new THREE.SphereGeometry(1400, 24, 12), new THREE.ShaderMaterial({
-  uniforms: {arriba:{value:CIELO.arriba.clone()}, horizonte:{value:CIELO.horizonte.clone()}, sol:{value:new THREE.Vector3(0.45,0.6,0.35).normalize()}},
+  uniforms: {arriba:{value:CIELO.arriba.clone()}, horizonte:{value:CIELO.horizonte.clone()}, sol:{value:(NOCHE ? new THREE.Vector3(-0.5,0.7,-0.3) : new THREE.Vector3(0.45,0.6,0.35)).normalize()}},
   vertexShader: 'varying vec3 vP; void main(){ vP = (modelMatrix*vec4(position,1.0)).xyz; gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
   fragmentShader: `uniform vec3 arriba; uniform vec3 horizonte; uniform vec3 sol; varying vec3 vP;
     void main(){
@@ -2062,6 +2236,7 @@ cupula.renderOrder = -10; cupula.frustumCulled = false;
 scene.add(cupula);
 const sol = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xfff2c0, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false}));
 sol.scale.set(260, 260, 1); scene.add(sol);
+if (NOCHE){ sol.material.color.set(0xe8f0ff); sol.scale.set(150, 150, 1); }
 const nubes = (()=>{
   const A = new Armador();
   for (const [x,y,z,r] of [[0,0,0,7],[6,-1,1,5.5],[-6,-1,-1,5],[2,3,-2,4.5],[-3,2,2,4.2],[10,-2,-1,3.5],[-10,-2,1,3.2]]) A.bola(r, '#ffffff', x, y, z, 8, 1, 0.62, 1);
@@ -2411,6 +2586,86 @@ function armarCasa(A, c){
   const m = A.malla(matMate()); mundo.add(m);
 })();
 
+/* ---------------- Lo que solo existe de noche: faroles, Coro con sus chivos, el bar, los aros de la noche y el ovni ---------------- */
+const NOCHE_VISTA = (()=>{
+  if (!NOCHE) return null;
+  const V = {chivos: [], arosNoche: [], rayos: [], farolas: []};
+  const A = new Armador(), glowTex = texturaResplandor();
+  const brillo = (x, y, z, color, esc, alfa)=>{ const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: glowTex, color, transparent:true, opacity: alfa||0.55, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(esc, esc, 1); sp.position.set(x, y, z); mundo.add(sp); return sp; };
+  /* faroles en cada casa y ventanas encendidas */
+  for (const c of CASAS.concat(CASAS_MCBO)){
+    const y = altura(c.x, c.z), px = c.x + Math.sin(c.puerta)*(c.w/2 + 2.5), pz = c.z + Math.cos(c.puerta)*(c.d/2 + 2.5);
+    A.cil(0.12, 0.16, 4.2, '#3a3a44', px, y+2.1, pz, 0,0,0,6).bola(0.42, '#fff2b0', px, y+4.4, pz, 8);
+    brillo(px, y+4.4, pz, 0xffd27a, 9, 0.6);
+    for (const k of [-0.3, 0.3]){ const a = c.puerta + Math.PI; const wx = c.x + Math.sin(a)*(c.w/2 + 0.3) + Math.cos(a)*k*(a===0||Math.abs(a)===Math.PI ? c.w : c.d), wz = c.z + Math.cos(a)*(c.d/2 + 0.3) - Math.sin(a)*k*(a===0||Math.abs(a)===Math.PI ? c.w : c.d); brillo(wx, y + c.h*0.55, wz, 0xffe08a, 3.2, 0.5); }
+  }
+  /* la plaza y la fuente también tienen luz */
+  for (const [x, z] of [[FUENTE.x+6, FUENTE.z+6], [FUENTE.x-6, FUENTE.z-6], [PLAZA_MCBO.x+8, PLAZA_MCBO.z], [PLAZA_MCBO.x-8, PLAZA_MCBO.z]]){ const y = altura(x, z); A.cil(0.12, 0.16, 4.2, '#3a3a44', x, y+2.1, z, 0,0,0,6).bola(0.42, '#fff2b0', x, y+4.4, z, 8); brillo(x, y+4.4, z, 0xffd27a, 9, 0.6); }
+  /* el bar de Rómulo con su letrero de neón */
+  { const bar = CASAS.find(c=>c.nombre==='BAR DE RÓMULO'); const y = altura(bar.x, bar.z);
+    const neon = letrero('🍺 BAR DE RÓMULO · POLARCITA', '#fff', 'rgba(255,60,120,0.92)', 2.4); neon.position.set(bar.x, y + bar.h + 4.2, bar.z); mundo.add(neon); V.neon = neon;
+    brillo(bar.x, y + bar.h + 4.2, bar.z, 0xff5aa0, 16, 0.45); }
+  /* Coro: cerca, cartel y chivos */
+  { const y = altura(CORO.x, CORO.z);
+    for (let i=0;i<20;i++){ const a = i/20*6.283, a2 = (i+1)/20*6.283, r = CORO.r + 2; const x1 = CORO.x + Math.cos(a)*r, z1 = CORO.z + Math.sin(a)*r, x2 = CORO.x + Math.cos(a2)*r, z2 = CORO.z + Math.sin(a2)*r;
+      if (alturaBase(x1, z1) < 1 || alturaBase(x2, z2) < 1) continue;
+      const h1 = altura(x1, z1), h2 = altura(x2, z2);
+      A.caja(0.2, 1.3, 0.2, '#8b5a2b', x1, h1+0.65, z1);
+      for (const k of [0.5, 1.0]){ const dx = x2-x1, dz = z2-z1, L = Math.hypot(dx, dz); A.caja(L, 0.08, 0.1, '#a0703a', (x1+x2)/2, (h1+h2)/2 + k, (z1+z2)/2, 0, Math.atan2(dx, dz) + Math.PI/2, 0); } }
+    const sp = letrero('🐐 CORO', '#fff', 'rgba(150,90,30,0.92)', 2.6); sp.position.set(CORO.x, y + 9, CORO.z); mundo.add(sp);
+    A.cil(0.14, 0.14, 6, '#8b5a2b', CORO.x, y+3, CORO.z, 0,0,0,6);
+    for (const c of CHIVOS){
+      const g = new THREE.Group(); const B = new Armador(); const col = c.id % 3 === 0 ? '#d8c8a8' : c.id % 3 === 1 ? '#f4f4f0' : '#8a6a4a';
+      B.caja(0.55, 0.5, 1.0, col, 0, 0.75, 0).caja(0.34, 0.34, 0.42, col, 0, 1.12, 0.62).caja(0.24, 0.12, 0.2, '#f0b0b0', 0, 1.04, 0.86)
+       .caja(0.06, 0.06, 0.04, '#111', -0.1, 1.2, 0.84).caja(0.06, 0.06, 0.04, '#111', 0.1, 1.2, 0.84)
+       .cono(0.05, 0.3, '#5a4a3a', -0.12, 1.4, 0.55, 5, -0.5, 0, 0.3).cono(0.05, 0.3, '#5a4a3a', 0.12, 1.4, 0.55, 5, -0.5, 0, -0.3)
+       .caja(0.1, 0.18, 0.06, col, -0.2, 1.1, 0.5, 0, 0, 0.6).caja(0.1, 0.18, 0.06, col, 0.2, 1.1, 0.5, 0, 0, -0.6)
+       .caja(0.1, 0.2, 0.1, col, 0, 0.85, -0.55, 0.6, 0, 0).caja(0.16, 0.24, 0.1, '#e8e8e0', 0, 0.78, 0.86);
+      for (const [x, z] of [[-0.18, 0.32], [0.18, 0.32], [-0.18, -0.32], [0.18, -0.32]]) B.caja(0.12, 0.5, 0.12, '#4a3a2a', x, 0.25, z);
+      g.add(B.malla(matMate())); g.position.set(c.x, altura(c.x, c.z), c.z); mundo.add(g); V.chivos.push(g); }
+  }
+  /* los aros de la noche, violeta y brillantes, para el pterodáctilo */
+  AROS_NOCHE.forEach((a, i)=>{
+    const m = new THREE.Mesh(new THREE.TorusGeometry(a.r, 0.55, 10, 30), new THREE.MeshPhongMaterial({color: lin(0xc07dff), emissive: lin(0x6a2aa0), shininess: 80}));
+    m.position.set(a.x, a.y, a.z);
+    const nudo = new THREE.Sprite(new THREE.SpriteMaterial({map: glowTex, color: 0xd09aff, transparent:true, opacity:0.55, depthWrite:false, blending:THREE.AdditiveBlending})); nudo.scale.set(a.r*1.8, a.r*1.8, 1); m.add(nudo);
+    const num = letrero(String(i+1), '#fff', 'rgba(120,40,180,0.9)', 2.2); num.position.y = a.r + 2.5; m.add(num);
+    mundo.add(m); V.arosNoche.push(m);
+  });
+  /* la nave extraterrestre, con sus luces, sus tres extraterrestres y el rayo de luz */
+  { const g = new THREE.Group(); const B = new Armador();
+    B.cil(13, 17, 2.4, '#9aa4b8', 0, 0, 0, 0,0,0, 28).cil(17, 13, 1.6, '#7a8498', 0, -2.0, 0, 0,0,0, 28).bola(6.5, '#7de0ff', 0, 1.6, 0, 16, 1, 0.75, 1).cil(2.2, 2.2, 1.0, '#5a6270', 0, -3.2, 0, 0,0,0, 12);
+    g.add(B.malla(new THREE.MeshPhongMaterial({vertexColors:true, shininess: 90})));
+    V.luces = []; for (let i=0;i<12;i++){ const a = i/12*6.283; const l = new THREE.Mesh(new THREE.SphereGeometry(0.7, 8, 6), new THREE.MeshBasicMaterial({color: i%3===0 ? 0xff5a5a : i%3===1 ? 0x7dffa0 : 0xffe36e})); l.position.set(Math.cos(a)*15.2, -0.6, Math.sin(a)*15.2); g.add(l); V.luces.push(l); }
+    V.extraterrestres = [];
+    for (let i=0;i<3;i++){ const a = i/3*6.283 + 0.6; const e = new THREE.Group(); const E = new Armador();
+      E.bola(0.55, '#7ddc5a', 0, 1.75, 0, 10, 1.1, 1.25, 1).caja(0.46, 0.7, 0.3, '#5ab04a', 0, 1.0, 0).bola(0.17, '#111', -0.2, 1.85, 0.42, 8, 1, 1.6, 0.6).bola(0.17, '#111', 0.2, 1.85, 0.42, 8, 1, 1.6, 0.6)
+       .caja(0.14, 0.6, 0.14, '#7ddc5a', -0.2, 0.3, 0).caja(0.14, 0.6, 0.14, '#7ddc5a', 0.2, 0.3, 0).cil(0.03, 0.03, 0.5, '#7ddc5a', 0, 2.5, 0, 0,0,0,4).bola(0.1, '#ff5aa0', 0, 2.8, 0, 6);
+      e.add(E.malla(matMate()));
+      const brazo = (s)=>{ const b = new THREE.Group(); b.position.set(s*0.32, 1.3, 0); b.add(new Armador().caja(0.12, 0.6, 0.12, '#7ddc5a', 0, -0.3, 0).malla(matMate())); e.add(b); return b; };
+      e.brazos = [brazo(-1), brazo(1)];
+      e.position.set(Math.cos(a)*9, 1.2, Math.sin(a)*9); e.rotation.y = -a + Math.PI/2; g.add(e); V.extraterrestres.push(e); }
+    const haz = new THREE.Mesh(new THREE.ConeGeometry(16, 44, 24, 1, true), new THREE.MeshBasicMaterial({color: 0x9dffb0, transparent:true, opacity:0.22, depthWrite:false, side: THREE.DoubleSide}));
+    haz.position.y = -25; haz.rotation.x = Math.PI; haz.visible = false; g.add(haz); V.haz = haz;
+    const et = letrero('👽 NAVE EXTRATERRESTRE', '#fff', 'rgba(40,160,80,0.9)', 4); et.position.y = 12; g.add(et);
+    g.position.set(OVNI.x, OVNI.y, OVNI.z); scene.add(g); V.ovni = g;
+  }
+  const m = A.malla(matMate()); mundo.add(m);
+  return V;
+})();
+/* el relámpago del Catatumbo: un rayo blanco en zigzag del cielo al agua, que dura un instante */
+function lanzarRayo(x, z){
+  if (!NOCHE_VISTA) return;
+  const A = new Armador(); let px = x, py = 260, pz = z;
+  for (let i=0;i<14;i++){ const nx = px + (azar()-0.5)*22, nz = pz + (azar()-0.5)*22, ny = Math.max(0, py - 260/14); const dx = nx-px, dy = ny-py, dz = nz-pz, L = Math.hypot(dx, dy, dz);
+    const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx/L, dy/L, dz/L)));
+    A.cil(0.5, 0.5, L, '#f4f8ff', (px+nx)/2, (py+ny)/2, (pz+nz)/2, e.x, e.y, e.z, 5); px = nx; py = ny; pz = nz; }
+  const m = A.malla(new THREE.MeshBasicMaterial({vertexColors:true})); scene.add(m);
+  NOCHE_VISTA.rayos.push({m, t: 14});
+  rayoLuz = 1.4; flashT = 9;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xdfe8ff, transparent:true, opacity:0.8, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(90, 90, 1); sp.position.set(x, 120, z); scene.add(sp); NOCHE_VISTA.rayos.push({m: sp, t: 10});
+}
+
 /* ---------------- Maracaibo y su puente sobre el lago ---------------- */
 function arepaGeo(){
   const A = new Armador();
@@ -2531,11 +2786,11 @@ const huevosMesh = HUEVOS.map(h=>{
 const luna = (()=>{
   const g = new THREE.Group();
   const A = new Armador();
-  A.bola(LUNA.r, '#d8d8d0', 0, 0, 0, 28);
+  A.bola(LUNA.r, NOCHE ? '#c8553d' : '#d8d8d0', 0, 0, 0, 28);
   semilla = 4321;
   for (let i=0;i<26;i++){ const a = azar()*6.28, b = (azar()-0.5)*3.1, r = LUNA.r*0.995, cr = 6 + azar()*14;
     const x = Math.cos(a)*Math.cos(b)*r, y = Math.sin(b)*r, z = Math.sin(a)*Math.cos(b)*r;
-    A.pieza(new THREE.CircleGeometry(cr, 14), '#b8b8b0', x, y, z, 0, 0, 0); }
+    A.pieza(new THREE.CircleGeometry(cr, 14), NOCHE ? '#8f3a2a' : '#b8b8b0', x, y, z, 0, 0, 0); }
   const m = A.malla(new THREE.MeshLambertMaterial({vertexColors:true}), false); g.add(m);
   /* los cráteres son discos pegados: se orientan mirando hacia afuera */
   m.geometry.computeVertexNormals();
@@ -3058,6 +3313,19 @@ function armarVehiculo(id){
     R.cola.add(new Armador().caja(0.06, 1.6, 0.16, '#3a3a44', 0,0,0).caja(0.06, 0.16, 1.6, '#3a3a44', 0,0,0).malla(matBrillo()));
     g.add(R.cola);
     R.asiento = {x:0, y:0.95, z:0.5, esc:0.62}; R.altoOjos = 1.9;
+  } else if (id==='ptero'){
+    const c = '#8a5a3a', claro = '#d9a066';
+    A.bola(0.9, c, 0, 1.6, 0, 12, 1, 0.8, 2.0).bola(0.55, claro, 0, 1.45, 0.3, 10, 1, 0.55, 1.6)
+     .bola(0.55, c, 0, 2.2, 2.0, 10, 1, 0.8, 1.0).cono(0.32, 1.8, '#e0a040', 0, 2.05, 3.5, 6, Math.PI/2, 0, 0).cono(0.3, 1.4, c, 0, 2.7, 1.2, 5, -Math.PI/2, 0, 0)
+     .bola(0.14, '#ffffff', -0.32, 2.4, 2.25, 8).bola(0.14, '#ffffff', 0.32, 2.4, 2.25, 8).bola(0.07, '#111', -0.34, 2.4, 2.38, 6).bola(0.07, '#111', 0.34, 2.4, 2.38, 6)
+     .cono(0.5, 2.0, c, 0, 1.55, -2.8, 6, Math.PI/2, 0, 0).caja(0.16, 0.8, 0.16, c, -0.35, 0.6, -0.2, 0.3, 0, 0).caja(0.16, 0.8, 0.16, c, 0.35, 0.6, -0.2, 0.3, 0, 0)
+     .caja(1.2, 0.12, 0.8, '#8b4513', 0, 2.2, -0.4).caja(0.14, 0.5, 0.14, '#8b4513', 0, 2.5, 0.3);
+    R.cuerpo = A.malla(matMate()); g.add(R.cuerpo);
+    R.alas = [];
+    for (const s of [-1, 1]){ const ala = new THREE.Group(); ala.position.set(s*0.7, 1.9, 0);
+      ala.add(new Armador().caja(3.6, 0.1, 2.2, claro, s*1.8, 0, -0.3).caja(2.4, 0.12, 1.4, c, s*3.9, 0, -0.6).caja(0.16, 0.16, 2.4, c, s*0.2, 0.06, -0.2).caja(0.14, 0.14, 2.0, c, s*3.2, 0.06, -0.4).malla(matMate()));
+      g.add(ala); R.alas.push(ala); }
+    R.asiento = {x:0, y:2.1, z:-0.4, esc:0.62}; R.altoOjos = 3.3;
   } else if (id==='motoagua'){
     const c = '#7de0ff';
     A.caja(1.1, 0.5, 2.8, c, 0, 0.5, 0).cono(0.6, 1.0, c, 0, 0.5, 1.9, 4, Math.PI/2, Math.PI/4, 0).caja(1.2, 0.2, 2.9, '#1a4a90', 0, 0.32, 0)
@@ -3113,6 +3381,7 @@ const familiaMesh = {};
 for (const f of FAMILIA){
   const m = armarPersona(f.id);
   m.position.set(f.x, altura(f.x, f.z), f.z); m.rotation.y = f.ang;
+  if (f.id==='romulo' && NOCHE){ const cerveza = new Armador().cil(0.1, 0.1, 0.36, '#c98a2a', 0, 0, 0, 0,0,0,8).cil(0.05, 0.06, 0.12, '#c98a2a', 0, 0.22, 0, 0,0,0,6).caja(0.2, 0.14, 0.02, '#1a3a8a', 0, 0.02, 0.1).caja(0.18, 0.06, 0.02, '#ffffff', 0, 0.03, 0.11).malla(matBrillo()); cerveza.position.set(0.44, 1.2, 0.3); m.add(cerveza); }
   const et = letrero(f.nombre, '#fff', 'rgba(20,20,50,0.75)', 1.1); et.position.y = 2.5/m.esc; m.add(et); m.etiqueta = et;
   scene.add(m); familiaMesh[f.id] = m;
 }
@@ -3127,7 +3396,7 @@ const vehMesh = {};
 for (const v of VEHICULOS_DEF){
   const m = armarVehiculo(v.id); scene.add(m); vehMesh[v.id] = m;
   const et = letrero(v.emoji+' '+v.nombre.replace('el ','').replace('la ','').toUpperCase(), '#fff', 'rgba(20,20,50,0.8)', 1.6);
-  et.position.y = v.id==='avion' ? 4.2 : v.id==='barco' ? 5.6 : v.id==='sub' ? 4.8 : v.id==='heli' ? 5.2 : v.id==='nave' ? 9.5 : v.id==='dino' ? 6.8 : 3.0; m.add(et); m.etiqueta = et;
+  et.position.y = v.id==='avion' ? 4.2 : v.id==='barco' ? 5.6 : v.id==='sub' ? 4.8 : v.id==='heli' ? 5.2 : v.id==='nave' ? 9.5 : v.id==='dino' ? 6.8 : v.id==='ptero' ? 5.2 : 3.0; m.add(et); m.etiqueta = et;
 }
 
 /* ---------------- Jugar con amigos: PeerJS ----------------
@@ -3142,7 +3411,7 @@ try{ const c = normalizarCodigo(new URL(location.href).searchParams.get('sala'))
 const nombreLocal = ()=> PERSONAJES_RED.find(p=>p.id===RED.pj).nombre;
 const hayPeerJS = ()=> typeof Peer !== 'undefined';
 const redActiva = ()=> !!RED.peer && (RED.estado==='sala' || RED.estado==='conectado');
-const enlaceSala = ()=> location.origin + location.pathname + '?sala=' + RED.sala;
+const enlaceSala = ()=> location.origin + location.pathname + '?sala=' + RED.sala + (MAPA===2 ? '&mapa=2' : '');
 function textoErrorRed(e){
   const t = e && e.type;
   if (t==='peer-unavailable') return 'No encontré la sala '+RED.sala+'. Revisa el código, o pide que la creen otra vez.';
@@ -3190,7 +3459,7 @@ function redSalir(){ if (RED.conns.size) redEnviar({t:'chau'}); redLimpiar(); RE
 function prepararConn(conn){
   conn.on('open', ()=>{
     RED.conns.set(conn.peer, conn);
-    try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED, es:P.estrellas.slice()}); }catch(e){}
+    try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED, es:P.estrellas.slice(), mapa:MAPA}); }catch(e){}
     if (VOZ.stream) vozLlamar(conn.peer);
     if (!RED.anfitrion){ RED.estado = 'conectado'; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
   });
@@ -3218,6 +3487,7 @@ function redRecibir(id, m){
   if (m.t==='hola'){
     const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
     const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
+    if (m.mapa && m.mapa !== MAPA){ aviso('🗺️ '+nombre+' está en el otro mapa: cambien los dos al mismo'); try{ const c = RED.conns.get(id); if (c) c.close(); }catch(e){} return; }
     if (!RED.remotos.has(id)) crearRemoto(id, {pj, nombre, x:P.J.x, y:P.J.y, z:P.J.z, ang:0, veh:'', mov:0, fase:0, nadando:false, suelo:true, cabeceo:0, giro:0, vel:0, aire:false, popitos:0, ganas:false, estrellas:0});
     aviso('👋 '+nombre+' entró a la isla'); sfx.saludo();
     /* las estrellas se comparten: lo que ya ganó cualquiera es de todos */
@@ -3257,6 +3527,7 @@ function pintarMisiones(){
   if (P.estrellas.includes('avion')) arosMesh.forEach(m=>m.material.color.copy(lin(0x7dffa0)));
   if (P.estrellas.includes('moto')) aroRampa.material.color.copy(lin(0x7dffa0));
   if (P.estrellas.includes('carro')) banderasMesh.forEach(g=>g.bandera.material.color.copy(lin(0xffd23f)));
+  if (NOCHE_VISTA) NOCHE_VISTA.arosNoche.forEach((m, i)=>{ m.material.color.copy(P.prog.arosNoche.includes(i) || P.estrellas.includes('ptero') ? lin(0x7dffa0) : lin(0xc07dff)); });
 }
 function crearRemoto(id, e){
   const r = {id, pj:e.pj, nombre:e.nombre, obj:e, act:{x:e.x, y:e.y, z:e.z, ang:e.ang}, t:tick, fase:0, vehs:{}};
@@ -3282,7 +3553,7 @@ function sincronizarRemotos(){
     r.fase += o.mov*DT*2.2 + DT*0.5;
     if (o.veh){
       let vm = r.vehs[o.veh];
-      if (!vm){ vm = armarVehiculo(o.veh); const et = letrero('👤 '+r.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); et.position.y = o.veh==='avion' ? 4.2 : o.veh==='barco' ? 5.6 : o.veh==='sub' ? 4.8 : o.veh==='heli' ? 5.2 : o.veh==='nave' ? 9.5 : o.veh==='dino' ? 6.8 : 3.0; vm.add(et); scene.add(vm); r.vehs[o.veh] = vm; }
+      if (!vm){ vm = armarVehiculo(o.veh); const et = letrero('👤 '+r.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); et.position.y = o.veh==='avion' ? 4.2 : o.veh==='barco' ? 5.6 : o.veh==='sub' ? 4.8 : o.veh==='heli' ? 5.2 : o.veh==='nave' ? 9.5 : o.veh==='dino' ? 6.8 : o.veh==='ptero' ? 5.2 : 3.0; vm.add(et); scene.add(vm); r.vehs[o.veh] = vm; }
       for (const k in r.vehs) r.vehs[k].visible = k===o.veh;
       vm.position.set(a.x, a.y, a.z);
       vm.rotation.set(-o.cabeceo, a.ang, o.veh==='avion' && o.aire ? o.giro*0.7 : o.veh==='moto' ? o.giro*0.45 : o.giro*0.1, 'YXZ');
@@ -3432,13 +3703,14 @@ const CAM_CFG = {
   pie:   {d:6.8,  h:3.0, mira:1.4}, nadar: {d:7.5, h:3.6, mira:0.6},
   carro: {d:10.5, h:4.2, mira:1.6}, moto:  {d:8.5, h:3.6, mira:1.4}, barco: {d:14, h:5.8, mira:1.8},
   avion: {d:16,   h:5.5, mira:1.8}, sub:   {d:12,  h:3.8, mira:1.0},
-  heli:  {d:14,   h:5.5, mira:2.0}, motoagua: {d:9, h:3.8, mira:1.2}, nave: {d:20, h:7, mira:4.0}, dino: {d:12, h:5.5, mira:3.5},
+  heli:  {d:14,   h:5.5, mira:2.0}, motoagua: {d:9, h:3.8, mira:1.2}, nave: {d:20, h:7, mira:4.0}, dino: {d:12, h:5.5, mira:3.5}, ptero: {d:13, h:5.2, mira:2.6},
 };
-scene.fog = new THREE.FogExp2(0xc9e4ff, 0.0014);
-const NIEBLA = {aire: new THREE.Color(0xc9e4ff), agua: new THREE.Color(0x0b4f8a)};
+scene.fog = new THREE.FogExp2(NOCHE ? 0x0a1128 : 0xc9e4ff, 0.0014);
+const NIEBLA = NOCHE ? {aire: new THREE.Color(0x0a1128), agua: new THREE.Color(0x06263f)} : {aire: new THREE.Color(0xc9e4ff), agua: new THREE.Color(0x0b4f8a)};
 
-function cargarGuardado(){ try{ const g = localStorage.getItem('aventura3d.partida'); return g ? JSON.parse(g) : null; }catch(e){ return null; } }
-function guardar(){ try{ localStorage.setItem('aventura3d.partida', JSON.stringify(exportar(P))); }catch(e){} }
+const CLAVE_PARTIDA = MAPA===2 ? 'aventura3d.partida2' : 'aventura3d.partida';
+function cargarGuardado(){ try{ const g = localStorage.getItem(CLAVE_PARTIDA); return g ? JSON.parse(g) : null; }catch(e){ return null; } }
+function guardar(){ try{ localStorage.setItem(CLAVE_PARTIDA, JSON.stringify(exportar(P))); }catch(e){} }
 function nuevaPartida(guardado){
   P = crearPartida(guardado);
   P.pj = RED.pj;
@@ -3514,12 +3786,14 @@ function elegirPausa(i){
   if (i===0) estado = 'juego';
   else if (i===1){ estado = 'amigos'; RED.entrandoCodigo = false; RED.error = ''; }
   else if (i===2){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} }
-  else if (i===3){ try{ localStorage.removeItem('aventura3d.partida'); }catch(e){} nuevaPartida(null); abrirPersonaje('nuevo'); }
-  else if (i===4){ redSalir(); volverAFernandoBros(); }
+  else if (i===3){ try{ localStorage.removeItem(CLAVE_PARTIDA); }catch(e){} nuevaPartida(null); abrirPersonaje('nuevo'); }
+  else if (i===4){ cambiarMapa(); }
+  else if (i===5){ redSalir(); volverAFernandoBros(); }
 }
 const enZona = (mx,my,z,m)=>mx>=z.x-(m||0) && mx<=z.x+z.w+(m||0) && my>=z.y-(m||0) && my<=z.y+z.h+(m||0);
 const zonaAtras = ()=>({x:14, y:12, w:190, h:42});
-const zonasPausa = ()=>[0,1,2,3,4].map(i=>({x:W/2-150, y:H/2+6+i*40, w:300, h:36}));
+const zonasPausa = ()=>[0,1,2,3,4,5].map(i=>({x:W/2-150, y:H/2+6+i*40, w:300, h:36}));
+function cambiarMapa(){ const otro = MAPA===2 ? 1 : 2; sfx.toque(); redSalir(); try{ localStorage.setItem('aventura3d.mapa', String(otro)); }catch(e){} location.href = location.pathname + '?mapa=' + otro; }
 /* la pantalla de ¿CON QUIÉN JUEGAS?: sale al pulsar JUGAR y al empezar de cero */
 let selPj = 0, pjOrigen = 'menu';
 const zonaPersonaje = ()=>{
@@ -3563,6 +3837,7 @@ function clic(x, y){
   }
   if (estado==='menu'){
     if (enZona(x, y, zonaAtras(), 6)) return volverAFernandoBros();
+    if (enZona(x, y, {x:W/2-200, y:196, w:400, h:38}, 4)) return cambiarMapa();
     if (enZona(x, y, {x:W-190, y:12, w:176, h:42}, 6)){ sfx.toque(); estado = 'amigos'; RED.entrandoCodigo = false; if (RED.pendiente){ const c = RED.pendiente; RED.pendiente = ''; redUnirse(c); } return; }
     if (RED.pendiente){ sfx.toque(); empezar(); } else abrirPersonaje('menu');
     return;
@@ -3662,8 +3937,18 @@ function atenderEventos(){
       case 'arepa': sfx.hamburguesa(); chispas(e.x, e.y, e.z, '#fff0c0', 16, 5); { const i = AREPAS.findIndex(a=>a.id===e.id); if (i>=0) arepasMesh[i].visible = false; } grande('¡AREPA! 🫓 '+e.total+'/5', '#fff0c0', 60); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
       case 'maracaibo': sfx.estrella(); confeti(J.x, J.y, J.z, 30); grande('¡BIENVENIDO A MARACAIBO! 🫓', '#7de0ff', 140); break;
       case 'espacio': grande('¡ESTÁS EN EL ESPACIO! 🌌', '#bfe9ff', 100); break;
-      case 'lunaLlega': sfx.despegue(); grande('¡LA LUNA! 🌙', '#fff6a0', 120); break;
-      case 'banderaLuna': sfx.estrella(); luna.bandera.visible = true; confeti(LUNA.x, LUNA.y-LUNA.r-2, LUNA.z, 40); grande('🚩 ¡LA BANDERA DE FERNANDO EN LA LUNA!', '#ffe36e', 120); break;
+      case 'lunaLlega': sfx.despegue(); grande(NOCHE ? '¡MARTE! 🔴' : '¡LA LUNA! 🌙', NOCHE ? '#ffa080' : '#fff6a0', 120); break;
+      case 'rayo': lanzarRayo(e.x, e.z); sfx.trueno(); break;
+      case 'catatumboCuenta': grande('⚡ ¡EL RELÁMPAGO DEL CATATUMBO! '+e.total+'/5', '#dfe8ff', 80); break;
+      case 'coro': sfx.estrella(); confeti(J.x, J.y, J.z, 20); grande('¡BIENVENIDO A CORO! 🐐', '#ffd27a', 140); break;
+      case 'chivo': sfx.chivo(); chispas(e.x, altura(e.x, e.z)+1, e.z, '#ffe36e', 12, 4); grande('🐐 CHIVO '+e.total+'/'+CHIVOS.length, '#ffe36e', 60); break;
+      case 'aroNoche': sfx.aro(); if (NOCHE_VISTA) NOCHE_VISTA.arosNoche[e.id].material.color.copy(lin(0x7dffa0)); { const a = AROS_NOCHE[e.id]; chispas(a.x, a.y, a.z, '#d09aff', 26, 9); } grande('⭕ ARO DE LA NOCHE '+e.total+'/'+AROS_NOCHE.length, '#d09aff', 60); break;
+      case 'polarcita': grande('🍺 ¡QUÉ RICA POLARCITA! 🦝', '#ffe36e', 90); break;
+      case 'ovniLlega': sfx.despegue(); grande('¡UNA NAVE EXTRATERRESTRE! 🛸', '#9dffb0', 120); break;
+      case 'ovniLuz': sfx.ovni(); if (NOCHE_VISTA) NOCHE_VISTA.haz.visible = true; break;
+      case 'extraterrestres': sfx.estrella(); confeti(OVNI.x, OVNI.y - 8, OVNI.z, 50); grande('¡EXTRATERRESTRES! 👽👽👽', '#9dffb0', 140); break;
+      case 'ovniLista': if (NOCHE_VISTA) NOCHE_VISTA.haz.visible = false; break;
+      case 'banderaLuna': sfx.estrella(); luna.bandera.visible = true; confeti(LUNA.x, LUNA.y-LUNA.r-2, LUNA.z, 40); grande(NOCHE ? '🚩 ¡LA BANDERA DE FERNANDO EN MARTE!' : '🚩 ¡LA BANDERA DE FERNANDO EN LA LUNA!', '#ffe36e', 120); break;
       case 'lunaLista': aviso('Suelta A y la nave baja solita a la isla 🚀'); break;
       case 'brinco': sfx.brinco(); break;
       case 'sinGanas': aviso('Come una hamburguesa 🍔 y después ven al baño'); break;
@@ -3790,6 +4075,14 @@ function sincronizar(){
   arepasMesh.forEach((m, i)=>{ if (!m.visible) return; if (Math.abs(m.position.x-J.x) > 160 || Math.abs(m.position.z-J.z) > 160) return; m.rotation.y = t*1.6; m.position.y = AREPAS[i].y + Math.sin(t*2.4 + i)*0.18; });
   luna.rotation.y = t*0.02;
   if (luna.bandera.visible) ondearBandera(luna.tela, t);
+  if (NOCHE_VISTA){
+    P.chivos.forEach((c, i)=>{ const g = NOCHE_VISTA.chivos[i]; g.position.set(c.x, altura(c.x, c.z) + (c.saltoT > 0 ? Math.abs(Math.sin(t*14))*0.5 : 0), c.z); g.rotation.y = c.ang; });
+    const o = NOCHE_VISTA.ovni; o.rotation.y += 0.004; o.position.y = OVNI.y + Math.sin(t*0.9)*2;
+    NOCHE_VISTA.luces.forEach((l, i)=>{ l.visible = Math.floor(t*4 + i) % 3 !== 0; });
+    const fiesta = P.escena && P.escena.tipo==='ovni';
+    NOCHE_VISTA.extraterrestres.forEach((e, i)=>{ e.position.y = 1.2 + (fiesta ? Math.abs(Math.sin(t*6 + i))*0.8 : 0); e.brazos[0].rotation.z = fiesta ? 2.4 + Math.sin(t*9 + i)*0.5 : 0.2; e.brazos[1].rotation.z = fiesta ? -2.4 - Math.sin(t*9 + i)*0.5 : -0.2; });
+    for (let i=NOCHE_VISTA.rayos.length-1;i>=0;i--){ const r = NOCHE_VISTA.rayos[i]; if (--r.t <= 0){ scene.remove(r.m); NOCHE_VISTA.rayos.splice(i, 1); } else if (r.m.material.opacity !== undefined) r.m.material.opacity = r.t/10*0.8; }
+  }
   cofre.haz.material.opacity = 0.12 + Math.sin(t*2)*0.05; cofre.rotation.y = 0.6 + Math.sin(t*0.5)*0.1;
   for (const l of letreros) l.giro.rotation.y = t*0.6;
   /* la estrella que sube cuando se gana una */
@@ -3805,6 +4098,7 @@ function sincronizar(){
 /* lo que gira y se mueve en cada vehículo: hélices, rotores, patas, fuego */
 function animarVehiculo(R, id, montado, vel, aire, alto, t){
   if (id==='heli'){ R.helice.rotation.y += montado ? 0.55 : 0.03; R.cola.rotation.x += montado ? 0.7 : 0.03; }
+  else if (id==='ptero'){ const amp = aire ? 0.7 : 0.08, w = Math.sin(t*(aire ? 7 : 1.5))*amp; R.alas[0].rotation.z = w; R.alas[1].rotation.z = -w; }
   else if (id==='nave'){ if (R.fuego){ R.fuego.visible = montado && aire; R.fuego.scale.set(1 + Math.sin(t*40)*0.15, 1 + Math.sin(t*33)*0.25, 1 + Math.cos(t*40)*0.15); } }
   else if (id==='dino'){ const amp = Math.min(1, Math.abs(vel)/4), s = Math.sin(t*9); R.patas[0].rotation.x = s*0.7*amp; R.patas[1].rotation.x = -s*0.7*amp; R.cuerpo.position.y = Math.abs(Math.cos(t*9))*0.18*amp; }
   else if (R.helice) R.helice.rotation.z += (montado ? 0.3 + Math.abs(vel)*0.03 : 0.02);
@@ -3832,7 +4126,10 @@ function camaraJuego(){
   if (v && v.id==='sub' && v.y < NIVEL_MAR - 1.5) oy = Math.min(oy, NIVEL_MAR - 0.8);
   else if (!v && J.nadando) oy = Math.max(oy, NIVEL_MAR + 1.6);
   let miraY = J.y + cfg.mira;
-  if (P.escena && P.escena.tipo==='luna'){
+  if (P.escena && P.escena.tipo==='ovni'){
+    const a = Math.PI*0.3 + P.escena.t*0.005;
+    ox = J.x + Math.sin(a)*40; oz = J.z + Math.cos(a)*40; oy = J.y + 24; miraY = J.y + 16;
+  } else if (P.escena && P.escena.tipo==='luna'){
     /* en la luna la cámara da una vuelta lenta por debajo de la nave, mirando la bandera */
     const a = Math.PI*0.9 + P.escena.t*0.004;
     ox = J.x + Math.sin(a)*22; oz = J.z + Math.cos(a)*22; oy = J.y - 9; miraY = J.y + 4;
@@ -3870,17 +4167,26 @@ function ambiente(){
   scene.fog.density = lerp(0.0014, 0.011, bajoF)*(1-esp);
   cupula.material.uniforms.arriba.value.copy(CIELO.arriba).lerp(CIELO.arribaAgua, bajoF).lerp(new THREE.Color(0x02030a), esp);
   cupula.material.uniforms.horizonte.value.copy(CIELO.horizonte).lerp(CIELO.horizonteAgua, bajoF).lerp(new THREE.Color(0x0a1030), esp);
-  estrellasCielo.material.opacity = esp; estrellasCielo.position.copy(camera.position);
+  estrellasCielo.material.opacity = NOCHE ? Math.max(esp, 0.9) : esp; estrellasCielo.position.copy(camera.position);
   luna.tela.geometry.attributes.position.needsUpdate = false;
   agua.material.uniforms.bajo.value = bajo ? 1 : 0;
   agua.material.uniforms.t.value = tick*DT;
   sol.visible = bajoF < 0.5;
-  luzSol.intensity = lerp(1.05, 0.5, bajoF);
-  luzCielo.intensity = lerp(0.6, 0.45, bajoF);
-  luzCielo.color.copy(lin(0xcfe9ff)).lerp(lin(0x2a7ab0), bajoF);
-  luzAmb.intensity = lerp(0.1, 0.3, bajoF);
+  if (NOCHE){
+    rayoLuz *= 0.82; flashT = Math.max(0, flashT - 1);
+    luzSol.intensity = lerp(0.32, 0.22, bajoF) + rayoLuz*0.9;
+    luzCielo.intensity = lerp(0.3, 0.28, bajoF) + rayoLuz*0.5;
+    luzCielo.color.copy(lin(0x2a3a6a)).lerp(lin(0x0b3a5a), bajoF);
+    luzAmb.intensity = lerp(0.16, 0.26, bajoF) + rayoLuz*1.2;
+    sol.position.set(camera.position.x - 500, camera.position.y + 700, camera.position.z - 300);
+  } else {
+    luzSol.intensity = lerp(1.05, 0.5, bajoF);
+    luzCielo.intensity = lerp(0.6, 0.45, bajoF);
+    luzCielo.color.copy(lin(0xcfe9ff)).lerp(lin(0x2a7ab0), bajoF);
+    luzAmb.intensity = lerp(0.1, 0.3, bajoF);
+    sol.position.set(camera.position.x + 600, camera.position.y + 800, camera.position.z + 470);
+  }
   cupula.position.copy(camera.position);
-  sol.position.set(camera.position.x + 600, camera.position.y + 800, camera.position.z + 470);
   enfocarLuz(P.J.x, P.J.y, P.J.z);
 }
 
@@ -3997,6 +4303,7 @@ function dibujarMapa(cx, cy, r){
   for (const b of BANOS){ const p = aM(b.x, b.z); ctx.fillStyle = P.prog.banos.includes(b.id) ? '#7dffa0' : '#8fd3ff'; ctx.fillRect(p.x-2.5, p.y-2.5, 5, 5); }
   for (const v of P.vehiculos){ if (P.veh===v) continue; const p = aM(v.x, v.z); ctx.font = '9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.emoji, p.x, p.y); }
   if (obj.x !== null && obj.x !== undefined){ const p = aM(obj.x, obj.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + Math.sin(tick*0.15)*2, 0, Math.PI*2); ctx.stroke(); }
+  if (NOCHE){ const q = aM(CORO.x, CORO.z); ctx.font = '10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐐', q.x, q.y); }
   for (const [, r] of RED.remotos){ const q = aM(r.act.x, r.act.z); ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
   const p = aM(J.x, J.z);
   ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, Math.PI*2); ctx.fill();
@@ -4039,12 +4346,13 @@ function dibujarMenu(){
   botonAtras('◀ FERNANDO BROS');
   boton(W-190, 12, 176, 42, '👥 CON AMIGOS', '#2a8ad0', '#1a4a90', 16, !!RED.pendiente);
   tituloAjustado('FERNANDO Y TÍO JUAN', W/2, 112 + Math.sin(tick*0.04)*3, 64, W-60, '#fff6a0', '#ffb000');
-  tituloAjustado('LA GRAN AVENTURA', W/2, 166, 42, W-120, '#bfe9ff', '#2a8ad0');
+  tituloAjustado(NOCHE ? 'MARACAIBO DE NOCHE' : 'LA GRAN AVENTURA', W/2, 166, 42, W-120, NOCHE ? '#d0b0ff' : '#bfe9ff', NOCHE ? '#6a2aa0' : '#2a8ad0');
+  boton(W/2-200, 196, 400, 38, NOCHE ? '☀️ MAPA 1: LA ISLA DE DÍA' : '🌙 MAPA 2: MARACAIBO DE NOCHE', NOCHE ? '#c07a10' : '#6a3ad0', NOCHE ? '#804a08' : '#3a1a90', 15, !NOCHE && Math.floor(tick/40)%2===0);
   /* el cartel de abajo: tres líneas con aire */
   const aw = Math.min(600, W-40), ay = H-206;
   cristal(W/2-aw/2, ay, aw, 96, 18, 0.55);
-  textoAjustado('Una isla entera para explorar: carro 🚗 · moto 🏍️ · barco 🚤 · avión ✈️ · submarino 🤿', W/2, ay+22, 15, aw-30, '#fff');
-  textoAjustado('Come hamburguesas 🍔, corre al baño 🚽 del Señor Popo 💩 y saluda a toda la familia 👨‍👩‍👧', W/2, ay+48, 15, aw-30, '#ffe36e');
+  textoAjustado(NOCHE ? 'El relámpago del Catatumbo ⚡ · Coro y sus chivos 🐐 · el bar de Rómulo 🍺 · el pterodáctilo 🦅' : 'Una isla entera para explorar: carro 🚗 · moto 🏍️ · barco 🚤 · avión ✈️ · submarino 🤿', W/2, ay+22, 15, aw-30, '#fff');
+  textoAjustado(NOCHE ? 'Vuela en la nave hasta Marte 🔴 y encuentra a los extraterrestres 👽 en el espacio' : 'Come hamburguesas 🍔, corre al baño 🚽 del Señor Popo 💩 y saluda a toda la familia 👨‍👩‍👧', W/2, ay+48, 15, aw-30, '#ffe36e');
   textoAjustado(tactil ? 'Palanca a la izquierda · A salta y monta · B corre y turbo · 🚪 para bajarte' : 'Flechas o WASD · ESPACIO salta y monta · MAYÚS corre y turbo · E para bajarte · ESC menú', W/2, ay+74, 13, aw-30, '#bcd6ff');
   if (RED.pendiente) textoBorde('🎉 Te invitaron a la sala '+RED.pendiente+' · toca para entrar', W/2, H-84, 18, '#7dffa0');
   else if (Math.floor(tick/30)%2===0) textoBorde(tactil ? 'TOCA PARA JUGAR' : 'PULSA ENTER PARA JUGAR', W/2, H-78, 30, '#fff', 'center', true);
@@ -4218,14 +4526,14 @@ function dibujarPausa(){
     if (m.id==='banos') extra = P.prog.banos.length+'/'+BANOS.length; else if (m.id==='carro') extra = P.prog.banderas.length+'/'+BANDERAS.length;
     else if (m.id==='avion') extra = P.prog.aros.length+'/'+AROS.length; else if (m.id==='heli') extra = P.prog.helipuertos.length+'/'+HELIPUERTOS.length;
     else if (m.id==='motoagua') extra = P.prog.boyas.length+'/'+BOYAS.length; else if (m.id==='dino') extra = P.prog.huevos.length+'/'+HUEVOS.length;
-    else if (m.id==='maracaibo') extra = P.arepas+'/5';
+    else if (m.id==='maracaibo') extra = P.arepas+'/5'; else if (m.id==='coro') extra = P.prog.chivos.length+'/'+CHIVOS.length; else if (m.id==='ptero') extra = P.prog.arosNoche.length+'/'+AROS_NOCHE.length; else if (m.id==='catatumbo') extra = P.prog.rayos+'/5';
     else if (m.id==='familia'){ extra = P.prog.familia.length+'/'+SALUDABLES.length; const faltan = FAMILIA.filter(f=>!f.bebe && !P.saludos[f.id]).map(f=>f.nombre); if (!ok && faltan.length) titulo_ = 'Falta saludar a: '+(faltan.length > 4 ? faltan.slice(0,4).join(', ')+' y '+(faltan.length-4)+' más' : faltan.join(', ')); }
     textoAjustado((ok ? '⭐ ' : '☆ ')+m.emoji+' '+titulo_, cx+14, cy, 14, cw-72, ok ? '#7dffa0' : (m.id==='familia' && titulo_ !== m.titulo ? '#ffe36e' : '#fff'), 'left');
     if (extra && !ok) texto(extra, cx+cw-12, cy, 13, '#bcd6ff', 'right');
   });
   const zs = zonasPausa();
-  const etiquetas = ['▶ SEGUIR JUGANDO', redActiva() ? '👥 SALA '+RED.sala+' · '+(RED.remotos.size+1)+' EN LA ISLA' : '👥 JUGAR CON AMIGOS', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', '◀ FERNANDO BROS'];
-  const colores = [['#3aa040','#1e6a24'],['#2a8ad0','#1a4a90'],['#4a6ad0','#2a3a90'],['#c05a10','#803a08'],['#4a6ad0','#2a3a90']];
+  const etiquetas = ['▶ SEGUIR JUGANDO', redActiva() ? '👥 SALA '+RED.sala+' · '+(RED.remotos.size+1)+' EN LA ISLA' : '👥 JUGAR CON AMIGOS', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', NOCHE ? '☀️ IR AL MAPA 1: LA ISLA DE DÍA' : '🌙 IR AL MAPA 2: MARACAIBO DE NOCHE', '◀ FERNANDO BROS'];
+  const colores = [['#3aa040','#1e6a24'],['#2a8ad0','#1a4a90'],['#4a6ad0','#2a3a90'],['#c05a10','#803a08'],['#6a3ad0','#3a1a90'],['#4a6ad0','#2a3a90']];
   zs.forEach((z, i)=> boton(z.x, z.y, z.w, z.h, etiquetas[i], colores[i][0], colores[i][1], 16, selPausa===i));
   texto(P.puntos.toLocaleString('es')+' puntos · '+P.hamburguesas+' hamburguesas comidas', W/2, H-12, 13, '#bcd6ff');
 }
@@ -4254,6 +4562,7 @@ function dibujar(){
   else if (estado==='final') dibujarFinal();
   else if (estado==='amigos') dibujarAmigos();
   else if (estado==='personaje') dibujarPersonaje();
+  if (flashT > 0 && estado==='juego'){ ctx.fillStyle = 'rgba(235,240,255,'+(flashT/9*0.5)+')'; ctx.fillRect(0,0,W,H); }
   if (cortina>0){ ctx.fillStyle = 'rgba(0,0,0,'+(cortina/40)+')'; ctx.fillRect(0,0,W,H); }
   if (MANDO.avisoT>0) pastilla('🎮 MANDO CONECTADO', W/2, H-90, 18, '#7dffa0', 0.55);
 }
@@ -4274,6 +4583,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF };
 requestAnimationFrame(bucle);
 })();
