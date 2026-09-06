@@ -194,6 +194,9 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 - Las voces son mp3 grabados: los mismos de Fernando Bros más las frases
   nuevas de esta aventura (las de Fernando sobre el popo, la luna y
   Maracaibo, y las del Señor Popo), grabadas con la misma voz de niño.
+- Al pulsar JUGAR, y también al EMPEZAR DE CERO desde el menú de pausa, sale
+  la pantalla «¿Con quién juegas?» para elegir entre los 18 personajes
+  (flechas y ENTER, o tocando). El elegido se recuerda para la próxima vez.
 - **Cada personaje jugable tiene su paquete de diálogos con su propia voz**:
   `DIALOGOS` guarda, para los 18 personajes, una frase por situación
   (`inicio`, `volar`, `barco`, `dino`, `luna`, `hamburguesa`, `arepa`,
