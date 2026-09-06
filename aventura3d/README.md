@@ -186,14 +186,19 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 - Los personajes, casas y vehículos se arman con cajitas de colores fundidas
   en una sola malla; los bosques, el pasto, las flores, las nubes, los peces
   y las algas se dibujan con instancias.
+- El puente a Maracaibo está inspirado en el General Rafael Urdaneta: cuatro
+  torres de concreto beige en forma de A con los cables en abanico hasta el
+  tablero, y pilotes dobles entre torre y torre. Al subir a él, el personaje
+  dice «¡Qué molleja! ¡Se me hizo un nudo en la garganta!» (cada uno a su
+  manera y con su voz), una vez por cruce.
 - Las voces son mp3 grabados: los mismos de Fernando Bros más las frases
   nuevas de esta aventura (las de Fernando sobre el popo, la luna y
   Maracaibo, y las del Señor Popo), grabadas con la misma voz de niño.
 - **Cada personaje jugable tiene su paquete de diálogos con su propia voz**:
   `DIALOGOS` guarda, para los 18 personajes, una frase por situación
   (`inicio`, `volar`, `barco`, `dino`, `luna`, `hamburguesa`, `arepa`,
-  `maracaibo`, `ganas`, `peo`, `alivio`, `popito`, `rampa`, `tesoro` y
-  `saludo`), y `CLIPS_PJ` la grabación de cada una (255 mp3, una voz distinta
+  `maracaibo`, `ganas`, `peo`, `alivio`, `popito`, `rampa`, `tesoro`,
+  `puente` y `saludo`), y `CLIPS_PJ` la grabación de cada una (una voz distinta
   por personaje: Tío Juan grave y cariñoso, Luca y Salomón de niño, Cucú de
   niña, Santi de bebé, Abu de abuela, Rómulo con eructos, los perros con
   guau…). El juego llama a `decir(P, situación)` y sale la frase del

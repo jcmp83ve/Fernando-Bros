@@ -69,6 +69,7 @@ const CLIPS = {
   '¡Llegué a la luna!': AUDIO_BASE+'hf_20260905_202155_5ecaea00-d580-4cb7-9de5-da1593326bc6.mp3',
   '¡Vamos, dinosaurio!': AUDIO_BASE+'hf_20260905_202154_b65da520-f47e-4fe5-93f6-534755238ff9.mp3',
   '¡Hola! Soy el Señor Popo. ¡Come hamburguesas y ven a mi baño!': AUDIO_BASE+'hf_20260905_212315_e5f05fa4-e608-45ef-9890-5970ca1fb19a.mp3',
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_a40ff000-b963-4f36-95be-b4a12f5e797e.mp3',
   '¡Bravo! ¡Qué popo tan grande!': AUDIO_BASE+'hf_20260905_212315_6ecdfe6d-f9b5-4cc9-80bb-d5ac6a250cb1.mp3',
 };
 /* Si un mp3 no carga, habla el navegador con la voz sintética y el tono
@@ -102,6 +103,7 @@ const SIN_GRABACION = [];
 /* Las grabaciones de cada personaje jugable: CLIPS_PJ[personaje][frase] (se rellenan abajo) */
 const CLIPS_PJ = {};
 CLIPS_PJ.tiojuan = {
+  '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta, pichunguito!': AUDIO_BASE+'hf_20260906_000211_099f1701-fc60-4330-852c-5e6efdd02493.mp3',
   '¡Tío Juan al rescate!': AUDIO_BASE+'hf_20260905_210210_199f86a0-4f49-466b-982a-44bc1cf39451.mp3',
   '¡Arriba, arriba! ¡Tío Juan vuela!': AUDIO_BASE+'hf_20260905_210210_2ad5e405-7d4f-4270-9365-c64e41ad13b3.mp3',
   '¡Capitán tío Juan al mando!': AUDIO_BASE+'hf_20260905_210210_15c52813-fa4a-4894-b0fc-8997998feb0b.mp3',
@@ -119,6 +121,7 @@ CLIPS_PJ.tiojuan = {
   '¡Hola, familia! ¡Un abrazo de tío Juan!': AUDIO_BASE+'hf_20260905_210238_218f5c52-99d2-42cc-b3a7-fdbf715e85be.mp3',
 };
 CLIPS_PJ.luca = {
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_24820549-92ee-4675-b660-8a47b36a9302.mp3',
   '¡Luca al ataque!': AUDIO_BASE+'hf_20260905_210238_ba6fb1d2-d6d0-4d15-a5cf-33c1ed282620.mp3',
   '¡Estoy volando! ¡Mírame!': AUDIO_BASE+'hf_20260905_210238_0d350cae-2737-46e4-8011-3bdc3040f339.mp3',
   '¡Zarpamos! ¡Todos a bordo!': AUDIO_BASE+'hf_20260905_210316_a9233ea7-0cc8-400c-be99-aeba39750a44.mp3',
@@ -136,6 +139,7 @@ CLIPS_PJ.luca = {
   '¡Hola! ¡Soy Luca, el amigo de Fernando!': AUDIO_BASE+'hf_20260905_210328_4a381a1b-9144-435d-8097-7dbf6f745d31.mp3',
 };
 CLIPS_PJ.salomon = {
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta, primo!': AUDIO_BASE+'hf_20260906_000244_dc43b3b9-2369-4615-a18a-ef9f3d9c8466.mp3',
   '¡Salomón en la casa!': AUDIO_BASE+'hf_20260905_210409_da284f95-7e30-4371-9011-aabbfec471d4.mp3',
   '¡Volando con estilo!': AUDIO_BASE+'hf_20260905_210328_7967f055-9abd-49f9-955e-6efe680b59f3.mp3',
   '¡Al agua, marineros!': AUDIO_BASE+'hf_20260905_210328_659985d2-7c5f-4838-9230-99a91395a4f0.mp3',
@@ -153,6 +157,7 @@ CLIPS_PJ.salomon = {
   '¡Hola! ¡Salomón quiere jugar!': AUDIO_BASE+'hf_20260905_210421_788c614c-5632-4785-bb97-65af9c22f654.mp3',
 };
 CLIPS_PJ.cucu = {
+  '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_1b04387a-e2a0-40eb-8e7a-401b0d8c267a.mp3',
   '¡Cucú! ¡Aquí estoy!': AUDIO_BASE+'hf_20260905_210703_5f221ed9-5716-4822-936a-cc9c90391de5.mp3',
   '¡Estoy volando como un pajarito!': AUDIO_BASE+'hf_20260905_210421_337b764a-9edb-4ffd-a9d0-4d254769d80c.mp3',
   '¡Vamos a navegar!': AUDIO_BASE+'hf_20260905_210420_a90c9a2c-8b09-4502-ad7a-f561e020b87f.mp3',
@@ -170,6 +175,7 @@ CLIPS_PJ.cucu = {
   '¡Hola! ¡Soy Cucú! ¿Jugamos?': AUDIO_BASE+'hf_20260905_210606_dd882164-fed1-4caa-9fe0-bfba75f44245.mp3',
 };
 CLIPS_PJ.santi = {
+  '¡Qué molleja! ¡Un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000244_956bdd44-a8f3-4c0d-ac8e-04916c46895b.mp3',
   '¡Tati al ataque!': AUDIO_BASE+'hf_20260905_210510_877e939b-e424-4e7e-b69a-329e78d549ae.mp3',
   '¡A volar! ¡Uuuh!': AUDIO_BASE+'hf_20260905_210703_60d61337-32ff-4e78-8f9b-66a7a6e5b1ec.mp3',
   '¡Barquito, barquito!': AUDIO_BASE+'hf_20260905_210510_ff58deb9-d6b0-4153-ad42-e16687330b6a.mp3',
@@ -187,6 +193,7 @@ CLIPS_PJ.santi = {
   '¡Hola! ¡Soy Santi!': AUDIO_BASE+'hf_20260905_210523_f8312e04-b61c-4ee8-a639-e9274a8915a3.mp3',
 };
 CLIPS_PJ.mama = {
+  '¡Qué molleja, mis amores! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_93c691f1-1236-4925-8afd-cc585ce52a95.mp3',
   '¡Mamá está lista! ¡Vamos, mis amores!': AUDIO_BASE+'hf_20260905_210523_f82fde6b-bd57-476f-91c0-cb7e0e11c8eb.mp3',
   '¡Estoy volando! ¡Sujétense bien!': AUDIO_BASE+'hf_20260905_210523_76fd3f78-5fef-4645-8c77-81297da02c3e.mp3',
   '¡Todos a bordo, mis amores!': AUDIO_BASE+'hf_20260905_210703_1b8c4dd6-f195-4e10-b281-c66169fe8576.mp3',
@@ -204,6 +211,7 @@ CLIPS_PJ.mama = {
   '¡Hola, mi amor! ¡Mamá te quiere mucho!': AUDIO_BASE+'hf_20260905_210703_bb52a312-7d08-4da6-9abb-a044c1f7c58b.mp3',
 };
 CLIPS_PJ.papa = {
+  '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_202294ae-b21a-401c-9dd6-797ba3d29568.mp3',
   '¡Papá al volante!': AUDIO_BASE+'hf_20260905_210703_09f2c4a7-0e88-401c-82df-e2e5637ae56a.mp3',
   '¡Papá vuela alto!': AUDIO_BASE+'hf_20260905_210703_afafa465-7cee-4f13-92b5-c5e8a68532aa.mp3',
   '¡Capitán papá al mando!': AUDIO_BASE+'hf_20260905_210847_1ba382b2-2703-452d-8210-a592f7b925e0.mp3',
@@ -221,6 +229,7 @@ CLIPS_PJ.papa = {
   '¡Hola, campeón! ¡Papá está aquí!': AUDIO_BASE+'hf_20260905_210935_54408410-f3f6-4954-8784-e6cb2ab18077.mp3',
 };
 CLIPS_PJ.abu = {
+  '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta, mi cielo!': AUDIO_BASE+'hf_20260906_000244_8d7a6424-c315-468c-b267-4513e1470afc.mp3',
   '¡Abu está lista, mis niños!': AUDIO_BASE+'hf_20260905_210914_5e4b3335-b965-48ef-b932-4bd1226d01f7.mp3',
   '¡Ay, Dios mío, estoy volando!': AUDIO_BASE+'hf_20260905_210914_4d55f7d3-258d-49a2-a850-8431bcbdc8de.mp3',
   '¡Vamos a navegar, mis amores!': AUDIO_BASE+'hf_20260905_210914_a2bc3fad-bc8f-4a44-8fb0-62aee9f62b83.mp3',
@@ -238,6 +247,7 @@ CLIPS_PJ.abu = {
   '¡Hola, mi cielo! ¡Abu te quiere!': AUDIO_BASE+'hf_20260905_211102_f7b5fee2-a1b1-4a8f-b826-0fcdfe644dc0.mp3',
 };
 CLIPS_PJ.nacho = {
+  '¡Épale, qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000244_8e5e054a-3d97-4878-bd78-a127f6561834.mp3',
   '¡Épale! ¡Tío Nacho llegó!': AUDIO_BASE+'hf_20260905_211122_040c8ffb-f2b8-48b0-946e-f1da910c8c46.mp3',
   '¡Épale, estoy volando!': AUDIO_BASE+'hf_20260905_211122_4f35c60a-929f-4aa4-b9e1-4163166552f5.mp3',
   '¡Todos a bordo con tío Nacho!': AUDIO_BASE+'hf_20260905_211122_ad78fe32-f216-4c38-84a4-fad333c188ef.mp3',
@@ -255,6 +265,7 @@ CLIPS_PJ.nacho = {
   '¡Épale! ¡Aquí viene tío Nacho!': AUDIO_BASE+'hf_20260905_211233_0d2530c9-62f0-495f-9dd0-c7cd85186173.mp3',
 };
 CLIPS_PJ.yanny = {
+  '¡Qué molleja, mi amor! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000211_120fe22f-2de6-425d-bb70-389e620d512f.mp3',
   '¡Hola mi amor! ¡Tía Yanny está lista!': AUDIO_BASE+'hf_20260905_211210_5ce11796-fa36-43a4-8bf8-930316ba09bf.mp3',
   '¡Estoy volando, mi amor!': AUDIO_BASE+'hf_20260905_211210_9f201a46-e7a4-4dd7-9852-d62f14a8f10b.mp3',
   '¡Todos a bordo, mis amores!': AUDIO_BASE+'hf_20260905_211233_09950464-6a25-4daf-b9f2-987677f4128e.mp3',
@@ -272,6 +283,7 @@ CLIPS_PJ.yanny = {
   '¡Hola mi amor! ¡Soy tía Yanny!': AUDIO_BASE+'hf_20260905_211321_81ef2f70-8ac6-4099-ae39-dd00ef98778f.mp3',
 };
 CLIPS_PJ.tiofran = {
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y un peo del susto!': AUDIO_BASE+'hf_20260906_000210_0aaa5fa1-d871-45e9-b492-7fb2eaa58e51.mp3',
   '¡Tío Fran llegó! ¡Cuidado con mis peos!': AUDIO_BASE+'hf_20260905_211321_12cb52df-4047-4462-9e01-56a3f607432b.mp3',
   '¡Volando a pura fuerza de peo!': AUDIO_BASE+'hf_20260905_211321_14d204d3-0be3-45a0-9d53-50215b31f0a1.mp3',
   '¡Todos a bordo! ¡Y abran las ventanas!': AUDIO_BASE+'hf_20260905_211451_45780969-5266-4128-844b-5cfef7d92aed.mp3',
@@ -289,6 +301,7 @@ CLIPS_PJ.tiofran = {
   '¡Hola! ¡Soy tío Fran! ¡Prrrr!': AUDIO_BASE+'hf_20260905_211429_9b5e63a7-87c6-4323-8857-1cfa7e1d170d.mp3',
 };
 CLIPS_PJ.romulo = {
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260906_000219_788dbe27-e9af-4e47-97b6-74d23ecfd4eb.mp3',
   '¡Rómulo el mapache está listo!': AUDIO_BASE+'hf_20260905_211429_a28b6474-3174-434e-ae2f-77049161db0c.mp3',
   '¡Estoy volando! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211429_b725a450-91f6-46e5-85c9-36466eabd3eb.mp3',
   '¡Al barco! ¡Brrrp!': AUDIO_BASE+'hf_20260905_211451_8a631037-875f-4344-87d8-2f1bef316fe9.mp3',
@@ -306,6 +319,7 @@ CLIPS_PJ.romulo = {
   '¡Hola! ¡Brrrp! ¡Ay, qué pena!': AUDIO_BASE+'hf_20260905_211515_ae5f8bc5-85c8-403a-a175-8a9915c232aa.mp3',
 };
 CLIPS_PJ.beto = {
+  '¡Qué molleja, pichunguito! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_8ee6a2f9-63e7-490c-be01-b18997f187e3.mp3',
   '¡Tío Beto está listo, pichunguito!': AUDIO_BASE+'hf_20260905_211515_44df742b-2dfb-495f-9de1-faf4fdc7a06e.mp3',
   '¡Estoy volando!': AUDIO_BASE+'hf_20260905_211559_70e20026-8ba8-47af-b79c-99ee194c8323.mp3',
   '¡Todos a bordo con tío Beto!': AUDIO_BASE+'hf_20260905_211537_7bf369c2-d0c3-4bfb-9b37-c62b2ba09670.mp3',
@@ -323,6 +337,7 @@ CLIPS_PJ.beto = {
   '¡Hola pichunguito! ¡Soy tío Beto!': AUDIO_BASE+'hf_20260905_211706_6cc72135-3327-4f18-acd7-6fb06b89ec5c.mp3',
 };
 CLIPS_PJ.giuliana = {
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_586d7b35-ba97-4317-9eca-e958f338b4bb.mp3',
   '¡Tía Giuliana está lista!': AUDIO_BASE+'hf_20260905_211624_7b78eff4-1245-4ca6-a493-eb5180754d4f.mp3',
   '¡Estoy volando! ¡Qué emoción!': AUDIO_BASE+'hf_20260905_211706_b3bdb296-e18e-4b80-90d0-f68311297105.mp3',
   '¡Todos a bordo!': AUDIO_BASE+'hf_20260905_211624_8062a0d2-2cf4-49c3-ab57-f571354c9436.mp3',
@@ -340,6 +355,7 @@ CLIPS_PJ.giuliana = {
   '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!': AUDIO_BASE+'hf_20260905_211729_580f7a89-60a3-4315-a6f3-f5c18221a592.mp3',
 };
 CLIPS_PJ.penny = {
+  '¡Guau! ¡Qué molleja! ¡Se me hizo un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_c2772fa7-ef50-4f74-95f1-13ab9b31c77e.mp3',
   '¡Guau! ¡Penny al ataque!': AUDIO_BASE+'hf_20260905_212151_8f86856b-70e0-4ecf-aea9-b2e64425eb14.mp3',
   '¡Guau! ¡Un perrito volador!': AUDIO_BASE+'hf_20260905_211753_9d44db2a-24c7-464e-98a9-472e9880bcca.mp3',
   '¡Guau! ¡Todos a bordo!': AUDIO_BASE+'hf_20260905_211729_6028deea-f5cd-4dfa-a62a-d68af0eb3e8a.mp3',
@@ -357,6 +373,7 @@ CLIPS_PJ.penny = {
   '¡Guau, guau! ¡Soy Penny!': AUDIO_BASE+'hf_20260905_211835_5309a4b6-fc7c-45bd-85ba-c1049176791d.mp3',
 };
 CLIPS_PJ.sheldon = {
+  '¡Guau, guau! ¡Qué molleja! ¡Un nudo en la garganta!': AUDIO_BASE+'hf_20260906_000219_b7e4b924-8114-4c00-a58a-3cb489743866.mp3',
   '¡Guau! ¡Sheldon al ataque!': AUDIO_BASE+'hf_20260905_211835_ec4070eb-0629-4d71-b2fb-f72f629d493e.mp3',
   '¡Guau! ¡Sheldon vuela!': AUDIO_BASE+'hf_20260905_211835_8f7b85b5-5d43-4411-a9b8-35f068e670ab.mp3',
   '¡Guau! ¡Al barco!': AUDIO_BASE+'hf_20260905_211955_52ee7f72-9965-4e1a-b274-8d97da80e4b7.mp3',
@@ -374,6 +391,7 @@ CLIPS_PJ.sheldon = {
   '¡Guau, guau! ¡Soy Sheldon!': AUDIO_BASE+'hf_20260905_212112_5ee66fdb-b946-4e7c-8ba1-43e6e48ba54e.mp3',
 };
 CLIPS_PJ.srpopo = {
+  '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y en la barriga!': AUDIO_BASE+'hf_20260906_000219_8087f8b1-52ca-4468-8bb9-458c6afe8523.mp3',
   '¡El Señor Popo está listo!': AUDIO_BASE+'hf_20260905_212112_974f5448-7fb2-4ad5-89ae-abe686607d2f.mp3',
   '¡Un popo volador! ¡Increíble!': AUDIO_BASE+'hf_20260905_212032_1626c937-7d8f-4ef2-8152-3f2780344488.mp3',
   '¡Todos a bordo del barco popo!': AUDIO_BASE+'hf_20260905_212112_b1e6caf5-f0cc-40d1-af41-262a6ebf804f.mp3',
@@ -748,26 +766,26 @@ const FAMILIA = [
 const porId = id => FAMILIA.find(c=>c.id===id);
 /* ---- El paquete de diálogos de cada personaje: la misma situación, la frase de cada uno.
    Fernando saluda a cada familiar con su frase de FAMILIA (saludo: null). ---- */
-const CLAVES_DIALOGO = ['inicio', 'volar', 'barco', 'dino', 'luna', 'hamburguesa', 'arepa', 'maracaibo', 'ganas', 'peo', 'alivio', 'popito', 'rampa', 'tesoro', 'saludo'];
+const CLAVES_DIALOGO = ['inicio', 'volar', 'barco', 'dino', 'luna', 'hamburguesa', 'arepa', 'maracaibo', 'ganas', 'peo', 'alivio', 'popito', 'rampa', 'tesoro', 'puente', 'saludo'];
 const DIALOGOS = {
-  fernando: {inicio: '¡Pichunguito al ataque!', volar: '¡A volar, pichunguitos!', barco: '¡Todos a bordo del barco pichunguito!', dino: '¡Vamos, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Tesoro! ¡Encontré el tesoro!', saludo: null},
-  tiojuan: {inicio: '¡Tío Juan al rescate!', volar: '¡Arriba, arriba! ¡Tío Juan vuela!', barco: '¡Capitán tío Juan al mando!', dino: '¡Un dinosaurio! ¡Qué bestia tan bonita!', luna: '¡Llegué a la luna, pichunguito!', hamburguesa: '¡Mmm, qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo, pichunguito!', maracaibo: '¡Maracaibo, tierra del sol amada!', ganas: '¡Ay, ay! ¡Necesito un baño ya!', peo: '¡Perdón! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio tan grande!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa como un superhéroe!', tesoro: '¡El tesoro es nuestro, pichunguito!', saludo: '¡Hola, familia! ¡Un abrazo de tío Juan!'},
-  luca: {inicio: '¡Luca al ataque!', volar: '¡Estoy volando! ¡Mírame!', barco: '¡Zarpamos! ¡Todos a bordo!', dino: '¡Arre, dinosaurio, arre!', luna: '¡Llegué a la luna! ¡Qué chévere!', hamburguesa: '¡Ñam! ¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola! ¡Soy Luca, el amigo de Fernando!'},
-  salomon: {inicio: '¡Salomón en la casa!', volar: '¡Volando con estilo!', barco: '¡Al agua, marineros!', dino: '¡Dinosaurio, tú y yo somos un equipo!', luna: '¡La luna! ¡Qué genial!', hamburguesa: '¡Esta hamburguesa está brutal!', arepa: '¡Arepa de agüita de sapo, la mejor!', maracaibo: '¡Maracaibo, aquí estoy!', ganas: '¡Uy, uy! ¡Quiero hacer popo!', peo: '¡Ups, se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Ja! ¡Un popo bebé me sigue!', rampa: '¡Salté la rampa con estilo!', tesoro: '¡El tesoro! ¡Somos ricos!', saludo: '¡Hola! ¡Salomón quiere jugar!'},
-  cucu: {inicio: '¡Cucú! ¡Aquí estoy!', volar: '¡Estoy volando como un pajarito!', barco: '¡Vamos a navegar!', dino: '¡Qué dinosaurio tan lindo!', luna: '¡Llegué a la luna! ¡Hola, estrellitas!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Qué tierno!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola! ¡Soy Cucú! ¿Jugamos?'},
-  santi: {inicio: '¡Tati al ataque!', volar: '¡A volar! ¡Uuuh!', barco: '¡Barquito, barquito!', dino: '¡Dino grande!', luna: '¡La luna! ¡Qué bonita!', hamburguesa: '¡Ñam, ñam! ¡Rica!', arepa: '¡Arepita rica!', maracaibo: '¡Maracaibo!', ganas: '¡Popó! ¡Quiero popó!', peo: '¡Jiji, un peo!', alivio: '¡Ahh, qué rico!', popito: '¡Popó bebé! ¡Amiguito!', rampa: '¡Salté! ¡Salté!', tesoro: '¡Tesoro! ¡Brilla!', saludo: '¡Hola! ¡Soy Santi!'},
-  mama: {inicio: '¡Mamá está lista! ¡Vamos, mis amores!', volar: '¡Estoy volando! ¡Sujétense bien!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué aventura!', luna: '¡Llegué a la luna! ¡No lo puedo creer!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, mi tierra!', ganas: '¡Ay, necesito un baño ahora mismo!', peo: '¡Ay, qué pena! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué susto!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola, mi amor! ¡Mamá te quiere mucho!'},
-  papa: {inicio: '¡Papá al volante!', volar: '¡Papá vuela alto!', barco: '¡Capitán papá al mando!', dino: '¡Un dinosaurio! ¡Esto sí es una aventura!', luna: '¡Llegué a la luna! ¡Increíble!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Uy, tengo que ir al baño!', peo: '¡Perdón! ¡Fue un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué salto!', tesoro: '¡El tesoro! ¡Lo encontramos!', saludo: '¡Hola, campeón! ¡Papá está aquí!'},
-  abu: {inicio: '¡Abu está lista, mis niños!', volar: '¡Ay, Dios mío, estoy volando!', barco: '¡Vamos a navegar, mis amores!', dino: '¡Ay, un dinosaurio! ¡Qué grande!', luna: '¡Llegué a la luna! ¡Quién lo diría!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Maracaibo! ¡Qué calor tan sabroso!', ganas: '¡Ay, necesito un bañito!', peo: '¡Ay, qué pena! ¡Un peíto!', alivio: '¡Ahh, qué alivio, mi amor!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Ay, mi corazón!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola, mi cielo! ¡Abu te quiere!'},
-  nacho: {inicio: '¡Épale! ¡Tío Nacho llegó!', volar: '¡Épale, estoy volando!', barco: '¡Todos a bordo con tío Nacho!', dino: '¡Épale, un dinosaurio!', luna: '¡Épale! ¡Llegué a la luna!', hamburguesa: '¡Épale, qué rica hamburguesa!', arepa: '¡Épale, qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, épale!', ganas: '¡Épale, quiero hacer popo!', peo: '¡Épale! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Épale, un popo bebé me sigue!', rampa: '¡Épale, salté la rampa!', tesoro: '¡Épale, el tesoro!', saludo: '¡Épale! ¡Aquí viene tío Nacho!'},
-  yanny: {inicio: '¡Hola mi amor! ¡Tía Yanny está lista!', volar: '¡Estoy volando, mi amor!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué lindo!', luna: '¡Llegué a la luna, mi amor!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Ay, quiero hacer popo!', peo: '¡Ay, mi amor, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola mi amor! ¡Soy tía Yanny!'},
-  tiofran: {inicio: '¡Tío Fran llegó! ¡Cuidado con mis peos!', volar: '¡Volando a pura fuerza de peo!', barco: '¡Todos a bordo! ¡Y abran las ventanas!', dino: '¡Un dinosaurio! ¡A ver quién se tira el peo más grande!', luna: '¡Llegué a la luna! ¡Mi peo me trajo hasta aquí!', hamburguesa: '¡Qué rica hamburguesa! ¡Ya viene el peo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Y no es broma!', peo: '¡Prrrr! ¡Ese sí fue grande!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Y huele a peo!', saludo: '¡Hola! ¡Soy tío Fran! ¡Prrrr!'},
-  romulo: {inicio: '¡Rómulo el mapache está listo!', volar: '¡Estoy volando! ¡Brrrp!', barco: '¡Al barco! ¡Brrrp!', dino: '¡Un dinosaurio! ¡Ay, qué pena!', luna: '¡Llegué a la luna! ¡Brrrp! ¡Ay, qué pena!', hamburguesa: '¡Qué rica hamburguesa! ¡Brrrp!', arepa: '¡Qué rica arepa! ¡Brrrp! ¡Ay, qué pena!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Ay, qué pena!', peo: '¡Brrrp! ¡No, eso fue un peo! ¡Ay, qué pena!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Brrrp!', saludo: '¡Hola! ¡Brrrp! ¡Ay, qué pena!'},
-  beto: {inicio: '¡Tío Beto está listo, pichunguito!', volar: '¡Estoy volando!', barco: '¡Todos a bordo con tío Beto!', dino: '¡Un dinosaurio! ¡Qué maravilla!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Hola pichunguito! ¡Soy tío Beto!'},
-  giuliana: {inicio: '¡Tía Giuliana está lista!', volar: '¡Estoy volando! ¡Qué emoción!', barco: '¡Todos a bordo!', dino: '¡Un dinosaurio! ¡Un abrazo, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', saludo: '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!'},
-  penny: {inicio: '¡Guau! ¡Penny al ataque!', volar: '¡Guau! ¡Un perrito volador!', barco: '¡Guau! ¡Todos a bordo!', dino: '¡Guau, guau! ¡Un dinosaurio!', luna: '¡Guau! ¡Llegué a la luna!', hamburguesa: '¡Guau! ¡Qué rica hamburguesa!', arepa: '¡Guau! ¡Qué rica arepa!', maracaibo: '¡Guau! ¡Llegamos a Maracaibo!', ganas: '¡Guau! ¡Quiero hacer popo!', peo: '¡Guau! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé me sigue!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡El tesoro!', saludo: '¡Guau, guau! ¡Soy Penny!'},
-  sheldon: {inicio: '¡Guau! ¡Sheldon al ataque!', volar: '¡Guau! ¡Sheldon vuela!', barco: '¡Guau! ¡Al barco!', dino: '¡Guau, guau! ¡Un dinosaurio grande!', luna: '¡Guau! ¡La luna!', hamburguesa: '¡Guau! ¡Hamburguesa rica!', arepa: '¡Guau! ¡Arepa rica!', maracaibo: '¡Guau! ¡Maracaibo!', ganas: '¡Guau! ¡Popo, popo!', peo: '¡Guau! ¡Un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡Tesoro!', saludo: '¡Guau, guau! ¡Soy Sheldon!'},
-  srpopo: {inicio: '¡El Señor Popo está listo!', volar: '¡Un popo volador! ¡Increíble!', barco: '¡Todos a bordo del barco popo!', dino: '¡Un dinosaurio! ¡Seguro hace popos enormes!', luna: '¡Llegué a la luna! ¡El primer popo en la luna!', hamburguesa: '¡Qué rica hamburguesa! ¡Vamos a hacer popo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Yo, el Señor Popo!', peo: '¡Uy, un peo! ¡Qué orgullo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Es mi hijito!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Huele a popo!', saludo: '¡Hola! ¡Soy el Señor Popo!'},
+  fernando: {inicio: '¡Pichunguito al ataque!', volar: '¡A volar, pichunguitos!', barco: '¡Todos a bordo del barco pichunguito!', dino: '¡Vamos, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Tesoro! ¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: null},
+  tiojuan: {inicio: '¡Tío Juan al rescate!', volar: '¡Arriba, arriba! ¡Tío Juan vuela!', barco: '¡Capitán tío Juan al mando!', dino: '¡Un dinosaurio! ¡Qué bestia tan bonita!', luna: '¡Llegué a la luna, pichunguito!', hamburguesa: '¡Mmm, qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo, pichunguito!', maracaibo: '¡Maracaibo, tierra del sol amada!', ganas: '¡Ay, ay! ¡Necesito un baño ya!', peo: '¡Perdón! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio tan grande!', popito: '¡Mira, un popo bebé me sigue!', rampa: '¡Salté la rampa como un superhéroe!', tesoro: '¡El tesoro es nuestro, pichunguito!', puente: '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta, pichunguito!', saludo: '¡Hola, familia! ¡Un abrazo de tío Juan!'},
+  luca: {inicio: '¡Luca al ataque!', volar: '¡Estoy volando! ¡Mírame!', barco: '¡Zarpamos! ¡Todos a bordo!', dino: '¡Arre, dinosaurio, arre!', luna: '¡Llegué a la luna! ¡Qué chévere!', hamburguesa: '¡Ñam! ¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola! ¡Soy Luca, el amigo de Fernando!'},
+  salomon: {inicio: '¡Salomón en la casa!', volar: '¡Volando con estilo!', barco: '¡Al agua, marineros!', dino: '¡Dinosaurio, tú y yo somos un equipo!', luna: '¡La luna! ¡Qué genial!', hamburguesa: '¡Esta hamburguesa está brutal!', arepa: '¡Arepa de agüita de sapo, la mejor!', maracaibo: '¡Maracaibo, aquí estoy!', ganas: '¡Uy, uy! ¡Quiero hacer popo!', peo: '¡Ups, se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Ja! ¡Un popo bebé me sigue!', rampa: '¡Salté la rampa con estilo!', tesoro: '¡El tesoro! ¡Somos ricos!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta, primo!', saludo: '¡Hola! ¡Salomón quiere jugar!'},
+  cucu: {inicio: '¡Cucú! ¡Aquí estoy!', volar: '¡Estoy volando como un pajarito!', barco: '¡Vamos a navegar!', dino: '¡Qué dinosaurio tan lindo!', luna: '¡Llegué a la luna! ¡Hola, estrellitas!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Qué tierno!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola! ¡Soy Cucú! ¿Jugamos?'},
+  santi: {inicio: '¡Tati al ataque!', volar: '¡A volar! ¡Uuuh!', barco: '¡Barquito, barquito!', dino: '¡Dino grande!', luna: '¡La luna! ¡Qué bonita!', hamburguesa: '¡Ñam, ñam! ¡Rica!', arepa: '¡Arepita rica!', maracaibo: '¡Maracaibo!', ganas: '¡Popó! ¡Quiero popó!', peo: '¡Jiji, un peo!', alivio: '¡Ahh, qué rico!', popito: '¡Popó bebé! ¡Amiguito!', rampa: '¡Salté! ¡Salté!', tesoro: '¡Tesoro! ¡Brilla!', puente: '¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Hola! ¡Soy Santi!'},
+  mama: {inicio: '¡Mamá está lista! ¡Vamos, mis amores!', volar: '¡Estoy volando! ¡Sujétense bien!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué aventura!', luna: '¡Llegué a la luna! ¡No lo puedo creer!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, mi tierra!', ganas: '¡Ay, necesito un baño ahora mismo!', peo: '¡Ay, qué pena! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué susto!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, mis amores! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola, mi amor! ¡Mamá te quiere mucho!'},
+  papa: {inicio: '¡Papá al volante!', volar: '¡Papá vuela alto!', barco: '¡Capitán papá al mando!', dino: '¡Un dinosaurio! ¡Esto sí es una aventura!', luna: '¡Llegué a la luna! ¡Increíble!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Uy, tengo que ir al baño!', peo: '¡Perdón! ¡Fue un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Qué salto!', tesoro: '¡El tesoro! ¡Lo encontramos!', puente: '¡Qué molleja de puente! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola, campeón! ¡Papá está aquí!'},
+  abu: {inicio: '¡Abu está lista, mis niños!', volar: '¡Ay, Dios mío, estoy volando!', barco: '¡Vamos a navegar, mis amores!', dino: '¡Ay, un dinosaurio! ¡Qué grande!', luna: '¡Llegué a la luna! ¡Quién lo diría!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Maracaibo! ¡Qué calor tan sabroso!', ganas: '¡Ay, necesito un bañito!', peo: '¡Ay, qué pena! ¡Un peíto!', alivio: '¡Ahh, qué alivio, mi amor!', popito: '¡Miren, un popo bebé me sigue!', rampa: '¡Salté la rampa! ¡Ay, mi corazón!', tesoro: '¡Encontré el tesoro!', puente: '¡Ay, qué molleja! ¡Se me hizo un nudo en la garganta, mi cielo!', saludo: '¡Hola, mi cielo! ¡Abu te quiere!'},
+  nacho: {inicio: '¡Épale! ¡Tío Nacho llegó!', volar: '¡Épale, estoy volando!', barco: '¡Todos a bordo con tío Nacho!', dino: '¡Épale, un dinosaurio!', luna: '¡Épale! ¡Llegué a la luna!', hamburguesa: '¡Épale, qué rica hamburguesa!', arepa: '¡Épale, qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo, épale!', ganas: '¡Épale, quiero hacer popo!', peo: '¡Épale! ¡Se me escapó un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Épale, un popo bebé me sigue!', rampa: '¡Épale, salté la rampa!', tesoro: '¡Épale, el tesoro!', puente: '¡Épale, qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Épale! ¡Aquí viene tío Nacho!'},
+  yanny: {inicio: '¡Hola mi amor! ¡Tía Yanny está lista!', volar: '¡Estoy volando, mi amor!', barco: '¡Todos a bordo, mis amores!', dino: '¡Un dinosaurio! ¡Qué lindo!', luna: '¡Llegué a la luna, mi amor!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Ay, quiero hacer popo!', peo: '¡Ay, mi amor, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, mi amor! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola mi amor! ¡Soy tía Yanny!'},
+  tiofran: {inicio: '¡Tío Fran llegó! ¡Cuidado con mis peos!', volar: '¡Volando a pura fuerza de peo!', barco: '¡Todos a bordo! ¡Y abran las ventanas!', dino: '¡Un dinosaurio! ¡A ver quién se tira el peo más grande!', luna: '¡Llegué a la luna! ¡Mi peo me trajo hasta aquí!', hamburguesa: '¡Qué rica hamburguesa! ¡Ya viene el peo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Y no es broma!', peo: '¡Prrrr! ¡Ese sí fue grande!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Y huele a peo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y un peo del susto!', saludo: '¡Hola! ¡Soy tío Fran! ¡Prrrr!'},
+  romulo: {inicio: '¡Rómulo el mapache está listo!', volar: '¡Estoy volando! ¡Brrrp!', barco: '¡Al barco! ¡Brrrp!', dino: '¡Un dinosaurio! ¡Ay, qué pena!', luna: '¡Llegué a la luna! ¡Brrrp! ¡Ay, qué pena!', hamburguesa: '¡Qué rica hamburguesa! ¡Brrrp!', arepa: '¡Qué rica arepa! ¡Brrrp! ¡Ay, qué pena!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Ay, qué pena!', peo: '¡Brrrp! ¡No, eso fue un peo! ¡Ay, qué pena!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Brrrp!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta! ¡Brrrp! ¡Ay, qué pena!', saludo: '¡Hola! ¡Brrrp! ¡Ay, qué pena!'},
+  beto: {inicio: '¡Tío Beto está listo, pichunguito!', volar: '¡Estoy volando!', barco: '¡Todos a bordo con tío Beto!', dino: '¡Un dinosaurio! ¡Qué maravilla!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Uy, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja, pichunguito! ¡Se me hizo un nudo en la garganta!', saludo: '¡Hola pichunguito! ¡Soy tío Beto!'},
+  giuliana: {inicio: '¡Tía Giuliana está lista!', volar: '¡Estoy volando! ¡Qué emoción!', barco: '¡Todos a bordo!', dino: '¡Un dinosaurio! ¡Un abrazo, dinosaurio!', luna: '¡Llegué a la luna!', hamburguesa: '¡Qué rica hamburguesa!', arepa: '¡Qué rica arepita de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo!', peo: '¡Ay, me eché un peo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue!', rampa: '¡Salté la rampa!', tesoro: '¡Encontré el tesoro!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Un abrazo, pichunguito! ¡Soy tía Giuliana!'},
+  penny: {inicio: '¡Guau! ¡Penny al ataque!', volar: '¡Guau! ¡Un perrito volador!', barco: '¡Guau! ¡Todos a bordo!', dino: '¡Guau, guau! ¡Un dinosaurio!', luna: '¡Guau! ¡Llegué a la luna!', hamburguesa: '¡Guau! ¡Qué rica hamburguesa!', arepa: '¡Guau! ¡Qué rica arepa!', maracaibo: '¡Guau! ¡Llegamos a Maracaibo!', ganas: '¡Guau! ¡Quiero hacer popo!', peo: '¡Guau! ¡Me eché un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé me sigue!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡El tesoro!', puente: '¡Guau! ¡Qué molleja! ¡Se me hizo un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Penny!'},
+  sheldon: {inicio: '¡Guau! ¡Sheldon al ataque!', volar: '¡Guau! ¡Sheldon vuela!', barco: '¡Guau! ¡Al barco!', dino: '¡Guau, guau! ¡Un dinosaurio grande!', luna: '¡Guau! ¡La luna!', hamburguesa: '¡Guau! ¡Hamburguesa rica!', arepa: '¡Guau! ¡Arepa rica!', maracaibo: '¡Guau! ¡Maracaibo!', ganas: '¡Guau! ¡Popo, popo!', peo: '¡Guau! ¡Un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡Tesoro!', puente: '¡Guau, guau! ¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Sheldon!'},
+  srpopo: {inicio: '¡El Señor Popo está listo!', volar: '¡Un popo volador! ¡Increíble!', barco: '¡Todos a bordo del barco popo!', dino: '¡Un dinosaurio! ¡Seguro hace popos enormes!', luna: '¡Llegué a la luna! ¡El primer popo en la luna!', hamburguesa: '¡Qué rica hamburguesa! ¡Vamos a hacer popo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Yo, el Señor Popo!', peo: '¡Uy, un peo! ¡Qué orgullo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Es mi hijito!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Huele a popo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y en la barriga!', saludo: '¡Hola! ¡Soy el Señor Popo!'},
 };
 function fraseDe(pj, k, id){
   const paq = DIALOGOS[pj] || DIALOGOS.fernando;
@@ -972,7 +990,7 @@ function crearPartida(guardado){
     popo: 0, ganas: false, pedoT: 0, ultimoPopoDicho: -9999, ultimaHamb: -9999,
     hamburguesas: 0, comidas: new Set(), arepas: 0, comidasArepas: new Set(), estrellas: [],
     prog: {banos:[], banderas:[], aros:[], familia:[], helipuertos:[], boyas:[], huevos:[], rampa:false, santi:false, cofre:false, popo:false, luna:false, maracaibo:false},
-    espacio: false, rugidoT: -9999, pj: 'fernando',
+    espacio: false, rugidoT: -9999, pj: 'fernando', enPuenteT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
   };
@@ -1377,6 +1395,10 @@ function revisarRecogibles(P){
     const dx = a.x-J.x, dz = a.z-J.z, dy = a.y-(J.y+1);
     if (dx*dx+dz*dz+dy*dy < alcance*alcance) comerArepa(P, a);
   }
+  /* al subir al puente (pasada la rampa) se le hace un nudo en la garganta: una vez por cruce */
+  { const tp = enPuente(J.x, J.z); const arriba = tp > PUENTE.rampa*0.6 && tp < PUENTE.L - PUENTE.rampa*0.6;
+    if (arriba && P.t - P.enPuenteT > 60*8) decir(P, 'puente');
+    if (arriba) P.enPuenteT = P.t; }
   if (!P.prog.maracaibo && enMaracaibo(J.x, J.z)){ P.prog.maracaibo = true; evento(P, 'maracaibo'); decir(P, 'maracaibo'); }
 }
 function comerArepa(P, a){
@@ -2425,10 +2447,52 @@ const arepasMesh = AREPAS.map(a=>{
     const b = []; for (const m of muestras) b.push({x:m.x + m.nx*lado*(PUENTE.ancho/2-0.3), z:m.z + m.nz*lado*(PUENTE.ancho/2-0.3), nx:m.nx, nz:m.nz});
     mundo.add(new THREE.Mesh(cinta(b, -0.08, 0.08, '#e8e8ea', 1.3, false), mat));
   }
+  /* Inspirado en el puente General Rafael Urdaneta de Maracaibo: torres de
+     concreto beige en forma de A (pórticos), con los cables en abanico desde
+     la punta hasta el tablero, y pilotes dobles entre torre y torre. */
+  const BEIGE = '#d9c6a1', BEIGE2 = '#c9b48c', CABLE = '#e6e6ea', giroP = Math.atan2(PUENTE.ux, PUENTE.uz);
+  const nx = -PUENTE.uz, nz = PUENTE.ux;
+  const barra = (ax, ay, az, bx, by, bz, r, color)=>{                 /* un cilindro de un punto a otro */
+    const dx = bx-ax, dy = by-ay, dz = bz-az, L = Math.hypot(dx, dy, dz);
+    const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx/L, dy/L, dz/L)));
+    A.cil(r, r, L, color, (ax+bx)/2, (ay+by)/2, (az+bz)/2, e.x, e.y, e.z, 6);
+  };
+  const viga = (ax, ay, az, bx, by, bz, w, d, color)=>{                /* una viga cuadrada de un punto a otro */
+    const dx = bx-ax, dy = by-ay, dz = bz-az, L = Math.hypot(dx, dy, dz);
+    const e = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx/L, dy/L, dz/L)));
+    A.caja(w, L, d, color, (ax+bx)/2, (ay+by)/2, (az+bz)/2, e.x, e.y, e.z);
+  };
+  const enT = (t, u, y)=>[PUENTE.x0 + PUENTE.ux*t + nx*u, y, PUENTE.z0 + PUENTE.uz*t + nz*u];
+  const torres = [0.2, 0.4, 0.6, 0.8].map(k=>k*PUENTE.L);
+  for (const t of torres){
+    const [cx, , cz] = enT(t, 0, 0), h = altura(cx, cz), fondo = alturaAgua(cx, cz) - 2, top = h + 24;
+    /* la base en el agua y las dos patas inclinadas de cada lado */
+    A.caja(20, 3, 6, BEIGE2, cx, NIVEL_MAR - 0.2, cz, 0, giroP, 0);
+    for (const lado of [-1, 1]){
+      const [bx, , bz] = enT(t, lado*8.5, 0), [dx, , dz] = enT(t, lado*6.2, 0), [tx, , tz] = enT(t, lado*2.2, 0);
+      viga(bx, fondo, bz, bx, NIVEL_MAR + 1.2, bz, 2.4, 2.4, BEIGE2);                 /* el pilote bajo el agua */
+      viga(bx, NIVEL_MAR + 1, bz, dx, h - 1, dz, 2.2, 2.6, BEIGE);                     /* pata gruesa hasta el tablero */
+      viga(dx, h - 1, dz, tx, top, tz, 1.6, 2.2, BEIGE);                               /* pata fina hasta la punta */
+    }
+    const [l1x, , l1z] = enT(t, -6.2, 0), [l2x, , l2z] = enT(t, 6.2, 0);
+    A.caja(13.2, 1.6, 2.6, BEIGE, cx, h - 1.2, cz, 0, giroP, 0);                       /* travesaño a la altura del tablero */
+    A.caja(5.6, 1.8, 2.4, BEIGE, cx, top + 0.6, cz, 0, giroP, 0);                      /* la punta */
+    A.caja(6.4, 0.5, 3.0, '#f2ece0', cx, top + 1.75, cz, 0, giroP, 0);
+    for (const lado of [-1, 1]) A.caja(0.5, 0.5, 0.5, '#ff3b30', cx + nx*lado*2.6, top + 2.2, cz + nz*lado*2.6); /* luces rojas para el avión */
+    /* los cables: en abanico desde la punta hasta el tablero, hacia los dos lados */
+    for (const lado of [-1, 1]) for (const dir of [-1, 1]) for (const dist of [7, 13, 19, 25]){
+      const tt = t + dir*dist; if (tt < 4 || tt > PUENTE.L - 4) continue;
+      const [ax, , az] = enT(t, lado*2.2, 0), [bx, , bz] = enT(tt, lado*(PUENTE.ancho/2 - 0.4), 0);
+      barra(ax, top - 0.6, az, bx, altura(bx, bz) + 0.3, bz, 0.07, CABLE);
+    }
+  }
+  /* pilotes dobles entre las torres, con su travesaño */
   for (let i=1;i<pasos;i+=2){
-    const m = muestras[i], h = altura(m.x, m.z), fondo = alturaAgua(m.x, m.z) - 2;
-    for (const lado of [-1, 1]) A.cil(0.6, 0.8, h-fondo, '#8a8a92', m.x + m.nx*lado*3.2, (h+fondo)/2, m.z + m.nz*lado*3.2, 0,0,0,8);
-    A.caja(PUENTE.ancho, 0.8, 1.2, '#8a8a92', m.x, h-0.5, m.z, 0, Math.atan2(PUENTE.ux, PUENTE.uz), 0);
+    const m = muestras[i], t = i/pasos*PUENTE.L;
+    if (torres.some(tt=>Math.abs(tt-t) < 6)) continue;
+    const h = altura(m.x, m.z), fondo = alturaAgua(m.x, m.z) - 2;
+    for (const lado of [-1, 1]) A.caja(1.2, h-fondo, 1.6, BEIGE, m.x + m.nx*lado*3.4, (h+fondo)/2, m.z + m.nz*lado*3.4, 0, giroP, 0);
+    A.caja(PUENTE.ancho, 1.0, 1.6, BEIGE, m.x, h-0.6, m.z, 0, giroP, 0);
   }
   /* los helipuertos: círculo con su H */
   for (const h of HELIPUERTOS){
