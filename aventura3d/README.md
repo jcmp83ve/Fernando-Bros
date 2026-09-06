@@ -202,9 +202,11 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
   (`inicio`, `volar`, `barco`, `dino`, `luna`, `hamburguesa`, `arepa`,
   `maracaibo`, `ganas`, `peo`, `alivio`, `popito`, `rampa`, `tesoro`,
   `puente` y `saludo`), y `CLIPS_PJ` la grabación de cada una (una voz distinta
-  por personaje: Tío Juan grave y cariñoso, Luca y Salomón de niño, Cucú de
-  niña, Santi de bebé, Abu de abuela, Rómulo con eructos, los perros con
-  guau…). El juego llama a `decir(P, situación)` y sale la frase del
+  por personaje: Tío Juan grave y cariñoso, Luca y Salomón con voces de
+  niño, Santi con la misma voz de niño que Fernando, Cucú de niña, Abu de
+  abuela, Rómulo con eructos, los perros con guau…). Las voces de los niños
+  se eligieron midiendo el tono de las grabaciones: solo Chloe, Luna y Zoe
+  suenan a niño (más de 320 Hz); las demás del catálogo son de adulto. El juego llama a `decir(P, situación)` y sale la frase del
   personaje elegido; en multijugador el evento `habla` viaja a los amigos y
   cada uno oye al personaje del otro con su voz si está a menos de 80 m.
   Fernando saluda a cada familiar con su frase de siempre; los demás tienen
