@@ -1876,7 +1876,8 @@ let AC = null, motor = null;
 function audio(){
   prepararClips();
   if (!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
-  if (AC && AC.state==='suspended') AC.resume();
+  if (AC && (AC.state==='suspended' || AC.state==='interrupted')){ try{ AC.resume(); }catch(e){} }
+  vozDesbloquear();
 }
 function beep(freq, dur, tipo, vol, t0){
   if (!AC) return;
@@ -2072,7 +2073,9 @@ const soltar = ev=>{
 };
 document.addEventListener('pointerup', soltar, true);
 document.addEventListener('pointercancel', soltar, true);
-addEventListener('blur', ()=>{ TOQUE.palanca = null; TOQUE.botones.clear(); vozParar(); });
+/* al pedir permiso de micrófono el teléfono tapa la página (blur): ahí no se suelta el botón 🎙️,
+   para que al aceptar se pueda hablar de una vez */
+addEventListener('blur', ()=>{ TOQUE.palanca = null; if (VOZ.pidiendo){ for (const [k,b] of [...TOQUE.botones]) if (b.k!=='voz') TOQUE.botones.delete(k); } else { TOQUE.botones.clear(); vozParar(); } });
 function palancaTactil(){
   const p = TOQUE.palanca; if (!p) return {jx:0, jy:0};
   const R = 46;
@@ -3537,7 +3540,7 @@ function redRecibir(id, m){
     const e = desempaquetarEstado(m); if (!e) return;
     let r = RED.remotos.get(id);
     if (!r) r = crearRemoto(id, e);
-    else if (r.pj !== e.pj || r.nombre !== e.nombre){ const hab = r.hablando; quitarRemoto(id); r = crearRemoto(id, e); r.hablando = hab; r.hablaT = tick; }
+    else if (r.pj !== e.pj || r.nombre !== e.nombre){ const hab = r.hablando; quitarRemoto(id, true); r = crearRemoto(id, e); r.hablando = hab; r.hablaT = tick; }   /* cambió de personaje: se rearma el muñeco sin cortar la voz */
     r.obj = e; r.t = tick;
     return;
   }
@@ -3577,8 +3580,8 @@ function crearRemoto(id, e){
   r.hablando = false; r.hablaT = 0;
   RED.remotos.set(id, r); if (VOZ.stream) vozLlamar(id); return r;
 }
-function quitarRemoto(id){
-  vozCortar(id);
+function quitarRemoto(id, mantenerVoz){
+  if (!mantenerVoz) vozCortar(id);
   const r = RED.remotos.get(id); if (!r) return;
   scene.remove(r.g); if (r.gs.parent) r.gs.parent.remove(r.gs);
   for (const k in r.vehs) scene.remove(r.vehs[k]);
@@ -3623,7 +3626,24 @@ function redPaso(){
    sonidos del micro se apagan al soltar (push-to-talk), así nadie se oye sin
    querer. Cada jugador llama a los demás por PeerJS; la voz sale del parlante
    con volumen según la distancia en la isla. */
-const VOZ = {stream:null, permiso:'', hablando:false, pidiendo:false, llamadas:new Map(), audios:new Map(), silencio:false, quiere:false, avisoT:0};
+const VOZ = {stream:null, permiso:'', hablando:false, pidiendo:false, llamadas:new Map(), audios:new Map(), silencio:false, quiere:false, avisoT:0, pendientes:new Set(), caja:null};
+/* los <audio> con la voz de los amigos viven escondidos dentro de la página: en iPhone y en Chrome un
+   audio suelto (fuera del DOM) a veces no suena, y si el navegador bloquea el play() por llegar sin
+   un toque del usuario, se reintenta en el próximo toque o tecla (vozDesbloquear) */
+function vozCaja(){
+  if (VOZ.caja) return VOZ.caja;
+  const d = document.createElement('div'); d.id = 'voces-amigos'; d.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;overflow:hidden;opacity:0.01;pointer-events:none';
+  document.body.appendChild(d); VOZ.caja = d; return d;
+}
+function vozReproducir(el){
+  let p = null;
+  try{ p = el.play(); }catch(e){ VOZ.pendientes.add(el); return; }
+  if (p && p.then) p.then(()=>{ VOZ.pendientes.delete(el); }).catch(()=>{ VOZ.pendientes.add(el); if (estado==='juego') aviso('🔊 Toca la pantalla para oír a tus amigos'); });
+}
+function vozDesbloquear(){
+  if (!VOZ.pendientes.size) return;
+  for (const el of [...VOZ.pendientes]){ VOZ.pendientes.delete(el); if (el.srcObject) vozReproducir(el); }
+}
 try{ VOZ.silencio = localStorage.getItem('aventura3d.silencio') === 'si'; }catch(e){}
 const hayMicrofono = ()=> !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 function vozEmpezar(){
@@ -3672,20 +3692,22 @@ function prepararLlamada(id, c){
   c.on('stream', st=>{
     let a = VOZ.audios.get(id);
     if (a && a.el){ try{ a.el.pause(); }catch(e){} }
-    const el = new Audio(); el.autoplay = true; el.playsInline = true; el.srcObject = st; el.muted = VOZ.silencio;
-    const p = el.play(); if (p && p.catch) p.catch(()=>{});
+    if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.srcObject = null; a.el.remove(); }catch(e){} }
+    const el = document.createElement('audio'); el.autoplay = true; el.playsInline = true; el.setAttribute('playsinline', ''); el.setAttribute('autoplay', ''); el.controls = false;
+    el.muted = VOZ.silencio; vozCaja().appendChild(el); el.srcObject = st;
     VOZ.audios.set(id, {el, st});
+    vozReproducir(el);
   });
-  const fin = ()=>{ if (VOZ.llamadas.get(id)===c) VOZ.llamadas.delete(id); const a = VOZ.audios.get(id); if (a && a.el){ try{ a.el.pause(); a.el.srcObject = null; }catch(e){} VOZ.audios.delete(id); } };
+  const fin = ()=>{ if (VOZ.llamadas.get(id)===c) VOZ.llamadas.delete(id); const a = VOZ.audios.get(id); if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.pause(); a.el.srcObject = null; a.el.remove(); }catch(e){} VOZ.audios.delete(id); } };
   c.on('close', fin); c.on('error', fin);
 }
 function vozCortar(id){
   const c = VOZ.llamadas.get(id); if (c){ try{ c.close(); }catch(e){} VOZ.llamadas.delete(id); }
-  const a = VOZ.audios.get(id); if (a && a.el){ try{ a.el.pause(); a.el.srcObject = null; }catch(e){} VOZ.audios.delete(id); }
+  const a = VOZ.audios.get(id); if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.pause(); a.el.srcObject = null; a.el.remove(); }catch(e){} VOZ.audios.delete(id); }
 }
 function vozCortarTodo(){ for (const id of [...new Set([...VOZ.llamadas.keys(), ...VOZ.audios.keys()])]) vozCortar(id); vozParar(); }
 function vozSilencio(si){
-  VOZ.silencio = si; for (const [,a] of VOZ.audios) if (a.el) a.el.muted = si;
+  VOZ.silencio = si; for (const [,a] of VOZ.audios) if (a.el){ a.el.muted = si; if (!si && a.el.paused) vozReproducir(a.el); }
   try{ localStorage.setItem('aventura3d.silencio', si ? 'si' : 'no'); }catch(e){}
 }
 function vozPaso(){
@@ -4623,6 +4645,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, redCrear, redUnirse, redSalir };
 requestAnimationFrame(bucle);
 })();
