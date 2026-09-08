@@ -242,6 +242,11 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
   **CAMBIAR DE PERSONAJE**; la partida sigue igual (posición, estrellas,
   hamburguesas, hasta montado en un vehículo), solo cambia quién juega y con
   qué voz habla. Los amigos de la sala ven el cambio al instante.
+- **Nada se cierra por un toque de más**: ◀ FERNANDO BROS, EMPEZAR DE CERO y
+  cambiar de mapa preguntan antes con una ventanita «¿Seguro?» (NO marcado
+  por defecto; ESC también es no). Cerrar la pestaña o ir atrás con una
+  partida abierta hace que el navegador pregunte (Safari de iPhone no lo
+  soporta).
 - **Cada personaje jugable tiene su paquete de diálogos con su propia voz**:
   `DIALOGOS` guarda, para los 18 personajes, una frase por situación
   (`inicio`, `volar`, `barco`, `dino`, `luna`, `hamburguesa`, `arepa`,

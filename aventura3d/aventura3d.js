@@ -1869,6 +1869,9 @@ function redimensionar(){
   W = w/k; H = h/k;
 }
 window.addEventListener('resize', redimensionar);
+/* cerrar la pestaña o ir atrás por error: el navegador pregunta antes (en iPhone Safari no lo hace) */
+let salidaAvisada = false;
+window.addEventListener('beforeunload', e=>{ try{ if (salidaAvisada || estado==='menu') return; }catch(err){ return; } e.preventDefault(); e.returnValue = ''; return ''; });
 redimensionar();
 
 /* ---------------- Sonido y música 8-bits (Web Audio) ---------------- */
@@ -3520,7 +3523,7 @@ function redRecibir(id, m){
     const sala = RED.sala; redLimpiar(); RED.estado = 'error';
     RED.error = 'La sala '+sala+' está en el mapa '+(m.mapa===2 ? '2, Maracaibo de noche 🌙' : '1, la isla de día ☀️')+'. Te llevo allá…';
     try{ localStorage.setItem('aventura3d.mapa', String(m.mapa)); }catch(e){}
-    setTimeout(()=>{ location.href = location.pathname + '?mapa=' + m.mapa + '&sala=' + sala; }, 1800);
+    setTimeout(()=>{ salidaAvisada = true; location.href = location.pathname + '?mapa=' + m.mapa + '&sala=' + sala; }, 1800);
     return;
   }
   if (m.t==='llena'){ if (!RED.anfitrion){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
@@ -3793,7 +3796,29 @@ if (RED.pj !== 'fernando') ponerPersonaje(RED.pj);
 function burbuja(txt, quien, dur){ burbujas.push({txt, quien: quien||'', t: dur||200, t0: dur||200}); if (burbujas.length > 2) burbujas.shift(); }
 function grande(txt, color, dur){ mensajeGrande = {txt, color: color||'#ffe36e', t: dur||90, t0: dur||90}; }
 function aviso(txt){ avisoTxt = txt; avisoT = 180; }
-function volverAFernandoBros(){ try{ location.href = URL_VOLVER; }catch(e){} }
+/* la ventanita «¿Seguro?»: se pone encima de cualquier pantalla y no deja salir del juego,
+   empezar de cero ni cambiar de mapa sin un SÍ a propósito (el NO está marcado por defecto) */
+const CONF = {activa:false, texto:'', detalle:'', si:null, sel:0, etiqueta:'SÍ, SALIR'};
+function confirmar(texto, detalle, si, etiqueta){ CONF.activa = true; CONF.texto = texto; CONF.detalle = detalle; CONF.si = si; CONF.sel = 0; CONF.etiqueta = etiqueta || 'SÍ, SALIR'; sfx.toque(); }
+const zonasConf = ()=>({no:{x:W/2-190, y:H/2+30, w:170, h:48}, si:{x:W/2+20, y:H/2+30, w:170, h:48}});
+function confResolver(si){
+  const f = CONF.si; CONF.activa = false; CONF.si = null; sfx.toque();
+  if (si && f) f();
+}
+function dibujarConfirmacion(){
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(0,0,W,H);
+  const w = Math.min(560, W-40), h = 190, x = W/2-w/2, y = H/2-95;
+  cristal(x, y, w, h, 22, 0.85);
+  ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(x, y, w, h, 22); ctx.stroke();
+  textoAjustado(CONF.texto, W/2, y+40, 26, w-40, '#fff6a0');
+  if (CONF.detalle) textoAjustado(CONF.detalle, W/2, y+78, 15, w-40, '#bcd6ff');
+  const z = zonasConf();
+  boton(z.no.x, z.no.y, z.no.w, z.no.h, '✋ NO, SEGUIR', '#3aa040', '#1e6a24', 18, CONF.sel===0);
+  boton(z.si.x, z.si.y, z.si.w, z.si.h, '✅ '+CONF.etiqueta, '#c03a30', '#801a10', 18, CONF.sel===1);
+  if (!tactil) texto('Flechas y ENTER · ESC = no', W/2, y+h-14, 12, 'rgba(255,255,255,0.6)');
+}
+function volverAFernandoBros(){ salidaAvisada = true; try{ location.href = URL_VOLVER; }catch(e){} }
+function pedirSalir(){ confirmar('¿Seguro que quieres salir del juego?', 'La partida queda guardada, pero se cierra la isla' + (redActiva() ? ' y sales de la sala ' + RED.sala : '') + '.', ()=>{ redSalir(); volverAFernandoBros(); }); }
 function empezar(){
   if (RED.pendiente && RED.estado==='off'){ const c = RED.pendiente; RED.pendiente = ''; estado = 'amigos'; redUnirse(c); return; }
   estado = 'juego'; cortina = 30;
@@ -3801,6 +3826,12 @@ function empezar(){
   setTimeout(()=>{ if (estado==='juego'){ const t = fraseDe(RED.pj, 'inicio'); hablar(t, RED.pj); burbuja(t, nombreLocal()); } }, 2500);
 }
 function procesarTecla(k){
+  if (CONF.activa){
+    if (k==='Escape') confResolver(false);
+    else if (k==='ArrowLeft'||k==='ArrowRight'||k==='ArrowUp'||k==='ArrowDown'){ CONF.sel = 1-CONF.sel; sfx.toque(); }
+    else if (k==='Enter'||k===' ') confResolver(CONF.sel===1);
+    return;
+  }
   if (estado==='menu'){
     if (k==='Escape') return;
     if (k==='Enter'||k===' '||k==='ArrowUp'||k==='ArrowDown'||k==='ArrowLeft'||k==='ArrowRight'||k==='Shift'){ if (RED.pendiente) empezar(); else abrirPersonaje('menu'); }
@@ -3847,15 +3878,15 @@ function elegirPausa(i){
   else if (i===6){ abrirPersonaje('juego'); }   /* cambiar de personaje sin perder la partida */
   else if (i===1){ estado = 'amigos'; RED.entrandoCodigo = false; RED.error = ''; }
   else if (i===2){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} }
-  else if (i===3){ try{ localStorage.removeItem(CLAVE_PARTIDA); }catch(e){} nuevaPartida(null); abrirPersonaje('nuevo'); }
-  else if (i===4){ cambiarMapa(); }
-  else if (i===5){ redSalir(); volverAFernandoBros(); }
+  else if (i===3){ confirmar('¿Empezar de cero?', 'Se borran '+(P.estrellas.length===1 ? 'la estrella' : 'las '+P.estrellas.length+' estrellas')+', las hamburguesas y los puntos de esta aventura.', ()=>{ try{ localStorage.removeItem(CLAVE_PARTIDA); }catch(e){} nuevaPartida(null); abrirPersonaje('nuevo'); }, 'SÍ, BORRAR'); }
+  else if (i===4){ confirmar(NOCHE ? '¿Ir al mapa 1, la isla de día?' : '¿Ir al mapa 2, Maracaibo de noche?', 'La partida de este mapa queda guardada' + (redActiva() ? ', pero sales de la sala '+RED.sala : '') + '.', cambiarMapa, 'SÍ, CAMBIAR'); }
+  else if (i===5){ pedirSalir(); }
 }
 const enZona = (mx,my,z,m)=>mx>=z.x-(m||0) && mx<=z.x+z.w+(m||0) && my>=z.y-(m||0) && my<=z.y+z.h+(m||0);
 const zonaAtras = ()=>({x:14, y:12, w:190, h:42});
 const N_PAUSA = 7;
 const zonasPausa = ()=>[0,1,2,3,4,5,6].map(i=>({x:W/2-150, y:H/2-4+i*35, w:300, h:32}));
-function cambiarMapa(){ const otro = MAPA===2 ? 1 : 2; sfx.toque(); redSalir(); try{ localStorage.setItem('aventura3d.mapa', String(otro)); }catch(e){} location.href = location.pathname + '?mapa=' + otro; }
+function cambiarMapa(){ const otro = MAPA===2 ? 1 : 2; sfx.toque(); salidaAvisada = true; redSalir(); try{ localStorage.setItem('aventura3d.mapa', String(otro)); }catch(e){} location.href = location.pathname + '?mapa=' + otro; }
 /* la pantalla de ¿CON QUIÉN JUEGAS?: sale al pulsar JUGAR y al empezar de cero */
 let selPj = 0, pjOrigen = 'menu';
 const zonaPersonaje = ()=>{
@@ -3894,13 +3925,14 @@ const zonaAmigos = ()=>{
   return z;
 };
 function clic(x, y){
+  if (CONF.activa){ const z = zonasConf(); if (enZona(x, y, z.si, 4)) confResolver(true); else if (enZona(x, y, z.no, 4)) confResolver(false); return; }
   if (estado==='juego'){
     if (redActiva() && !P.escena) for (const z of zonasIrCon()) if (enZona(x, y, z, 4)){ sfx.toque(); irCon(z.id); return; }
     return;
   }
   if (estado==='menu'){
-    if (enZona(x, y, zonaAtras(), 6)) return volverAFernandoBros();
-    if (enZona(x, y, {x:W/2-200, y:196, w:400, h:38}, 4)) return cambiarMapa();
+    if (enZona(x, y, zonaAtras(), 6)) return pedirSalir();
+    if (enZona(x, y, {x:W/2-200, y:196, w:400, h:38}, 4)) return confirmar(NOCHE ? '¿Ir al mapa 1, la isla de día?' : '¿Ir al mapa 2, Maracaibo de noche?', 'La partida de cada mapa se guarda aparte.', cambiarMapa, 'SÍ, CAMBIAR');
     if (enZona(x, y, {x:W-190, y:12, w:176, h:42}, 6)){ sfx.toque(); estado = 'amigos'; RED.entrandoCodigo = false; if (RED.pendiente){ const c = RED.pendiente; RED.pendiente = ''; redUnirse(c); } return; }
     if (RED.pendiente){ sfx.toque(); empezar(); } else abrirPersonaje('menu');
     return;
@@ -3949,7 +3981,7 @@ function clic(x, y){
   }
   if (estado==='final'){
     if (enZona(x, y, {x:W/2-150, y:H-90, w:300, h:44}, 6)){ estado = 'juego'; sfx.toque(); }
-    else if (enZona(x, y, zonaAtras(), 6)) volverAFernandoBros();
+    else if (enZona(x, y, zonaAtras(), 6)) pedirSalir();
   }
 }
 
@@ -4628,6 +4660,7 @@ function dibujar(){
   else if (estado==='final') dibujarFinal();
   else if (estado==='amigos') dibujarAmigos();
   else if (estado==='personaje') dibujarPersonaje();
+  if (CONF.activa) dibujarConfirmacion();
   if (flashT > 0 && estado==='juego'){ ctx.fillStyle = 'rgba(235,240,255,'+(flashT/9*0.5)+')'; ctx.fillRect(0,0,W,H); }
   if (cortina>0){ ctx.fillStyle = 'rgba(0,0,0,'+(cortina/40)+')'; ctx.fillRect(0,0,W,H); }
   if (MANDO.avisoT>0) pastilla('🎮 MANDO CONECTADO', W/2, H-90, 18, '#7dffa0', 0.55);
@@ -4649,6 +4682,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, redCrear, redUnirse, redSalir };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, redCrear, redUnirse, redSalir, CONF };
 requestAnimationFrame(bucle);
 })();
