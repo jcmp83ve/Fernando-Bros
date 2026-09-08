@@ -3824,8 +3824,7 @@ function procesarTecla(k){
   }
   if (estado==='pausa'){
     if (k==='Escape'||k==='p'||k==='P'){ estado = 'juego'; sfx.toque(); }
-    else if (k==='ArrowUp'){ selPausa = (selPausa+4)%5; sfx.toque(); }
-    else if (k==='ArrowDown'){ selPausa = (selPausa+1)%5; sfx.toque(); }
+    else if (k==='ArrowUp'||k==='ArrowDown'){ const orden = [0, 6, 1, 2, 3, 4, 5]; const f = orden.indexOf(selPausa); selPausa = orden[(f + (k==='ArrowUp' ? N_PAUSA-1 : 1)) % N_PAUSA]; sfx.toque(); }
     else if (k==='Enter'||k===' ') elegirPausa(selPausa);
     return;
   }
@@ -3845,6 +3844,7 @@ function procesarTecla(k){
 function elegirPausa(i){
   sfx.toque();
   if (i===0) estado = 'juego';
+  else if (i===6){ abrirPersonaje('juego'); }   /* cambiar de personaje sin perder la partida */
   else if (i===1){ estado = 'amigos'; RED.entrandoCodigo = false; RED.error = ''; }
   else if (i===2){ musicaOn = !musicaOn; try{ localStorage.setItem('aventura3d.musica', musicaOn ? 'si' : 'no'); }catch(e){} }
   else if (i===3){ try{ localStorage.removeItem(CLAVE_PARTIDA); }catch(e){} nuevaPartida(null); abrirPersonaje('nuevo'); }
@@ -3853,7 +3853,8 @@ function elegirPausa(i){
 }
 const enZona = (mx,my,z,m)=>mx>=z.x-(m||0) && mx<=z.x+z.w+(m||0) && my>=z.y-(m||0) && my<=z.y+z.h+(m||0);
 const zonaAtras = ()=>({x:14, y:12, w:190, h:42});
-const zonasPausa = ()=>[0,1,2,3,4,5].map(i=>({x:W/2-150, y:H/2+6+i*40, w:300, h:36}));
+const N_PAUSA = 7;
+const zonasPausa = ()=>[0,1,2,3,4,5,6].map(i=>({x:W/2-150, y:H/2-4+i*35, w:300, h:32}));
 function cambiarMapa(){ const otro = MAPA===2 ? 1 : 2; sfx.toque(); redSalir(); try{ localStorage.setItem('aventura3d.mapa', String(otro)); }catch(e){} location.href = location.pathname + '?mapa=' + otro; }
 /* la pantalla de ¿CON QUIÉN JUEGAS?: sale al pulsar JUGAR y al empezar de cero */
 let selPj = 0, pjOrigen = 'menu';
@@ -3874,6 +3875,7 @@ function marcarPj(i){
 }
 function confirmarPj(){
   marcarPj(selPj); sfx.estrella();
+  if (pjOrigen==='juego'){ estado = 'juego'; cortina = 16; aviso('Ahora juegas con '+nombreLocal()+' '+(PERSONAJES_RED.find(p=>p.id===RED.pj)||PERSONAJES_RED[0]).emoji); setTimeout(()=>{ if (estado==='juego'){ const t = fraseDe(RED.pj, 'inicio'); if (t){ hablar(t, RED.pj); burbuja(t, nombreLocal()); } } }, 400); return; }
   if (pjOrigen==='nuevo'){ burbujas.length = 0; estado = 'juego'; cortina = 30; aviso('Aventura nueva: ¡a empezar de cero con '+nombreLocal()+'!'); setTimeout(()=>{ if (estado==='juego'){ const t = fraseDe(RED.pj, 'inicio'); hablar(t, RED.pj); burbuja(t, nombreLocal()); } }, 600); }
   else empezar();
 }
@@ -3912,7 +3914,7 @@ function clic(x, y){
   }
   if (estado==='pausa'){
     let dio = false;
-    zonasPausa().forEach((z, i)=>{ if (enZona(x, y, z, 4)){ elegirPausa(i); dio = true; } });
+    zonasPausa().forEach((z, f)=>{ if (enZona(x, y, z, 4)){ elegirPausa([0, 6, 1, 2, 3, 4, 5][f]); dio = true; } });
     if (!dio && y < H/2-20) { estado = 'juego'; sfx.toque(); }
     return;
   }
@@ -4266,7 +4268,7 @@ function actualizar(){
   sincronizar(); sincronizarRemotos();
   pasoNubes(); pasoGaviotas(); pasoPeces(); pasoAlgas(); pasoParticulas();
   if (estado==='menu' || (estado==='personaje' && pjOrigen==='menu')) camaraMenu(); else camaraJuego();
-  if (RED.estado==='conectado' && (estado==='menu' || estado==='personaje')) estado = 'juego';
+  if (RED.estado==='conectado' && (estado==='menu' || (estado==='personaje' && pjOrigen==='menu'))) estado = 'juego';
   ambiente();
   if (cortina > 0) cortina--;
   if (mensajeGrande && --mensajeGrande.t <= 0) mensajeGrande = null;
@@ -4425,14 +4427,14 @@ function dibujarPersonaje(){
   const z = zonaPersonaje(), sel = PERSONAJES_RED[selPj];
   tituloAjustado('¿CON QUIÉN JUEGAS?', W/2, 40, 40, W-240, '#fff6a0', '#ffb000');
   botonAtras(pjOrigen==='menu' ? '◀ VOLVER' : '◀ ASÍ ESTÁ BIEN');
-  texto('Cada personaje habla con su propia voz 🗣️', W/2, 78, 15, '#bcd6ff');
+  texto(pjOrigen==='juego' ? 'La partida sigue igual: solo cambia quién juega 🗣️' : 'Cada personaje habla con su propia voz 🗣️', W/2, 78, 15, '#bcd6ff');
   z.pjs.forEach((zp, i)=>{ const pj = PERSONAJES_RED[i], es = i===selPj;
     cristal(zp.x, zp.y, zp.w, zp.h, 12, es ? 0.85 : 0.4);
     if (es){ ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.roundRect(zp.x, zp.y, zp.w, zp.h, 12); ctx.stroke(); }
     texto(pj.emoji, zp.x+zp.w/2, zp.y+22, 22, '#fff'); textoAjustado(pj.nombre, zp.x+zp.w/2, zp.y+45, 12, zp.w-8, es ? '#ffe36e' : '#fff'); });
   const fh = 56, fy = Math.min(z.pjs[z.pjs.length-1].y + 58 + 14, z.jugar.y - fh - 12);
   if (fy > z.pjs[z.pjs.length-1].y + 40){ cristal(W/2-260, fy, 520, fh, 14, 0.5); textoAjustado(sel.emoji+' '+sel.nombre+' dice: «'+fraseDe(sel.id, 'inicio')+'»', W/2, fy+fh/2, 16, 500, '#fff'); }
-  boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ JUGAR CON '+sel.nombre.toUpperCase(), '#3aa040', '#1e6a24', 20, Math.floor(tick/30)%2===0);
+  boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, (pjOrigen==='juego' ? '▶ SEGUIR CON ' : '▶ JUGAR CON ')+sel.nombre.toUpperCase(), '#3aa040', '#1e6a24', 20, Math.floor(tick/30)%2===0);
   if (!tactil) texto('Flechas para elegir · ENTER para jugar', W/2, H-8, 12, 'rgba(255,255,255,0.6)');
 }
 function dibujarAmigos(){
@@ -4580,7 +4582,7 @@ function dibujarHUD(){
 function dibujarPausa(){
   ctx.fillStyle = 'rgba(5,10,30,0.82)'; ctx.fillRect(0,0,W,H);
   titulo('LAS MISIONES', W/2, 42, 40, '#fff6a0', '#ffb000');
-  const pw = Math.min(1040, W-24), x0 = W/2-pw/2, y0 = 70, filas = Math.ceil(MISIONES.length/2), cw = pw/2, fh = 27;
+  const pw = Math.min(1040, W-24), x0 = W/2-pw/2, y0 = 70, filas = Math.ceil(MISIONES.length/2), cw = pw/2, fh = 26;
   cristal(x0, y0-6, pw, filas*fh+16, 16, 0.5);
   MISIONES.forEach((m, i)=>{
     const ok = P.estrellas.includes(m.id), col = Math.floor(i/filas), fila = i%filas, cx = x0 + col*cw, cy = y0+10+fila*fh;
@@ -4590,14 +4592,16 @@ function dibujarPausa(){
     else if (m.id==='motoagua') extra = P.prog.boyas.length+'/'+BOYAS.length; else if (m.id==='dino') extra = P.prog.huevos.length+'/'+HUEVOS.length;
     else if (m.id==='maracaibo') extra = P.arepas+'/5'; else if (m.id==='coro') extra = P.prog.chivos.length+'/'+CHIVOS.length; else if (m.id==='ptero') extra = P.prog.arosNoche.length+'/'+AROS_NOCHE.length; else if (m.id==='catatumbo') extra = P.prog.rayos+'/5';
     else if (m.id==='familia'){ extra = P.prog.familia.length+'/'+SALUDABLES.length; const faltan = FAMILIA.filter(f=>!f.bebe && !P.saludos[f.id]).map(f=>f.nombre); if (!ok && faltan.length) titulo_ = 'Falta saludar a: '+(faltan.length > 4 ? faltan.slice(0,4).join(', ')+' y '+(faltan.length-4)+' más' : faltan.join(', ')); }
-    textoAjustado((ok ? '⭐ ' : '☆ ')+m.emoji+' '+titulo_, cx+14, cy, 18, cw-78, ok ? '#7dffa0' : (m.id==='familia' && titulo_ !== m.titulo ? '#ffe36e' : '#fff'), 'left');
+    textoAjustado((ok ? '⭐ ' : '☆ ')+m.emoji+' '+titulo_, cx+14, cy, 17, cw-78, ok ? '#7dffa0' : (m.id==='familia' && titulo_ !== m.titulo ? '#ffe36e' : '#fff'), 'left');
     if (extra && !ok) texto(extra, cx+cw-12, cy, 16, '#bcd6ff', 'right');
   });
   const zs = zonasPausa();
-  const etiquetas = ['▶ SEGUIR JUGANDO', redActiva() ? '👥 SALA '+RED.sala+' · '+(RED.remotos.size+1)+' EN LA ISLA' : '👥 JUGAR CON AMIGOS', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', NOCHE ? '☀️ IR AL MAPA 1: LA ISLA DE DÍA' : '🌙 IR AL MAPA 2: MARACAIBO DE NOCHE', '◀ FERNANDO BROS'];
-  const colores = [['#3aa040','#1e6a24'],['#2a8ad0','#1a4a90'],['#4a6ad0','#2a3a90'],['#c05a10','#803a08'],['#6a3ad0','#3a1a90'],['#4a6ad0','#2a3a90']];
-  zs.forEach((z, i)=> boton(z.x, z.y, z.w, z.h, etiquetas[i], colores[i][0], colores[i][1], 16, selPausa===i));
-  texto(P.puntos.toLocaleString('es')+' puntos · '+P.hamburguesas+' hamburguesas comidas', W/2, H-12, 13, '#bcd6ff');
+  const etiquetas = ['▶ SEGUIR JUGANDO', redActiva() ? '👥 SALA '+RED.sala+' · '+(RED.remotos.size+1)+' EN LA ISLA' : '👥 JUGAR CON AMIGOS', musicaOn ? '🎵 MÚSICA: SÍ' : '🔇 MÚSICA: NO', '🗑️ EMPEZAR DE CERO', NOCHE ? '☀️ IR AL MAPA 1: LA ISLA DE DÍA' : '🌙 IR AL MAPA 2: MARACAIBO DE NOCHE', '◀ FERNANDO BROS', (PERSONAJES_RED.find(p=>p.id===RED.pj)||PERSONAJES_RED[0]).emoji+' CAMBIAR DE PERSONAJE'];
+  const colores = [['#3aa040','#1e6a24'],['#2a8ad0','#1a4a90'],['#4a6ad0','#2a3a90'],['#c05a10','#803a08'],['#6a3ad0','#3a1a90'],['#4a6ad0','#2a3a90'],['#d07a20','#8a4a10']];
+  /* el orden en pantalla: seguir, cambiar de personaje, amigos, música, de cero, mapa, volver */
+  const orden = [0, 6, 1, 2, 3, 4, 5];
+  zs.forEach((z, f)=>{ const i = orden[f]; boton(z.x, z.y, z.w, z.h, etiquetas[i], colores[i][0], colores[i][1], 15, selPausa===i); });
+  texto(P.puntos.toLocaleString('es')+' puntos · '+P.hamburguesas+' hamburguesas comidas', W/2, H-9, 12, '#bcd6ff');
 }
 function dibujarFinal(){
   ctx.fillStyle = 'rgba(5,10,30,0.55)'; ctx.fillRect(0,0,W,H);

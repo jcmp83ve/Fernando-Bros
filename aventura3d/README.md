@@ -238,6 +238,10 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 - Al pulsar JUGAR, y también al EMPEZAR DE CERO desde el menú de pausa, sale
   la pantalla «¿Con quién juegas?» para elegir entre los 18 personajes
   (flechas y ENTER, o tocando). El elegido se recuerda para la próxima vez.
+  **En plena partida también se puede cambiar**: menú de pausa (ESC o ☰) →
+  **CAMBIAR DE PERSONAJE**; la partida sigue igual (posición, estrellas,
+  hamburguesas, hasta montado en un vehículo), solo cambia quién juega y con
+  qué voz habla. Los amigos de la sala ven el cambio al instante.
 - **Cada personaje jugable tiene su paquete de diálogos con su propia voz**:
   `DIALOGOS` guarda, para los 18 personajes, una frase por situación
   (`inicio`, `volar`, `barco`, `dino`, `luna`, `hamburguesa`, `arepa`,
