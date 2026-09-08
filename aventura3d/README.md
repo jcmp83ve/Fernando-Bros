@@ -152,6 +152,15 @@ aparato pide permiso para el micrófono. Sale «🔊 Luca está hablando», un
 altavoz flota sobre su cabeza, los amigos lejanos se oyen más bajito, y en la
 pantalla de amigos se pueden silenciar todos con un toque.
 
+**Si no se oye la voz**: la primera vez que se aprieta 🎙️ el teléfono pide
+permiso y hay que **volver a mantener apretado** después de aceptar (sale
+«Micrófono listo»). El que habla ve un aro verde y «🎙️ Hablando…»; el que
+escucha ve «🔊 Fulano está hablando». Si el navegador del que escucha bloqueó
+el sonido, sale «🔊 Toca la pantalla para oír a tus amigos» y con un toque
+cualquiera ya suena. Revisa también que el botón de la pantalla de amigos
+diga **🔊 OÍR A LOS AMIGOS** (no 🔇), el volumen del aparato, y en iPhone que
+en Ajustes → Safari → Micrófono no esté en «Denegar».
+
 Por dentro es **WebRTC con PeerJS**: los navegadores se conectan directo
 entre sí y el servidor público de PeerJS solo los presenta por el código.
 Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
@@ -250,6 +259,7 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 ```
 node pruebas.js          # el mapa 1: la isla de día
 node pruebas_noche.js    # el mapa 2: Maracaibo de noche
+node pruebas_voz.js      # el walkie-talkie, con dos navegadores (ver la cabecera del archivo)
 ```
 
 Sin navegador: se carga el núcleo y **Fernando juega solo hasta ganar las
