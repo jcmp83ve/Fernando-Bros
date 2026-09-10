@@ -603,6 +603,10 @@ const R_ISLA = 300;
 const ISLITA = {x:430, z:170};
 const MARACAIBO = {x:-400, z:-300, r:110};   /* la isla de las arepas, al noroeste, unida por el puente */
 const LUNA = {x:0, y:700, z:0, r:90};
+const ISLA_BANANA = {x:-430, z:250, r:48};    /* la isla de las bananas, al suroeste: quien come banana se vuelve gorila */
+const CASTILLO = {x:-150, z:30, r:24, ang:Math.PI/2};   /* el castillo, al oeste del pueblo; la puerta mira al este */
+const VALLE_DINOS = {x:110, z:-110, r:28};    /* el valle donde pasean los dinosaurios sueltos */
+const enIslaBanana = (x, z)=> Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z) < ISLA_BANANA.r + 8;
 const MONTANA = {x:-60, z:-200};
 const PUEBLO = {x:20, z:70};
 const FARO = {x:-270, z:-60};
@@ -628,6 +632,9 @@ function alturaBase(x, z){
   const d3 = Math.hypot(x-MARACAIBO.x, z-MARACAIBO.z);
   const m3 = 1 - smooth(70, 130, d3);
   h = lerp(h, 3.5 + 2.5*m3 + 4*m3*(ruido(x/50+8, z/50+2)-0.5), m3);
+  const d4 = Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z);
+  const m4 = 1 - smooth(20, 72, d4);
+  h = lerp(h, -8 + 12.5*m4 + 3*m4*(ruido(x/30+4, z/30+6)-0.5), m4);
   return h;
 }
 const enMaracaibo = (x, z)=> Math.hypot(x-MARACAIBO.x, z-MARACAIBO.z) < MARACAIBO.r;
@@ -801,6 +808,20 @@ const HELIPUERTOS = [
   {id:2, nombre:'la islita',    x:ISLITA.x-2, z:ISLITA.z+12},
   {id:3, nombre:'Maracaibo',    x:MARACAIBO.x+28, z:MARACAIBO.z+34},
 ];
+/* la vereda del lago: un paseo de madera por la orilla de Maracaibo, mirando al lago y al puente */
+const VEREDA = (()=>{
+  const pts = [], a0 = Math.atan2(MARACAIBO.z, MARACAIBO.x) + Math.PI;   /* la dirección del puente, hacia la isla grande */
+  for (let i=0;i<=34;i++){
+    const a = a0 + 0.42 + i/34*1.5;
+    let r = 60; while (r < 150 && alturaBase(MARACAIBO.x + Math.cos(a)*r, MARACAIBO.z + Math.sin(a)*r) > 1.0) r += 1;
+    const rr = r - 4.5;
+    pts.push({x: MARACAIBO.x + Math.cos(a)*rr, z: MARACAIBO.z + Math.sin(a)*rr, a});
+  }
+  for (let i=0;i<pts.length;i++){ const p = pts[Math.max(0,i-1)], q = pts[Math.min(pts.length-1,i+1)]; const dx = q.x-p.x, dz = q.z-p.z, L = Math.hypot(dx,dz)||1; pts[i].tx = dx/L; pts[i].tz = dz/L; pts[i].nx = -dz/L; pts[i].nz = dx/L; }
+  const m = pts[Math.floor(pts.length/2)];
+  return {pts, ancho: 5, centro: {x:m.x, z:m.z}};
+})();
+const cercaVereda = (x, z, d)=>{ for (const p of VEREDA.pts) if (Math.hypot(x-p.x, z-p.z) < d) return true; return false; };
 const BOYAS = [];
 for (let i=0;i<6;i++){ const a = i/6*Math.PI*2 + 0.35; let r = 372; while (alturaBase(Math.cos(a)*r, Math.sin(a)*r) > -2.5 && r < 470) r += 5; BOYAS.push({id:i, x:Math.cos(a)*r, z:Math.sin(a)*r}); }
 const HUEVOS = [];
@@ -808,6 +829,20 @@ for (const [cx,cz] of [[-120,-40],[-205,-25],[-40,-260],[120,-205],[255,-95],[-2
   let x = cx, z = cz, k = 0; while (alturaBase(x, z) < 1.5 && k < 40){ x += (0-x)*0.05; z += (0-z)*0.05; k++; }
   HUEVOS.push({id:HUEVOS.length, x, z});
 }
+/* los dinosaurios sueltos del valle: cuello largo, un tiranosaurio y dos triceratops, uno chiquito */
+const DINOS = [
+  {id:0, tipo:'cuello', esc:1.0,  color:'#7a9e5a', claro:'#b8d48a', x:VALLE_DINOS.x-10, z:VALLE_DINOS.z-6},
+  {id:1, tipo:'trex',   esc:1.0,  color:'#b0603a', claro:'#e0a070', x:VALLE_DINOS.x+12, z:VALLE_DINOS.z+8},
+  {id:2, tipo:'trice',  esc:1.0,  color:'#6a7ab0', claro:'#a8b4e0', x:VALLE_DINOS.x-2,  z:VALLE_DINOS.z+14},
+  {id:3, tipo:'cuello', esc:0.6,  color:'#8ab06a', claro:'#c8e0a0', x:VALLE_DINOS.x-14, z:VALLE_DINOS.z+2},
+  {id:4, tipo:'trice',  esc:0.75, color:'#8a6ab0', claro:'#c0a8e0', x:VALLE_DINOS.x+6,  z:VALLE_DINOS.z-14},
+];
+for (const d of DINOS){ let k = 0; while (alturaBase(d.x, d.z) < 1.5 && k < 30){ d.x += (VALLE_DINOS.x-d.x)*0.1; d.z += (VALLE_DINOS.z-d.z)*0.1; k++; } }
+/* la isla de las bananas: matas de plátano y bananas que vuelven a crecer */
+const PLATANOS = [], BANANAS = [];
+{ semilla = 9090;
+  for (let i=0;i<12;i++){ const a = i/12*6.283 + azar()*0.4, r = 10 + azar()*24; const x = ISLA_BANANA.x + Math.cos(a)*r, z = ISLA_BANANA.z + Math.sin(a)*r; if (alturaBase(x, z) > 1.6) PLATANOS.push({x, z, esc: 0.85 + azar()*0.4, rot: azar()*6.28}); }
+  for (let i=0;i<8;i++){ const a = i/8*6.283 + 0.3, r = 5 + (i%3)*7; const x = ISLA_BANANA.x + Math.cos(a)*r, z = ISLA_BANANA.z + Math.sin(a)*r; BANANAS.push({id:'b'+i, x, z}); } }
 const CANCHA = {x:0, z:128, w:36, d:22};
 const PARQUE = {x:90, z:66};
 const FUENTE = {x:10, z:70, r:3.2};
@@ -833,6 +868,7 @@ const VEHICULOS_DEF = [
   {id:'heli',  nombre:'el helicóptero', emoji:'🚁', x:236, z:8, ang:-Math.PI/2, radio:2.6, vuela:true},
   {id:'motoagua', nombre:'la moto de agua', emoji:'🛥️', x:MUELLE.x0 + Math.cos(MUELLE.ang)*34 + Math.sin(MUELLE.ang)*5.5, z:MUELLE.z0 + Math.sin(MUELLE.ang)*34 - Math.cos(MUELLE.ang)*5.5, ang:Math.atan2(Math.cos(MUELLE.ang), Math.sin(MUELLE.ang)), radio:1.6, agua:true},
   {id:'nave',  nombre:'la nave espacial', emoji:'🚀', x:186, z:-56, ang:Math.PI, radio:2.4, vuela:true},
+  {id:'ovni',  nombre:'la nave extraterrestre', emoji:'🛸', x:CASTILLO.x, z:CASTILLO.z-44, ang:0, radio:3.2, vuela:true},
   {id:'dino',  nombre:'el dinosaurio', emoji:'🦖', x:-40, z:-60, ang:Math.PI/2, radio:1.6, aplasta:true},
   ...(MAPA===2 ? [{id:'ptero', nombre:'el pterodáctilo', emoji:'🦅', x:-72, z:-34, ang:Math.PI/2, radio:2.2, vuela:true}] : []),
   {id:'moto',  nombre:'la moto',       emoji:'🏍️', x:RAMPA.x - RAMPA.tx*70, z:RAMPA.z - RAMPA.tz*70, ang:RAMPA.ang, radio:1.2},
@@ -880,10 +916,32 @@ const DIALOGOS = {
   sheldon: {inicio: '¡Guau! ¡Sheldon al ataque!', volar: '¡Guau! ¡Sheldon vuela!', barco: '¡Guau! ¡Al barco!', dino: '¡Guau, guau! ¡Un dinosaurio grande!', luna: '¡Guau! ¡La luna!', hamburguesa: '¡Guau! ¡Hamburguesa rica!', arepa: '¡Guau! ¡Arepa rica!', maracaibo: '¡Guau! ¡Maracaibo!', ganas: '¡Guau! ¡Popo, popo!', peo: '¡Guau! ¡Un peo!', alivio: '¡Ahh, qué alivio! ¡Guau!', popito: '¡Guau! ¡Un popo bebé!', rampa: '¡Guau! ¡Salté la rampa!', tesoro: '¡Guau! ¡Tesoro!', puente: '¡Guau, guau! ¡Qué molleja! ¡Un nudo en la garganta!', saludo: '¡Guau, guau! ¡Soy Sheldon!', catatumbo: '¡Guau, guau! ¡Arriba! ¡El relámpago del Catatumbo!', coro: '¡Guau, guau! ¿Más chivos a Coro?', marte: '¡Guau! ¡Marte!', extraterrestres: '¡Guau, guau! ¡Marcianitos!'},
   srpopo: {inicio: '¡El Señor Popo está listo!', volar: '¡Un popo volador! ¡Increíble!', barco: '¡Todos a bordo del barco popo!', dino: '¡Un dinosaurio! ¡Seguro hace popos enormes!', luna: '¡Llegué a la luna! ¡El primer popo en la luna!', hamburguesa: '¡Qué rica hamburguesa! ¡Vamos a hacer popo!', arepa: '¡Qué rica arepa de agüita de sapo!', maracaibo: '¡Llegamos a Maracaibo!', ganas: '¡Quiero hacer popo! ¡Yo, el Señor Popo!', peo: '¡Uy, un peo! ¡Qué orgullo!', alivio: '¡Ahh, qué alivio!', popito: '¡Un popo bebé me sigue! ¡Es mi hijito!', rampa: '¡Salté la rampa!', tesoro: '¡El tesoro! ¡Huele a popo!', puente: '¡Qué molleja! ¡Se me hizo un nudo en la garganta… y en la barriga!', saludo: '¡Hola! ¡Soy el Señor Popo!', catatumbo: '¡Mira para arriba! ¡Es el relámpago del Catatumbo!', coro: '¿Para qué vamos a traer más chivos a Coro?', marte: '¡Llegué a Marte! ¡El primer popo en Marte!', extraterrestres: '¡Extraterrestres! ¡Seguro hacen popo verde!'},
 };
+/* las situaciones nuevas (casas, castillo, ovni, meteoritos, dinosaurios, la vereda, las bananas y la gordura)
+   no tienen grabación: se dicen con la voz sintética de cada personaje, con su manera de hablar */
+const FRASES_NUEVAS = {
+  casa: '¡Hola! ¿Hay alguien en casa?',
+  castillo: '¡Un castillo! ¡Soy el rey del castillo!',
+  ovni: '¡Estoy manejando la nave extraterrestre!',
+  meteorito: '¡Cuidado! ¡Están cayendo meteoritos!',
+  dinos: '¡Mira! ¡Dinosaurios de verdad!',
+  vereda: '¡La vereda del lago! ¡Qué brisa tan rica!',
+  gorila: '¡Comí banana! ¡Soy un gorila! ¡Uh, uh, ah, ah!',
+  gorilaFin: '¡Uf! Ya no soy un gorila.',
+  gordo: '¡Uy! ¡Estoy gordito de tantas hamburguesas!',
+  flaco: '¡Hice popo y quedé flaquito!',
+};
+const alFinal = (t, suf)=> /!$/.test(t) ? t.replace(/!(?=[^!]*$)/, suf+'!') : t + suf;
+const SABOR_PJ = {
+  tiojuan: t=>alFinal(t, ', pichunguito'), luca: t=>t+' ¡Qué chévere!', salomon: t=>alFinal(t, ', primo'), cucu: t=>'¡Cucú! '+t,
+  santi: t=>(t.match(/^[^!?]*[!?]/)||[t])[0], mama: t=>alFinal(t, ', mis amores'), papa: t=>t+' ¡Increíble!', abu: t=>t+' ¡Ay, mi cielo!',
+  nacho: t=>'¡Épale! '+t, yanny: t=>alFinal(t, ', mi amor'), tiofran: t=>t+' ¡Prrrr!', romulo: t=>t+' ¡Brrrp! ¡Ay, qué pena!',
+  beto: t=>alFinal(t, ', pichunguito'), giuliana: t=>t+' ¡Un abrazo!', penny: t=>'¡Guau! '+t, sheldon: t=>'¡Guau, guau! '+t, srpopo: t=>t+' ¡Y después, a hacer popo!',
+};
+function variar(pj, t){ const f = SABOR_PJ[pj]; return f ? f(t) : t; }
 function fraseDe(pj, k, id){
   const paq = DIALOGOS[pj] || DIALOGOS.fernando;
   if (k==='saludo' && (!paq.saludo || pj==='fernando')){ const f = porId(id); return f ? f.frase : DIALOGOS.tiojuan.saludo; }
-  return paq[k] || DIALOGOS.fernando[k] || '';
+  return paq[k] || DIALOGOS.fernando[k] || (FRASES_NUEVAS[k] ? variar(pj, FRASES_NUEVAS[k]) : '');
 }
 function nombreDe(pj){ const p = PERSONAJES_RED.find(q=>q.id===pj); return p ? p.nombre : 'Fernando'; }
 /* el jugador dice la frase de su personaje para la situación k */
@@ -904,6 +962,7 @@ for (const c of CASAS_MCBO) solar(c.x, c.z, Math.max(c.w,c.d)/2+3);
 solar(PLAZA_MCBO.x, PLAZA_MCBO.z, 10);
 for (const h of HELIPUERTOS) solar(h.x, h.z, 8);
 solar(186, -56, 9, PISTA.h); solar(-40, -60, 9);
+solar(CASTILLO.x, CASTILLO.z, 26); solar(CASTILLO.x, CASTILLO.z-44, 9, alturaBase(CASTILLO.x, CASTILLO.z)); solar(ISLA_BANANA.x, ISLA_BANANA.z, 12);
 solar(PUENTE.x0 - PUENTE.ux*6, PUENTE.z0 - PUENTE.uz*6, 9, Math.max(1.5, alturaBase(PUENTE.x0 - PUENTE.ux*6, PUENTE.z0 - PUENTE.uz*6)));
 solar(PUENTE.x1 + PUENTE.ux*6, PUENTE.z1 + PUENTE.uz*6, 9, Math.max(1.5, alturaBase(PUENTE.x1 + PUENTE.ux*6, PUENTE.z1 + PUENTE.uz*6)));
 for (const h of HELIPUERTOS) h.y = 0;
@@ -940,6 +999,92 @@ function alturaMalla(x, z){
   return c + (b-c)*(1-u) + (d-c)*(1-v);
 }
 for (const h of HELIPUERTOS) h.y = alturaMalla(h.x, h.z);
+for (const b of BANANAS) b.y = alturaMalla(b.x, b.z) + 1.0;
+/* ---------------- Por dentro de las casas y del castillo ----------------
+   Cada casa tiene un cuarto escondido 220 m bajo la isla, justo debajo de ella. Al tocar
+   la puerta con A se entra (se teletransporta al cuarto) y desde la puerta de adentro se
+   sale. Los muebles se definen aquí, en el marco «puerta al frente» (+z), y se giran según
+   hacia dónde mira la puerta de esa casa; así el núcleo choca con los mismos muebles que
+   la vista dibuja. */
+const CASTILLO_DEF = {x:CASTILLO.x, z:CASTILLO.z, w:30, d:30, h:8, color:'#a8a8b0', techo:'#c0392b', nombre:'EL CASTILLO', castillo:true, puerta:CASTILLO.ang};
+const Y_INTERIOR = -220;
+function muebles(c, HW, HD){
+  const M = [];
+  const m = (t, x, z, w, d, extra)=> M.push(Object.assign({t, x, z, w, d, ang:0, alto:0}, extra||{}));
+  if (c.castillo){
+    m('alfombraRoja', 0, 0.6, 4.4, HD*2-3, {suave:true});
+    m('trono', 0, -HD+2.4, 2.6, 1.8);
+    for (const sx of [-1, 1]) for (const k of [-0.55, 0, 0.55]) m('columna', sx*HW*0.62, k*HD, 1.6, 1.6);
+    for (const sx of [-1, 1]) for (const k of [-0.6, -0.2, 0.2, 0.6]) m('estandarte', sx*(HW-0.35), k*HD, 0.2, 1.6, {suave:true, ang: sx > 0 ? -Math.PI/2 : Math.PI/2});
+    for (const k of [-0.45, 0.35]) m('candelabro', 0, k*HD, 3, 3, {suave:true});
+    m('mesaBanquete', -HW*0.35, HD*0.55, 8, 2.2);
+    for (const sx of [-1, 1]) m('armadura', sx*3.2, -HD+2.6, 1.0, 1.0);
+    m('chimenea', HW-0.9, HD*0.5, 1.6, 3.2, {ang: -Math.PI/2});
+    m('cuadro', 0, -HD+0.3, 3, 0.2, {suave:true, alto: 4.6, texto:'🏰'});
+  } else if (c.letrero==='BAR'){
+    m('barra', 0, -HD+2.0, 8, 1.3);
+    for (const k of [-2.4, -0.8, 0.8, 2.4]) m('banqueta', k, -HD+3.2, 0.6, 0.6, {suave:true});
+    m('estante', 0, -HD+0.45, 8, 0.5, {suave:true, alto: 1.4});
+    for (const [x, z] of [[-HW*0.55, 0.6], [HW*0.55, 0.6], [0, HD*0.55]]) m('mesaRedonda', x, z, 2.0, 2.0);
+    m('rocola', HW-1.0, HD-1.6, 1.3, 0.9, {ang: -Math.PI/2});
+    m('cuadro', -HW+0.3, -HD*0.2, 0.2, 2.4, {suave:true, alto: 2.4, texto:'🍺'});
+  } else if (c.letrero==='BURGER' || c.letrero==='AREPAS'){
+    m('mostrador', 0, -HD+2.4, 7, 1.3, {comida: c.letrero});
+    m('cocina', 0, -HD+0.8, 6, 1.1, {ang: Math.PI});
+    for (const [x, z] of [[-HW*0.55, 0.4], [HW*0.55, 0.4], [-HW*0.55, HD*0.65], [HW*0.55, HD*0.65]]) m('mesaRedonda', x, z, 2.0, 2.0);
+    m('cuadro', HW-0.3, -HD*0.3, 0.2, 2.4, {suave:true, alto: 2.4, texto: c.letrero==='BURGER' ? '🍔' : '🫓'});
+  } else if (c.gasolinera){
+    m('mostrador', 0, -HD+2.2, 5, 1.3);
+    for (const sx of [-1, 1]) m('estanteTienda', sx*HW*0.5, 0.4, 4.2, 0.9);
+    m('llantas', HW-1.4, HD-1.6, 1.6, 1.6);
+    m('cuadro', 0, -HD+0.3, 3, 0.2, {suave:true, alto: 3.0, texto:'⛽'});
+  } else {
+    m('cama', -HW+2.0, -HD+2.3, 2.4, 3.6, {color: c.techo});
+    m('mesita', -HW+0.7, -HD+0.7, 0.9, 0.9);
+    m('mesa', HW*0.4, -HD*0.25, 2.4, 1.6);
+    m('sofa', -HW*0.4, HD*0.45, 2.8, 1.2, {color: c.techo, ang: Math.PI});
+    m('tele', -HW*0.4, HD-0.75, 1.7, 0.7, {ang: Math.PI});
+    m('cocina', HW-0.6, -HD*0.35, 1.1, 4.2, {ang: -Math.PI/2});
+    m('alfombra', 0.3, HD*0.05, 4.2, 3.2, {suave:true, color: c.color});
+    m('lampara', HW-1.1, HD-1.2, 0.6, 0.6);
+    m('cuadro', -HW+0.3, -HD*0.2, 0.2, 2.2, {suave:true, alto: 2.4, texto: c.nombre==='CASA DE FERNANDO' ? '🧢' : c.nombre==='CASA DE ABU' ? '👵' : '🖼️'});
+    m('ventana', 0, -HD+0.3, 2.4, 0.2, {suave:true, alto: 2.2});
+  }
+  return M;
+}
+const INTERIORES = CASAS.concat(CASAS_MCBO, [CASTILLO_DEF]).map((c, i)=>{
+  const HW = c.castillo ? 14 : 7, HD = c.castillo ? 11 : 5.5, alto = c.castillo ? 9 : 4.2, a = c.puerta;
+  const gira = (x, z)=>({x: x*Math.cos(a) + z*Math.sin(a), z: -x*Math.sin(a) + z*Math.cos(a)});
+  const lado = Math.abs(Math.sin(a)) > 0.5;                     /* la puerta mira al este u oeste: el cuarto va girado */
+  const hw = lado ? HD : HW, hd = lado ? HW : HD;
+  const M = muebles(c, HW, HD).map(mb=>{ const g = gira(mb.x, mb.z); return Object.assign({}, mb, {x: c.x + g.x, z: c.z + g.z, w: lado ? mb.d : mb.w, d: lado ? mb.w : mb.d, ang: mb.ang + a}); });
+  const sx = Math.sin(a), cz = Math.cos(a);
+  const px = c.x + sx*(lado ? hw : hd), pz = c.z + cz*(lado ? hw : hd);    /* la puerta de adentro, en la pared del frente */
+  const ex = c.x + sx*(c.w/2 + 1.9), ez = c.z + cz*(c.d/2 + 1.9);              /* el sitio de afuera, frente a la puerta */
+  return {id:i, c, nombre:c.nombre, castillo:!!c.castillo, x:c.x, z:c.z, y:Y_INTERIOR, hw, hd, alto, ang:a, px, pz, ex, ez, muebles:M,
+    ix: px - sx*1.7, iz: pz - cz*1.7};                                          /* donde se aparece al entrar, un pasito adentro */
+});
+const INTERIOR_CASTILLO = INTERIORES[INTERIORES.length-1];
+/* moverse dentro de un cuarto: paredes y muebles, sin árboles ni mar */
+function moverEnCasa(J, nx, nz, I){
+  let choco = false;
+  const mx = I.hw - 0.55, mz = I.hd - 0.55;
+  if (nx < I.x-mx || nx > I.x+mx){ nx = clamp(nx, I.x-mx, I.x+mx); choco = true; }
+  if (nz < I.z-mz || nz > I.z+mz){ nz = clamp(nz, I.z-mz, I.z+mz); choco = true; }
+  for (const o of I.muebles){
+    if (o.suave) continue;
+    const hx = o.w/2, hz = o.d/2;
+    const cx = clamp(nx, o.x-hx, o.x+hx), cz = clamp(nz, o.z-hz, o.z+hz);
+    const dx = nx-cx, dz = nz-cz, d = Math.hypot(dx,dz);
+    if (d < J.radio){
+      if (d > 1e-6){ nx = cx + dx/d*J.radio; nz = cz + dz/d*J.radio; }
+      else { const s1 = o.x+hx+J.radio-nx, s2 = nx-(o.x-hx-J.radio), s3 = o.z+hz+J.radio-nz, s4 = nz-(o.z-hz-J.radio); const m = Math.min(s1,s2,s3,s4);
+        if (m===s1) nx = o.x+hx+J.radio; else if (m===s2) nx = o.x-hx-J.radio; else if (m===s3) nz = o.z+hz+J.radio; else nz = o.z-hz-J.radio; }
+      choco = true;
+    }
+  }
+  return {x:nx, z:nz, choco};
+}
 /* la altura que se pisa: la malla más la rampa y el muelle */
 function altura(x, z){
   const t = enRampa(x, z);
@@ -999,6 +1144,7 @@ function lejosDeTodo(x, z, minimo){
     const dp = Math.hypot(x-PUEBLO.x, z-PUEBLO.z);
     if (dp < 160 && azar() < 0.9) continue;                      /* el pueblo casi sin árboles: se choca menos */
     if (enMaracaibo(x, z) && azar() < 0.7) continue;
+    if (enIslaBanana(x, z) || cercaVereda(x, z, 7) || Math.hypot(x-CASTILLO.x, z-CASTILLO.z) < 34 || Math.hypot(x-VALLE_DINOS.x, z-VALLE_DINOS.z) < VALLE_DINOS.r + 4) continue;
     if (!lejosDeTodo(x, z, 8)) continue;
     const esc = 0.8 + azar()*0.6;
     if (h > 30) DECOR.pinos.push({x, z, h, esc, rot: azar()*6.28});
@@ -1011,8 +1157,10 @@ function lejosDeTodo(x, z, minimo){
     if (h > -2 && h < 1.5) continue;
     if (h > 1.5 && !lejosDeTodo(x, z, 3)) continue;
     if (h > 1.5 && Math.hypot(x-PUEBLO.x, z-PUEBLO.z) < 140) continue;
+    if (h > 1.5 && (enIslaBanana(x, z) || cercaVereda(x, z, 7) || Math.hypot(x-CASTILLO.x, z-CASTILLO.z) < 34 || Math.hypot(x-VALLE_DINOS.x, z-VALLE_DINOS.z) < VALLE_DINOS.r + 4)) continue;
     DECOR.rocas.push({x, z, h, esc: 0.6 + azar()*1.6, rot: azar()*6.28, agua: h < -2});
   }
+  for (let i=2;i<VEREDA.pts.length;i+=5){ const p = VEREDA.pts[i]; const x = p.x + p.nx*6.2, z = p.z + p.nz*6.2; if (altura(x, z) > 1.0) DECOR.palmeras.push({x, z, h: altura(x, z), esc: 1.05 + (i%3)*0.12, rot: i*1.7, inclina: -0.25}); }
   for (const a of DECOR.arboles) agregarObst({x:a.x, z:a.z, r:0.9*a.esc});
   for (const a of DECOR.palmeras) agregarObst({x:a.x, z:a.z, r:0.7*a.esc});
   for (const a of DECOR.pinos) agregarObst({x:a.x, z:a.z, r:0.9*a.esc});
@@ -1020,6 +1168,8 @@ function lejosDeTodo(x, z, minimo){
   for (const c of CASAS) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2});
   for (const c of CASAS_MCBO) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2});
   agregarObst({x:HANGAR.x, z:HANGAR.z, hx:HANGAR.w/2, hz:HANGAR.d/2});
+  agregarObst({x:CASTILLO.x, z:CASTILLO.z, hx:15, hz:15});
+  for (const p of PLATANOS) agregarObst({x:p.x, z:p.z, r:0.6*p.esc});
   agregarObst({x:FARO.x, z:FARO.z, r:3.2});
   agregarObst({x:FUENTE.x, z:FUENTE.z, r:FUENTE.r});
   for (const b of BANOS) agregarObst({x:b.x, z:b.z, r:1.6});
@@ -1097,6 +1247,9 @@ function crearPartida(guardado){
     prog: {banos:[], banderas:[], aros:[], familia:[], helipuertos:[], boyas:[], huevos:[], chivos:[], arosNoche:[], rayos:0, rampa:false, santi:false, cofre:false, popo:false, luna:false, maracaibo:false, ovni:false, coroDicho:false},
     chivos: CHIVOS.map(c=>({id:c.id, x:c.x, z:c.z, ang:c.ang, t:0, saltoT:0})), ultimoRayo: -9999, catatumboDicho: -9999,
     espacio: false, rugidoT: -9999, pj: 'fernando', enPuenteT: -9999,
+    casa: null, cercaPuerta: null, meteoros: [], proxMeteoros: 60*40, meteoroDicho: -9999,
+    dinos: DINOS.map(d=>({id:d.id, x:d.x, z:d.z, ang:0, mov:0, fase:0, obj:null, espera:60*d.id, r: (d.tipo==='cuello' ? 2.8 : d.tipo==='trex' ? 1.9 : 2.2)*d.esc})), rugidoDinoT: -9999, dinosDicho: -99999,
+    bananasT: {}, gorilaT: 0, gordura: 0, flacoT: 0, gordoDicho: -9999, veredaT: -99999, castilloDicho: false,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
   };
@@ -1111,7 +1264,7 @@ function exportar(P){
   for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos','chivos','arosNoche']) prog[k] = P.prog[k].slice();
   for (const k of ['rampa','santi','cofre','popo','luna','maracaibo','ovni','coroDicho']) prog[k] = P.prog[k];
   prog.rayos = P.prog.rayos;
-  return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas], arepas: P.arepas, comidasArepas: [...P.comidasArepas], popitos: P.popitos.length, prog};
+  return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas], arepas: P.arepas, comidasArepas: [...P.comidasArepas], popitos: P.popitos.length, prog, gordura: P.gordura};
 }
 function importar(P, g){
   try{
@@ -1120,6 +1273,7 @@ function importar(P, g){
     if (Number.isFinite(g.hamburguesas)) P.hamburguesas = g.hamburguesas;
     if (Array.isArray(g.comidas)) P.comidas = new Set(g.comidas);
     if (Number.isFinite(g.arepas)) P.arepas = g.arepas;
+    if (Number.isFinite(g.gordura)) P.gordura = clamp(g.gordura, 0, 6)|0;
     if (Array.isArray(g.comidasArepas)) P.comidasArepas = new Set(g.comidasArepas);
     if (g.prog){ for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos','chivos','arosNoche']) if (Array.isArray(g.prog[k])) P.prog[k] = g.prog[k].slice();
       for (const k of ['rampa','santi','cofre','popo','luna','maracaibo','ovni','coroDicho']) if (typeof g.prog[k]==='boolean') P.prog[k] = g.prog[k];
@@ -1181,6 +1335,9 @@ function pasoPie(P, ent){
   }
   let velMax = J.nadando ? 3.2 : (ent.b ? 12.35 : 6.2);                /* con B se corre un 30% más rápido que antes */
   if (P.ganas && !J.nadando) velMax *= 0.72;                          /* con ganas de popo se camina apretado */
+  if (P.gorilaT > 0) velMax *= 1.3;                                    /* el gorila corre más */
+  else if (P.gordura > 0) velMax *= 1 - 0.05*P.gordura;                /* gordito se camina más lento */
+  if (P.casa){ pasoEnCasa(P, ent, dx, dz, velMax, mag); return; }
   const objx = dx*velMax*mag, objz = dz*velMax*mag;
   const k = J.suelo || J.nadando ? 0.18 : 0.04;
   J.vx += (objx - J.vx)*k; J.vz += (objz - J.vz)*k;
@@ -1198,7 +1355,7 @@ function pasoPie(P, ent){
     J.nadando = false; J.suelo = true; J.y = Math.max(J.y, g);
   }
   if (!J.nadando){
-    if (J.suelo && ent.aNuevo){ J.vy = 9.8; J.suelo = false; evento(P, 'salto'); }
+    if (J.suelo && ent.aNuevo){ J.vy = P.gorilaT > 0 ? 13 : 9.8 - 0.4*P.gordura; J.suelo = false; evento(P, 'salto'); }
     if (J.suelo){
       if (g >= J.y - 0.8){ J.vy = 0; J.y = g; }
       else { J.suelo = false; J.vy = 0; }
@@ -1215,20 +1372,59 @@ function pasoPie(P, ent){
     const d = Math.hypot(v.x-J.x, v.z-J.z) - v.radio;
     if (d < md && Math.abs(v.y - J.y) < 4){ md = d; P.cercaVeh = v; }
   }
+  /* ¿o una puerta? (la puerta gana: A entra en vez de montar) */
+  P.cercaPuerta = null;
+  for (const I of INTERIORES) if (Math.hypot(I.ex-J.x, I.ez-J.z) < 2.3 && Math.abs(altura(I.ex, I.ez) - J.y) < 3){ P.cercaPuerta = I; P.cercaVeh = null; break; }
+}
+/* dentro de una casa: piso plano, paredes, muebles y la puerta para salir */
+function pasoEnCasa(P, ent, dx, dz, velMax, mag){
+  const J = P.J, I = P.casa;
+  const objx = dx*velMax*mag, objz = dz*velMax*mag;
+  J.vx += (objx - J.vx)*0.18; J.vz += (objz - J.vz)*0.18;
+  J.mov = Math.hypot(J.vx, J.vz);
+  const m = moverEnCasa(J, J.x + J.vx*DT, J.z + J.vz*DT, I);
+  J.x = m.x; J.z = m.z; if (m.choco){ J.vx *= 0.5; J.vz *= 0.5; }
+  J.nadando = false;
+  const g = I.y;
+  if (J.suelo && ent.aNuevo){ J.vy = P.gorilaT > 0 ? 11 : 9.0; J.suelo = false; evento(P, 'salto'); }
+  if (!J.suelo){
+    J.vy -= GRAV*DT; J.y += J.vy*DT;
+    if (J.y > g + I.alto - 2.0){ J.y = g + I.alto - 2.0; J.vy = Math.min(J.vy, 0); }
+    if (J.y <= g){ J.y = g; J.suelo = true; J.vy = 0; }
+  } else J.y = g;
+  J.fase += J.mov*DT*2.2;
+  P.cercaVeh = null;
+  P.cercaPuerta = Math.hypot(I.px-J.x, I.pz-J.z) < 2.4 ? I : null;
+}
+function entrarCasa(P, I){
+  const J = P.J;
+  P.casa = I; J.x = I.ix; J.z = I.iz; J.y = I.y; J.vx = J.vz = J.vy = 0; J.suelo = true; J.nadando = false; J.ang = envolver(I.ang + Math.PI);
+  P.cercaPuerta = null; P.cercaVeh = null;
+  evento(P, 'casaEntra', {id:I.id, nombre:I.nombre, castillo:I.castillo});
+  if (I.castillo){ if (!P.castilloDicho){ P.castilloDicho = true; P.puntos += 300; decir(P, 'castillo'); } }
+  else decir(P, 'casa');
+}
+function salirCasa(P){
+  const J = P.J, I = P.casa; if (!I) return;
+  P.casa = null; J.x = I.ex; J.z = I.ez; J.y = altura(I.ex, I.ez); J.vx = J.vz = J.vy = 0; J.suelo = true; J.nadando = false; J.ang = I.ang;
+  P.cercaPuerta = null;
+  for (const p of P.perros) if (p.sigue){ p.x = J.x + (azar()-0.5)*2; p.z = J.z + 1.5 + azar(); p.y = altura(p.x, p.z); }
+  evento(P, 'casaSale', {id:I.id});
 }
 function montar(P, v){
   P.veh = v; P.J.suelo = true; P.J.nadando = false; P.J.vx = P.J.vz = 0;
   P.J.x = v.x; P.J.z = v.z; P.J.y = v.y; P.J.ang = v.ang;
   P.cercaVeh = null;
   evento(P, 'montar', {id: v.id});
-  if (v.id==='avion' || v.id==='heli' || v.id==='nave' || v.id==='ptero') decir(P, 'volar');
+  if (v.id==='ovni') decir(P, 'ovni');
+  else if (v.id==='avion' || v.id==='heli' || v.id==='nave' || v.id==='ptero') decir(P, 'volar');
   else if (v.id==='barco' || v.id==='motoagua') decir(P, 'barco');
   else if (v.id==='dino') decir(P, 'dino');
 }
 function puedeBajar(P){
   const v = P.veh; if (!v) return false;
   if (Math.abs(v.vel) > 4) return false;
-  if ((v.id==='avion' || v.id==='heli' || v.id==='nave') && v.aire) return false;
+  if ((v.id==='avion' || v.id==='heli' || v.id==='nave' || v.id==='ovni') && v.aire) return false;
   if (v.id==='sub' && v.y < NIVEL_MAR - 0.9) return false;
   if (v.agua && v.y > NIVEL_MAR + 1.5) return false;
   return true;
@@ -1265,6 +1461,7 @@ const CARACT = {
   nave:  {vmax: 48, acc: 14, freno: 14, giro: 1.4, reversa: 0, turbo: 1.4, empuje: 30, techo: 900},
   dino:  {vmax: 18, acc: 24, freno: 30, giro: 2.6, reversa: 3, turbo: 1.35},
   ptero: {vmax: 30, acc: 10, freno: 10, giro: 2.1, reversa: 6, turbo: 1.4, vertical: 8, techo: 200},
+  ovni:  {vmax: 46, acc: 16, freno: 16, giro: 2.6, reversa: 12, turbo: 1.6, vertical: 13, techo: 420},
 };
 function pasoVehiculo(P, v, ent){
   const C = CARACT[v.id];
@@ -1273,7 +1470,7 @@ function pasoVehiculo(P, v, ent){
   const fx = Math.sin(v.ang), fz = Math.cos(v.ang);
   if (v.id==='avion' && v.aire) return pasoAvionAire(P, v, ent, C);
   if (v.id==='sub') return pasoSub(P, v, ent, C);
-  if (v.id==='heli' || v.id==='ptero') return pasoHeli(P, v, ent, C);
+  if (v.id==='heli' || v.id==='ptero' || v.id==='ovni') return pasoHeli(P, v, ent, C);
   if (v.id==='nave') return pasoNave(P, v, ent, C);
   const esAgua = v.id==='barco' || v.agua, esDino = v.id==='dino';
   if (esDino && ent.b && P.t - P.rugidoT > 90){ P.rugidoT = P.t; evento(P, 'rugido', {x:v.x, y:v.y, z:v.z}); }
@@ -1434,7 +1631,7 @@ function pasoPerros(P){
       p.fase += DT*2;
       return;
     }
-    if (P.veh){ p.dentro = true; return; }
+    if (P.veh || P.casa){ p.dentro = true; return; }
     p.dentro = false;
     const atras = 2.2 + i*1.8, lado = (i===0 ? -1 : 1)*1.1;
     const ox = J.x - Math.sin(J.ang)*atras - Math.cos(J.ang)*lado, oz = J.z - Math.cos(J.ang)*atras + Math.sin(J.ang)*lado;
@@ -1462,7 +1659,7 @@ function nacerPopito(P, x, z){
 function pasoPopitos(P){
   const J = P.J, base = P.perros.filter(p=>p.sigue).length;
   P.popitos.forEach((p, i)=>{
-    if (P.veh){ p.dentro = true; return; }
+    if (P.veh || P.casa){ p.dentro = true; return; }
     p.dentro = false;
     const k = base + i, atras = 2.4 + k*1.5, lado = (k%2 ? 1 : -1)*0.9;
     const ox = J.x - Math.sin(J.ang)*atras - Math.cos(J.ang)*lado, oz = J.z - Math.cos(J.ang)*atras + Math.sin(J.ang)*lado;
@@ -1482,6 +1679,7 @@ function pasoPopitos(P){
 function comerHamburguesa(P, h){
   P.comidas.add(h.id); P.hamburguesas++; P.puntos += 100;
   P.popo = Math.min(1, P.popo + 0.34);
+  engordar(P);
   evento(P, 'hamburguesa', {id:h.id, x:h.x, y:h.y, z:h.z, total:P.hamburguesas});
   if (P.t - P.ultimaHamb > 60) decir(P, 'hamburguesa');
   P.ultimaHamb = P.t;
@@ -1491,6 +1689,12 @@ function comerHamburguesa(P, h){
   if (P.popo >= 0.99 && !P.ganas) decir(P, 'peo');
   if (P.t - P.ultimoPopoDicho > 60*7){ decir(P, 'ganas'); P.ultimoPopoDicho = P.t; }
   if (P.popo >= 0.99 && !P.ganas){ P.ganas = true; evento(P, 'ganas'); }
+}
+/* cada hamburguesa o arepa engorda un poquito (hasta 6); al hacer popo se queda flaquito un rato */
+function engordar(P){
+  P.gordura = Math.min(6, P.gordura + 1); P.flacoT = 0;
+  evento(P, 'gordura', {n:P.gordura});
+  if (P.gordura >= 4 && P.t - P.gordoDicho > 60*30){ P.gordoDicho = P.t; decir(P, 'gordo'); }
 }
 function pasoPopo(P){
   if (P.pedoT > 0) P.pedoT--;
@@ -1513,10 +1717,80 @@ function revisarRecogibles(P){
     if (arriba && P.t - P.enPuenteT > 60*8) decir(P, 'puente');
     if (arriba) P.enPuenteT = P.t; }
   if (!P.prog.maracaibo && enMaracaibo(J.x, J.z)){ P.prog.maracaibo = true; evento(P, 'maracaibo'); decir(P, 'maracaibo'); }
+  /* la vereda del lago: al pasear por ella se dice lo de la brisa (una vez cada rato) */
+  if (!P.veh && !P.casa && P.t - P.veredaT > 60*60*5 && cercaVereda(J.x, J.z, 4)){ P.veredaT = P.t; evento(P, 'vereda'); decir(P, 'vereda'); }
+  /* las bananas de la isla: se comen y vuelven a crecer */
+  if (!P.casa) for (const b of BANANAS){
+    const te = P.bananasT[b.id]; if (te !== undefined && P.t - te < 60*45) continue;
+    const dx = b.x-J.x, dz = b.z-J.z, dy = b.y-(J.y+1);
+    if (dx*dx+dz*dz+dy*dy < alcance*alcance) comerBanana(P, b);
+  }
+}
+function comerBanana(P, b){
+  P.bananasT[b.id] = P.t; P.puntos += 200;
+  const nueva = P.gorilaT <= 0;
+  P.gorilaT = 60*60;
+  evento(P, 'banana', {id:b.id, x:b.x, y:b.y, z:b.z, nueva});
+  if (nueva){ evento(P, 'gorila', {on:true}); decir(P, 'gorila'); }
+}
+function pasoGorila(P){
+  if (P.gorilaT > 0){ P.gorilaT--; if (P.gorilaT === 0){ evento(P, 'gorila', {on:false}); decir(P, 'gorilaFin'); } }
+  if (P.flacoT > 0) P.flacoT--;
+}
+/* ---- los dinosaurios sueltos pasean por su valle ---- */
+function pasoDinos(P){
+  const J = P.J;
+  for (const d of P.dinos){
+    const def = DINOS[d.id];
+    if (d.espera > 0){ d.espera--; d.mov = 0; d.fase += DT; continue; }
+    if (!d.obj || Math.hypot(d.obj.x-d.x, d.obj.z-d.z) < 2.5){
+      let k = 0, ox, oz;
+      do { const a = azar()*6.283, r = 6 + azar()*(VALLE_DINOS.r-6); ox = VALLE_DINOS.x + Math.cos(a)*r; oz = VALLE_DINOS.z + Math.sin(a)*r; k++; }
+      while (k < 12 && (altura(ox, oz) < 1.5 || cercaRuta(ox, oz).d < 12));
+      d.obj = {x:ox, z:oz}; d.espera = 60*(1 + azar()*4);
+      if (def.tipo==='trex' && P.t - P.rugidoDinoT > 60*9 && Math.hypot(d.x-J.x, d.z-J.z) < 70){ P.rugidoDinoT = P.t; evento(P, 'rugidoDino', {x:d.x, y:altura(d.x, d.z), z:d.z}); }
+      continue;
+    }
+    const vel = (def.tipo==='trex' ? 3.4 : def.tipo==='trice' ? 2.4 : 1.8)*(0.7 + 0.3*def.esc);
+    const dx = d.obj.x-d.x, dz = d.obj.z-d.z;
+    d.ang = envolver(d.ang + envolver(Math.atan2(dx, dz) - d.ang)*0.05);
+    d.x += Math.sin(d.ang)*vel*DT; d.z += Math.cos(d.ang)*vel*DT; d.mov = vel; d.fase += vel*DT*1.6;
+  }
+  /* a pie no se atraviesan: empujan suavecito */
+  if (!P.veh && !P.casa) for (const d of P.dinos){
+    const dx = J.x-d.x, dz = J.z-d.z, dist = Math.hypot(dx, dz), rr = d.r + J.radio;
+    if (dist < rr && dist > 1e-3 && Math.abs(altura(d.x, d.z) - J.y) < 4){ J.x = d.x + dx/dist*rr; J.z = d.z + dz/dist*rr; }
+  }
+  if (!P.casa && P.t - P.dinosDicho > 60*60*4 && Math.hypot(J.x-VALLE_DINOS.x, J.z-VALLE_DINOS.z) < VALLE_DINOS.r + 14){ P.dinosDicho = P.t; evento(P, 'dinosVistos'); decir(P, 'dinos'); }
+}
+/* ---- los meteoritos: de vez en cuando cae una lluvia cerca del jugador (no hacen daño, solo susto) ---- */
+function pasoMeteoros(P){
+  const J = P.J;
+  if (P.t >= P.proxMeteoros){
+    P.proxMeteoros = P.t + 60*(70 + azar()*60);
+    if (!P.casa && !P.escena){
+      const n = 3 + Math.floor(azar()*4);
+      for (let i=0;i<n;i++){ const a = azar()*6.283, r = 22 + azar()*70; P.meteoros.push({x: J.x + Math.cos(a)*r, z: J.z + Math.sin(a)*r, y: 240 + azar()*60 + i*35, vx:(azar()-0.5)*16, vz:(azar()-0.5)*16, vy: -(62 + azar()*30), r: 0.7 + azar()*0.9, t:0}); }
+      evento(P, 'meteoros', {n});
+      if (P.t - P.meteoroDicho > 60*45){ P.meteoroDicho = P.t; decir(P, 'meteorito'); }
+    }
+  }
+  for (let i=P.meteoros.length-1;i>=0;i--){
+    const m = P.meteoros[i]; m.t++;
+    m.x += m.vx*DT; m.z += m.vz*DT; m.y += m.vy*DT;
+    const g = Math.max(altura(m.x, m.z), NIVEL_MAR);
+    if (m.y <= g + m.r || m.t > 60*8){
+      const d = Math.hypot(m.x-J.x, m.z-J.z);
+      evento(P, 'meteoroCae', {x:m.x, y:g, z:m.z, r:m.r, agua: altura(m.x, m.z) < NIVEL_MAR - 0.5, d});
+      if (d < 7 && !P.veh && !P.casa && J.suelo){ J.vy = 7; J.suelo = false; }
+      P.meteoros.splice(i, 1);
+    }
+  }
 }
 function comerArepa(P, a){
   P.comidasArepas.add(a.id); P.arepas++; P.puntos += 150;
   P.popo = Math.min(1, P.popo + 0.34);
+  engordar(P);
   evento(P, 'arepa', {id:a.id, x:a.x, y:a.y, z:a.z, total:P.arepas});
   if (P.t - P.ultimaHamb > 60) decir(P, 'arepa');
   P.ultimaHamb = P.t;
@@ -1576,6 +1850,7 @@ function pasoEscena(P){
     if (E.t === 285){ evento(P, 'banoPuerta', {abre:true, bano:E.bano}); decir(P, 'alivio'); }
     if (E.t >= E.dur){
       P.escena = null; P.popo = 0; P.ganas = false; P.puntos += 500;
+      { const g = P.gordura; P.gordura = 0; P.flacoT = 60*40; evento(P, 'flaco', {antes:g}); if (g >= 3) decir(P, 'flaco'); }
       if (!P.prog.banos.includes(E.bano)) P.prog.banos.push(E.bano);
       evento(P, 'banoSale', {bano:E.bano, banos:P.prog.banos.length});
       /* de cada popo nace un popo bebé que sigue a Fernando */
@@ -1726,16 +2001,16 @@ function empaquetarEstado(P, pj, nombre){
   const J = P.J, v = P.veh, r = (n, d)=> Math.round(n*(d||100))/(d||100);
   return {t:'e', pj, n:nombre, x:r(J.x), y:r(J.y), z:r(J.z), a:r(J.ang), v: v ? v.id : '', m:r(J.mov,10), f:r(J.fase,10),
     na: J.nadando ? 1 : 0, su: J.suelo ? 1 : 0, c: v ? r(v.cabeceo) : 0, g: v ? r(v.giro) : 0, ve: v ? r(v.vel,10) : 0, ai: v && v.aire ? 1 : 0,
-    pp: P.popitos.length, ga: P.ganas ? 1 : 0, es: P.estrellas.length};
+    pp: P.popitos.length, ga: P.ganas ? 1 : 0, es: P.estrellas.length, go: P.gorilaT > 0 ? 1 : 0, gd: P.gordura, fl: P.flacoT > 0 ? 1 : 0};
 }
 function desempaquetarEstado(m){
   if (!m || typeof m !== 'object' || m.t !== 'e' || ![m.x, m.y, m.z].every(Number.isFinite)) return null;
   const num = (v, a, b)=> Number.isFinite(v) ? clamp(v, a, b) : 0;
   const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
   const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
-  return {pj, nombre, x:num(m.x,-LIMITE,LIMITE), y:num(m.y,-60,400), z:num(m.z,-LIMITE,LIMITE), ang:num(m.a,-7,7),
+  return {pj, nombre, x:num(m.x,-LIMITE,LIMITE), y:num(m.y,-260,950), z:num(m.z,-LIMITE,LIMITE), ang:num(m.a,-7,7),
     veh: VEHICULOS_DEF.some(d=>d.id===m.v) ? m.v : '', mov:num(m.m,0,40), fase:num(m.f,0,1e7), nadando:!!m.na, suelo:!!m.su,
-    cabeceo:num(m.c,-1,1), giro:num(m.g,-1,1), vel:num(m.ve,-20,80), aire:!!m.ai, popitos:num(m.pp,0,MAX_POPITOS)|0, ganas:!!m.ga, estrellas:num(m.es,0,8)|0};
+    cabeceo:num(m.c,-1,1), giro:num(m.g,-1,1), vel:num(m.ve,-20,80), aire:!!m.ai, popitos:num(m.pp,0,MAX_POPITOS)|0, ganas:!!m.ga, estrellas:num(m.es,0,8)|0, gorila:!!m.go, gordura:num(m.gd,0,6)|0, flaco:!!m.fl};
 }
 
 /* ---- un paso de la partida (60 por segundo) ---- */
@@ -1753,11 +2028,13 @@ function pasoPartida(P, ent){
     P.J.x = P.veh.x; P.J.y = P.veh.y; P.J.z = P.veh.z; P.J.ang = P.veh.ang;
     if (salirNuevo) intentarBajar(P);
   } else {
-    if (aNuevo && P.cercaVeh){ montar(P, P.cercaVeh); e2.aNuevo = false; e2.a = false; }
+    if (aNuevo && P.cercaPuerta){ if (P.casa) salirCasa(P); else entrarCasa(P, P.cercaPuerta); e2.aNuevo = false; e2.a = false; }
+    else if (aNuevo && P.cercaVeh){ montar(P, P.cercaVeh); e2.aNuevo = false; e2.a = false; }
     if (P.veh) pasoVehiculo(P, P.veh, {jx:0, jy:0, a:false, b:false, aNuevo:false, bNuevo:false});
     else pasoPie(P, e2);
   }
   pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
+  pasoDinos(P); pasoMeteoros(P); pasoGorila(P);
   if (NOCHE) pasoNoche(P);
 }
 /* ---- lo que solo pasa de noche: el relámpago del Catatumbo sobre el lago y los chivos de Coro ---- */
@@ -1794,7 +2071,8 @@ if (typeof module !== 'undefined' && module.exports){
   module.exports = {CLIPS, TONO_TTS, SIN_GRABACION, MISIONES, FAMILIA, PERROS_DEF, VEHICULOS_DEF, BANOS, HAMBURGUESAS, AROS, BANDERAS, CASAS, DECOR,
     RUTA, PISTA, RAMPA, MUELLE, COFRE, ISLITA, INICIO, HANGAR, FARO, PLAYA, MONTANA, PUEBLO, CANCHA, PARQUE, FUENTE, TAM, NSEG, SEG, MALLA, LIMITE, NIVEL_MAR,
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
-    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado};
+    posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
+    CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -1917,6 +2195,9 @@ const sfx = {
   trueno(){ ruidoSonoro(1.6, 0.35, 900, 60, 0.35); ruidoSonoro(0.25, 0.3, 4000, 800, 0.05); },
   chivo(){ [660,620,700,640].forEach((f,i)=>beep(f,0.09,'sawtooth',0.12,i*0.08)); },
   ovni(){ [440,554,659,880,1108,1318].forEach((f,i)=>beep(f,0.18,'sine',0.12,i*0.12)); },
+  meteoro(d){ const v = clamp(1 - (d||0)/160, 0.15, 1); ruidoSonoro(1.2, 0.45*v, 700, 50, 0.3*v); beep(60, 0.5, 'sawtooth', 0.25*v); ruidoSonoro(0.3, 0.25*v, 3000, 600, 0.05); },
+  gorila(){ [180,150,200,140,220,160].forEach((f,i)=>beep(f,0.14,'sawtooth',0.22,i*0.11)); ruidoSonoro(0.5, 0.12, 500, 150, 0.1); },
+  banana(){ [659,784,988,1319].forEach((f,i)=>beep(f,0.09,'square',0.06,i*0.06)); },
   plop(){ beep(180,0.05,'sine',0.2); beep(90,0.14,'sine',0.25,0.05); ruidoSonoro(0.12, 0.06, 900, 200, 0.06); },
   descarga(){ ruidoSonoro(2.4, 0.22, 1200, 200); for (let i=0;i<8;i++) beep(120+i*15, 0.12, 'sine', 0.05, 0.3+i*0.2); },
   puerta(){ beep(240,0.06,'square',0.05); beep(180,0.08,'square',0.05,0.06); },
@@ -1942,7 +2223,7 @@ function motorArrancar(tipo){
   motorParar();
   try{
     const o = AC.createOscillator(), o2 = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain();
-    o.type = tipo==='avion' || tipo==='nave' ? 'sawtooth' : tipo==='sub' || tipo==='heli' ? 'sine' : tipo==='barco' || tipo==='motoagua' ? 'square' : tipo==='dino' ? 'triangle' : 'sawtooth';
+    o.type = tipo==='avion' || tipo==='nave' ? 'sawtooth' : tipo==='sub' || tipo==='heli' || tipo==='ovni' ? 'sine' : tipo==='barco' || tipo==='motoagua' ? 'square' : tipo==='dino' ? 'triangle' : 'sawtooth';
     o2.type = 'square';
     f.type = 'lowpass'; f.frequency.value = tipo==='sub' ? 220 : 700;
     g.gain.value = 0;
@@ -2774,6 +3055,260 @@ const arepasMesh = AREPAS.map(a=>{
   for (const [t, f, x, y, z, e] of carteles){ const sp = letrero(t, '#fff', f, e); sp.position.set(x, y, z); mundo.add(sp); }
   for (const h of HELIPUERTOS){ const sp = letrero('🅗 '+h.nombre.toUpperCase(), '#fff', 'rgba(40,40,60,0.9)', 1.4); sp.position.set(h.x, h.y+6, h.z); mundo.add(sp); }
 })();
+/* ---------------- Lo nuevo: el castillo, la plataforma del ovni, el valle de los dinosaurios,
+   la isla de las bananas y la vereda del lago ---------------- */
+(function construirLugaresNuevos(){
+  const A = new Armador();
+  const matPiso = new THREE.MeshLambertMaterial({vertexColors:true, polygonOffset:true, polygonOffsetFactor:-1, polygonOffsetUnits:-1});
+  /* el castillo: foso, murallas con almenas, cuatro torres, portón y la torre del homenaje */
+  { const cx = CASTILLO.x, cz = CASTILLO.z, y0 = altura(cx, cz), PIEDRA = '#a8a8b0', PIEDRA2 = '#8e8e98', ROJO = '#c0392b';
+    A.pieza(new THREE.RingGeometry(16.2, 20.5, 48), '#4fa3d8', cx, y0+0.12, cz, -Math.PI/2, 0, 0);
+    A.pieza(new THREE.RingGeometry(20.5, 21.3, 48), PIEDRA2, cx, y0+0.2, cz, -Math.PI/2, 0, 0);
+    const sx = Math.sin(CASTILLO.ang), sz = Math.cos(CASTILLO.ang);
+    A.caja(sx ? 6.5 : 5, 0.4, sx ? 5 : 6.5, '#8b5a2b', cx + sx*18.2, y0+0.35, cz + sz*18.2);   /* el puente levadizo */
+    for (const k of [-1.4, 1.4]) for (let i=0;i<4;i++) A.caja(0.14, 1.0, 0.14, '#5a3418', cx + sx*(15.8+i*1.6) + (sx ? 0 : k), y0+0.9, cz + sz*(15.8+i*1.6) + (sx ? k : 0));
+    for (const lado of [-1, 1]){
+      A.caja(30, 8, 1.4, PIEDRA, cx, y0+4, cz + lado*14.3); A.caja(1.4, 8, 30, PIEDRA, cx + lado*14.3, y0+4, cz);
+      A.caja(30.2, 1.2, 1.6, PIEDRA2, cx, y0+0.6, cz + lado*14.3); A.caja(1.6, 1.2, 30.2, PIEDRA2, cx + lado*14.3, y0+0.6, cz);
+      for (let i=-6;i<=6;i++){ A.caja(1.2, 1.1, 1.5, PIEDRA, cx + i*2.3, y0+8.55, cz + lado*14.3); A.caja(1.5, 1.1, 1.2, PIEDRA, cx + lado*14.3, y0+8.55, cz + i*2.3); }
+    }
+    for (const [tx, tz] of [[-1,-1],[1,-1],[-1,1],[1,1]]){
+      const x = cx + tx*14.3, z = cz + tz*14.3;
+      A.cil(3.6, 3.9, 12, PIEDRA, x, y0+6, z, 0,0,0, 14); A.cil(4.0, 4.0, 0.6, PIEDRA2, x, y0+12.2, z, 0,0,0, 14);
+      A.cono(4.4, 5.5, ROJO, x, y0+15.2, z, 14);
+      A.cil(0.08, 0.08, 3, '#5a3418', x, y0+19.3, z, 0,0,0, 5); A.caja(1.4, 0.8, 0.06, '#ffd23f', x+0.7, y0+20.4, z);
+      for (const a of [0, Math.PI/2, Math.PI, -Math.PI/2]) A.caja(0.6, 1.0, 0.6, '#1a2a4a', x + Math.sin(a)*3.7, y0+7.5, z + Math.cos(a)*3.7);
+    }
+    /* el portón, en la muralla hacia donde mira la puerta */
+    A.caja(sx ? 1.0 : 7.0, 7.2, sx ? 7.0 : 1.0, PIEDRA2, cx + sx*14.4, y0+3.6, cz + sz*14.4);
+    A.caja(sx ? 0.5 : 5.0, 6.0, sx ? 5.0 : 0.5, '#4a2a10', cx + sx*14.85, y0+3.0, cz + sz*14.85);
+    for (let i=0;i<4;i++) A.caja(sx ? 0.55 : 5.2, 0.16, sx ? 5.2 : 0.55, '#2a1a08', cx + sx*14.86, y0+0.9+i*1.5, cz + sz*14.86);
+    A.bola(0.18, '#ffd23f', cx + sx*15.1 + (sx ? 0 : 1.6), y0+3.0, cz + sz*15.1 + (sx ? 1.6 : 0), 6);
+    /* la torre del homenaje en el medio, con su tejado y su torre alta */
+    A.caja(12, 14, 12, PIEDRA, cx, y0+7, cz); A.caja(12.4, 1.0, 12.4, PIEDRA2, cx, y0+0.5, cz);
+    A.pieza(techoGeo(12, 12, 5), ROJO, cx, y0+14, cz);
+    for (const a of [0, Math.PI/2, Math.PI, -Math.PI/2]) for (const k of [-3, 0, 3]) A.caja(a===0||a===Math.PI ? 1.0 : 0.3, 1.4, a===0||a===Math.PI ? 0.3 : 1.0, '#bfe9ff', cx + Math.sin(a)*6.1 + (a===0||a===Math.PI ? k : 0), y0+9.5, cz + Math.cos(a)*6.1 + (a===0||a===Math.PI ? 0 : k));
+    A.cil(2.4, 2.6, 22, PIEDRA, cx, y0+11, cz, 0,0,0, 12); A.cono(3.0, 4.5, ROJO, cx, y0+24.2, cz, 12);
+    A.cil(0.1, 0.1, 4, '#5a3418', cx, y0+28.4, cz, 0,0,0, 5); A.caja(2.2, 1.2, 0.08, '#e63946', cx+1.1, y0+29.8, cz); A.caja(0.7, 0.7, 0.1, '#ffd23f', cx+1.1, y0+29.8, cz);
+    const sp = letrero('🏰 EL CASTILLO', '#fff6a0', 'rgba(60,40,20,0.92)', 3.2); sp.position.set(cx, y0+34, cz); mundo.add(sp);
+  }
+  /* la plataforma de la nave extraterrestre */
+  { const v = VEHICULOS_DEF.find(v=>v.id==='ovni'), y = altura(v.x, v.z);
+    A.cil(5.4, 5.8, 0.4, '#3a3a48', v.x, y+0.2, v.z, 0,0,0, 24); A.pieza(new THREE.RingGeometry(3.8, 4.6, 32), '#7dffa0', v.x, y+0.42, v.z, -Math.PI/2, 0, 0);
+    for (let i=0;i<8;i++){ const a = i/8*6.283; A.bola(0.28, i%2 ? '#7dffa0' : '#ff5aa0', v.x + Math.cos(a)*5.2, y+0.55, v.z + Math.sin(a)*5.2, 6); }
+    const sp = letrero('🛸 PLATAFORMA OVNI', '#fff', 'rgba(40,160,80,0.9)', 2); sp.position.set(v.x, y+9, v.z); mundo.add(sp); }
+  /* el valle de los dinosaurios: cartel, huesos y una cerca de troncos */
+  { const y = altura(VALLE_DINOS.x, VALLE_DINOS.z);
+    const sp = letrero('🦕 VALLE DE LOS DINOSAURIOS', '#fff', 'rgba(60,110,40,0.92)', 2.8); sp.position.set(VALLE_DINOS.x, y+10, VALLE_DINOS.z); mundo.add(sp);
+    A.cil(0.16, 0.16, 7, '#8b5a2b', VALLE_DINOS.x, y+3.5, VALLE_DINOS.z, 0,0,0, 6);
+    for (let i=0;i<3;i++){ const x = VALLE_DINOS.x + Math.cos(i*2.1)*14, z = VALLE_DINOS.z + Math.sin(i*2.1)*14, h = altura(x, z); if (h < 1.5) continue;
+      A.cil(0.16, 0.16, 3.2, '#f4f0e0', x, h+0.2, z, Math.PI/2, i*0.8, 0, 6); for (const k of [-1.2, 0, 1.2]) A.cil(0.1, 0.1, 1.4, '#f4f0e0', x + Math.sin(i*0.8)*k, h+0.2, z + Math.cos(i*0.8)*k, Math.PI/2, i*0.8 + Math.PI/2, 0, 5); }
+  }
+  /* la isla de las bananas: matas de plátano y su cartel */
+  for (const p of PLATANOS){
+    const y = altura(p.x, p.z), e = p.esc, alto = 3.4*e;
+    A.cil(0.22*e, 0.34*e, alto, '#8aa050', p.x, y+alto/2, p.z, 0,0,0, 8);
+    for (let k=0;k<6;k++){ const a = p.rot + k/6*6.283; A.bola(1, k%2 ? '#4caf50' : '#43a047', p.x + Math.cos(a)*1.5*e, y+alto+0.2 - (k%2)*0.3, p.z + Math.sin(a)*1.5*e, 8, 0.42*e, 0.09*e, 1.7*e); }
+    A.bola(0.5*e, '#43a047', p.x, y+alto+0.35, p.z, 8, 1, 0.6, 1);
+    for (let k=0;k<7;k++){ const a = k/7*6.283; A.bola(0.16*e, '#ffd23f', p.x + Math.cos(a)*0.32*e, y+alto-0.55*e, p.z + Math.sin(a)*0.32*e, 6, 0.6, 1.8, 0.6); }
+  }
+  { const y = altura(ISLA_BANANA.x, ISLA_BANANA.z);
+    const sp = letrero('🍌 ISLA DE LAS BANANAS', '#fff6a0', 'rgba(120,80,10,0.92)', 2.8); sp.position.set(ISLA_BANANA.x, y+9, ISLA_BANANA.z); mundo.add(sp);
+    A.cil(0.16, 0.16, 6, '#8b5a2b', ISLA_BANANA.x, y+3, ISLA_BANANA.z, 0,0,0, 6);
+    const sp2 = letrero('come banana → gorila por 1 minuto 🦍', '#fff', 'rgba(40,40,60,0.85)', 1.6); sp2.position.set(ISLA_BANANA.x, y+6.6, ISLA_BANANA.z); mundo.add(sp2); }
+  /* la vereda del lago: tablado de madera por la orilla, baranda hacia el agua, farolas y bancos */
+  { const pts = VEREDA.pts;
+    mundo.add(new THREE.Mesh(cinta(pts, -2.5, 2.5, '#c9a06a', 0.1, false), matPiso));
+    mundo.add(new THREE.Mesh(cinta(pts, -2.55, -2.1, '#8a6a3a', 0.16, false), matPiso));
+    mundo.add(new THREE.Mesh(cinta(pts, 2.1, 2.55, '#8a6a3a', 0.16, false), matPiso));
+    const b = pts.map(p=>({x:p.x + p.nx*-2.8, z:p.z + p.nz*-2.8, nx:p.nx, nz:p.nz}));
+    mundo.add(new THREE.Mesh(cinta(b, -0.07, 0.07, '#f2ece0', 1.1, false), matPiso));
+    mundo.add(new THREE.Mesh(cinta(b, -0.05, 0.05, '#f2ece0', 0.6, false), matPiso));
+    pts.forEach((p, i)=>{
+      const h = altura(p.x, p.z);
+      if (i % 2 === 0) A.caja(0.14, 1.2, 0.14, '#f2ece0', p.x + p.nx*-2.8, h+0.7, p.z + p.nz*-2.8);
+      if (i % 5 === 1){ const x = p.x + p.nx*3.0, z = p.z + p.nz*3.0, hh = altura(x, z); A.cil(0.12, 0.16, 4.2, '#3a3a44', x, hh+2.1, z, 0,0,0, 6).bola(0.42, '#fff2b0', x, hh+4.4, z, 8); if (NOCHE){ const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xffd27a, transparent:true, opacity:0.6, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(9, 9, 1); sp.position.set(x, hh+4.4, z); mundo.add(sp); } }
+      if (i % 6 === 3){ const x = p.x + p.nx*1.6, z = p.z + p.nz*1.6, hh = altura(x, z), ry = Math.atan2(-p.nx, -p.nz);
+        A.caja(1.8, 0.1, 0.5, '#8b5a2b', x, hh+0.55, z, 0, ry, 0).caja(1.8, 0.5, 0.1, '#8b5a2b', x - Math.sin(ry)*0.25, hh+0.85, z - Math.cos(ry)*0.25, 0, ry, 0);
+        for (const k of [-0.7, 0.7]) A.caja(0.1, 0.5, 0.5, '#3a3a44', x + Math.cos(ry)*k, hh+0.28, z - Math.sin(ry)*k, 0, ry, 0); }
+    });
+    const c = VEREDA.centro, y = altura(c.x, c.z);
+    const sp = letrero('🌴 LA VEREDA DEL LAGO', '#fff', 'rgba(20,110,90,0.92)', 3); sp.position.set(c.x, y+8, c.z); mundo.add(sp);
+    A.cil(0.16, 0.16, 5, '#8b5a2b', c.x + VEREDA.pts[17].nx*3.0, y+2.5, c.z + VEREDA.pts[17].nz*3.0, 0,0,0, 6);
+    /* un kiosco de jugos a mitad de camino */
+    const q = VEREDA.pts[8], kx = q.x + q.nx*5.5, kz = q.z + q.nz*5.5, ky = altura(kx, kz);
+    A.caja(3.2, 1.0, 1.4, '#ff8a3d', kx, ky+0.5, kz, 0, Math.atan2(-q.nx, -q.nz), 0).caja(3.6, 0.2, 2.6, '#e63946', kx, ky+2.6, kz, 0, Math.atan2(-q.nx, -q.nz), 0);
+    for (const k of [-1.5, 1.5]) A.cil(0.07, 0.07, 2.6, '#f2ece0', kx + Math.cos(Math.atan2(-q.nx, -q.nz))*k, ky+1.3, kz - Math.sin(Math.atan2(-q.nx, -q.nz))*k, 0,0,0, 5);
+    const spk = letrero('🥤 JUGOS', '#fff', 'rgba(220,60,40,0.92)', 1.4); spk.position.set(kx, ky+3.4, kz); mundo.add(spk);
+  }
+  const m = A.malla(matMate()); mundo.add(m);
+})();
+/* las bananas: giran y brillan como las hamburguesas, y vuelven a aparecer cuando crecen */
+const geoBanana = (()=>{ const A = new Armador(); A.pieza(new THREE.TorusGeometry(0.55, 0.15, 8, 14, Math.PI*0.95), '#ffd23f', 0, 0.3, 0, 0, 0, -0.1).bola(0.1, '#5a3418', -0.55, 0.3, 0, 5).bola(0.1, '#5a3418', 0.55, 0.3, 0, 5); return A.geo(); })();
+const bananasMesh = BANANAS.map(b=>{
+  const m = new THREE.Mesh(geoBanana, matBrillo()); m.scale.set(1.5,1.5,1.5); m.position.set(b.x, b.y, b.z); m.castShadow = true;
+  const brillo = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xfff0a0, transparent:true, opacity:0.45, depthWrite:false, blending:THREE.AdditiveBlending}));
+  brillo.scale.set(2.4,2.4,1); brillo.position.y = 0.3; m.add(brillo);
+  mundo.add(m); return m;
+});
+/* los dinosaurios sueltos: cuello largo, tiranosaurio y triceratops, con patas que caminan */
+function armarDinoLibre(def){
+  const g = new THREE.Group(), A = new Armador(), c = def.color, cl = def.claro;
+  const patas = [];
+  const pata = (x, z, alto, grosor)=>{ const p = new Armador().cil(grosor, grosor*0.85, alto, c, 0, -alto/2, 0, 0,0,0, 8).bola(grosor*1.15, cl, 0, -alto, 0.1, 7, 1.1, 0.45, 1.4).malla(matMate()); p.position.set(x, alto, z); g.add(p); patas.push(p); return p; };
+  if (def.tipo==='cuello'){
+    A.bola(1.6, c, 0, 2.6, 0, 12, 1.1, 0.9, 1.7).bola(1.1, cl, 0, 2.3, 0.2, 10, 0.9, 0.6, 1.5)
+     .cil(0.42, 0.62, 5.2, c, 0, 5.0, 2.2, 0.55, 0, 0, 10).bola(0.62, c, 0, 7.2, 3.6, 10, 1, 0.8, 1.3).caja(0.55, 0.3, 0.9, c, 0, 6.95, 4.3).caja(0.5, 0.2, 0.8, cl, 0, 6.8, 4.25)
+     .bola(0.13, '#fff', -0.3, 7.35, 3.9, 6).bola(0.13, '#fff', 0.3, 7.35, 3.9, 6).bola(0.06, '#111', -0.31, 7.36, 4.02, 5).bola(0.06, '#111', 0.31, 7.36, 4.02, 5)
+     .cono(0.9, 5.0, c, 0, 2.4, -4.4, 8, Math.PI/2, 0, 0);
+    for (let i=0;i<7;i++) A.cono(0.2, 0.42, cl, 0, 4.0 - i*0.12, 1.4 - i*1.0, 4);
+    pata(-0.9, 1.3, 2.2, 0.36); pata(0.9, 1.3, 2.2, 0.36); pata(-0.9, -1.3, 2.2, 0.36); pata(0.9, -1.3, 2.2, 0.36);
+  } else if (def.tipo==='trex'){
+    A.bola(1.2, c, 0, 2.6, -0.2, 12, 1.0, 1.0, 1.7).bola(0.85, cl, 0, 2.3, 0.2, 10, 0.85, 0.7, 1.4)
+     .cil(0.55, 0.7, 1.6, c, 0, 3.6, 1.3, 0.8, 0, 0, 10).bola(1.0, c, 0, 4.4, 2.3, 12, 1, 0.9, 1.4).caja(1.0, 0.55, 1.6, c, 0, 3.95, 3.3).caja(0.9, 0.35, 1.4, cl, 0, 3.55, 3.2)
+     .bola(0.18, '#fff', -0.42, 4.6, 2.8, 8).bola(0.18, '#fff', 0.42, 4.6, 2.8, 8).bola(0.08, '#111', -0.44, 4.6, 2.96, 6).bola(0.08, '#111', 0.44, 4.6, 2.96, 6)
+     .cono(0.85, 4.0, c, 0, 2.6, -3.2, 8, Math.PI/2, 0, 0)
+     .caja(0.24, 0.6, 0.24, c, -0.7, 2.9, 1.0, 0.7, 0, 0).caja(0.24, 0.6, 0.24, c, 0.7, 2.9, 1.0, 0.7, 0, 0);
+    for (let i=0;i<6;i++) A.caja(0.12, 0.3, 0.1, '#fff', -0.35 + i*0.14, 3.8, 4.1);
+    for (let i=0;i<6;i++) A.cono(0.22, 0.5, cl, 0, 3.7 - i*0.15, 0.9 - i*0.75, 4);
+    pata(-0.7, -0.3, 2.0, 0.42); pata(0.7, -0.3, 2.0, 0.42);
+  } else {
+    A.bola(1.5, c, 0, 2.2, 0, 12, 1.1, 0.85, 1.6).bola(1.0, cl, 0, 1.9, 0.2, 10, 0.95, 0.55, 1.4)
+     .bola(0.95, c, 0, 2.5, 2.4, 12, 1, 0.85, 1.2).caja(0.8, 0.45, 1.1, c, 0, 2.2, 3.3).caja(0.7, 0.3, 1.0, cl, 0, 1.9, 3.25)
+     .pieza(new THREE.CylinderGeometry(1.7, 1.7, 0.3, 16, 1, false, 0, Math.PI), cl, 0, 3.0, 1.7, -0.3, 0, 0)
+     .cono(0.14, 1.4, '#fff8e0', 0, 2.5, 3.9, 6, Math.PI/2, 0, 0).cono(0.14, 1.2, '#fff8e0', -0.5, 3.1, 2.9, 6, Math.PI/2, 0, 0).cono(0.14, 1.2, '#fff8e0', 0.5, 3.1, 2.9, 6, Math.PI/2, 0, 0)
+     .bola(0.15, '#fff', -0.45, 2.75, 3.0, 7).bola(0.15, '#fff', 0.45, 2.75, 3.0, 7).bola(0.07, '#111', -0.46, 2.75, 3.14, 5).bola(0.07, '#111', 0.46, 2.75, 3.14, 5)
+     .cono(0.7, 3.0, c, 0, 2.0, -3.4, 8, Math.PI/2, 0, 0);
+    pata(-1.0, 1.1, 1.8, 0.4); pata(1.0, 1.1, 1.8, 0.4); pata(-1.0, -1.1, 1.8, 0.4); pata(1.0, -1.1, 1.8, 0.4);
+  }
+  const cuerpo = A.malla(matMate()); g.add(cuerpo);
+  g.partes = {cuerpo, patas}; g.scale.setScalar(def.esc);
+  const et = letrero(def.tipo==='cuello' ? '🦕 cuello largo' : def.tipo==='trex' ? '🦖 tiranosaurio' : '🦕 triceratops', '#fff', 'rgba(60,110,40,0.8)', 1.4/def.esc); et.position.y = (def.tipo==='cuello' ? 9 : 6.2); g.add(et); g.etiqueta = et;
+  mundo.add(g); return g;
+}
+const dinosMesh = DINOS.map(armarDinoLibre);
+/* los meteoritos que caen y los escombros que dejan */
+const meteorosMesh = new Map(), escombros = [];
+const geoMeteoro = (()=>{ const A = new Armador(); A.bola(1, '#4a3a30', 0, 0, 0, 8, 1.1, 0.9, 1).bola(0.6, '#6a5040', 0.3, 0.3, 0.2, 6).bola(0.5, '#3a2a20', -0.4, -0.2, 0.3, 6); return A.geo(); })();
+const texGlow = texturaResplandor();
+function sincronizarNuevos(t){
+  const J = P.J;
+  P.dinos.forEach((d, i)=>{
+    const g = dinosMesh[i], def = DINOS[i], amp = Math.min(1, d.mov/1.5), s = Math.sin(d.fase*(def.tipo==='trex' ? 6 : 4));
+    g.position.set(d.x, altura(d.x, d.z), d.z); g.rotation.y = d.ang;
+    g.partes.patas.forEach((p, k)=>{ p.rotation.x = s*0.6*amp*(k%2 ? -1 : 1)*(k>=2 ? -1 : 1); });
+    g.partes.cuerpo.position.y = Math.abs(Math.cos(d.fase*4))*0.15*amp + (d.mov === 0 ? Math.sin(t*1.5 + i)*0.04 : 0);
+    g.partes.cuerpo.rotation.x = d.mov === 0 ? Math.sin(t*0.8 + i)*0.02 : 0;
+    g.etiqueta.visible = Math.hypot(d.x-J.x, d.z-J.z) < 60;
+  });
+  for (const m of P.meteoros){
+    let g = meteorosMesh.get(m);
+    if (!g){ g = new THREE.Group(); const b = new THREE.Mesh(geoMeteoro, matMate()); b.scale.setScalar(m.r); g.add(b); g.bola = b;
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texGlow, color: 0xff8a20, transparent:true, opacity:0.85, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(m.r*7, m.r*7, 1); g.add(sp); scene.add(g); meteorosMesh.set(m, g); }
+    g.position.set(m.x, m.y, m.z); g.bola.rotation.x += 0.12; g.bola.rotation.y += 0.07;
+    if (m.t % 2 === 0) particula(m.x + (azar()-0.5)*m.r, m.y + m.r*0.5, m.z + (azar()-0.5)*m.r, m.t % 4 ? '#ffa020' : '#ffe36e', (azar()-0.5)*3, 6+azar()*6, (azar()-0.5)*3, 26, m.r*0.9, {alfa:0.8, aditivo:true, crece:1.6});
+  }
+  for (const [m, g] of meteorosMesh) if (!P.meteoros.includes(m)){ scene.remove(g); meteorosMesh.delete(m); }
+  for (let i=escombros.length-1;i>=0;i--){ const e = escombros[i]; e.t--; e.sp.material.opacity = Math.max(0, e.t/300)*0.7; if (e.t <= 0){ scene.remove(e.g); escombros.splice(i, 1); } }
+  bananasMesh.forEach((m, i)=>{ const b = BANANAS[i], te = P.bananasT[b.id]; m.visible = te === undefined || P.t - te >= 60*45; if (!m.visible || Math.abs(b.x-J.x) > 160 || Math.abs(b.z-J.z) > 160) return; m.rotation.y = t*1.8; m.position.y = b.y + Math.sin(t*2.6 + i)*0.18; });
+  /* la luz de la casa donde se está */
+  if (P.casa){ luzCasa.position.set(P.casa.x, P.casa.y + P.casa.alto - 0.9, P.casa.z); luzCasa.intensity = NOCHE ? 1.7 : 0.9; luzCasa.distance = P.casa.castillo ? 70 : 40; }
+  else luzCasa.intensity = 0;
+}
+function caeMeteoro(e){
+  sfx.meteoro(e.d);
+  chispas(e.x, e.y + 0.5, e.z, '#ffa020', 34, 14); chispas(e.x, e.y + 0.5, e.z, '#ffe36e', 16, 9);
+  for (let i=0;i<18;i++) particula(e.x + (azar()-0.5)*3, e.y + 0.3, e.z + (azar()-0.5)*3, e.agua ? '#dff4ff' : '#8a7a68', (azar()-0.5)*7, 2+azar()*7, (azar()-0.5)*7, 50+azar()*30, 0.5+azar()*0.6, {alfa:0.7, crece:2.5, grav: e.agua ? 10 : 2});
+  if (e.d < 110) sacudida = Math.round(clamp(26 - e.d/4, 5, 26));
+  if (!e.agua){
+    const g = new THREE.Group(); const b = new THREE.Mesh(geoMeteoro, matMate()); b.scale.set(e.r, e.r*0.6, e.r); b.rotation.y = azar()*6; g.add(b);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texGlow, color: 0xff6a20, transparent:true, opacity:0.7, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(e.r*6, e.r*6, 1); g.add(sp);
+    const A = new Armador(); A.pieza(new THREE.CircleGeometry(e.r*2.6, 14), '#3a2e26', 0, 0.05, 0, -Math.PI/2, 0, 0); g.add(A.malla(matMate(), false));
+    g.position.set(e.x, e.y, e.z); scene.add(g); escombros.push({g, sp, t: 60*25});
+  }
+}
+/* ---------------- Por dentro: los cuartos de las casas y el salón del castillo ---------------- */
+const luzCasa = new THREE.PointLight(0xffe2b8, 0, 48, 1.4); scene.add(luzCasa);
+function aclarar(hex, k){ const c = new THREE.Color(hex); c.lerp(new THREE.Color(0xffffff), k===undefined ? 0.45 : k); return '#'+c.getHexString(); }
+function armarMueble(m, I){
+  const B = new Armador(), w = m.w, d = m.d, H = I.alto;
+  /* en el marco del mueble: el frente es +z, w a lo ancho (x) y d a lo hondo (z) ya girados como el cuarto */
+  const lw = Math.abs(Math.sin(m.ang)) > 0.5 ? d : w, ld = Math.abs(Math.sin(m.ang)) > 0.5 ? w : d;
+  const col = m.color || '#c0392b', MAD = '#8b5a2b', MAD2 = '#a0703a';
+  switch (m.t){
+    case 'cama': B.caja(lw, 0.5, ld, MAD, 0, 0.25, 0).caja(lw-0.2, 0.35, ld-0.2, '#ffffff', 0, 0.65, 0).caja(lw-0.2, 0.14, ld*0.55, col, 0, 0.88, ld*0.12).bola(0.36, '#ffffff', 0, 0.95, -ld/2+0.55, 8, 1.7, 0.55, 1); break;
+    case 'mesita': B.caja(0.9, 0.6, 0.9, MAD, 0, 0.3, 0).cil(0.05, 0.05, 0.5, '#333', 0, 0.85, 0, 0,0,0, 5).cil(0.16, 0.3, 0.32, '#ffe36e', 0, 1.2, 0, 0,0,0, 10); break;
+    case 'mesa': B.caja(lw, 0.1, ld, MAD2, 0, 0.75, 0); for (const [x,z] of [[-1,-1],[1,-1],[-1,1],[1,1]]) B.cil(0.06, 0.06, 0.75, MAD, x*(lw/2-0.15), 0.37, z*(ld/2-0.15), 0,0,0, 6);
+      B.cil(0.26, 0.26, 0.03, '#ffffff', -0.5, 0.82, 0, 0,0,0, 10).cil(0.1, 0.09, 0.22, '#4fc3f7', 0.5, 0.92, 0.1, 0,0,0, 8).bola(0.14, '#e63946', -0.5, 0.9, 0, 6);
+      for (const z of [-1, 1]){ B.caja(0.5, 0.08, 0.5, MAD, 0, 0.45, z*(ld/2+0.4)).caja(0.5, 0.6, 0.08, MAD, 0, 0.78, z*(ld/2+0.62)); for (const [x,zz] of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]]) B.cil(0.03,0.03,0.45,MAD, x, 0.22, z*(ld/2+0.4)+zz, 0,0,0, 4); } break;
+    case 'sofa': B.caja(lw, 0.5, ld, col, 0, 0.25, 0).caja(lw, 0.55, 0.32, col, 0, 0.75, -ld/2+0.16).caja(0.3, 0.75, ld, col, -lw/2+0.15, 0.37, 0).caja(0.3, 0.75, ld, col, lw/2-0.15, 0.37, 0)
+      .bola(0.32, '#ffe36e', -lw*0.25, 0.62, 0.1, 8, 1.2, 0.5, 1).bola(0.32, '#ffe36e', lw*0.25, 0.62, 0.1, 8, 1.2, 0.5, 1); break;
+    case 'tele': B.caja(lw, 0.5, ld, '#3a3a44', 0, 0.25, 0).caja(lw-0.2, 1.0, 0.1, '#111', 0, 1.05, 0).caja(lw-0.4, 0.8, 0.03, '#4fc3f7', 0, 1.05, 0.06).bola(0.16, '#ffd23f', -0.2, 1.1, 0.08, 6).bola(0.1, '#e63946', 0.25, 0.95, 0.08, 6); break;
+    case 'cocina': B.caja(lw, 0.9, ld, '#e8e8ea', 0, 0.45, 0).caja(lw+0.06, 0.06, ld+0.06, '#8a8a94', 0, 0.93, 0)
+      .cil(0.16, 0.16, 0.03, '#222', -lw*0.25, 0.97, 0, 0,0,0, 8).cil(0.16, 0.16, 0.03, '#222', lw*0.25, 0.97, -ld*0.2, 0,0,0, 8).cil(0.2, 0.18, 0.26, '#c0392b', -lw*0.25, 1.1, 0, 0,0,0, 10).cil(0.13, 0.13, 0.03, '#4fc3f7', lw*0.25, 0.97, ld*0.25, 0,0,0, 8)
+      .caja(lw, 0.7, 0.45, '#e8e8ea', 0, 2.1, -ld/2+0.22).caja(0.9, 1.9, 0.8, '#f4f4f8', -lw/2+0.45, 0.95, ld/2+0.45).caja(0.06, 0.6, 0.06, '#8a8a94', -lw/2+0.9, 1.1, ld/2+0.86); break;
+    case 'alfombra': B.pieza(new THREE.CylinderGeometry(1, 1, 0.04, 20), aclarar(col, 0.2), 0, 0.03, 0, 0,0,0, lw/2, 1, ld/2).pieza(new THREE.CylinderGeometry(1, 1, 0.045, 20), '#ffffff', 0, 0.03, 0, 0,0,0, lw/2-0.5, 1, ld/2-0.5); break;
+    case 'alfombraRoja': B.caja(lw, 0.05, ld, '#c0392b', 0, 0.03, 0).caja(0.25, 0.06, ld, '#ffd23f', -lw/2+0.12, 0.03, 0).caja(0.25, 0.06, ld, '#ffd23f', lw/2-0.12, 0.03, 0); break;
+    case 'lampara': B.cil(0.3, 0.3, 0.05, '#333', 0, 0.03, 0, 0,0,0, 8).cil(0.04, 0.04, 1.6, '#333', 0, 0.8, 0, 0,0,0, 5).cil(0.22, 0.36, 0.4, '#ffe36e', 0, 1.75, 0, 0,0,0, 10); break;
+    case 'cuadro': { const y = m.alto || 2.2, pared = lw > ld; B.caja(pared ? lw : 0.12, 1.1, pared ? 0.12 : ld, '#6b3e1e', 0, y, 0).caja(pared ? lw-0.24 : 0.2, 0.86, pared ? 0.2 : ld-0.24, '#8ecbff', 0, y, 0); break; }
+    case 'ventana': { const y = m.alto || 2.2; B.caja(lw, 1.5, 0.16, '#bfe9ff', 0, y, 0).caja(lw+0.16, 0.12, 0.2, '#ffffff', 0, y+0.78, 0).caja(lw+0.16, 0.12, 0.2, '#ffffff', 0, y-0.78, 0).caja(0.1, 1.5, 0.2, '#ffffff', 0, y, 0).caja(lw, 0.1, 0.2, '#ffffff', 0, y, 0); break; }
+    case 'barra': B.caja(lw, 1.1, ld, '#5a3418', 0, 0.55, 0).caja(lw+0.1, 0.08, ld+0.1, '#d9c6a1', 0, 1.14, 0); for (let i=0;i<5;i++) B.cil(0.07, 0.07, 0.36, ['#2a9c3a','#c0392b','#ffd23f','#4fc3f7','#7b4fa8'][i], -lw*0.4 + i*lw*0.2, 1.36, -ld*0.2, 0,0,0, 6).cil(0.04, 0.04, 0.12, '#222', -lw*0.4 + i*lw*0.2, 1.6, -ld*0.2, 0,0,0, 5);
+      B.cil(0.05, 0.05, 0.4, '#c8c8d0', lw*0.3, 1.34, ld*0.1, 0,0,0, 6).caja(0.24, 0.08, 0.08, '#c8c8d0', lw*0.3, 1.52, ld*0.14).cil(0.14, 0.12, 0.3, '#ffd23f', -lw*0.1, 1.33, ld*0.2, 0,0,0, 8).cil(0.14, 0.14, 0.06, '#ffffff', -lw*0.1, 1.5, ld*0.2, 0,0,0, 8); break;
+    case 'banqueta': B.cil(0.2, 0.2, 0.04, '#333', 0, 0.02, 0, 0,0,0, 8).cil(0.04, 0.04, 0.7, '#888', 0, 0.37, 0, 0,0,0, 5).cil(0.26, 0.26, 0.08, '#c0392b', 0, 0.76, 0, 0,0,0, 10); break;
+    case 'estante': { const y = m.alto || 1.4; B.caja(lw, 0.08, ld, '#5a3418', 0, y, 0).caja(lw, 0.08, ld, '#5a3418', 0, y+0.7, 0); for (let i=0;i<9;i++) B.cil(0.07, 0.07, 0.34, ['#2a9c3a','#c0392b','#ffd23f','#4fc3f7','#ff6ec0'][i%5], -lw*0.45 + i*lw*0.11, y+0.22, 0, 0,0,0, 6); break; }
+    case 'mesaRedonda': B.cil(0.9, 0.9, 0.08, MAD2, 0, 0.75, 0, 0,0,0, 16).cil(0.08, 0.08, 0.72, MAD, 0, 0.36, 0, 0,0,0, 6).cil(0.4, 0.4, 0.05, MAD, 0, 0.03, 0, 0,0,0, 10).cil(0.22, 0.22, 0.03, '#ffffff', 0.3, 0.81, 0.1, 0,0,0, 10).cil(0.09, 0.08, 0.2, '#ffe36e', -0.3, 0.9, -0.2, 0,0,0, 8);
+      for (let i=0;i<3;i++){ const a = i/3*6.283 + 0.5, x = Math.cos(a)*1.25, z = Math.sin(a)*1.25; B.caja(0.46, 0.08, 0.46, MAD, x, 0.45, z, 0, -a, 0).caja(0.46, 0.55, 0.08, MAD, x + Math.cos(a)*0.22, 0.76, z + Math.sin(a)*0.22, 0, -a + Math.PI/2, 0).cil(0.03, 0.03, 0.45, MAD, x, 0.22, z, 0,0,0, 4); } break;
+    case 'rocola': B.caja(lw, 1.7, ld, '#c0392b', 0, 0.85, 0).bola(lw/2, '#ffd23f', 0, 1.7, 0, 10, 1, 0.5, ld/lw).caja(lw-0.3, 0.5, 0.08, '#4fc3f7', 0, 1.15, ld/2).caja(lw-0.3, 0.3, 0.08, '#111', 0, 0.5, ld/2); for (let i=0;i<4;i++) B.bola(0.07, ['#ff5aa0','#7dffa0','#ffe36e','#4fc3f7'][i], -lw*0.3 + i*lw*0.2, 1.5, ld/2, 5); break;
+    case 'mostrador': B.caja(lw, 1.0, ld, '#e63946', 0, 0.5, 0).caja(lw+0.1, 0.08, ld+0.1, '#ffffff', 0, 1.04, 0).caja(lw*0.8, 0.5, 0.06, '#ffd23f', 0, 0.55, ld/2);
+      { const geo = m.comida==='AREPAS' ? arepaGeo() : m.comida==='BURGER' ? hamburguesaGeo() : null; if (geo) B.pieza(geo, '#ffffff', -lw*0.3, 1.1, 0, 0,0,0, 1.6, 1.6, 1.6); }
+      B.caja(0.5, 0.4, 0.4, '#333', lw*0.3, 1.28, -ld*0.1).caja(0.36, 0.28, 0.05, '#7dffa0', lw*0.3, 1.3, ld*0.1); break;
+    case 'estanteTienda': B.caja(lw, 1.9, ld, '#8a8a94', 0, 0.95, 0); for (let f=0;f<3;f++) for (let i=0;i<6;i++) B.caja(0.36, 0.42, 0.36, ['#e63946','#4fc3f7','#ffd23f','#2a9c3a','#ff6ec0','#7b4fa8'][(i+f)%6], -lw*0.42 + i*lw*0.168, 0.5 + f*0.62, ld/2 - 0.1); break;
+    case 'llantas': for (let i=0;i<3;i++) B.pieza(new THREE.TorusGeometry(0.55, 0.2, 8, 14), '#222', 0, 0.2 + i*0.42, 0, Math.PI/2, 0, 0); break;
+    case 'trono': B.caja(lw, 0.6, ld, '#ffd23f', 0, 0.3, 0).caja(1.6, 0.5, 1.2, '#c0392b', 0, 0.85, 0.15).caja(1.7, 2.8, 0.34, '#ffd23f', 0, 1.9, -ld/2+0.2).caja(1.3, 2.0, 0.1, '#c0392b', 0, 1.7, -ld/2+0.4)
+      .caja(0.3, 0.6, 1.2, '#ffd23f', -0.95, 1.3, 0.1).caja(0.3, 0.6, 1.2, '#ffd23f', 0.95, 1.3, 0.1).bola(0.22, '#e63946', 0, 3.35, -ld/2+0.2, 8).bola(0.15, '#4fc3f7', -0.6, 3.1, -ld/2+0.2, 6).bola(0.15, '#4fc3f7', 0.6, 3.1, -ld/2+0.2, 6); break;
+    case 'columna': B.cil(0.55, 0.65, H-0.6, '#d0d0d8', 0, H/2-0.3, 0, 0,0,0, 12).caja(1.6, 0.4, 1.6, '#b8b8c4', 0, 0.2, 0).caja(1.6, 0.4, 1.6, '#b8b8c4', 0, H-0.5, 0); break;
+    case 'estandarte': B.caja(1.4, 0.12, 0.12, '#5a3418', 0, 4.4, 0.1).caja(1.2, 2.2, 0.08, '#c0392b', 0, 3.2, 0.1).caja(1.2, 0.3, 0.09, '#ffd23f', 0, 4.2, 0.1).bola(0.3, '#ffd23f', 0, 3.1, 0.16, 8, 1, 1, 0.3); break;
+    case 'candelabro': { const y = H-2.2; B.cil(0.04, 0.04, 2.0, '#5a4a3a', 0, y+1.0, 0, 0,0,0, 5).pieza(new THREE.TorusGeometry(1.3, 0.09, 8, 20), '#c9a032', 0, y, 0, Math.PI/2, 0, 0);
+      for (let i=0;i<8;i++){ const a = i/8*6.283; B.cil(0.06, 0.06, 0.4, '#fff8e0', Math.cos(a)*1.3, y+0.25, Math.sin(a)*1.3, 0,0,0, 5).bola(0.09, '#ffa020', Math.cos(a)*1.3, y+0.55, Math.sin(a)*1.3, 5, 1, 1.6, 1); } break; }
+    case 'mesaBanquete': B.caja(lw, 0.12, ld, MAD2, 0, 0.9, 0); for (const [x,z] of [[-1,-1],[1,-1],[-1,1],[1,1]]) B.caja(0.16, 0.9, 0.16, MAD, x*(lw/2-0.3), 0.45, z*(ld/2-0.3));
+      for (const z of [-1, 1]){ B.caja(lw, 0.08, 0.4, MAD, 0, 0.45, z*(ld/2+0.5)); for (const x of [-1, 1]) B.caja(0.14, 0.45, 0.4, MAD, x*(lw/2-0.4), 0.22, z*(ld/2+0.5)); }
+      B.bola(0.5, '#c8763a', 0, 1.25, 0, 10, 1.4, 0.7, 1).cil(0.6, 0.6, 0.06, '#ffffff', 0, 0.99, 0, 0,0,0, 12); for (let i=0;i<6;i++) B.bola(0.16, ['#e63946','#ffd23f','#7dffa0','#ff8a3d','#c07dff','#4fc3f7'][i], -lw*0.4 + i*lw*0.16, 1.1, (i%2 ? 0.6 : -0.6), 6);
+      for (let i=0;i<4;i++) B.cil(0.1, 0.09, 0.2, '#c9a032', -lw*0.3 + i*lw*0.2, 1.06, (i%2 ? -0.7 : 0.7), 0,0,0, 6); break;
+    case 'armadura': B.caja(0.7, 0.5, 0.7, '#5a5a66', 0, 0.25, 0).caja(0.22, 0.8, 0.26, '#c8c8d0', -0.16, 0.9, 0).caja(0.22, 0.8, 0.26, '#c8c8d0', 0.16, 0.9, 0).caja(0.7, 0.9, 0.45, '#d8d8e0', 0, 1.75, 0).bola(0.32, '#c8c8d0', 0, 2.45, 0, 10).caja(0.4, 0.1, 0.1, '#222', 0, 2.45, 0.28)
+      .caja(0.16, 0.8, 0.2, '#c8c8d0', -0.5, 1.7, 0.1).caja(0.16, 0.8, 0.2, '#c8c8d0', 0.5, 1.7, 0.1).cil(0.04, 0.04, 1.6, '#e8e8f0', 0.55, 2.0, 0.35, 0,0,0, 5).caja(0.3, 0.06, 0.1, '#c9a032', 0.55, 1.5, 0.35).cil(0.45, 0.45, 0.06, '#c0392b', -0.62, 1.6, 0.3, Math.PI/2, 0, 0, 10).cono(0.12, 0.35, '#e63946', 0, 2.95, 0, 6); break;
+    case 'chimenea': B.caja(lw, 2.8, ld, '#8a6a5a', 0, 1.4, 0).caja(lw-0.5, 1.4, ld*0.6, '#2a1a10', 0, 0.75, ld*0.3).caja(lw+0.2, 0.16, ld+0.2, '#5a3a2a', 0, 2.85, 0)
+      .bola(0.28, '#ff8a20', -0.3, 0.45, ld*0.3, 6, 1, 1.6, 1).bola(0.24, '#ffd23f', 0.25, 0.4, ld*0.3, 6, 1, 1.5, 1).cil(0.1, 0.1, 0.9, '#5a3418', 0, 0.2, ld*0.3, 0,0,Math.PI/2, 5).caja(lw, H-3.0, ld*0.7, '#8a6a5a', 0, 2.9+(H-3.0)/2, -ld*0.15); break;
+  }
+  const mm = B.malla(matMate()); mm.position.set(m.x - I.x, 0, m.z - I.z); mm.rotation.y = m.ang;
+  return mm;
+}
+const interioresMesh = INTERIORES.map(I=>{
+  const g = new THREE.Group(); g.position.set(I.x, I.y, I.z);
+  const A = new Armador(), c = I.c, W2 = I.hw, D2 = I.hd, H = I.alto;
+  const pared = c.castillo ? '#9a9aa4' : aclarar(c.color, 0.5), piso = c.castillo ? '#6e6a70' : (c.letrero || c.gasolinera ? '#e0d8c8' : '#c9a06a'), techo = c.castillo ? '#5a5a66' : '#f4f2ee';
+  A.caja(W2*2+0.6, 0.3, D2*2+0.6, piso, 0, -0.15, 0).caja(W2*2+0.6, 0.3, D2*2+0.6, techo, 0, H+0.15, 0);
+  A.caja(W2*2+0.6, H, 0.3, pared, 0, H/2, -D2-0.15).caja(W2*2+0.6, H, 0.3, pared, 0, H/2, D2+0.15).caja(0.3, H, D2*2+0.6, pared, -W2-0.15, H/2, 0).caja(0.3, H, D2*2+0.6, pared, W2+0.15, H/2, 0);
+  const zoc = c.castillo ? '#6a6a74' : '#8b5a2b';
+  A.caja(W2*2, 0.25, 0.12, zoc, 0, 0.12, -D2+0.06).caja(W2*2, 0.25, 0.12, zoc, 0, 0.12, D2-0.06).caja(0.12, 0.25, D2*2, zoc, -W2+0.06, 0.12, 0).caja(0.12, 0.25, D2*2, zoc, W2-0.06, 0.12, 0);
+  if (c.castillo){ for (let i=0;i<9;i++) for (let j=0;j<7;j++) if ((i+j)%2===0) A.caja(2.6, 0.04, 2.6, '#7e7a80', -W2+2+i*3.1, 0.02, -D2+2+j*3.2); }
+  /* la puerta de adentro, en la pared del frente */
+  const s = Math.sin(I.ang), co = Math.cos(I.ang), lado = Math.abs(s) > 0.5, dx = I.px - I.x, dz = I.pz - I.z;
+  const pw = c.castillo ? 3.2 : 1.4, ph = c.castillo ? 5 : 2.4;
+  A.caja(lado ? 0.24 : pw+0.5, ph+0.3, lado ? pw+0.5 : 0.24, c.castillo ? '#6a6a74' : '#ffffff', dx - s*0.22, ph/2+0.1, dz - co*0.22);
+  A.caja(lado ? 0.2 : pw, ph, lado ? pw : 0.2, c.castillo ? '#4a2a10' : '#6b3e1e', dx - s*0.28, ph/2, dz - co*0.28);
+  A.bola(0.1, '#ffd23f', dx - s*0.42 + (lado ? 0 : pw*0.32), ph*0.45, dz - co*0.42 + (lado ? pw*0.32 : 0), 6);
+  /* ventanas en las paredes de los lados (hacia afuera no hay nada: las hacemos brillantes) */
+  if (!c.castillo){ for (const sx of [-1, 1]) A.caja(0.16, 1.3, 1.8, '#bfe9ff', sx*(W2-0.08), 2.3, -D2*0.3).caja(0.2, 0.1, 1.9, '#ffffff', sx*(W2-0.08), 2.3, -D2*0.3).caja(0.2, 1.4, 0.1, '#ffffff', sx*(W2-0.08), 2.3, -D2*0.3); }
+  else { for (const sx of [-1, 1]) for (const k of [-0.6, 0, 0.6]) A.caja(0.16, 3.0, 1.2, '#bfe9ff', sx*(W2-0.08), 5.5, k*D2).caja(0.2, 3.2, 0.2, '#6a6a74', sx*(W2-0.08), 5.5, k*D2); }
+  /* la lámpara del techo */
+  if (!c.castillo) A.cil(0.03, 0.03, 0.7, '#333', 0, H-0.35, 0, 0,0,0, 4).cil(0.3, 0.55, 0.4, '#ffe36e', 0, H-0.9, 0, 0,0,0, 12).bola(0.16, '#fff8e0', 0, H-1.0, 0, 6);
+  g.add(A.malla(matMate()));
+  for (const m of I.muebles){ const mm = armarMueble(m, I); g.add(mm); if (m.t==='cuadro' && m.texto){ const sp = letrero(m.texto, '#fff', 'rgba(0,0,0,0)', 0.8); sp.position.set(m.x - I.x + (m.w > m.d ? 0 : (m.x > I.x ? -0.25 : 0.25)), (m.alto||2.2), m.z - I.z + (m.w > m.d ? (m.z > I.z ? -0.25 : 0.25) : 0)); g.add(sp); } }
+  const et = letrero((c.castillo ? '🏰 ' : c.letrero==='BAR' ? '🍺 ' : c.letrero==='BURGER' ? '🍔 ' : c.letrero==='AREPAS' ? '🫓 ' : c.gasolinera ? '⛽ ' : '🏠 ') + c.nombre.toUpperCase(), '#fff', 'rgba(20,20,50,0.8)', c.castillo ? 3 : 1.6);
+  et.position.set(0, H-0.6-(c.castillo ? 1.2 : 0), -D2+0.6); g.add(et);
+  if (NOCHE){ const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xffd27a, transparent:true, opacity:0.5, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(8, 8, 1); sp.position.set(0, H-1.0, 0); g.add(sp); }
+  mundo.add(g); return g;
+});
 /* las boyas, que se mecen; los huevos con manchas; la luna con sus cráteres y las estrellas del espacio */
 const boyasMesh = BOYAS.map(b=>{
   const A = new Armador();
@@ -3210,11 +3745,31 @@ function armarPopito(){
   return g;
 }
 const popitosMesh = [];
-/* cualquier personaje elegible: persona, perrito o el Señor Popo */
-function armarJugador(pj){
+/* el gorila: quien come una banana en la isla se vuelve gorila un minuto; se anima como una persona */
+function armarGorila(color){
+  const g = new THREE.Group(), A = new Armador(), PEL = color || '#2a2320', PIEL2 = color ? '#8a8a94' : '#5a4a44';
+  A.bola(0.72, PEL, 0, 1.2, 0, 12, 1.15, 1.0, 0.9).bola(0.5, PIEL2, 0, 1.15, 0.32, 10, 1.0, 0.85, 0.7)     /* el cuerpo y el pecho */
+   .bola(0.5, PEL, 0, 2.05, 0.1, 12, 1.05, 0.95, 1.0).bola(0.34, PIEL2, 0, 1.95, 0.42, 10, 1.1, 0.8, 0.7)      /* la cabeza y la cara */
+   .bola(0.09, '#111', -0.16, 2.08, 0.62, 6).bola(0.09, '#111', 0.16, 2.08, 0.62, 6).bola(0.04, '#fff', -0.14, 2.1, 0.68, 4).bola(0.04, '#fff', 0.18, 2.1, 0.68, 4)
+   .bola(0.07, '#111', -0.08, 1.9, 0.72, 5).bola(0.07, '#111', 0.08, 1.9, 0.72, 5).caja(0.3, 0.05, 0.05, '#3a2a28', 0, 1.78, 0.7)
+   .bola(0.14, PEL, -0.5, 2.12, 0, 6).bola(0.14, PEL, 0.5, 2.12, 0, 6).bola(0.28, PEL, 0, 2.5, -0.05, 8, 1, 0.5, 1)
+   .cil(0.1, 0.1, 0.3, PEL, 0, 1.68, 0, 0,0,0, 6);
+  const cuerpo = A.malla(matMate()); g.add(cuerpo);
+  const brazo = ()=>{ const B = new Armador(); B.cil(0.2, 0.17, 1.15, PEL, 0, -0.55, 0, 0,0,0, 8).bola(0.24, PIEL2, 0, -1.15, 0, 8, 1.2, 0.7, 1.1); return B.malla(matMate()); };
+  const pierna = ()=>{ const B = new Armador(); B.cil(0.2, 0.18, 0.62, PEL, 0, -0.3, 0, 0,0,0, 8).bola(0.24, PIEL2, 0, -0.62, 0.08, 8, 1.1, 0.5, 1.5); return B.malla(matMate()); };
+  const bI = brazo(), bD = brazo(), pI = pierna(), pD = pierna();
+  bI.position.set(-0.78, 1.55, 0); bD.position.set(0.78, 1.55, 0); pI.position.set(-0.32, 0.62, 0); pD.position.set(0.32, 0.62, 0);
+  g.add(bI, bD, pI, pD);
+  g.partes = {cuerpo, bI, bD, pI, pD, capa:null};
+  g.scale.setScalar(1.25); g.esc = 1.25; g.fase = 0;
+  return g;
+}
+/* cualquier personaje elegible: persona, perrito o el Señor Popo (y el gorila, mientras dure la banana) */
+function armarJugador(pj, gorila){
   const def = PERSONAJES_RED.find(p=>p.id===pj) || PERSONAJES_RED[0];
   let g;
-  if (def.perro){ g = armarPerro(def.perro); g.tipo = 'perro'; g.esc = 0.9; }
+  if (gorila){ g = armarGorila(); g.tipo = 'persona'; }
+  else if (def.perro){ g = armarPerro(def.perro); g.tipo = 'perro'; g.esc = 0.9; }
   else if (def.id==='srpopo'){ g = armarSrPopo(); g.tipo = 'popo'; g.esc = 0.95; }
   else { g = armarPersona(def.id); g.tipo = 'persona'; }
   return g;
@@ -3371,6 +3926,18 @@ function armarVehiculo(id){
     R.fuego = new THREE.Mesh(new THREE.ConeGeometry(0.7, 3.2, 10), new THREE.MeshBasicMaterial({color: 0xffa020, transparent: true, opacity: 0.85}));
     R.fuego.rotation.x = Math.PI; R.fuego.position.set(0, -1.6, 0); R.fuego.visible = false; g.add(R.fuego);
     R.asiento = {x:0, y:3.7, z:0.3, esc:0.5}; R.altoOjos = 4.3;
+  } else if (id==='ovni'){
+    A.cil(3.0, 4.1, 0.7, '#9aa4b8', 0, 1.05, 0, 0,0,0, 24).cil(4.1, 3.0, 0.5, '#7a8498', 0, 0.45, 0, 0,0,0, 24).cil(0.9, 0.9, 0.5, '#5a6270', 0, 0.2, 0, 0,0,0, 12)
+     .cil(1.9, 1.9, 0.12, '#5a6270', 0, 1.45, 0, 0,0,0, 20).cil(0.5, 0.5, 0.1, '#7dffa0', 0, 0.06, 0, 0,0,0, 12);
+    for (let i=0;i<3;i++){ const a = i/3*6.283; A.cil(0.12, 0.16, 1.0, '#5a6270', Math.cos(a)*2.4, 0.35, Math.sin(a)*2.4, 0,0,0, 6).cil(0.36, 0.36, 0.1, '#3a3a48', Math.cos(a)*2.4, 0.05, Math.sin(a)*2.4, 0,0,0, 8); }
+    R.cuerpo = A.malla(matBrillo()); g.add(R.cuerpo);
+    R.cupula = new THREE.Mesh(new THREE.SphereGeometry(1.75, 18, 12, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshPhongMaterial({color: lin(0x9de8ff), transparent:true, opacity:0.42, shininess:90, side:THREE.DoubleSide}));
+    R.cupula.position.y = 1.4; g.add(R.cupula);
+    R.anillo = new THREE.Group(); R.anillo.position.y = 0.75; g.add(R.anillo); R.luces = [];
+    for (let i=0;i<12;i++){ const a = i/12*6.283; const l = new THREE.Mesh(new THREE.SphereGeometry(0.22, 7, 6), new THREE.MeshBasicMaterial({color: i%3===0 ? 0xff5a5a : i%3===1 ? 0x7dffa0 : 0xffe36e})); l.position.set(Math.cos(a)*3.75, 0, Math.sin(a)*3.75); R.anillo.add(l); R.luces.push(l); }
+    R.haz = new THREE.Mesh(new THREE.ConeGeometry(3.4, 9, 20, 1, true), new THREE.MeshBasicMaterial({color: 0x9dffb0, transparent:true, opacity:0.16, depthWrite:false, side: THREE.DoubleSide}));
+    R.haz.position.y = -4.3; R.haz.rotation.x = Math.PI; R.haz.visible = false; g.add(R.haz);
+    R.asiento = {x:0, y:1.35, z:0, esc:0.5}; R.altoOjos = 2.2;
   } else if (id==='dino'){
     const c = '#5aa04a', claro = '#8fd45e';
     A.bola(1.3, c, 0, 2.2, -0.2, 12, 1.1, 1, 1.6).bola(0.9, claro, 0, 1.9, 0.1, 10, 0.9, 0.7, 1.4)
@@ -3386,7 +3953,7 @@ function armarVehiculo(id){
     for (const x of [-0.7, 0.7]){ const p = new Armador().caja(0.55, 1.6, 0.7, c, 0, -0.8, 0).caja(0.7, 0.3, 1.0, claro, 0, -1.65, 0.2).cono(0.12, 0.3, '#ffffff', -0.2, -1.7, 0.75, 4, Math.PI/2,0,0).cono(0.12, 0.3, '#ffffff', 0.2, -1.7, 0.75, 4, Math.PI/2,0,0).malla(matMate()); p.position.set(x, 1.8, -0.4); g.add(p); R.patas.push(p); }
     R.asiento = {x:0, y:3.25, z:-0.3, esc:0.62}; R.altoOjos = 4.5;
   }
-  const sombra = new THREE.Mesh(new THREE.CircleGeometry(id==='avion' ? 3.2 : id==='barco' || id==='heli' ? 2.6 : id==='dino' ? 2.2 : 1.8, 16), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.18, depthWrite:false}));
+  const sombra = new THREE.Mesh(new THREE.CircleGeometry(id==='avion' ? 3.2 : id==='ovni' ? 3.6 : id==='barco' || id==='heli' ? 2.6 : id==='dino' ? 2.2 : 1.8, 16), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:0.18, depthWrite:false}));
   sombra.rotation.x = -Math.PI/2; sombra.position.y = 0.04; g.add(sombra); R.sombra = sombra;
   g.partes = R;
   return g;
@@ -3395,13 +3962,17 @@ function armarVehiculo(id){
 /* ---------------- Todo el elenco, puesto en la isla ---------------- */
 let fer = armarJugador('fernando'); scene.add(fer);
 let ferSentado = armarJugador('fernando'); ferSentado.visible = false; scene.add(ferSentado);
+let ferGorila = false;
 function ponerPersonaje(pj){
   if (!PERSONAJES_RED.some(p=>p.id===pj)) return;
   if (P) P.pj = pj;
+  ferGorila = !!(P && P.gorilaT > 0);
   if (fer.parent) fer.parent.remove(fer); if (ferSentado.parent) ferSentado.parent.remove(ferSentado);
-  fer = armarJugador(pj); scene.add(fer);
-  ferSentado = armarJugador(pj); ferSentado.visible = false; scene.add(ferSentado);
+  fer = armarJugador(pj, ferGorila); scene.add(fer);
+  ferSentado = armarJugador(pj, ferGorila); ferSentado.visible = false; scene.add(ferSentado);
 }
+/* el factor de gordura: ancho según las hamburguesas comidas, flaquito después del baño */
+function gorduraDe(gordura, flaco){ return flaco ? {kx:0.84, ky:1.04} : {kx: 1 + 0.1*gordura, ky: 1 - 0.015*gordura}; }
 const tioJuan = armarPersona('tiojuan'); scene.add(tioJuan);
 tioJuan.partes.bI.rotation.x = -2.9; tioJuan.partes.bD.rotation.x = -2.9;
 const familiaMesh = {};
@@ -3418,12 +3989,14 @@ for (const p of PERROS_DEF){
   const et = letrero(p.nombre, '#fff', 'rgba(20,20,50,0.75)', 0.9); et.position.y = 1.9; m.add(et); m.etiqueta = et;
 }
 const srPopo = armarSrPopo(); scene.add(srPopo);
+{ const est = armarGorila('#8a8a94'); est.scale.setScalar(2.2); est.position.set(ISLA_BANANA.x + 4, altura(ISLA_BANANA.x + 4, ISLA_BANANA.z - 4), ISLA_BANANA.z - 4); est.rotation.y = Math.PI*0.75; est.partes.bI.rotation.x = -2.4; est.partes.bD.rotation.x = -2.4; est.partes.bI.rotation.z = 0.5; est.partes.bD.rotation.z = -0.5; mundo.add(est);
+  const B = new Armador(); B.cil(2.2, 2.6, 0.8, '#b8b8c4', 0, 0.4, 0, 0,0,0, 12); const base = B.malla(matMate()); base.position.copy(est.position); mundo.add(base); est.position.y += 0.8; }
 { const et = letrero('Señor Popo', '#fff', 'rgba(90,50,20,0.85)', 1.3); et.position.y = 3.4; srPopo.add(et); }
 const vehMesh = {};
 for (const v of VEHICULOS_DEF){
   const m = armarVehiculo(v.id); scene.add(m); vehMesh[v.id] = m;
   const et = letrero(v.emoji+' '+v.nombre.replace('el ','').replace('la ','').toUpperCase(), '#fff', 'rgba(20,20,50,0.8)', 1.6);
-  et.position.y = v.id==='avion' ? 4.2 : v.id==='barco' ? 5.6 : v.id==='sub' ? 4.8 : v.id==='heli' ? 5.2 : v.id==='nave' ? 9.5 : v.id==='dino' ? 6.8 : v.id==='ptero' ? 5.2 : 3.0; m.add(et); m.etiqueta = et;
+  et.position.y = v.id==='avion' ? 4.2 : v.id==='barco' ? 5.6 : v.id==='sub' ? 4.8 : v.id==='heli' ? 5.2 : v.id==='nave' ? 9.5 : v.id==='dino' ? 6.8 : v.id==='ptero' ? 5.2 : v.id==='ovni' ? 4.6 : 3.0; m.add(et); m.etiqueta = et;
 }
 
 /* ---------------- Jugar con amigos: PeerJS ----------------
@@ -3543,7 +4116,7 @@ function redRecibir(id, m){
     const e = desempaquetarEstado(m); if (!e) return;
     let r = RED.remotos.get(id);
     if (!r) r = crearRemoto(id, e);
-    else if (r.pj !== e.pj || r.nombre !== e.nombre){ const hab = r.hablando; quitarRemoto(id, true); r = crearRemoto(id, e); r.hablando = hab; r.hablaT = tick; }   /* cambió de personaje: se rearma el muñeco sin cortar la voz */
+    else if (r.pj !== e.pj || r.nombre !== e.nombre || r.gorila !== !!e.gorila){ const hab = r.hablando; quitarRemoto(id, true); r = crearRemoto(id, e); r.hablando = hab; r.hablaT = tick; }   /* cambió de personaje (o se volvió gorila): se rearma el muñeco sin cortar la voz */
     r.obj = e; r.t = tick;
     return;
   }
@@ -3576,8 +4149,9 @@ function pintarMisiones(){
 }
 function crearRemoto(id, e){
   const r = {id, pj:e.pj, nombre:e.nombre, obj:e, act:{x:e.x, y:e.y, z:e.z, ang:e.ang}, t:tick, fase:0, vehs:{}};
-  r.g = armarJugador(e.pj); r.g.visible = false; scene.add(r.g);
-  r.gs = armarJugador(e.pj); r.gs.visible = false; scene.add(r.gs);
+  r.gorila = !!e.gorila;
+  r.g = armarJugador(e.pj, r.gorila); r.g.visible = false; scene.add(r.g);
+  r.gs = armarJugador(e.pj, r.gorila); r.gs.visible = false; scene.add(r.gs);
   r.etiqueta = letrero('👤 '+e.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); r.etiqueta.position.y = 2.6/r.g.esc; r.g.add(r.etiqueta);
   r.bocina = letrero('🔊', '#fff', 'rgba(40,160,80,0.9)', 0.9); r.bocina.position.y = 3.4/r.g.esc; r.bocina.visible = false; r.g.add(r.bocina);
   r.hablando = false; r.hablaT = 0;
@@ -3598,7 +4172,7 @@ function sincronizarRemotos(){
     r.fase += o.mov*DT*2.2 + DT*0.5;
     if (o.veh){
       let vm = r.vehs[o.veh];
-      if (!vm){ vm = armarVehiculo(o.veh); const et = letrero('👤 '+r.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); et.position.y = o.veh==='avion' ? 4.2 : o.veh==='barco' ? 5.6 : o.veh==='sub' ? 4.8 : o.veh==='heli' ? 5.2 : o.veh==='nave' ? 9.5 : o.veh==='dino' ? 6.8 : o.veh==='ptero' ? 5.2 : 3.0; vm.add(et); scene.add(vm); r.vehs[o.veh] = vm; }
+      if (!vm){ vm = armarVehiculo(o.veh); const et = letrero('👤 '+r.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); et.position.y = o.veh==='avion' ? 4.2 : o.veh==='barco' ? 5.6 : o.veh==='sub' ? 4.8 : o.veh==='heli' ? 5.2 : o.veh==='nave' ? 9.5 : o.veh==='dino' ? 6.8 : o.veh==='ptero' ? 5.2 : o.veh==='ovni' ? 4.6 : 3.0; vm.add(et); scene.add(vm); r.vehs[o.veh] = vm; }
       for (const k in r.vehs) r.vehs[k].visible = k===o.veh;
       vm.position.set(a.x, a.y, a.z);
       vm.rotation.set(-o.cabeceo, a.ang, o.veh==='avion' && o.aire ? o.giro*0.7 : o.veh==='moto' ? o.giro*0.45 : o.giro*0.1, 'YXZ');
@@ -3607,13 +4181,14 @@ function sincronizarRemotos(){
       animarVehiculo(R, o.veh, true, o.vel, o.aire, o.y > 260, tick*DT);
       R.sombra.visible = o.veh!=='sub';
       if (r.gs.parent !== vm) vm.add(r.gs);
-      r.gs.visible = true; r.gs.position.set(R.asiento.x, R.asiento.y, R.asiento.z); r.gs.scale.setScalar(r.gs.esc*R.asiento.esc); r.gs.rotation.set(0,0,0);
+      r.gs.visible = true; r.gs.position.set(R.asiento.x, R.asiento.y, R.asiento.z); { const k = gorduraDe(o.gordura||0, !!o.flaco); r.gs.scale.set(r.gs.esc*R.asiento.esc*k.kx, r.gs.esc*R.asiento.esc*k.ky, r.gs.esc*R.asiento.esc*k.kx); } r.gs.rotation.set(0,0,0);
       animarModelo(r.gs, 0, 0, false, false, !R.asiento.parado);
       r.g.visible = false;
     } else {
       for (const k in r.vehs) r.vehs[k].visible = false;
       r.gs.visible = false;
       r.g.visible = true; r.g.position.set(a.x, a.y, a.z); r.g.rotation.set(o.nadando ? (r.g.tipo==='persona' ? 1.2 : 0.3) : 0, a.ang, 0);
+      { const k = gorduraDe(o.gordura||0, !!o.flaco); r.g.scale.set(r.g.esc*k.kx, r.g.esc*k.ky, r.g.esc*k.kx); }
       animarModelo(r.g, o.mov, r.fase, !o.suelo && !o.nadando, o.nadando);
       r.etiqueta.visible = Math.hypot(a.x-P.J.x, a.z-P.J.z) > 3;
     }
@@ -3767,7 +4342,8 @@ const CAM_CFG = {
   pie:   {d:6.8,  h:3.0, mira:1.4}, nadar: {d:7.5, h:3.6, mira:0.6},
   carro: {d:10.5, h:4.2, mira:1.6}, moto:  {d:8.5, h:3.6, mira:1.4}, barco: {d:14, h:5.8, mira:1.8},
   avion: {d:16,   h:5.5, mira:1.8}, sub:   {d:12,  h:3.8, mira:1.0},
-  heli:  {d:14,   h:5.5, mira:2.0}, motoagua: {d:9, h:3.8, mira:1.2}, nave: {d:20, h:7, mira:4.0}, dino: {d:12, h:5.5, mira:3.5}, ptero: {d:13, h:5.2, mira:2.6},
+  heli:  {d:14,   h:5.5, mira:2.0}, motoagua: {d:9, h:3.8, mira:1.2}, nave: {d:20, h:7, mira:4.0}, dino: {d:12, h:5.5, mira:3.5}, ptero: {d:13, h:5.2, mira:2.6}, ovni: {d:15, h:6.5, mira:2.2},
+  casa: {d:5.4, h:2.9, mira:1.3},
 };
 scene.fog = new THREE.FogExp2(NOCHE ? 0x0a1128 : 0xc9e4ff, 0.0014);
 const NIEBLA = NOCHE ? {aire: new THREE.Color(0x0a1128), agua: new THREE.Color(0x06263f)} : {aire: new THREE.Color(0xc9e4ff), agua: new THREE.Color(0x0b4f8a)};
@@ -4046,6 +4622,17 @@ function atenderEventos(){
       case 'banderaLuna': sfx.estrella(); luna.bandera.visible = true; confeti(LUNA.x, LUNA.y-LUNA.r-2, LUNA.z, 40); grande(NOCHE ? '🚩 ¡LA BANDERA DE FERNANDO EN MARTE!' : '🚩 ¡LA BANDERA DE FERNANDO EN LA LUNA!', '#ffe36e', 120); break;
       case 'lunaLista': aviso('Suelta A y la nave baja solita a la isla 🚀'); break;
       case 'brinco': sfx.brinco(); break;
+      case 'casaEntra': sfx.puerta(); cortina = 22; grande((e.castillo ? '🏰 ' : '🏠 ')+e.nombre, e.castillo ? '#fff6a0' : '#bfe9ff', 90); break;
+      case 'casaSale': sfx.puerta(); cortina = 18; break;
+      case 'gordura': if (e.n >= 3) grande(e.n >= 5 ? '¡QUÉ GORDITO! 🍔🍔🍔' : '¡Gordito! 🍔', '#ffb070', 70); break;
+      case 'flaco': if (e.antes >= 2) grande('¡FLAQUITO OTRA VEZ! 💪', '#7dffa0', 90); break;
+      case 'banana': sfx.banana(); chispas(e.x, e.y, e.z, '#ffe36e', 16, 5); grande('¡BANANA! 🍌', '#ffe36e', 60); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
+      case 'gorila': if (e.on){ sfx.gorila(); confeti(J.x, J.y, J.z, 30); grande('¡ERES UN GORILA! 🦍 (1 minuto)', '#ffd27a', 140); sacudida = 10; } else grande('Se acabó la banana: ¡de vuelta a la normalidad!', '#bfe9ff', 100); break;
+      case 'dinosVistos': grande('¡DINOSAURIOS! 🦕🦖', '#8fd45e', 110); break;
+      case 'rugidoDino': if (Math.hypot(e.x-J.x, e.z-J.z) < 80){ sfx.rugido(); sacudida = 8; } for (let i=0;i<8;i++) particula(e.x + (azar()-0.5)*3, e.y+4, e.z + (azar()-0.5)*3, '#c0ffc0', (azar()-0.5)*4, 1+azar()*2, (azar()-0.5)*4, 30, 0.25, {alfa:0.5, crece:2}); break;
+      case 'meteoros': grande('¡LLUVIA DE METEORITOS! ☄️', '#ffb070', 120); break;
+      case 'meteoroCae': caeMeteoro(e); break;
+      case 'vereda': grande('🌴 ¡LA VEREDA DEL LAGO!', '#7de0ff', 120); break;
       case 'sinGanas': aviso('Come una hamburguesa 🍔 y después ven al baño'); break;
       case 'final': sfx.final(); setTimeout(()=>{ if (estado==='juego'){ estado = 'final'; hablar('Te amo tío Juan, yo soy tu pichunguito'); burbuja('Te amo tío Juan, yo soy tu pichunguito', 'Fernando'); setTimeout(()=>{ hablar('¡Ganaste! ¡Te amo tío Juan!'); }, 3500); } }, 2500); break;
     }
@@ -4057,7 +4644,9 @@ function atenderEventos(){
 const tmpV = new THREE.Vector3();
 function sincronizar(){
   const J = P.J, t = tick*DT;
-  /* Fernando a pie */
+  /* Fernando a pie (y gorila si comió banana; gordito según las hamburguesas) */
+  if (ferGorila !== (P.gorilaT > 0)) ponerPersonaje(P.pj);
+  { const k = gorduraDe(P.gordura, P.flacoT > 0); fer.scale.set(fer.esc*k.kx, fer.esc*k.ky, fer.esc*k.kx); }
   fer.visible = !P.veh && !ferDentro;
   fer.position.set(J.x, J.y, J.z); fer.rotation.y = J.ang;
   const apretado = P.ganas && !J.nadando;
@@ -4090,7 +4679,7 @@ function sincronizar(){
     const m = vehMesh[P.veh.id], R = m.partes;
     if (ferSentado.parent !== m){ if (ferSentado.parent) ferSentado.parent.remove(ferSentado); m.add(ferSentado); }
     ferSentado.visible = true;
-    ferSentado.position.set(R.asiento.x, R.asiento.y, R.asiento.z); ferSentado.scale.setScalar(ferSentado.esc*R.asiento.esc);
+    ferSentado.position.set(R.asiento.x, R.asiento.y, R.asiento.z); { const k = gorduraDe(P.gordura, P.flacoT > 0); ferSentado.scale.set(ferSentado.esc*R.asiento.esc*k.kx, ferSentado.esc*R.asiento.esc*k.ky, ferSentado.esc*R.asiento.esc*k.kx); }
     ferSentado.rotation.set(0,0,0);
     animarModelo(ferSentado, 0, 0, false, false, !R.asiento.parado);
     if (R.asiento.parado && ferSentado.tipo==='persona'){ ferSentado.partes.bI.rotation.x = -1.3; ferSentado.partes.bD.rotation.x = -1.3; }
@@ -4125,7 +4714,7 @@ function sincronizar(){
     const vel = Math.hypot(tmpV.x - tioJuan.position.x, tmpV.z - tioJuan.position.z);
     tioJuan.rotation.set(0.9 + Math.min(0.4, vel*0.02), ang, 0, 'YXZ');
     tioJuan.partes.pI.rotation.x = 0.2 + Math.sin(t*3)*0.1; tioJuan.partes.pD.rotation.x = 0.2 - Math.sin(t*3)*0.1;
-    tioJuan.visible = RED.pj !== 'tiojuan';
+    tioJuan.visible = RED.pj !== 'tiojuan' && !P.casa;
     ondearCapa(tioJuan.partes.capa, t, 0.6 + Math.min(1, vel));
   }
   /* la familia mira a Fernando cuando se acerca */
@@ -4179,6 +4768,7 @@ function sincronizar(){
     for (let i=NOCHE_VISTA.rayos.length-1;i>=0;i--){ const r = NOCHE_VISTA.rayos[i]; if (--r.t <= 0){ scene.remove(r.m); NOCHE_VISTA.rayos.splice(i, 1); } else if (r.m.material.opacity !== undefined) r.m.material.opacity = r.t/10*0.8; }
   }
   cofre.haz.material.opacity = 0.12 + Math.sin(t*2)*0.05; cofre.rotation.y = 0.6 + Math.sin(t*0.5)*0.1;
+  sincronizarNuevos(t);
   for (const l of letreros) l.giro.rotation.y = t*0.6;
   /* la estrella que sube cuando se gana una */
   if (estrellaAnim){
@@ -4194,6 +4784,7 @@ function sincronizar(){
 function animarVehiculo(R, id, montado, vel, aire, alto, t){
   if (id==='heli'){ R.helice.rotation.y += montado ? 0.55 : 0.03; R.cola.rotation.x += montado ? 0.7 : 0.03; }
   else if (id==='ptero'){ const amp = aire ? 0.7 : 0.08, w = Math.sin(t*(aire ? 7 : 1.5))*amp; R.alas[0].rotation.z = w; R.alas[1].rotation.z = -w; }
+  else if (id==='ovni'){ R.anillo.rotation.y += montado ? 0.09 : 0.015; R.luces.forEach((l, i)=>{ l.visible = Math.floor(t*(montado ? 8 : 2) + i) % 3 !== 0; }); R.cuerpo.position.y = aire ? Math.sin(t*2.2)*0.18 : 0; R.cupula.position.y = 1.4 + (aire ? Math.sin(t*2.2)*0.18 : 0); R.haz.visible = montado && aire; if (R.haz.visible) R.haz.scale.set(1 + Math.sin(t*5)*0.08, 1, 1 + Math.cos(t*5)*0.08); }
   else if (id==='nave'){ if (R.fuego){ R.fuego.visible = montado && aire; R.fuego.scale.set(1 + Math.sin(t*40)*0.15, 1 + Math.sin(t*33)*0.25, 1 + Math.cos(t*40)*0.15); } }
   else if (id==='dino'){ const amp = Math.min(1, Math.abs(vel)/4), s = Math.sin(t*9); R.patas[0].rotation.x = s*0.7*amp; R.patas[1].rotation.x = -s*0.7*amp; R.cuerpo.position.y = Math.abs(Math.cos(t*9))*0.18*amp; }
   else if (R.helice) R.helice.rotation.z += (montado ? 0.3 + Math.abs(vel)*0.03 : 0.02);
@@ -4210,14 +4801,14 @@ function camaraJuego(){
   let objYaw = camYaw;
   if (v) objYaw = v.ang; else if (J.mov > 0.6) objYaw = J.ang;
   camYaw = envolver(camYaw + envolver(objYaw - camYaw)*(v ? 0.07 : 0.035));
-  const cfg = v ? CAM_CFG[v.id] : (J.nadando ? CAM_CFG.nadar : CAM_CFG.pie);
+  const cfg = v ? CAM_CFG[v.id] : (P.casa ? CAM_CFG.casa : J.nadando ? CAM_CFG.nadar : CAM_CFG.pie);
   let dist = cfg.d, alt = cfg.h;
   if (v && v.id==='avion' && v.aire){ alt = cfg.h - v.cabeceo*7; dist = cfg.d + Math.abs(v.cabeceo)*3; }
   if (v) dist += Math.abs(v.vel)*0.08;
   const fx = Math.sin(camYaw), fz = Math.cos(camYaw);
   let ox = J.x - fx*dist, oy = J.y + alt, oz = J.z - fz*dist;
-  const g = altura(ox, oz) + 1.3;
-  if (oy < g) oy = g;
+  if (P.casa){ const I = P.casa; ox = clamp(ox, I.x - I.hw + 0.5, I.x + I.hw - 0.5); oz = clamp(oz, I.z - I.hd + 0.5, I.z + I.hd - 0.5); oy = Math.min(oy, I.y + I.alto - 0.5); }
+  else { const g = altura(ox, oz) + 1.3; if (oy < g) oy = g; }
   if (v && v.id==='sub' && v.y < NIVEL_MAR - 1.5) oy = Math.min(oy, NIVEL_MAR - 0.8);
   else if (!v && J.nadando) oy = Math.max(oy, NIVEL_MAR + 1.6);
   let miraY = J.y + cfg.mira;
@@ -4255,7 +4846,7 @@ function camaraMenu(){
 }
 /* el aire y el agua: niebla, cielo y luz cambian cuando la cámara se hunde */
 function ambiente(){
-  const bajo = camera.position.y < NIVEL_MAR + ola(camera.position.x, camera.position.z, tick*DT);
+  const bajo = !P.casa && camera.position.y < NIVEL_MAR + ola(camera.position.x, camera.position.z, tick*DT);
   bajoF += ((bajo ? 1 : 0) - bajoF)*0.15;
   const esp = clamp((camera.position.y - 220)/260, 0, 1);            /* de 220 a 480 m el cielo se vuelve espacio */
   scene.fog.color.copy(NIEBLA.aire).lerp(NIEBLA.agua, bajoF);
@@ -4307,7 +4898,7 @@ function actualizar(){
   for (let i=burbujas.length-1;i>=0;i--) if (--burbujas[i].t <= 0) burbujas.splice(i,1);
   if (avisoT > 0) avisoT--;
   if (MANDO.avisoT > 0) MANDO.avisoT--;
-  const tema = estado==='menu' || estado==='personaje' ? TEMA_MENU : (bajoF > 0.5 ? TEMA_MAR : (P.veh && (P.veh.id==='avion' || P.veh.id==='heli' || P.veh.id==='nave') && P.veh.aire ? TEMA_CIELO : TEMA_ISLA));
+  const tema = estado==='menu' || estado==='personaje' ? TEMA_MENU : (bajoF > 0.5 ? TEMA_MAR : (P.veh && (P.veh.id==='avion' || P.veh.id==='heli' || P.veh.id==='nave' || P.veh.id==='ovni') && P.veh.aire ? TEMA_CIELO : TEMA_ISLA));
   programarMusica(tema);
 }
 
@@ -4399,6 +4990,7 @@ function dibujarMapa(cx, cy, r){
   for (const v of P.vehiculos){ if (P.veh===v) continue; const p = aM(v.x, v.z); ctx.font = '12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.emoji, p.x, p.y); }
   if (obj.x !== null && obj.x !== undefined){ const p = aM(obj.x, obj.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + Math.sin(tick*0.15)*2, 0, Math.PI*2); ctx.stroke(); }
   if (NOCHE){ const q = aM(CORO.x, CORO.z); ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐐', q.x, q.y); }
+  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
   for (const [, r] of RED.remotos){ const q = aM(r.act.x, r.act.z); ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
   const p = aM(J.x, J.z);
   ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI*2); ctx.fill();
@@ -4564,11 +5156,12 @@ function dibujarHUD(){
   }
   if (redActiva()) for (const z of zonasIrCon()){ boton(z.x, z.y, z.w, z.h, '🚀 IR CON '+z.nombre.toUpperCase()+' · '+(z.d > 999 ? (z.d/1000).toFixed(1)+' km' : Math.round(z.d)+' m'), '#2a8ad0', '#1a4a90', 13, z.d > 60 && Math.floor(tick/30)%2===0); }
   /* avisos y frases */
-  if (P.cercaVeh && !P.veh && !P.escena) textoBorde((tactil ? 'A' : 'ESPACIO')+' = MONTAR '+P.cercaVeh.emoji, W/2, H-96, 22, '#fff', 'center', true);
+  if (P.cercaPuerta && !P.veh && !P.escena) textoBorde((tactil ? 'A' : 'ESPACIO')+' = '+(P.casa ? 'SALIR 🚪' : (P.cercaPuerta.castillo ? 'ENTRAR AL CASTILLO 🏰' : 'ENTRAR 🏠')), W/2, H-96, 22, '#fff', 'center', true);
+  else if (P.cercaVeh && !P.veh && !P.escena) textoBorde((tactil ? 'A' : 'ESPACIO')+' = MONTAR '+P.cercaVeh.emoji, W/2, H-96, 22, '#fff', 'center', true);
   if (P.veh){
-    const rapidez = (P.veh.id==='nave' || P.veh.id==='heli') ? Math.hypot(P.veh.vel, P.veh.vy||0) : Math.abs(P.veh.vel);
+    const rapidez = (P.veh.id==='nave' || P.veh.id==='heli' || P.veh.id==='ovni' || P.veh.id==='ptero') ? Math.hypot(P.veh.vel, P.veh.vy||0) : Math.abs(P.veh.vel);
     textoBorde(Math.round(rapidez*3.6)+' km/h', W/2, H-30, 18, '#fff');
-    if ((P.veh.id==='avion' || P.veh.id==='heli' || P.veh.id==='nave') && P.veh.aire) textoBorde(Math.round(P.veh.y)+' m de altura', W/2, H-52, 14, '#bfe9ff');
+    if ((P.veh.id==='avion' || P.veh.id==='heli' || P.veh.id==='nave' || P.veh.id==='ovni' || P.veh.id==='ptero') && P.veh.aire) textoBorde(Math.round(P.veh.y)+' m de altura', W/2, H-52, 14, '#bfe9ff');
     if (P.veh.id==='sub') textoBorde(Math.round(-P.veh.y)+' m de profundidad', W/2, H-52, 14, '#bfe9ff');
     if (puedeBajar(P)) texto((tactil ? '🚪' : 'E')+' = bajarse', W/2, H-72, 13, '#bcd6ff');
   }
@@ -4682,6 +5275,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, redCrear, redUnirse, redSalir, CONF };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal()), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA };
 requestAnimationFrame(bucle);
 })();
