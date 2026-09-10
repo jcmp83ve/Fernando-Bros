@@ -130,6 +130,49 @@ ventanas encendidas, y con once misiones nuevas:
 En multijugador los dos deben estar en el mismo mapa (el enlace de invitación
 ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
 
+## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
+
+- **Se entra a las casas**: frente a la puerta de cualquier casa (las doce del
+  pueblo y las cinco de Maracaibo, incluidos el bar, la hamburguesería, la
+  arepera y la gasolinera) sale «A = ENTRAR 🏠». Cada una tiene su cuarto con
+  cama, sofá, tele, cocina y cuadros (el bar tiene barra, banquetas y rocola;
+  la hamburguesería, mostrador y mesas). Los muebles chocan, y por la puerta
+  de adentro se sale. Los amigos de la sala te ven adentro si entran contigo.
+- **El castillo**, al oeste del pueblo (🏰 en el radar): foso, murallas con
+  almenas, cuatro torres, portón y torre del homenaje. Por dentro, un salón
+  del trono con alfombra roja, columnas, estandartes, candelabros, banquete y
+  dos armaduras. Entrar la primera vez da 300 puntos y el personaje se declara
+  rey del castillo.
+- **La nave extraterrestre 🛸** se maneja: está en su plataforma junto al
+  castillo. Se conduce como el helicóptero (A sube, B baja, palanca para
+  moverse), va rapidísimo, tiene cúpula, luces que giran y un haz de luz
+  cuando vuela. Existe en los dos mapas.
+- **Meteoritos ☄️**: cada minuto y pico cae una lluvia de 3 a 6 meteoritos
+  cerca del jugador, con estela de fuego, explosión, temblor de cámara y una
+  roca humeante que se queda un rato. No hacen daño; si uno cae al lado, te
+  hace dar un brinquito.
+- **Dinosaurios sueltos 🦕🦖**: en el valle de los dinosaurios (al noreste,
+  🦕 en el radar) pasean un cuello largo, un tiranosaurio que ruge, dos
+  triceratops y un cuello largo bebé. Caminan por su valle sin meterse al
+  agua ni a la carretera, y a pie empujan suavecito.
+- **La vereda del lago 🌴**: un paseo de madera por la orilla de Maracaibo
+  mirando al lago y al puente, con baranda, farolas (encendidas de noche),
+  bancos, palmeras y un kiosco de jugos. Al pasear por ella el personaje
+  habla de la brisa.
+- **La isla de las bananas 🍌**, al suroeste: matas de plátano, una estatua
+  de gorila y ocho bananas que vuelven a crecer. Quien come una **se vuelve
+  gorila durante un minuto**: corre un 30 % más, salta más alto y dice
+  «¡Uh, uh, ah, ah!». Los amigos de la sala también lo ven como gorila.
+- **Gordura 🍔**: cada hamburguesa o arepa engorda un poquito (hasta seis),
+  se camina más lento y se salta menos; con cuatro el personaje se queja. Al
+  hacer popo se vuelve a la normalidad y queda **flaquito** unos 40 s. Se
+  guarda con la partida y se comparte en la sala.
+- Las frases de estas situaciones nuevas (casa, castillo, ovni, meteoritos,
+  dinosaurios, vereda, gorila, gordo y flaco) no están grabadas: las dice la
+  voz sintética de cada personaje con su manera de hablar (Tío Juan añade
+  «pichunguito», Nacho empieza con «¡Épale!», Rómulo eructa, Santi habla
+  cortico…).
+
 ## 👥 Jugar con amigos (en línea, gratis)
 
 Hasta cuatro personas (el anfitrión y tres amigos), cada una en su aparato, **juegan a la vez en la
@@ -270,6 +313,13 @@ node pruebas.js          # el mapa 1: la isla de día
 node pruebas_noche.js    # el mapa 2: Maracaibo de noche
 node pruebas_voz.js      # el walkie-talkie, con dos navegadores (ver la cabecera del archivo)
 ```
+
+El banco del mapa 1 también recorre lo nuevo: entra y sale del castillo y de
+una casa (con muebles que empujan y los perritos escondidos), vuela y aterriza
+la nave extraterrestre, mira pasear a los dinosaurios sin mojarse, hace caer
+una lluvia de meteoritos, come una banana y corre como gorila, pasea por la
+vereda del lago, engorda con cinco hamburguesas y adelgaza en el baño, y
+comprueba que cada personaje diga las frases nuevas a su manera.
 
 Sin navegador: se carga el núcleo y **Fernando juega solo hasta ganar las
 trece estrellas** — camina y salta, come y hace popo, da la vuelta a la isla

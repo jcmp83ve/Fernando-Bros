@@ -355,12 +355,105 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   if (JSON.stringify(b).length > 260) mal('el paquete pesa mucho: '+JSON.stringify(b).length+' bytes');
   if (N.desempaquetarEstado({t:'e', x:'no', y:1, z:2}) !== null) mal('un paquete sin posición debía rechazarse');
   const basura = N.desempaquetarEstado({t:'e', pj:'bowser', n:'<script>x'.repeat(9), x:NaN+0*0 || 0, y:1e9, z:-1e9, a:99, v:'cohete', m:-5, pp:999, es:50});
-  if (!basura || basura.pj!=='fernando' || basura.x!==0 || basura.y!==400 || basura.z!==-N.LIMITE || basura.veh!=='' || basura.mov!==0 || basura.popitos!==N.MAX_POPITOS || basura.estrellas!==8 || /[<>]/.test(basura.nombre)) mal('un paquete con basura no se limpia bien: '+JSON.stringify(basura));
+  if (!basura || basura.pj!=='fernando' || basura.x!==0 || basura.y!==950 || basura.z!==-N.LIMITE || basura.veh!=='' || basura.mov!==0 || basura.popitos!==N.MAX_POPITOS || basura.estrellas!==8 || /[<>]/.test(basura.nombre)) mal('un paquete con basura no se limpia bien: '+JSON.stringify(basura));
   if (N.desempaquetarEstado(null) !== null || N.desempaquetarEstado({t:'hola'}) !== null || N.desempaquetarEstado('e') !== null) mal('desempaquetar debía rechazar lo que no es estado');
   bien('red: códigos de sala y paquetes de', JSON.stringify(a).length, 'bytes que se limpian solos');
 }
+/* 13b) lo nuevo: casas y castillo por dentro, la nave extraterrestre, los dinosaurios sueltos,
+   los meteoritos, la isla de las bananas, la vereda del lago y la gordura */
+{
+  const Q = N.crearPartida();
+  /* el castillo: se entra por la puerta con A, se camina adentro sin salirse del salón, y se sale */
+  const I = N.INTERIOR_CASTILLO;
+  if (!I || !I.castillo || I.muebles.length < 10) mal('el castillo no tiene salón');
+  poner(Q, I.ex, I.ez); correr(Q, 2, {});
+  if (!Q.cercaPuerta || Q.cercaPuerta !== I) mal('frente al portón no se ofrece entrar');
+  const evsC = paso(Q, {a:true});
+  if (Q.casa !== I || Math.abs(Q.J.y - N.Y_INTERIOR) > 0.01) mal('no entró al castillo: '+JSON.stringify({casa: Q.casa && Q.casa.nombre, y: Q.J.y}));
+  if (!evsC.some(e=>e.tipo==='casaEntra' && e.castillo)) mal('no salió el evento casaEntra del castillo');
+  const dicho = evsC.find(e=>e.tipo==='hablar' && e.k==='castillo'); if (!dicho || !/castillo/i.test(dicho.texto)) mal('no dijo lo del castillo');
+  correr(Q, 60*6, {jy:1, camYaw: I.ang + Math.PI});
+  if (Math.abs(Q.J.x - I.x) > I.hw || Math.abs(Q.J.z - I.z) > I.hd) mal('se salió del salón caminando');
+  if (Q.J.y < N.Y_INTERIOR - 0.01) mal('se hundió en el piso del castillo');
+  /* los muebles chocan: parado en el trono se sale empujado */
+  const trono = I.muebles.find(m=>m.t==='trono'); Q.J.x = trono.x; Q.J.z = trono.z; correr(Q, 30, {});
+  if (Math.abs(Q.J.x - trono.x) < trono.w/2 && Math.abs(Q.J.z - trono.z) < trono.d/2) mal('el trono no empuja');
+  Q.J.x = I.px - Math.sin(I.ang)*1.2; Q.J.z = I.pz - Math.cos(I.ang)*1.2; correr(Q, 2, {});
+  if (Q.cercaPuerta !== I) mal('junto a la puerta de adentro no se ofrece salir');
+  correr(Q, 1, {a:true});
+  if (Q.casa || Math.abs(Q.J.x - I.ex) > 0.01 || Math.abs(Q.J.y - N.altura(I.ex, I.ez)) > 0.01) mal('no salió del castillo bien');
+  /* una casa cualquiera, con Penny siguiendo: adentro los perritos se esconden y afuera vuelven */
+  const casa = N.INTERIORES.find(J=>J.nombre==='CASA DE FERNANDO');
+  Q.perros[0].sigue = true;
+  poner(Q, casa.ex, casa.ez); correr(Q, 2, {}); correr(Q, 1, {a:true}); correr(Q, 10, {});
+  if (Q.casa !== casa) mal('no entró a la casa de Fernando'); if (!Q.perros[0].dentro) mal('Penny no se escondió al entrar');
+  const cama = casa.muebles.find(m=>m.t==='cama'); Q.J.x = cama.x; Q.J.z = cama.z; correr(Q, 30, {});
+  if (Math.abs(Q.J.x - cama.x) < cama.w/2 && Math.abs(Q.J.z - cama.z) < cama.d/2) mal('la cama no empuja');
+  Q.J.x = casa.px - Math.sin(casa.ang)*1.2; Q.J.z = casa.pz - Math.cos(casa.ang)*1.2; correr(Q, 2, {}); correr(Q, 1, {a:true}); correr(Q, 5, {});
+  if (Q.casa || Q.perros[0].dentro) mal('al salir de la casa algo quedó adentro');
+  bien('casas y castillo: se entra con A, hay '+N.INTERIORES.length+' cuartos con muebles que chocan, y se sale por la puerta');
+  /* la nave extraterrestre: se monta, sube con A, no deja bajarse en el aire, y baja con B */
+  const ov = montar(Q, 'ovni');
+  if (!Q.eventos.some(e=>e.tipo==='hablar' && e.k==='ovni') && !tipos.hablar) mal('no dijo lo de la nave extraterrestre');
+  correr(Q, 60*3, {a:true});
+  if (!ov.aire || ov.y < 8) mal('la nave extraterrestre no sube: y='+ov.y.toFixed(1));
+  if (N.puedeBajar(Q)) mal('deja bajarse de la nave extraterrestre en el aire');
+  correr(Q, 60*4, {jy:1});
+  if (Math.hypot(ov.x - N.CASTILLO.x, ov.z - (N.CASTILLO.z-44)) < 20) mal('la nave extraterrestre no avanza');
+  const fb = correr(Q, 60*20, {b:true}, (P)=>ov.suelo);
+  if (!ov.suelo) mal('la nave extraterrestre no aterriza'); else bien('nave extraterrestre: sube, vuela y aterriza en '+(fb/60).toFixed(0)+' s');
+  correr(Q, 1, {salir:true}); if (Q.veh) mal('no se pudo bajar de la nave extraterrestre');
+  /* los dinosaurios sueltos: pasean por su valle, en tierra, y empujan al que camina */
+  poner(Q, N.VALLE_DINOS.x - 40, N.VALLE_DINOS.z); const antes = Q.dinos.map(d=>({x:d.x, z:d.z}));
+  correr(Q, 60*25, {});
+  let movidos = 0; Q.dinos.forEach((d, i)=>{ if (N.altura(d.x, d.z) < 1.4) mal('un dinosaurio se metió al agua'); if (Math.hypot(d.x - N.VALLE_DINOS.x, d.z - N.VALLE_DINOS.z) > N.VALLE_DINOS.r + 8) mal('un dinosaurio se fue del valle'); if (Math.hypot(d.x-antes[i].x, d.z-antes[i].z) > 4) movidos++; });
+  if (movidos < 2) mal('los dinosaurios no pasean: solo '+movidos+' se movieron');
+  if (!tipos.dinosVistos) mal('no se dijo lo de los dinosaurios al acercarse');
+  { const d = Q.dinos[0]; Q.J.x = d.x; Q.J.z = d.z; Q.J.y = N.altura(d.x, d.z); correr(Q, 5, {}); if (Math.hypot(Q.J.x-d.x, Q.J.z-d.z) < d.r) mal('el dinosaurio no empuja'); }
+  bien('dinosaurios: '+movidos+' pasean por el valle sin meterse al agua');
+  /* los meteoritos: cae una lluvia cerca y todos tocan tierra */
+  poner(Q, 0, -30); Q.proxMeteoros = Q.t; correr(Q, 2, {});
+  const enElAire = Q.meteoros.length; if (enElAire < 3) mal('la lluvia trajo pocos meteoritos: '+enElAire);
+  correr(Q, 60*12, {}, (P)=>P.meteoros.length===0);
+  if (Q.meteoros.length) mal('quedaron meteoritos flotando'); if ((tipos.meteoroCae||0) < enElAire) mal('no cayeron todos: '+tipos.meteoroCae+'/'+enElAire);
+  if (!tipos.meteoros) mal('no salió el evento de la lluvia');
+  bien('meteoritos: cayeron '+enElAire+' cerca de Fernando');
+  /* la isla de las bananas: comer una vuelve gorila un minuto, corre más, y la banana vuelve a crecer */
+  const bn = N.BANANAS[0]; poner(Q, bn.x - 5, bn.z);
+  correr(Q, 60*3, {jy:1, camYaw: Math.PI/2}, (P)=>P.gorilaT > 0);
+  if (!(Q.gorilaT > 0)) mal('la banana no volvió gorila a Fernando');
+  if (!Q.eventos.some(e=>e.tipo==='gorila') && !tipos.gorila) mal('no salió el evento gorila');
+  if (Q.bananasT[bn.id] === undefined) mal('la banana no se marcó comida');
+  { poner(Q, 0, -30); let vg = 0; correr(Q, 90, {jy:1, camYaw:0}); vg = Q.J.mov; Q.gorilaT = 0; correr(Q, 90, {jy:1, camYaw:0}); if (!(vg > Q.J.mov*1.2)) mal('el gorila no corre más rápido: '+vg.toFixed(1)+' vs '+Q.J.mov.toFixed(1)); }
+  Q.gorilaT = 2; correr(Q, 3, {}); if (Q.gorilaT !== 0 || !tipos.gorila) mal('el gorila no se acaba');
+  if (Q.t - Q.bananasT[bn.id] >= 60*45) mal('la prueba fue muy larga'); Q.bananasT[bn.id] = Q.t - 60*46; poner(Q, bn.x - 5, bn.z); correr(Q, 60*3, {jy:1, camYaw: Math.PI/2}, (P)=>P.gorilaT > 0);
+  if (!(Q.gorilaT > 0)) mal('la banana no volvió a crecer');
+  bien('isla de las bananas: gorila por un minuto, corre más, y las bananas vuelven a crecer');
+  Q.gorilaT = 0;
+  /* la vereda del lago: al pasear por ella se dice lo de la brisa */
+  const vp = N.VEREDA.pts; if (vp.length < 20) mal('la vereda es muy corta'); for (const t of vp) if (N.altura(t.x, t.z) < 0.8) mal('la vereda pisa el agua');
+  poner(Q, vp[10].x, vp[10].z); correr(Q, 30, {});
+  if (!tipos.vereda) mal('no se dijo lo de la vereda del lago'); else bien('vereda del lago: '+vp.length+' tramos por la orilla de Maracaibo, con su frase');
+  /* la gordura: cada hamburguesa engorda, el baño adelgaza y lo deja flaquito un rato */
+  for (let i=0;i<5;i++) N.engordar(Q);
+  if (Q.gordura !== 5) mal('no engordó: '+Q.gordura);
+  if (!Q.eventos.some(e=>e.tipo==='hablar' && e.k==='gordo')) mal('no dijo que está gordito');
+  { poner(Q, 0, -30); correr(Q, 90, {jy:1, camYaw:0}); const vGordo = Q.J.mov; Q.gordura = 0; correr(Q, 90, {jy:1, camYaw:0}); if (!(Q.J.mov > vGordo*1.15)) mal('gordito no camina más lento'); Q.gordura = 5; }
+  Q.popo = 1; const bq = N.BANOS[0]; poner(Q, bq.px, bq.pz); correr(Q, 60*8, {}, (P, evs)=>evs.some(e=>e.tipo==='banoSale'));
+  if (Q.gordura !== 0 || !(Q.flacoT > 0)) mal('el baño no lo dejó flaquito: '+JSON.stringify({g:Q.gordura, f:Q.flacoT}));
+  if (!tipos.flaco) mal('no salió el evento flaco');
+  const paq = N.empaquetarEstado(Q, 'fernando', 'Fer'); const des = N.desempaquetarEstado(paq);
+  if (!des.flaco || des.gordura !== 0) mal('la red no lleva la gordura');
+  bien('gordura: 5 hamburguesas = gordito y lento; el baño lo deja flaquito');
+  /* las frases nuevas: cada personaje las dice a su manera */
+  for (const k of Object.keys(N.FRASES_NUEVAS)) for (const pj of N.PERSONAJES_RED) if (!N.fraseDe(pj.id, k)) mal('sin frase '+k+' para '+pj.nombre);
+  if (!/^¡Épale!/.test(N.fraseDe('nacho', 'castillo'))) mal('Nacho no dice épale');
+  if (!/pichunguito!$/.test(N.fraseDe('tiojuan', 'gorila'))) mal('Tío Juan no dice pichunguito: '+N.fraseDe('tiojuan', 'gorila'));
+  if (N.fraseDe('santi', 'meteorito').length >= N.fraseDe('fernando', 'meteorito').length) mal('Santi no habla cortico');
+  bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
+}
 /* 14) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);
