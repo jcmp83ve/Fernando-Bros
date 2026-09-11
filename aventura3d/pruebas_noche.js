@@ -29,11 +29,55 @@ function montar(P, id){ const v = P.vehiculos.find(v=>v.id===id); poner(P, v.x +
 const hacia = (v, x, z)=>{ const d = env(Math.atan2(x-v.x, z-v.z) - v.ang); return -Math.max(-1, Math.min(1, d*2.5)); };
 
 if (N.MAPA !== 2) mal('el núcleo no cargó el mapa 2');
-if (N.MISIONES.length !== 11) mal('el mapa 2 debería tener 11 misiones, tiene '+N.MISIONES.length);
+if (N.MISIONES.length !== 14) mal('el mapa 2 debería tener 14 misiones, tiene '+N.MISIONES.length);
 if (!N.VEHICULOS_DEF.some(v=>v.id==='ptero')) mal('falta el pterodáctilo');
 if (N.CHIVOS.length !== 8) mal('deberían ser 8 chivos');
 for (const c of N.CHIVOS) if (N.alturaBase(c.x, c.z) < 1) mal('un chivo nació en el agua');
 bien('mapa 2:', N.MISIONES.length, 'misiones ·', N.VEHICULOS_DEF.length, 'vehículos · Coro con', N.CHIVOS.length, 'chivos');
+
+
+/* el paseo por el espacio: bajarse en la luna, recoger las rocas, subir a Saturno a saludar y a Júpiter por los cristales */
+function paseoEspacial(P, v, nombreLuna){
+  if (!P.zona || P.zona.id!=='luna') { mal('la nave no se posó en '+nombreLuna+' (zona '+(P.zona && P.zona.id)+')'); return; }
+  bien('nave: se posó en '+nombreLuna+', gravedad', P.zona.grav);
+  correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave en '+nombreLuna);
+  const Z = P.zona;
+  let alto = 0; correr(P, 1, {a:true}); correr(P, 60, {}, (P)=>{ alto = Math.max(alto, P.J.y - Z.y); return P.J.suelo; });
+  if (alto < 4.5) mal('en '+nombreLuna+' no se salta más alto ('+alto.toFixed(1)+' m)'); else bien('salto en '+nombreLuna+':', alto.toFixed(1), 'm');
+  for (const r of Z.recogibles){
+    P.J.x = r.x + 4; P.J.z = r.z; P.J.y = Z.y;
+    correr(P, 60*6, (P)=>({jy:1, camYaw: Math.atan2(r.x-P.J.x, r.z-P.J.z)}), (P)=>P.prog.rocas.includes(r.id));
+  }
+  if (!P.estrellas.includes('rocas')) mal('no recogió las 6 rocas ('+P.prog.rocas.length+')'); else bien('rocas: las 6, con la estrella');
+  const subir = (destino)=>{
+    montar(P, 'nave');
+    correr(P, 60*20, {a:true}, (P)=>!P.zona);
+    if (P.zona) { mal('la nave no salió de la zona'); return false; }
+    if (destino === null) return true;
+    const B = N.ZONAS[destino].planeta;
+    const f = correr(P, 60*200, (P)=>({a: v.y < B.y - B.r - 8, jy: Math.hypot(v.x-B.x, v.z-B.z) > 8 ? 1 : 0, jx: hacia(v, B.x, B.z)}), (P)=>P.zona && P.zona.id===destino);
+    if (!P.zona || P.zona.id!==destino){ mal('la nave no llegó a '+destino+' (y '+v.y.toFixed(0)+', a '+Math.hypot(v.x-B.x, v.z-B.z).toFixed(0)+' m)'); return false; }
+    bien('nave: llegó a '+N.ZONAS[destino].nombre+' en', (f/60).toFixed(0), 's');
+    correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave en '+destino);
+    return true;
+  };
+  if (subir('saturno')){
+    const S = P.zona;
+    for (const a of P.aliens.saturno){
+      for (let k=0;k<3 && !P.prog.saturnianos.includes(a.id);k++){ P.J.x = a.x + 3; P.J.z = a.z; P.J.y = S.y; correr(P, 60*4, (P)=>({jy:1, camYaw: Math.atan2(a.x-P.J.x, a.z-P.J.z)}), (P)=>P.prog.saturnianos.includes(a.id)); }
+    }
+    if (!P.estrellas.includes('saturno')) mal('no saludó a los 4 saturnianos ('+P.prog.saturnianos.length+')'); else bien('Saturno: saludó a los 4 saturnianos y ganó', P.monedas, 'monedas en total');
+  }
+  if (subir('jupiter')){
+    const Jz = P.zona;
+    for (const r of Jz.recogibles){ P.J.x = r.x + 4; P.J.z = r.z; P.J.y = Jz.y; correr(P, 60*6, (P)=>({jy:1, camYaw: Math.atan2(r.x-P.J.x, r.z-P.J.z)}), (P)=>P.prog.cristales.includes(r.id)); }
+    if (!P.estrellas.includes('jupiter')) mal('no recogió los 5 cristales ('+P.prog.cristales.length+')'); else bien('Júpiter: los 5 cristales, gravedad', Jz.grav);
+  }
+  subir(null);
+  const fb = correr(P, 60*200, {}, (P)=>v.suelo);
+  if (!v.suelo) mal('la nave no volvió a posarse en la Tierra (y '+v.y.toFixed(0)+')'); else bien('nave: volvió a tierra en', (fb/60).toFixed(0), 's');
+  correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave');
+}
 
 const P = N.crearPartida(); P.pj = 'luca';
 const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='hablar') dichos.push(e); return false; };
@@ -82,7 +126,10 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   if (!P.estrellas.includes('luna')) mal('la nave no llegó a Marte (y '+v.y.toFixed(0)+')'); else bien('nave: llegó a Marte en', (f/60).toFixed(0), 's');
   if (!dichos.some(d=>d.k==='marte')) mal('no dijo lo de Marte'); else bien('en Marte dijo:', dichos.find(d=>d.k==='marte').texto);
   dichos.length = 0;
-  const g = correr(P, 60*120, (P)=>({a: v.y < N.OVNI.y - 5, jy: Math.min(1, Math.hypot(v.x-N.OVNI.x, v.z-N.OVNI.z)/30), jx: hacia(v, N.OVNI.x, N.OVNI.z)}), (P, evs)=>{ oir(P, evs); return P.estrellas.includes('ovni'); });
+  /* en Marte se pasea, se recogen las rocas y se sigue a Saturno y Júpiter; después, de vuelta, el ovni */
+  paseoEspacial(P, v, 'Marte');
+  montar(P, 'nave');
+  const g = correr(P, 60*150, (P)=>({a: v.y < N.OVNI.y - 5, jy: Math.min(1, Math.hypot(v.x-N.OVNI.x, v.z-N.OVNI.z)/30), jx: hacia(v, N.OVNI.x, N.OVNI.z)}), (P, evs)=>{ oir(P, evs); return P.estrellas.includes('ovni'); });
   if (!P.estrellas.includes('ovni')) mal('no encontró la nave extraterrestre (y '+v.y.toFixed(0)+', a '+Math.hypot(v.x-N.OVNI.x, v.y-N.OVNI.y, v.z-N.OVNI.z).toFixed(0)+' m)'); else bien('nave: encontró a los extraterrestres en', (g/60).toFixed(0), 's');
   if (!tipos.ovniLuz || !tipos.extraterrestres) mal('faltan los eventos del ovni');
   if (!dichos.some(d=>d.k==='extraterrestres')) mal('no saludó a los extraterrestres'); else bien('a los extraterrestres les dijo:', dichos.find(d=>d.k==='extraterrestres').texto);

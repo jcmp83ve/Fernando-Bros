@@ -76,7 +76,7 @@ brinquitos, en fila con Penny y Sheldon (*«¡Mira, un popo bebé me sigue!»*).
 Cada visita al baño suma uno más (hasta diez), se guardan con la partida y
 se esconden mientras Fernando va en un vehículo.
 
-## ⭐ Las trece estrellas
+## ⭐ Las dieciséis estrellas
 
 | Misión | Cómo se gana |
 |---|---|
@@ -93,6 +93,9 @@ se esconden mientras Fernando va en un vehículo.
 | 🦖 **Los 8 huevos** | Montado en el dinosaurio (que pasa por encima de los árboles), recoger los ocho huevos con manchas que hay por los bosques |
 | 🚀 **La luna** | Encender la nave espacial (mantener A), subir hasta el espacio, llegar a la luna y plantar la bandera de Fernando |
 | 🫓 **Maracaibo** | Cruzar el puente sobre el lago hasta Maracaibo y comerse cinco arepas de agüita de sapo |
+| 🌑 **Las rocas de la luna** | Bajarse de la nave en la luna (E) y recoger las seis rocas paseando a saltos |
+| 🪐 **Saturno** | Seguir subiendo con la nave hasta Saturno, bajarse y saludar a los cuatro saturnianos |
+| 🟠 **Júpiter** | Subir más alto todavía, hasta Júpiter, y recoger los cinco cristales |
 
 Arriba a la derecha hay un **radar grande de la isla** y el **objetivo de ahora**,
 con una flecha y los metros que faltan: si tiene ganas de popo apunta al baño
@@ -172,6 +175,56 @@ ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
   voz sintética de cada personaje con su manera de hablar (Tío Juan añade
   «pichunguito», Nacho empieza con «¡Épale!», Rómulo eructa, Santi habla
   cortico…).
+
+## 🪙🌙🎪 Monedas y tienda, día y noche, planetas, islas nuevas, paracaídas, nieve y circo
+
+- **Monedas 🪙**: hay monedas repartidas por toda la isla, por Maracaibo, por
+  las islas nuevas y por los planetas (vuelven a aparecer a los tres minutos).
+  También dan monedas las misiones, saludar a los bichos, entrar a una casa
+  por primera vez y atrapar fantasmas. El contador va arriba, junto a las
+  hamburguesas.
+- **La tienda de disfraces 🎁** está en el menú de ESC: gorros (corona,
+  sombrero vaquero, casco espacial, gorro de Santa, sombrero de mago, orejas
+  de conejo), capas de colores, pintura para el carro y **mascotas** (gatito,
+  pollito y dragoncito) que siguen al personaje. Lo comprado se guarda en el
+  aparato y los amigos de la sala lo ven puesto.
+- **Día y noche 🌞🌙** en el mapa 1: el día dura diez minutos; el sol se mueve,
+  atardece, sale la luna, se encienden las farolas y las ventanas de las
+  casas. De noche salen **fantasmas de popo 👻** que flotan por el pueblo:
+  atraparlos da 8 monedas.
+- **Física de juguete 📦🐔🍉**: cajas que salen volando al chocarlas con un
+  vehículo o al correr contra ellas, conos en la gasolinera y la pista,
+  gallinas que huyen aleteando y sandías que se rompen. Todo vuelve a su
+  sitio solo.
+- **La luna se recorre 🌙** (Marte en el mapa 2): al llegar con la nave el
+  personaje se baja (E) y pasea con gravedad bajita, con cráteres, rocas,
+  la bandera y **extraterrestres grises** que saludan. Con A en la nave se
+  vuelve al espacio.
+- **Saturno 🪐 y Júpiter 🟠**: con la misma nave se sube más y más alto (la
+  nave ahora llega hasta los 2300 m). Cada planeta se recorre igual, con su
+  gravedad (Saturno flojita, Júpiter pesada), sus **extraterrestres distintos**
+  (saturnianos con anillo, jupiterianos gelatinosos) y su misión.
+- **Visitas extraterrestres 🛸**: cada tanto una nave baja cerca del jugador
+  con un haz de luz, salen dos extraterrestres a pasear un rato y se van.
+  Saludarlos da monedas.
+- **La isla de los elefantes 🐘** (noreste), con cinco elefantes que pasean y
+  barritan, y **la isla de los vampiros borrachos 🧛** (sureste), con cripta,
+  lápidas, árboles secos y vampiros que dan tumbos e hipan.
+- **Paracaídas 🪂**: en el avión, en pleno vuelo, con E el personaje se lanza
+  en paracaídas (se guía con la palanca) y el avión vuelve solo a la pista.
+- **La montaña nevada ❄️**: la montaña del noroeste ahora es alta y con nieve,
+  con pinos, muñecos de nieve, **la casa de Santa Claus 🎅** (con árbol de
+  Navidad y regalos por dentro), cuatro **renos** pastando, una **moto de
+  nieve 🛷** y unos **esquís ⛷️** que bajan solos la pendiente.
+- **El gran circo 🎪**, en su isla al norte: una carpa enorme con banderines.
+  Por dentro, pista, gradas, trapecio, tres payasos, el león Leo que ruge, la
+  jirafa Jirafina y el elefante Bombo sobre su pelota.
+- **La partida no se cae**: la sala manda latidos, el invitado que pierde la
+  conexión vuelve a entrar solo (hasta diez intentos), la pantalla no se
+  apaga mientras se juega, el botón «atrás» del navegador pausa en vez de
+  salir, y cerrar la pestaña sigue pidiendo confirmación.
+- Las frases nuevas (Saturno, Júpiter, paracaídas, nieve, circo, fantasmas)
+  también las dice la voz sintética de cada personaje a su manera.
 
 ## 👥 Jugar con amigos (en línea, gratis)
 
@@ -319,10 +372,12 @@ una casa (con muebles que empujan y los perritos escondidos), vuela y aterriza
 la nave extraterrestre, mira pasear a los dinosaurios sin mojarse, hace caer
 una lluvia de meteoritos, come una banana y corre como gorila, pasea por la
 vereda del lago, engorda con cinco hamburguesas y adelgaza en el baño, y
-comprueba que cada personaje diga las frases nuevas a su manera.
+comprueba que cada personaje diga las frases nuevas a su manera. También se
+lanza en paracaídas, recorre la luna, Saturno y Júpiter, saluda a los
+extraterrestres y recoge rocas y cristales.
 
 Sin navegador: se carga el núcleo y **Fernando juega solo hasta ganar las
-trece estrellas** — camina y salta, come y hace popo, da la vuelta a la isla
+dieciséis estrellas** — camina y salta, come y hace popo, da la vuelta a la isla
 en carro cruzando las banderas, salta la rampa en moto, despega, cruza los
 siete aros y aterriza, navega hasta Santi bordeando la costa, baja con el
 submarino hasta el cofre, se posa en los cuatro helipuertos, pasa las seis
