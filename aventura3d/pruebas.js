@@ -108,6 +108,49 @@ function montar(P, id){
 /* volante automático: gira hacia un punto */
 const hacia = (v, x, z)=>{ const d = env(Math.atan2(x-v.x, z-v.z) - v.ang); return -Math.max(-1, Math.min(1, d*2.5)); };
 
+
+/* el paseo por el espacio: bajarse en la luna, recoger las rocas, subir a Saturno a saludar y a Júpiter por los cristales */
+function paseoEspacial(P, v, nombreLuna){
+  if (!P.zona || P.zona.id!=='luna') { mal('la nave no se posó en '+nombreLuna+' (zona '+(P.zona && P.zona.id)+')'); return; }
+  bien('nave: se posó en '+nombreLuna+', gravedad', P.zona.grav);
+  correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave en '+nombreLuna);
+  const Z = P.zona;
+  let alto = 0; correr(P, 1, {a:true}); correr(P, 60, {}, (P)=>{ alto = Math.max(alto, P.J.y - Z.y); return P.J.suelo; });
+  if (alto < 4.5) mal('en '+nombreLuna+' no se salta más alto ('+alto.toFixed(1)+' m)'); else bien('salto en '+nombreLuna+':', alto.toFixed(1), 'm');
+  for (const r of Z.recogibles){
+    P.J.x = r.x + 4; P.J.z = r.z; P.J.y = Z.y;
+    correr(P, 60*6, (P)=>({jy:1, camYaw: Math.atan2(r.x-P.J.x, r.z-P.J.z)}), (P)=>P.prog.rocas.includes(r.id));
+  }
+  if (!P.estrellas.includes('rocas')) mal('no recogió las 6 rocas ('+P.prog.rocas.length+')'); else bien('rocas: las 6, con la estrella');
+  const subir = (destino)=>{
+    montar(P, 'nave');
+    correr(P, 60*20, {a:true}, (P)=>!P.zona);
+    if (P.zona) { mal('la nave no salió de la zona'); return false; }
+    if (destino === null) return true;
+    const B = N.ZONAS[destino].planeta;
+    const f = correr(P, 60*200, (P)=>({a: v.y < B.y - B.r - 8, jy: Math.hypot(v.x-B.x, v.z-B.z) > 8 ? 1 : 0, jx: hacia(v, B.x, B.z)}), (P)=>P.zona && P.zona.id===destino);
+    if (!P.zona || P.zona.id!==destino){ mal('la nave no llegó a '+destino+' (y '+v.y.toFixed(0)+', a '+Math.hypot(v.x-B.x, v.z-B.z).toFixed(0)+' m)'); return false; }
+    bien('nave: llegó a '+N.ZONAS[destino].nombre+' en', (f/60).toFixed(0), 's');
+    correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave en '+destino);
+    return true;
+  };
+  if (subir('saturno')){
+    const S = P.zona;
+    for (const a of P.aliens.saturno){
+      for (let k=0;k<3 && !P.prog.saturnianos.includes(a.id);k++){ P.J.x = a.x + 3; P.J.z = a.z; P.J.y = S.y; correr(P, 60*4, (P)=>({jy:1, camYaw: Math.atan2(a.x-P.J.x, a.z-P.J.z)}), (P)=>P.prog.saturnianos.includes(a.id)); }
+    }
+    if (!P.estrellas.includes('saturno')) mal('no saludó a los 4 saturnianos ('+P.prog.saturnianos.length+')'); else bien('Saturno: saludó a los 4 saturnianos y ganó', P.monedas, 'monedas en total');
+  }
+  if (subir('jupiter')){
+    const Jz = P.zona;
+    for (const r of Jz.recogibles){ P.J.x = r.x + 4; P.J.z = r.z; P.J.y = Jz.y; correr(P, 60*6, (P)=>({jy:1, camYaw: Math.atan2(r.x-P.J.x, r.z-P.J.z)}), (P)=>P.prog.cristales.includes(r.id)); }
+    if (!P.estrellas.includes('jupiter')) mal('no recogió los 5 cristales ('+P.prog.cristales.length+')'); else bien('Júpiter: los 5 cristales, gravedad', Jz.grav);
+  }
+  subir(null);
+  const fb = correr(P, 60*200, {}, (P)=>v.suelo);
+  if (!v.suelo) mal('la nave no volvió a posarse en la Tierra (y '+v.y.toFixed(0)+')'); else bien('nave: volvió a tierra en', (fb/60).toFixed(0), 's');
+  correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave');
+}
 const P = N.crearPartida();
 if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
 
@@ -190,8 +233,15 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   if (!v.aire) mal('el avión no despegó (vel '+v.vel.toFixed(1)+')'); else bien('avión: despegó a los', (f0/60).toFixed(1), 's');
   correr(P, 60*2, {jy:1});
   if (v.y < N.altura(v.x,v.z)+8) mal('el avión no sube');
+  /* E en pleno vuelo: se salta en paracaídas, se cae despacito y el avión vuelve solo a la pista */
   correr(P, 1, {salir:true});
-  if (!P.veh) mal('se bajó del avión en pleno vuelo');
+  if (P.veh || !P.paracaidas) mal('E en el aire debía abrir el paracaídas');
+  let vyMin = 0; correr(P, 60*40, {jy:0.5, camYaw:0}, (P)=>{ vyMin = Math.min(vyMin, P.J.vy); return !P.paracaidas; });
+  if (P.paracaidas) mal('el paracaídas no aterrizó'); else if (vyMin < -7) mal('con paracaídas cayó muy rápido: '+vyMin.toFixed(1)); else bien('paracaídas: saltó del avión y bajó a', (-vyMin).toFixed(1), 'm/s como máximo');
+  correr(P, 60*9, {}, (P)=>!P.avionSolo);
+  if (P.avionSolo || !v.suelo || Math.hypot(v.x-N.PISTA.x, v.z-70) > 2) mal('el avión no volvió solo a la pista'); else bien('el avión volvió solo a la pista');
+  if (!tipos.paracaidas || !tipos.paracaidasSuelo || !tipos.avionVuelve) mal('faltan los eventos del paracaídas');
+  montar(P, 'avion'); correr(P, 60*20, {jy:1}, (P)=>v.aire); correr(P, 60*2, {jy:1});
   const f = correr(P, 60*400, (P)=>{
     const i = N.AROS.findIndex((a,i)=>!P.prog.aros.includes(i)); if (i<0) return {jy:0};
     const a = N.AROS[i]; const d = Math.hypot(a.x-v.x, a.z-v.z);
@@ -282,9 +332,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   const f = correr(P, 60*120, (P)=>({a:true, jy: v.y > 80 ? Math.min(1, Math.hypot(v.x-N.LUNA.x, v.z-N.LUNA.z)/30) : 0, jx: hacia(v, N.LUNA.x, N.LUNA.z)}), (P)=>P.estrellas.includes('luna'));
   if (!P.estrellas.includes('luna')) mal('la nave no llegó a la luna (y '+v.y.toFixed(0)+')'); else bien('nave: llegó a la luna en', (f/60).toFixed(0), 's');
   if (!tipos.espacio || !tipos.banderaLuna) mal('faltan los eventos del espacio o la bandera');
-  const fb = correr(P, 60*120, {}, (P)=>v.suelo);
-  if (!v.suelo) mal('la nave no volvió a posarse (y '+v.y.toFixed(0)+')'); else bien('nave: volvió a tierra en', (fb/60).toFixed(0), 's');
-  correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la nave');
+  paseoEspacial(P, v, 'la luna');
 }
 /* 9f) el carro cruza el puente hasta Maracaibo y come arepas */
 {
@@ -453,7 +501,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
 }
 /* 14) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);
