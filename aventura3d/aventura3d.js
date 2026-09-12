@@ -1586,6 +1586,7 @@ function pasoPie(P, ent){
     J.ang = envolver(J.ang + envolver(Math.atan2(dx, dz) - J.ang)*0.25);
   }
   let velMax = J.nadando ? 3.2 : (ent.b ? 19.8 : 6.2);                 /* con B se corre un 60% más rápido que antes */
+  if (ent.c && !J.nadando){ velMax *= 1.5; if (J.mov > 8 && P.t % 4 === 0) evento(P, 'turboPie', {x:J.x, y:J.y, z:J.z}); }   /* con C, un 50% más encima (se suma a B) */
   if (P.ganas && !J.nadando) velMax *= 0.72;                          /* con ganas de popo se camina apretado */
   if (P.gorilaT > 0) velMax *= 1.3;                                    /* el gorila corre más */
   else if (P.gordura > 0) velMax *= 1 - 0.05*P.gordura;                /* gordito se camina más lento */
@@ -2725,7 +2726,7 @@ function pasoPartida(P, ent){
   if (Number.isFinite(ent.camYaw)) P.camYaw = ent.camYaw;
   if (P.escena){ pasoEscena(P); pasoPerros(P); pasoPopitos(P); return; }
   if (P.durmiendo){ const D = P.durmiendo; D.t++; if (D.t >= D.dur){ P.durmiendo = null; if (!NOCHE){ P.hora += 0.25; if (P.hora >= 1) P.hora -= 1; } P.popo = Math.max(0, P.popo - 0.15); const primera = !P.saludos.siesta; P.saludos.siesta = true; if (primera){ P.monedas += 10; } evento(P, 'despierta', {primera}); } return; }
-  const e2 = {jx, jy, a:!!ent.a, b:!!ent.b, aNuevo, bNuevo};
+  const e2 = {jx, jy, a:!!ent.a, b:!!ent.b, c:!!ent.c, aNuevo, bNuevo};
   if (P.veh){
     pasoVehiculo(P, P.veh, e2);
     P.J.x = P.veh.x; P.J.y = P.veh.y; P.J.z = P.veh.z; P.J.ang = P.veh.ang;
@@ -3045,9 +3046,10 @@ const TOQUE = {palanca:null, botones:new Map()};
 const BOTONES_TACTILES = [
   {id:'A', k:'a', txt:'A', color:'rgba(255,120,90,.40)', borde:'rgba(255,190,170,.9)', r:40, pos:()=>({x:W-52, y:H-112})},
   {id:'B', k:'b', txt:'B', color:'rgba(110,170,255,.40)', borde:'rgba(180,210,255,.9)', r:34, pos:()=>({x:W-130, y:H-52})},
+  {id:'C', k:'c', txt:'C', color:'rgba(255,200,80,.40)', borde:'rgba(255,230,160,.9)', r:30, pos:()=>({x:W-206, y:H-44})},
   {id:'salir', k:'salir', txt:'🚪', color:'rgba(255,230,110,.40)', borde:'rgba(255,240,180,.9)', r:28, pos:()=>({x:W-52, y:H-210}), solo:'veh'},
   {id:'menu', k:'menu', txt:'☰', color:'rgba(255,255,255,.25)', borde:'rgba(255,255,255,.7)', r:20, pos:()=>({x:W-30, y:30})},
-  {id:'voz', k:'voz', txt:'🎙️', color:'rgba(120,230,150,.40)', borde:'rgba(180,255,200,.9)', r:34, pos:()=>({x:W-218, y:H-64}), solo:'red'},
+  {id:'voz', k:'voz', txt:'🎙️', color:'rgba(120,230,150,.40)', borde:'rgba(180,255,200,.9)', r:34, pos:()=>({x:W-288, y:H-60}), solo:'red'},
 ];
 function botonTactilEn(x, y){
   let mejor = null, md = 1e9;
@@ -3073,7 +3075,7 @@ document.addEventListener('pointerdown', ev=>{
 }, true);
 document.addEventListener('pointermove', ev=>{
   if (TOQUE.palanca && TOQUE.palanca.id===ev.pointerId){ const p = aLogico(ev); TOQUE.palanca.x = p.x; TOQUE.palanca.y = p.y; ev.preventDefault(); }
-  else if (TOQUE.botones.has(ev.pointerId)){ const p = aLogico(ev); const b = botonTactilEn(p.x, p.y); if (b && b.k!==TOQUE.botones.get(ev.pointerId).k && (b.k==='a'||b.k==='b')){ TOQUE.botones.set(ev.pointerId, b); } }
+  else if (TOQUE.botones.has(ev.pointerId)){ const p = aLogico(ev); const b = botonTactilEn(p.x, p.y); if (b && b.k!==TOQUE.botones.get(ev.pointerId).k && (b.k==='a'||b.k==='b'||b.k==='c')){ TOQUE.botones.set(ev.pointerId, b); } }
 }, true);
 const soltar = ev=>{
   if (TOQUE.palanca && TOQUE.palanca.id===ev.pointerId) TOQUE.palanca = null;
@@ -3096,11 +3098,11 @@ function palancaTactil(){
   return {jx: dx, jy: -dy};
 }
 /* mandos: palanca analógica, A/B como en Fernando Bros, hombros para bajarse, + para el menú */
-const MANDO = {activo:false, prev:{}, dirPrev:null, rep:0, jx:0, jy:0, a:false, b:false, salir:false, avisoT:0};
+const MANDO = {activo:false, prev:{}, dirPrev:null, rep:0, jx:0, jy:0, a:false, b:false, c:false, salir:false, avisoT:0};
 function leerMandos(){
   if (!navigator.getGamepads) return;
   let gps; try{ gps = navigator.getGamepads(); }catch(e){ return; }
-  let hay = false, jx = 0, jy = 0, a = false, b = false, salir = false;
+  let hay = false, jx = 0, jy = 0, a = false, b = false, c = false, salir = false;
   const vozAntes = MANDO.voz; MANDO.voz = false;
   for (const gp of gps){
     if (!gp || !gp.connected) continue;
@@ -3110,7 +3112,8 @@ function leerMandos(){
     jx += zona(ax); jy -= zona(ay);
     const pulsado = i=>{ const bt = gp.buttons[i]; return !!(bt && (bt.pressed || bt.value > 0.5)); };
     if (pulsado(0)||pulsado(1)) a = true;
-    if (pulsado(2)||pulsado(3)||pulsado(7)||pulsado(6)) b = true;
+    if (pulsado(2)||pulsado(7)||pulsado(6)) b = true;
+    if (pulsado(3)) c = true;
     if (pulsado(4)||pulsado(5)||pulsado(8)) salir = true;
     if (pulsado(10)) MANDO.voz = true;
     if (pulsado(14)) jx -= 1; if (pulsado(15)) jx += 1; if (pulsado(12)) jy += 1; if (pulsado(13)) jy -= 1;
@@ -3127,7 +3130,7 @@ function leerMandos(){
     if (dir) MANDO.dirPrev = dir;
   }
   if (hay !== MANDO.activo){ MANDO.activo = hay; document.body.classList.toggle('conMando', hay); }
-  MANDO.jx = hay ? clamp(jx,-1,1) : 0; MANDO.jy = hay ? clamp(jy,-1,1) : 0; MANDO.a = a; MANDO.b = b; MANDO.salir = salir;
+  MANDO.jx = hay ? clamp(jx,-1,1) : 0; MANDO.jy = hay ? clamp(jy,-1,1) : 0; MANDO.a = a; MANDO.b = b; MANDO.c = c; MANDO.salir = salir;
   if (MANDO.voz && !vozAntes) vozEmpezar(); else if (!MANDO.voz && vozAntes) vozParar();
 }
 addEventListener('gamepadconnected', ()=>{ MANDO.avisoT = 200; });
@@ -3142,6 +3145,7 @@ function leerEntrada(){
   const ent = {jx, jy,
     a: !!(keys[' ']||keys['z']||MANDO.a||tb.includes('a')||pulsadas.has(' ')||pulsadas.has('z')||pulsadas.has('a')),
     b: !!(keys['shift']||keys['x']||MANDO.b||tb.includes('b')||pulsadas.has('shift')||pulsadas.has('x')||pulsadas.has('b')),
+    c: !!(keys['c']||keys['control']||MANDO.c||tb.includes('c')||pulsadas.has('c')),
     salir: !!(keys['e']||keys['enter']||keys['backspace']||MANDO.salir||tb.includes('salir')||pulsadas.has('e')||pulsadas.has('enter')||pulsadas.has('salir'))};
   pulsadas.clear();
   return ent;
@@ -5948,6 +5952,7 @@ function atenderEventos(){
       case 'fantasma': sfx.fantasma(); chispas(e.x, e.y, e.z, '#c0b0ff', 18, 5); grande('¡BUUU! 👻 +8 🪙', '#c0b0ff', 70); break;
       case 'trompeta': sfx.trompeta(); for (let i=0;i<16;i++) particula(e.x + (azar()-0.5), e.y+3.2, e.z + 3.4, '#8fd3ff', (azar()-0.5)*3, 5+azar()*4, 2+azar()*4, 40, 0.2, {grav:10, alfa:0.8}); break;
       case 'hipo': sfx.hipo(); burbuja('¡Hip!', 'Vampiro'); break;
+      case 'turboPie': for (let i=0;i<3;i++) particula(e.x + (azar()-0.5)*1.2, e.y + 0.3 + azar()*1.2, e.z + (azar()-0.5)*1.2, '#ffffff', -J.vx*0.3, 0.5, -J.vz*0.3, 14, 0.14, {alfa:0.7, grav:0}); break;
       case 'muu': sfx.muu(); burbuja('¡Muuuu!', 'Vaca'); break;
       case 'oinc': sfx.oinc(); burbuja('¡Oinc, oinc!', 'Cerdito'); break;
       case 'mueble': { const on = e.on; if (e.t==='tele'){ if (on) sfx.tele(); else sfx.toque(); aviso(on ? '📺 ¡Dibujitos!' : '📺 Tele apagada'); } else if (e.t==='lampara'){ sfx.toque(); aviso(on ? '💡 Luz encendida' : '💡 Luz apagada'); } else if (e.t==='chimenea'){ if (on) sfx.trompeta(); else sfx.toque(); aviso(on ? '🔥 ¡Qué calentico!' : '🔥 Chimenea apagada'); } else if (e.t==='rocola'){ if (on) sfx.rocola(); else sfx.toque(); aviso(on ? '🎵 ¡A bailar!' : '🎵 Música apagada'); } else if (e.t==='arbolNavidad'){ sfx.campanitas(); aviso(on ? '🎄 ¡Luces de Navidad!' : '🎄 Luces apagadas'); } else if (e.t==='piano'){ sfx.piano(); for (let i=0;i<8;i++) particula(e.x + (azar()-0.5)*2, e.y + 1.6, e.z + (azar()-0.5)*1, ['#ff6ec0','#4fc3f7','#ffe36e'][i%3], (azar()-0.5)*0.8, 1.5+azar(), (azar()-0.5)*0.8, 60, 0.25, {grav:-0.5, alfa:0.9}); } else if (e.t==='armadura'){ sfx.choque(); sacudida = 5; burbuja('¡CLANK!', 'La armadura'); } break; }

@@ -14,13 +14,14 @@ vuelve con **◀ FERNANDO BROS**.
 
 ## 🕹️ Cómo se juega
 
-Controles pensados para manos pequeñas: **la palanca mueve, A sube, B corre**.
+Controles pensados para manos pequeñas: **la palanca mueve, A sube, B corre, C es turbo**.
 
 | Teclado | Mando 🎮 | Celular 📱 | Acción |
 |---|---|---|---|
 | Flechas / WASD | Palanca izquierda o cruceta | Palanca (aparece donde pongas el dedo, en la mitad izquierda) | Caminar · volante y gas/freno · subir y bajar el avión · adelante y atrás en el submarino |
 | ESPACIO / Z | Botón inferior (A/B) | **A** | **Saltar** · **montarse** en un vehículo · brinco del carro y la moto · **subir** el submarino |
-| MAYÚS / X | Botón lateral (X/Y) o gatillos | **B** | **Correr** · **turbo** del carro, la moto, el barco y el avión · **bajar** el submarino |
+| MAYÚS / X | Botón lateral (X) o gatillos | **B** | **Correr** · **turbo** del carro, la moto, el barco y el avión · **bajar** el submarino |
+| C / CTRL | Botón Y | **C** | **Turbo a pie**: un 50 % más rápido, y se suma a B (los dos juntos: casi 30 m/s) |
 | E / ENTER | Hombros (L/R) o − | **🚪** | **Bajarse** del vehículo (parado, en tierra o en la superficie) |
 | V (mantener) | Palanca izquierda apretada (L3) | **🎙️** (mantener) | **Hablar** por walkie-talkie con los amigos de la sala |
 | T | Palanca derecha apretada (R3) | **🚀 IR CON…** | Tío Juan te lleva de un salto al lado del amigo |
