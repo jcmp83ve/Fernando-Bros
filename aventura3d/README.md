@@ -227,6 +227,23 @@ ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
   cuando lo saludan**. La primera vez da 25 monedas; si Fernando se aleja
   del micrófono la canción se corta, y los amigos de la sala que estén cerca
   también la oyen.
+- **Mucho público en el concierto 👏**: más de cien personas en las gradas y
+  frente a la tarima. Cuando Fernando termina la canción completa, todos
+  levantan los brazos, aplauden con ovación y cae confeti del cielo.
+- **Con B se corre un 60 % más rápido** que antes.
+- **Los planetas están más cerca**: la luna, Saturno y Júpiter bajaron, la
+  nave sube más rápido y la zona de llegada es más ancha.
+- **Fútbol ⚽**: la cancha tiene un balón de verdad. Se patea corriendo contra
+  él (con B, patadón) y también con los vehículos; rebota en los bordes y al
+  entrar por una portería hay ¡GOOOL!, confeti y 10 monedas. Vuelve solo al
+  centro.
+- **Olas grandes y tabla de surf 🏄**: frente a la playa hay una zona de olas
+  altas que ruedan hacia la orilla (con cresta de espuma). La tabla está en
+  la orilla: remando es lenta, pero al ponerse delante de una ola, la ola la
+  lleva; aguantar la ola da 20 monedas la primera vez.
+- **El tanque 🪖**, junto al hangar: lento, aplasta árboles y rocas, y con B
+  dispara balas de cañón que estallan en confeti y mandan a volar las cajas,
+  las gallinas, las sandías y el balón.
 - **La partida no se cae**: la sala manda latidos, el invitado que pierde la
   conexión vuelve a entrar solo (hasta diez intentos), la pantalla no se
   apaga mientras se juega, el botón «atrás» del navegador pausa en vez de
