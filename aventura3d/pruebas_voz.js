@@ -20,7 +20,7 @@ async function pagina(browser, nombre){
   await pg.waitForFunction(()=>window.AV && window.Trystero, null, {timeout:60000});
   await pg.evaluate((n)=>{
     localStorage.removeItem('aventura3d.partida'); localStorage.setItem('aventura3d.nombre', n);
-    AV.RED.medioPreferido = 'mqtt'; AV.RED_RELES.mqtt = ['ws://127.0.0.1:1884']; AV.RED_CONFIG.rtcConfig = {iceServers:[]};
+    AV.RED_RELES.mqtt = ['ws://127.0.0.1:1884']; AV.RED_RELES.nostr = ['ws://127.0.0.1:65530']; AV.RED_CONFIG.rtcConfig = {iceServers:[]};
     AV.empezar();
   }, nombre);
   return pg;
