@@ -611,7 +611,11 @@ const enIslaBanana = (x, z)=> Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z) < ISL
 const ISLA_ELEFANTES = {x:430, z:-330, r:50};   /* la isla de los elefantes, al noreste */
 const ISLA_VAMPIROS = {x:330, z:450, r:46};     /* la isla de los vampiros borrachos, al sureste */
 const ISLA_CIRCO = {x:150, z:-500, r:55};       /* la isla del gran circo, al norte */
-const enIslaLejana = (x, z)=> [ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO].some(i=>Math.hypot(x-i.x, z-i.z) < i.r + 8);
+const ISLA_CONCIERTO = {x:-160, z:480, r:52};   /* la sala de conciertos al aire libre, al sur */
+const ESCENARIO = {x:ISLA_CONCIERTO.x, z:ISLA_CONCIERTO.z-14, w:18, d:9};   /* la tarima mira hacia +z, donde está el público */
+const MICROFONO = {x:ESCENARIO.x, z:ESCENARIO.z+2.6};
+const CANCION_FRAMES = 60*10;   /* la canción de Fernando dura unos diez segundos */
+const enIslaLejana = (x, z)=> [ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO].some(i=>Math.hypot(x-i.x, z-i.z) < i.r + 8);
 /* los planetas, más arriba que la luna: el cohete llega a los tres */
 const SATURNO = {x:350, y:1300, z:-250, r:105};
 const JUPITER = {x:-420, y:1950, z:380, r:150};
@@ -643,7 +647,7 @@ function alturaBase(x, z){
   const d4 = Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z);
   const m4 = 1 - smooth(20, 72, d4);
   h = lerp(h, -8 + 12.5*m4 + 3*m4*(ruido(x/30+4, z/30+6)-0.5), m4);
-  for (const isla of [ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO]){
+  for (const isla of [ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO]){
     const di = Math.hypot(x-isla.x, z-isla.z), mi = 1 - smooth(isla.r*0.45, isla.r*1.5, di);
     h = lerp(h, -8 + 12*mi + 2.5*mi*(ruido(x/28+isla.x, z/28+isla.z)-0.5), mi);
   }
@@ -863,6 +867,9 @@ const VAMPIROS = [0,1,2,3].map(i=>{ const a = i/4*6.283 + 0.8; return npc('vampi
 const RENOS = [0,1,2,3].map(i=>{ const a = i/4*6.283 + 0.4; return npc('reno', 'Reno', MONTANA.x + Math.cos(a)*22, MONTANA.z + Math.sin(a)*22, {r: 1.3, vel: 2.4, frase: '¡Jo! ¡Soy el reno de Santa!', monedas: 10, nariz: i===0}); });
 const SANTA = npc('santa', 'Santa Claus', MONTANA.x-14+5+3.2, MONTANA.z+12+1.5, {r: 0.9, vel: 0, quieto: true, frase: '¡Jo, jo, jo! ¡Feliz Navidad, pichunguito!', monedas: 30});
 SANTA.ang = -Math.PI/2;
+/* Fernando cantante: aparece frente al micrófono cuando el que juega no es Fernando; al saludarlo, canta */
+const CANTANTE = npc('cantante', 'Fernando', MICROFONO.x, MICROFONO.z-0.9, {r: 0.9, vel: 0, quieto: true, canta: true, frase: '¡Este concierto es para ti, pichunguito! 🎤', monedas: 25});
+CANTANTE.ang = 0;
 /* el gran circo: una carpa con pista, gradas, payasos, un león, una jirafa y un elefante en pelota */
 const CIRCO_DEF = {x:ISLA_CIRCO.x, z:ISLA_CIRCO.z, w:36, d:36, h:14, color:'#e63946', techo:'#ffd23f', nombre:'EL GRAN CIRCO', circo:true, puerta:0};
 const CIRCO_NPCS = [
@@ -988,6 +995,8 @@ const FRASES_NUEVAS = {
   nieve: '¡Nieve! ¡Qué frío tan rico!',
   circo: '¡El circo! ¡Quiero ver a los payasos!',
   fantasma: '¡Un fantasma de popo! ¡Buuu!',
+  concierto: '¡Un concierto! ¡Voy a cantar mi canción!',
+  conciertoFer: '¡Mira, es Fernando! ¡Vamos a saludarlo para que cante!',
   flaco: '¡Hice popo y quedé flaquito!',
 };
 const alFinal = (t, suf)=> /!$/.test(t) ? t.replace(/!(?=[^!]*$)/, suf+'!') : t + suf;
@@ -1023,7 +1032,7 @@ solar(PLAZA_MCBO.x, PLAZA_MCBO.z, 10);
 for (const h of HELIPUERTOS) solar(h.x, h.z, 8);
 solar(186, -56, 9, PISTA.h); solar(-40, -60, 9);
 solar(CASTILLO.x, CASTILLO.z, 26); solar(CASTILLO.x, CASTILLO.z-44, 9, alturaBase(CASTILLO.x, CASTILLO.z)); solar(ISLA_BANANA.x, ISLA_BANANA.z, 12);
-solar(ISLA_CIRCO.x, ISLA_CIRCO.z, 24); solar(ISLA_VAMPIROS.x, ISLA_VAMPIROS.z, 12); solar(MONTANA.x+18, MONTANA.z+13, 9, alturaBase(MONTANA.x-14, MONTANA.z+12));
+solar(ISLA_CIRCO.x, ISLA_CIRCO.z, 24); solar(ESCENARIO.x, ESCENARIO.z+7, 26); solar(ISLA_VAMPIROS.x, ISLA_VAMPIROS.z, 12); solar(MONTANA.x+18, MONTANA.z+13, 9, alturaBase(MONTANA.x-14, MONTANA.z+12));
 solar(PUENTE.x0 - PUENTE.ux*6, PUENTE.z0 - PUENTE.uz*6, 9, Math.max(1.5, alturaBase(PUENTE.x0 - PUENTE.ux*6, PUENTE.z0 - PUENTE.uz*6)));
 solar(PUENTE.x1 + PUENTE.ux*6, PUENTE.z1 + PUENTE.uz*6, 9, Math.max(1.5, alturaBase(PUENTE.x1 + PUENTE.ux*6, PUENTE.z1 + PUENTE.uz*6)));
 for (const h of HELIPUERTOS) h.y = 0;
@@ -1386,7 +1395,7 @@ function crearPartida(guardado){
     hora: NOCHE ? 0.0 : 0.32, fantasmas: [], fantasmaDicho: -99999, mascota: null, mascotaPos: null,
     props: PROPS_DEF.map(d=>Object.assign({}, d, {ox:d.x, oz:d.z, y:0, vx:0, vy:0, vz:0, giro:0, ang:d.ang||0, estado:'quieto', t:0, fase:0, huyeT:0, premioT:-9999})),
     aliens: {luna: ZONAS.luna.aliens.map(a=>Object.assign({}, a)), saturno: ZONAS.saturno.aliens.map(a=>Object.assign({}, a)), jupiter: ZONAS.jupiter.aliens.map(a=>Object.assign({}, a))},
-    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)),
+    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999,
     trompetaT: -9999, hipoT: -9999, rugidoLeonT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
@@ -2067,6 +2076,7 @@ function npcsCerca(P){
   if (Math.hypot(J.x-ISLA_ELEFANTES.x, J.z-ISLA_ELEFANTES.z) < 90) for (const n of P.elefantes) lista.push(n);
   if (Math.hypot(J.x-ISLA_VAMPIROS.x, J.z-ISLA_VAMPIROS.z) < 90) for (const n of P.vampiros) lista.push(n);
   if (Math.hypot(J.x-MONTANA.x, J.z-MONTANA.z) < 90){ for (const n of P.renos) lista.push(n); lista.push(P.santa); }
+  if (P.pj !== 'fernando' && Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < 90) lista.push(P.cantante);
   return lista;
 }
 function revisarSaludosNPC(P){
@@ -2082,9 +2092,28 @@ function revisarSaludosNPC(P){
     const monedas = primera ? n.monedas : Math.ceil(n.monedas/4);
     P.monedas += monedas; P.puntos += 100;
     evento(P, 'saludoNPC', {bicho:n.tipo, nombre:n.nombre, texto:n.frase, monedas, x:n.x, y: y === null ? altura(n.x, n.z) : y, z:n.z, alien:n.alien});
-    evento(P, 'hablar', {texto:n.frase, quien:n.nombre, pj:'npc_'+n.tipo});
+    if (n.canta) empezarCanto(P, 'npc'); else evento(P, 'hablar', {texto:n.frase, quien:n.nombre, pj:'npc_'+n.tipo});
     if (n.zona==='saturno' && !P.prog.saturnianos.includes(n.id)){ P.prog.saturnianos.push(n.id); evento(P, 'saturniano', {total:P.prog.saturnianos.length}); if (P.prog.saturnianos.length >= 4) darEstrella(P, 'saturno'); }
   }
+}
+/* la sala de conciertos: si el que juega es Fernando, canta al pararse frente al micrófono;
+   si es otro, Fernando está ahí de cantante y canta cuando lo saludan (revisarSaludosNPC) */
+function empezarCanto(P, quien){
+  P.canto = {t:0, dur:CANCION_FRAMES, quien}; P.cantoT = P.t;
+  const primera = !P.saludos.concierto; P.saludos.concierto = true;
+  if (primera){ P.monedas += 25; P.puntos += 300; }
+  evento(P, 'canta', {quien, x:MICROFONO.x, y:altura(MICROFONO.x, MICROFONO.z), z:MICROFONO.z, primera});
+}
+function pasoConcierto(P){
+  const J = P.J, dm = Math.hypot(J.x-MICROFONO.x, J.z-MICROFONO.z);
+  if (P.canto){
+    const C = P.canto; C.t++;
+    const lejos = C.quien==='yo' ? (!!P.veh || dm > 4) : dm > 70;
+    if (C.t >= C.dur || lejos || P.casa || P.zona){ P.canto = null; P.cantoT = P.t; evento(P, 'cantoFin', {completo: C.t >= C.dur}); }   /* el descanso de 8 s se cuenta desde el final */
+    return;
+  }
+  if (P.pj==='fernando' && !P.veh && !P.casa && !P.zona && !P.escena && J.suelo && P.t - P.cantoT > 60*8 && dm < 1.5) empezarCanto(P, 'yo');
+  if (!P.veh && !P.casa && !P.zona && P.t - P.conciertoDicho > 60*60*4 && Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < ISLA_CONCIERTO.r + 10){ P.conciertoDicho = P.t; evento(P, 'conciertoCerca'); decir(P, P.pj==='fernando' ? 'concierto' : 'conciertoFer'); }
 }
 /* las rocas de la luna y los cristales de Júpiter se recogen a pie */
 function revisarRecogiblesZona(P){
@@ -2498,7 +2527,7 @@ function pasoPartida(P, ent){
   }
   pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
   pasoDinos(P); pasoMeteoros(P); pasoGorila(P);
-  pasoBichos(P); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
+  pasoBichos(P); pasoConcierto(P); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
   pasoHora(P); pasoMascota(P); pasoProps(P);
   pasoNoche(P);
 }
@@ -2539,7 +2568,7 @@ if (typeof module !== 'undefined' && module.exports){
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
     posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
     CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, INTERIOR_CIRCO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana,
-    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
+    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -4718,8 +4747,47 @@ for (const k in ZONAS){
     const sp = letrero('🧛 ISLA DE LOS VAMPIROS BORRACHOS', '#f4c0ff', 'rgba(40,10,50,0.92)', 3); sp.position.set(I.x, y+14, I.z); mundo.add(sp);
     const sp2 = letrero('🍅 bar de jugo de tomate', '#fff', 'rgba(120,20,40,0.9)', 1.5); sp2.position.set(I.x, y+7.6, I.z+4.2); mundo.add(sp2);
   }
+  { /* la sala de conciertos al aire libre: tarima, fondo, torres con luces, bocinas, micrófono y gradas */
+    const E = ESCENARIO, y = altura(E.x, E.z), M = MICROFONO, G = '#8a8a96', NEG = '#15151c';
+    A.caja(E.w, 0.36, E.d, '#4a3424', E.x, y+0.18, E.z).caja(E.w+1.2, 0.5, 0.9, '#e63946', E.x, y+0.25, E.z + E.d/2 + 0.45)
+     .caja(E.w, 7.5, 0.7, '#1e1e34', E.x, y+3.75, E.z - E.d/2).caja(E.w-2.5, 4.6, 0.12, '#0d0a1c', E.x, y+4.3, E.z - E.d/2 + 0.42)
+     .caja(1.4, 0.4, 0.14, '#ff6ec0', E.x-6, y+6.9, E.z - E.d/2 + 0.42).caja(1.4, 0.4, 0.14, '#4fc3f7', E.x-4, y+6.9, E.z - E.d/2 + 0.42).caja(1.4, 0.4, 0.14, '#ffd23f', E.x-2, y+6.9, E.z - E.d/2 + 0.42).caja(1.4, 0.4, 0.14, '#7dffa0', E.x, y+6.9, E.z - E.d/2 + 0.42).caja(1.4, 0.4, 0.14, '#ff6ec0', E.x+2, y+6.9, E.z - E.d/2 + 0.42).caja(1.4, 0.4, 0.14, '#4fc3f7', E.x+4, y+6.9, E.z - E.d/2 + 0.42).caja(1.4, 0.4, 0.14, '#ffd23f', E.x+6, y+6.9, E.z - E.d/2 + 0.42);
+    for (const sx of [-1, 1]){
+      A.caja(0.5, 9, 0.5, G, E.x + sx*(E.w/2+0.3), y+4.5, E.z - E.d/2 + 1.2).caja(0.5, 9, 0.5, G, E.x + sx*(E.w/2+0.3), y+4.5, E.z + E.d/2 - 0.6).caja(0.4, 0.4, E.d, G, E.x + sx*(E.w/2+0.3), y+9, E.z);
+      for (let k=0;k<2;k++) A.caja(1.8, 3.4, 1.5, NEG, E.x + sx*(E.w/2+1.9), y+1.7+k*0.0, E.z + E.d/2 - 1.6 + k*(-2.2)).bola(0.42, '#2a2a34', E.x + sx*(E.w/2+1.9), y+2.4, E.z + E.d/2 - 0.84 + k*(-2.2), 10, 1, 1, 0.5).bola(0.22, '#2a2a34', E.x + sx*(E.w/2+1.9), y+1.0, E.z + E.d/2 - 0.84 + k*(-2.2), 8, 1, 1, 0.5);
+    }
+    A.caja(E.w+1.2, 0.4, 0.4, G, E.x, y+9, E.z - E.d/2 + 1.2).caja(E.w+1.2, 0.4, 0.4, G, E.x, y+9, E.z + E.d/2 - 0.6);
+    A.cil(0.28, 0.4, 0.08, '#333', M.x, y+0.4, M.z, 0,0,0, 12).cil(0.045, 0.045, 1.55, '#d0d0d8', M.x, y+1.2, M.z, 0,0,0, 6).cil(0.04, 0.04, 0.5, '#d0d0d8', M.x, y+2.05, M.z+0.16, 0.9,0,0, 6).bola(0.13, '#222', M.x, y+2.22, M.z+0.36, 8, 1, 1.3, 1);
+    for (let k=0;k<5;k++){ const zk = E.z + E.d/2 + 5 + k*3.6, hk = altura(E.x, zk); A.caja(E.w+8+k*1.5, 0.3, 0.7, '#8b5a2b', E.x, hk+0.55+k*0.1, zk).caja(0.3, 0.6, 0.3, '#5a3a1a', E.x - (E.w+8+k*1.5)/2 + 0.5, hk+0.3+k*0.1, zk).caja(0.3, 0.6, 0.3, '#5a3a1a', E.x + (E.w+8+k*1.5)/2 - 0.5, hk+0.3+k*0.1, zk).caja(0.3, 0.6, 0.3, '#5a3a1a', E.x, hk+0.3+k*0.1, zk); }
+    for (let k=0;k<6;k++){ const a = k/6*6.283, x = ISLA_CONCIERTO.x + Math.cos(a)*30, z = ISLA_CONCIERTO.z + Math.sin(a)*30, h = altura(x, z); if (h < 1.5) continue; A.cil(0.1, 0.1, 5, '#8a8a96', x, h+2.5, z, 0,0,0, 6).bola(0.5, ['#ff6ec0','#4fc3f7','#ffd23f'][k%3], x, h+5.3, z, 8); }
+    const sp = letrero('🎤 SALA DE CONCIERTOS', '#fff6a0', 'rgba(60,20,90,0.92)', 3.2); sp.position.set(E.x, y+12.5, E.z); mundo.add(sp);
+    const sp2 = letrero('🎶 ¡HOY CANTA FERNANDO!', '#fff', 'rgba(230,57,70,0.9)', 2); sp2.position.set(E.x, y+10.4, E.z + E.d/2); mundo.add(sp2);
+  }
   mundo.add(A.malla(matMate()));
 })();
+/* las luces del concierto: focos de colores en las torres y haces que se encienden cuando alguien canta */
+const conciertoLuces = (()=>{
+  const E = ESCENARIO, y = altura(E.x, E.z), g = new THREE.Group(), focos = [], haces = [];
+  const colores = [0xff6ec0, 0x4fc3f7, 0xffd23f, 0x7dffa0, 0xff8a3d, 0xc07dff];
+  for (let i=0;i<6;i++){
+    const x = E.x - E.w/2 + 1.5 + i*(E.w-3)/5, z = E.z - E.d/2 + 1.2;
+    const f = new THREE.Mesh(new THREE.SphereGeometry(0.32, 8, 6), new THREE.MeshBasicMaterial({color: colores[i]})); f.position.set(x, y+8.6, z); g.add(f); focos.push(f);
+    const h = new THREE.Mesh(new THREE.ConeGeometry(2.2, 8.4, 14, 1, true), new THREE.MeshBasicMaterial({color: colores[i], transparent:true, opacity:0.16, depthWrite:false, side:THREE.DoubleSide, blending:THREE.AdditiveBlending}));
+    h.position.set(x, y+4.4, z + 1.6); h.rotation.x = Math.PI - 0.35; h.visible = false; g.add(h); haces.push(h);
+  }
+  mundo.add(g); return {g, focos, haces, colores};
+})();
+const cantanteMesh = (()=>{ const g = armarJugador('fernando'); g.position.set(CANTANTE.x, altura(CANTANTE.x, CANTANTE.z) + 0.36, CANTANTE.z); g.rotation.y = CANTANTE.ang; const et = letrero('🎤 Fernando', '#fff', 'rgba(200,40,60,0.88)', 1.4); et.position.y = 2.7; g.add(et); mundo.add(g); return g; })();
+/* la canción de Fernando (el mp3 de la carpeta): suena al cantar y baja de volumen con la distancia */
+let cancion = null;
+function cancionTocar(){
+  try{
+    if (!cancion){ cancion = document.createElement('audio'); cancion.src = 'cancion_pichunguito.mp3'; cancion.preload = 'auto'; cancion.setAttribute('playsinline', ''); vozCaja().appendChild(cancion); }
+    cancion.currentTime = 0; cancion.volume = 1;
+    const p = cancion.play(); if (p && p.catch) p.catch(()=>{ VOZ.pendientes.add(cancion); if (estado==='juego') aviso('🔊 Toca la pantalla para oír la canción'); });
+  }catch(e){}
+}
+function cancionParar(){ if (cancion){ try{ cancion.pause(); }catch(e){} VOZ.pendientes.delete(cancion); } }
 /* los bichos vivos, colocados; el ovni de visita; la mascota */
 const elefantesMesh = ELEFANTES.map(n=>{ const g = armarCuadrupedo({tipo:'elefante', color:'#8a8a98', claro:'#b8b8c4', esc:n.esc}); mundo.add(g); return g; });
 const renosMesh = RENOS.map(n=>{ const g = armarCuadrupedo({tipo:'reno', color:'#8a5a2a', claro:'#d9a066', nariz:n.nariz}); mundo.add(g); return g; });
@@ -4778,6 +4846,20 @@ function sincronizarMundoNuevo(t){
   /* los bichos que pasean */
   const poneNPC = (g, n, y)=>{ g.position.set(n.x, y, n.z); g.rotation.y = n.ang; const amp = Math.min(1, n.mov/1.2), s = Math.sin(n.fase*4); if (g.partes && g.partes.patas) g.partes.patas.forEach((p, k)=>{ p.rotation.x = s*0.5*amp*(k%2 ? -1 : 1)*(k>=2 ? -1 : 1); }); else if (g.partes) animarPersona(g, n.mov*2, n.fase*2.5, false, false); };
   if (Math.hypot(J.x-ISLA_ELEFANTES.x, J.z-ISLA_ELEFANTES.z) < 220) P.elefantes.forEach((n, i)=>poneNPC(elefantesMesh[i], n, altura(n.x, n.z)));
+  if (Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < 260){
+    const canta = !!P.canto, deNPC = canta && P.canto.quien==='npc';
+    cantanteMesh.visible = P.pj !== 'fernando';
+    if (cantanteMesh.visible){
+      const c = cantanteMesh.partes;
+      animarPersona(cantanteMesh, 0, t*2, false, false);
+      if (deNPC){ c.bD.rotation.x = -1.7 + Math.sin(t*6)*0.15; c.bI.rotation.x = -0.5 + Math.sin(t*4)*0.5; c.bI.rotation.z = -0.5; c.cuerpo.position.y = Math.abs(Math.sin(t*7))*0.08; cantanteMesh.rotation.y = CANTANTE.ang + Math.sin(t*1.5)*0.35; }
+      else { c.bD.rotation.x = -0.4; c.bI.rotation.z = -0.12; cantanteMesh.rotation.y = envolver(cantanteMesh.rotation.y + envolver((Math.hypot(J.x-CANTANTE.x, J.z-CANTANTE.z) < 12 ? Math.atan2(J.x-CANTANTE.x, J.z-CANTANTE.z) : CANTANTE.ang) - cantanteMesh.rotation.y)*0.06); }
+    }
+    conciertoLuces.haces.forEach((h, i)=>{ h.visible = canta; if (canta){ h.rotation.z = Math.sin(t*2.2 + i*1.1)*0.5; h.material.opacity = 0.12 + Math.abs(Math.sin(t*5 + i))*0.12; } });
+    conciertoLuces.focos.forEach((f, i)=>{ f.material.color.setHex(conciertoLuces.colores[canta ? (i + Math.floor(t*4)) % 6 : i]); });
+    if (canta && tick % 8 === 0){ const y = altura(MICROFONO.x, MICROFONO.z); particula(MICROFONO.x + (azar()-0.5)*1.5, y+2.4, MICROFONO.z + 0.6, ['#ff6ec0','#4fc3f7','#ffd23f'][tick%3], (azar()-0.5)*1.5, 2.5+azar()*1.5, 1+azar(), 70, 0.2, {grav:0.5, alfa:0.9}); }
+    if (canta && tick % 30 === 0) confeti(ESCENARIO.x + (azar()-0.5)*20, altura(ESCENARIO.x, ESCENARIO.z+12)+6, ESCENARIO.z + 10 + azar()*10, 6);
+  }
   if (Math.hypot(J.x-ISLA_VAMPIROS.x, J.z-ISLA_VAMPIROS.z) < 220) P.vampiros.forEach((n, i)=>{ const g = vampirosMesh[i]; poneNPC(g, n, altura(n.x, n.z)); g.rotation.z = Math.sin(n.fase*2.5 + i)*0.18; g.rotation.x = Math.sin(n.fase*1.7)*0.08; if (g.partes.capa) ondearCapa(g.partes.capa, t, 0.4 + n.mov*0.3); });
   if (Math.hypot(J.x-MONTANA.x, J.z-MONTANA.z) < 220){ P.renos.forEach((n, i)=>poneNPC(renosMesh[i], n, altura(n.x, n.z))); santaMesh.rotation.y = envolver(santaMesh.rotation.y + envolver((Math.hypot(J.x-SANTA.x, J.z-SANTA.z) < 14 ? Math.atan2(J.x-SANTA.x, J.z-SANTA.z) : SANTA.ang) - santaMesh.rotation.y)*0.06); animarPersona(santaMesh, 0, P.santa.fase, false, false); santaMesh.partes.bD.rotation.x = P.t - P.santa.saludoT < 90 ? -2.6 + Math.sin(t*8)*0.4 : -0.3; }
   if (P.casa && P.casa.circo){ const I = P.casa; P.circo.forEach((n, i)=>{ const g = circoMesh[i]; poneNPC(g, n, I.y + (n.tipo==='elefanteCirco' ? 2.4 : n.tipo==='leon' ? 1.1 : 0)); if (n.tipo==='payaso') g.position.y += Math.abs(Math.sin(n.fase*3))*0.15; if (n.tipo==='elefanteCirco') g.rotation.y = t*0.8; }); monosMesh.rotation.x = Math.sin(t*1.6)*0.9; }
@@ -4960,6 +5042,7 @@ function redRecibir(id, m){
     else if (m.tipo==='estrella'){ confeti(x, y, z, 30); sfx.estrella(); recibirEstrella(m.id, r.nombre); }
     else if (m.tipo==='popo'){ confeti(x, y, z, 12); aviso('💩 '+r.nombre+' hizo popo'); }
     else if (m.tipo==='salto' && cerca){ sfx.salto(); }
+    else if (m.tipo==='canta' && cerca){ cancionTocar(); confeti(x, y+3, z, 30); burbuja('🎶 Pichunguito… 🎶', r.nombre); }
     else if (m.tipo==='habla' && cerca && CLAVES_DIALOGO.includes(m.k)){ const texto = fraseDe(r.pj, m.k, String(m.id||'')); if (texto){ hablar(texto, r.pj); burbuja(texto, r.nombre); } }
   }
 }
@@ -5533,6 +5616,8 @@ function atenderEventos(){
       case 'fantasma': sfx.fantasma(); chispas(e.x, e.y, e.z, '#c0b0ff', 18, 5); grande('¡BUUU! 👻 +8 🪙', '#c0b0ff', 70); break;
       case 'trompeta': sfx.trompeta(); for (let i=0;i<16;i++) particula(e.x + (azar()-0.5), e.y+3.2, e.z + 3.4, '#8fd3ff', (azar()-0.5)*3, 5+azar()*4, 2+azar()*4, 40, 0.2, {grav:10, alfa:0.8}); break;
       case 'hipo': sfx.hipo(); burbuja('¡Hip!', 'Vampiro'); break;
+      case 'canta': cancionTocar(); sfx.estrella(); confeti(e.x, e.y+3, e.z, 40); grande(e.quien==='yo' ? '🎤 ¡A CANTAR!' : '🎤 ¡CANTA, FERNANDO!', '#ff9ed6', 130); if (e.primera) aviso('¡Qué concierto! +25 🪙'); burbuja('🎶 Pichunguito… 🎶', 'Fernando'); redEvento('canta', {x:e.x, y:e.y, z:e.z}); break;
+      case 'cantoFin': cancionParar(); if (e.completo) confeti(e.x||MICROFONO.x, altura(MICROFONO.x, MICROFONO.z)+3, e.z||MICROFONO.z, 30); break;
       case 'rugidoLeon': sfx.rugido(); sacudida = 6; burbuja('¡ROAAAR!', 'León Leo'); break;
       case 'gallinaVuela': sfx.gallina(); for (let i=0;i<8;i++) particula(e.x, e.y+0.6, e.z, '#ffffff', (azar()-0.5)*4, 2+azar()*3, (azar()-0.5)*4, 50, 0.16, {alfa:0.9, grav:3}); grande('¡COCOROCÓ! 🐔', '#fff', 50); break;
       case 'propVuela': sfx.golpe(); chispas(e.x, e.y+0.5, e.z, '#d8c8a0', 8, 4); break;
@@ -5561,7 +5646,8 @@ function sincronizar(){
   animarModelo(fer, J.mov*(apretado ? 1.8 : 1), J.fase*(apretado ? 1.6 : 1), !J.suelo && !J.nadando, J.nadando);
   fer.rotation.x = J.nadando ? (fer.tipo==='persona' ? 1.2 : 0.3) : 0;
   if (fer.tipo==='persona'){
-    if (apretado){ fer.partes.pI.rotation.z = 0.25; fer.partes.pD.rotation.z = -0.25; fer.partes.bI.rotation.x = -1.2; fer.partes.bD.rotation.x = -1.2; fer.rotation.z = Math.sin(J.fase*1.6)*0.08; }
+    if (P.canto && P.canto.quien==='yo'){ const s = tick*DT; fer.partes.bD.rotation.x = -1.7 + Math.sin(s*6)*0.15; fer.partes.bI.rotation.x = -0.5 + Math.sin(s*4)*0.5; fer.partes.bI.rotation.z = -0.5; fer.partes.cuerpo.position.y = Math.abs(Math.sin(s*7))*0.08; fer.rotation.z = Math.sin(s*1.5)*0.06; }
+    else if (apretado){ fer.partes.pI.rotation.z = 0.25; fer.partes.pD.rotation.z = -0.25; fer.partes.bI.rotation.x = -1.2; fer.partes.bD.rotation.x = -1.2; fer.rotation.z = Math.sin(J.fase*1.6)*0.08; }
     else { fer.partes.pI.rotation.z = 0; fer.partes.pD.rotation.z = 0; fer.rotation.z = 0; }
   } else fer.rotation.z = apretado ? Math.sin(J.fase*1.6)*0.08 : 0;
   /* los vehículos */
@@ -5909,7 +5995,7 @@ function dibujarMapa(cx, cy, r){
   for (const v of P.vehiculos){ if (P.veh===v) continue; const p = aM(v.x, v.z); ctx.font = '12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.emoji, p.x, p.y); }
   if (obj.x !== null && obj.x !== undefined){ const p = aM(obj.x, obj.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + Math.sin(tick*0.15)*2, 0, Math.PI*2); ctx.stroke(); }
   if (NOCHE){ const q = aM(CORO.x, CORO.z); ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐐', q.x, q.y); }
-  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS], ['🐘', ISLA_ELEFANTES], ['🧛', ISLA_VAMPIROS], ['🎪', ISLA_CIRCO], ['🎅', MONTANA]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
+  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS], ['🐘', ISLA_ELEFANTES], ['🧛', ISLA_VAMPIROS], ['🎪', ISLA_CIRCO], ['🎤', ISLA_CONCIERTO], ['🎅', MONTANA]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
   for (const [, r] of RED.remotos){ const q = aM(r.act.x, r.act.z); ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
   const p = aM(J.x, J.z);
   ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI*2); ctx.fill();
@@ -6237,6 +6323,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();

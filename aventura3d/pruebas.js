@@ -493,6 +493,24 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   const paq = N.empaquetarEstado(Q, 'fernando', 'Fer'); const des = N.desempaquetarEstado(paq);
   if (!des.flaco || des.gordura !== 0) mal('la red no lleva la gordura');
   bien('gordura: 5 hamburguesas = gordito y lento; el baño lo deja flaquito');
+  /* la sala de conciertos: Fernando canta frente al micrófono; con otro personaje, Fernando está ahí y canta al saludarlo */
+  { const C = N.crearPartida(); C.pj = 'fernando';
+    if (N.altura(N.MICROFONO.x, N.MICROFONO.z) < 1.5) mal('el micrófono está en el agua');
+    poner(C, N.MICROFONO.x, N.MICROFONO.z + 0.4); const antes = tipos.canta||0; correr(C, 10, {});
+    if ((tipos.canta||0) === antes || !C.canto || C.canto.quien!=='yo') mal('Fernando no canta al pararse frente al micrófono');
+    if (N.npcsCerca(C).some(n=>n.tipo==='cantante')) mal('siendo Fernando, hay otro Fernando cantante');
+    correr(C, 60*3, {}); if (!C.canto) mal('la canción se cortó antes de tiempo');
+    correr(C, N.CANCION_FRAMES, {}); if (C.canto) mal('la canción no terminó sola'); if (!tipos.cantoFin) mal('no avisó el final de la canción');
+    const mon = C.monedas; poner(C, N.MICROFONO.x + 20, N.MICROFONO.z + 20); correr(C, 60*9, {}); poner(C, N.MICROFONO.x, N.MICROFONO.z + 0.4); correr(C, 10, {});
+    if (!C.canto) mal('no vuelve a cantar al volver al micrófono'); if (C.monedas !== mon) mal('cantar de nuevo dio monedas otra vez');
+    poner(C, N.MICROFONO.x + 12, N.MICROFONO.z); correr(C, 5, {}); if (C.canto) mal('se alejó del micrófono y la canción siguió');
+    const R = N.crearPartida(); R.pj = 'tiojuan';
+    poner(R, N.CANTANTE.x + 1.3, N.CANTANTE.z); correr(R, 5, {});
+    if (!N.npcsCerca(R).some(n=>n.tipo==='cantante')) mal('siendo Tío Juan, Fernando no está de cantante');
+    if (!R.canto || R.canto.quien!=='npc') mal('al saludar a Fernando cantante, no canta'); if (R.monedas < 25) mal('saludar al cantante no dio monedas');
+    if (!tipos.conciertoCerca) mal('no se dijo nada al llegar a la sala de conciertos');
+    bien('sala de conciertos: Fernando canta al micrófono, y de cantante canta cuando lo saludan');
+  }
   /* las frases nuevas: cada personaje las dice a su manera */
   for (const k of Object.keys(N.FRASES_NUEVAS)) for (const pj of N.PERSONAJES_RED) if (!N.fraseDe(pj.id, k)) mal('sin frase '+k+' para '+pj.nombre);
   if (!/^¡Épale!/.test(N.fraseDe('nacho', 'castillo'))) mal('Nacho no dice épale');
@@ -501,7 +519,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
 }
 /* 14) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);

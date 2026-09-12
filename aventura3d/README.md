@@ -219,6 +219,14 @@ ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
 - **El gran circo 🎪**, en su isla al norte: una carpa enorme con banderines.
   Por dentro, pista, gradas, trapecio, tres payasos, el león Leo que ruge, la
   jirafa Jirafina y el elefante Bombo sobre su pelota.
+- **La sala de conciertos 🎤**, en su isla al sur: tarima, fondo con luces de
+  colores, torres con focos, bocinas y gradas de madera. Si el que juega es
+  **Fernando**, al pararse frente al micrófono canta su canción (el mp3
+  «Pichunguito», con focos que giran y confeti). Si juega cualquier otro
+  personaje, Fernando está ahí de cantante frente al micrófono y **canta
+  cuando lo saludan**. La primera vez da 25 monedas; si Fernando se aleja
+  del micrófono la canción se corta, y los amigos de la sala que estén cerca
+  también la oyen.
 - **La partida no se cae**: la sala manda latidos, el invitado que pierde la
   conexión vuelve a entrar solo (hasta diez intentos), la pantalla no se
   apaga mientras se juega, el botón «atrás» del navegador pausa en vez de
