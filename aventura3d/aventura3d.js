@@ -538,7 +538,7 @@ const TONO_PJ = {
   santi:{pitch:2.0, rate:0.9}, mama:{pitch:1.3, rate:1.0}, papa:{pitch:0.7, rate:1.0}, abu:{pitch:1.1, rate:0.85}, nacho:{pitch:0.85, rate:1.15},
   yanny:{pitch:1.45, rate:1.0}, tiofran:{pitch:0.65, rate:1.0}, romulo:{pitch:0.35, rate:0.8}, beto:{pitch:0.75, rate:1.0}, giuliana:{pitch:1.3, rate:1.05},
   penny:{pitch:1.6, rate:1.2}, sheldon:{pitch:0.9, rate:1.2}, srpopo:{pitch:0.5, rate:0.92},
-  npc_santa:{pitch:0.5, rate:0.9}, npc_vampiro:{pitch:0.6, rate:0.85}, npc_payaso:{pitch:1.6, rate:1.2}, npc_alien:{pitch:1.5, rate:1.3}, npc_elefante:{pitch:0.4, rate:0.8}, npc_elefanteCirco:{pitch:0.45, rate:0.85}, npc_leon:{pitch:0.3, rate:0.7}, npc_reno:{pitch:1.2, rate:1.0}, npc_jirafa:{pitch:1.3, rate:1.0},
+  npc_santa:{pitch:0.5, rate:0.9}, npc_vampiro:{pitch:0.6, rate:0.85}, npc_payaso:{pitch:1.6, rate:1.2}, npc_alien:{pitch:1.5, rate:1.3}, npc_elefante:{pitch:0.4, rate:0.8}, npc_vaca:{pitch:0.5, rate:0.75}, npc_cerdo:{pitch:1.5, rate:1.2}, npc_cebra:{pitch:1.2, rate:1.1}, npc_elefanteCirco:{pitch:0.45, rate:0.85}, npc_leon:{pitch:0.3, rate:0.7}, npc_reno:{pitch:1.2, rate:1.0}, npc_jirafa:{pitch:1.3, rate:1.0},
 };
 function hablarTTS(texto, pj){
   if (typeof speechSynthesis === 'undefined'){ hablando = false; reproducirCola(); return; }
@@ -599,19 +599,22 @@ function fbm(x, z, oct){
 /* ---------------- La isla ----------------
    El mundo mide 1200 m de lado; la isla grande está en el centro, la islita
    de Santi al este, y todo lo demás es mar (hondo hacia afuera). */
-const TAM = 1200, NSEG = 240, SEG = TAM/NSEG, MITAD = TAM/2, LIMITE = 590;
-const R_ISLA = 300;
-const ISLITA = {x:430, z:170};
-const MARACAIBO = {x:-400, z:-300, r:110};   /* la isla de las arepas, al noroeste, unida por el puente */
+const TAM = 1800, NSEG = 360, SEG = TAM/NSEG, MITAD = TAM/2, LIMITE = 890;   /* el mundo creció un 50 %: la isla mide 900 m de lado a lado */
+const R_ISLA = 450;
+const ISLITA = {x:645, z:255};
+const MARACAIBO = {x:-600, z:-450, r:110};   /* la isla de las arepas, al noroeste, unida por el puente */
 const LUNA = {x:0, y:520, z:0, r:90};   /* más baja que antes: se llega más fácil */
-const ISLA_BANANA = {x:-430, z:250, r:48};    /* la isla de las bananas, al suroeste: quien come banana se vuelve gorila */
+const ISLA_BANANA = {x:-645, z:375, r:48};    /* la isla de las bananas, al suroeste: quien come banana se vuelve gorila */
 const CASTILLO = {x:-150, z:30, r:24, ang:Math.PI/2};   /* el castillo, al oeste del pueblo; la puerta mira al este */
 const VALLE_DINOS = {x:110, z:-110, r:28};    /* el valle donde pasean los dinosaurios sueltos */
+const VALLE_DINOS2 = {x:60, z:-395, r:36};    /* el segundo valle, en las tierras nuevas del norte */
+const SABANA = {x:340, z:210, r:40};           /* la sabana: leones, jirafas y cebras */
+const GRANJA = {x:-330, z:220, r:34};          /* la granja: vacas, cerditos y gallinas */
 const enIslaBanana = (x, z)=> Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z) < ISLA_BANANA.r + 8;
-const ISLA_ELEFANTES = {x:430, z:-330, r:50};   /* la isla de los elefantes, al noreste */
-const ISLA_VAMPIROS = {x:330, z:450, r:46};     /* la isla de los vampiros borrachos, al sureste */
-const ISLA_CIRCO = {x:150, z:-500, r:55};       /* la isla del gran circo, al norte */
-const ISLA_CONCIERTO = {x:-160, z:480, r:52};   /* la sala de conciertos al aire libre, al sur */
+const ISLA_ELEFANTES = {x:645, z:-495, r:50};   /* la isla de los elefantes, al noreste */
+const ISLA_VAMPIROS = {x:495, z:675, r:46};     /* la isla de los vampiros borrachos, al sureste */
+const ISLA_CIRCO = {x:225, z:-750, r:55};       /* la isla del gran circo, al norte */
+const ISLA_CONCIERTO = {x:-240, z:720, r:52};   /* la sala de conciertos al aire libre, al sur */
 const ESCENARIO = {x:ISLA_CONCIERTO.x, z:ISLA_CONCIERTO.z-14, w:18, d:9};   /* la tarima mira hacia +z, donde está el público */
 const MICROFONO = {x:ESCENARIO.x, z:ESCENARIO.z+2.6};
 const CANCION_FRAMES = 60*10;   /* la canción de Fernando dura unos diez segundos */
@@ -621,7 +624,7 @@ const SATURNO = {x:350, y:900, z:-250, r:105};
 const JUPITER = {x:-420, y:1300, z:380, r:150};
 const MONTANA = {x:-60, z:-200};
 const PUEBLO = {x:20, z:70};
-const FARO = {x:-270, z:-60};
+const FARO = {x:-405, z:-90};
 const NIVEL_MAR = 0;
 function alturaBase(x, z){
   const d0 = Math.hypot(x, z), a = Math.atan2(z, x);
@@ -647,6 +650,8 @@ function alturaBase(x, z){
   const d4 = Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z);
   const m4 = 1 - smooth(20, 72, d4);
   h = lerp(h, -8 + 12.5*m4 + 3*m4*(ruido(x/30+4, z/30+6)-0.5), m4);
+  /* las tierras nuevas del anillo de afuera van un poco más altas, para que no queden a ras de playa */
+  for (const L of [VALLE_DINOS2, SABANA, GRANJA]){ const dl = Math.hypot(x-L.x, z-L.z); h += 3.2*(1 - smooth(L.r, L.r + 40, dl))*(1 - smooth(R_ISLA-40, R_ISLA+20, d0)); }
   for (const isla of [ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO]){
     const di = Math.hypot(x-isla.x, z-isla.z), mi = 1 - smooth(isla.r*0.45, isla.r*1.5, di);
     h = lerp(h, -8 + 12*mi + 2.5*mi*(ruido(x/28+isla.x, z/28+isla.z)-0.5), mi);
@@ -730,7 +735,7 @@ function solar(x, z, r, h){ SOLARES.push({x, z, r, h: h===undefined ? alturaBase
 function orilla(x, z){
   const a = Math.atan2(z, x);
   let d = 200;
-  while (d < 420 && alturaBase(Math.cos(a)*d, Math.sin(a)*d) > 0.3) d += 1;
+  while (d < R_ISLA + 120 && alturaBase(Math.cos(a)*d, Math.sin(a)*d) > 0.3) d += 1;
   return {x: Math.cos(a)*d, z: Math.sin(a)*d, ang: a, d};
 }
 
@@ -840,7 +845,7 @@ const VEREDA = (()=>{
 })();
 const cercaVereda = (x, z, d)=>{ for (const p of VEREDA.pts) if (Math.hypot(x-p.x, z-p.z) < d) return true; return false; };
 const BOYAS = [];
-for (let i=0;i<6;i++){ const a = i/6*Math.PI*2 + 0.35; let r = 372; while (alturaBase(Math.cos(a)*r, Math.sin(a)*r) > -2.5 && r < 470) r += 5; BOYAS.push({id:i, x:Math.cos(a)*r, z:Math.sin(a)*r}); }
+for (let i=0;i<6;i++){ const a = i/6*Math.PI*2 + 0.35; let r = R_ISLA + 72; while (alturaBase(Math.cos(a)*r, Math.sin(a)*r) > -2.5 && r < R_ISLA + 170) r += 5; BOYAS.push({id:i, x:Math.cos(a)*r, z:Math.sin(a)*r}); }
 const HUEVOS = [];
 for (const [cx,cz] of [[-120,-40],[-205,-25],[-40,-260],[120,-205],[255,-95],[-245,120],[70,-100],[-140,80]]){
   let x = cx, z = cz, k = 0; while (alturaBase(x, z) < 1.5 && k < 40){ x += (0-x)*0.05; z += (0-z)*0.05; k++; }
@@ -853,7 +858,14 @@ const DINOS = [
   {id:2, tipo:'trice',  esc:1.0,  color:'#6a7ab0', claro:'#a8b4e0', x:VALLE_DINOS.x-2,  z:VALLE_DINOS.z+14},
   {id:3, tipo:'cuello', esc:0.6,  color:'#8ab06a', claro:'#c8e0a0', x:VALLE_DINOS.x-14, z:VALLE_DINOS.z+2},
   {id:4, tipo:'trice',  esc:0.75, color:'#8a6ab0', claro:'#c0a8e0', x:VALLE_DINOS.x+6,  z:VALLE_DINOS.z-14},
+  {id:5, tipo:'trex',   esc:1.15, color:'#8a4a2a', claro:'#d09060', x:VALLE_DINOS2.x+10, z:VALLE_DINOS2.z+6, valle:1},
+  {id:6, tipo:'trex',   esc:0.7,  color:'#c07a4a', claro:'#f0b080', x:VALLE_DINOS2.x-8,  z:VALLE_DINOS2.z+12, valle:1},
+  {id:7, tipo:'cuello', esc:1.2,  color:'#5a8e4a', claro:'#a0c880', x:VALLE_DINOS2.x-16, z:VALLE_DINOS2.z-8, valle:1},
+  {id:8, tipo:'cuello', esc:0.55, color:'#9ab86a', claro:'#d0e8a0', x:VALLE_DINOS2.x+2,  z:VALLE_DINOS2.z-16, valle:1},
+  {id:9, tipo:'trice',  esc:1.0,  color:'#4a6ab0', claro:'#98a8e0', x:VALLE_DINOS2.x+18, z:VALLE_DINOS2.z-4, valle:1},
+  {id:10, tipo:'trice', esc:0.6,  color:'#b06a9a', claro:'#e0a8d0', x:VALLE_DINOS2.x-4,  z:VALLE_DINOS2.z+20, valle:1},
 ];
+const VALLES_DINOS = [VALLE_DINOS, VALLE_DINOS2];
 for (const d of DINOS){ let k = 0; while (alturaBase(d.x, d.z) < 1.5 && k < 30){ d.x += (VALLE_DINOS.x-d.x)*0.1; d.z += (VALLE_DINOS.z-d.z)*0.1; k++; } }
 /* la isla de las bananas: matas de plátano y bananas que vuelven a crecer */
 const PLATANOS = [], BANANAS = [];
@@ -865,6 +877,15 @@ function npc(tipo, nombre, x, z, extra){ return Object.assign({tipo, nombre, x, 
 const ELEFANTES = [0,1,2,3].map(i=>{ const a = i/4*6.283; return npc('elefante', 'Elefante', ISLA_ELEFANTES.x + Math.cos(a)*16, ISLA_ELEFANTES.z + Math.sin(a)*16, {r: 2.6, vel: 1.6, frase: '¡Prrrrruuu! ¡Qué trompa tan larga tengo!', monedas: 10, esc: i===3 ? 0.6 : 1}); });
 const VAMPIROS = [0,1,2,3].map(i=>{ const a = i/4*6.283 + 0.8; return npc('vampiro', 'Vampiro', ISLA_VAMPIROS.x + Math.cos(a)*12, ISLA_VAMPIROS.z + Math.sin(a)*12, {r: 0.8, vel: 1.4, borracho: true, frase: ['¡Hip! ¡Quiero jugo de tomate!', '¡Hip! ¡Se me cayó un colmillo!', '¡Buenas noooches! ¡Hip!', '¡Hip! ¿Dónde dejé mi ataúd?'][i], monedas: 10}); });
 const RENOS = [0,1,2,3].map(i=>{ const a = i/4*6.283 + 0.4; return npc('reno', 'Reno', MONTANA.x + Math.cos(a)*22, MONTANA.z + Math.sin(a)*22, {r: 1.3, vel: 2.4, frase: '¡Jo! ¡Soy el reno de Santa!', monedas: 10, nariz: i===0}); });
+const ANIMALES = [];
+{ const a = (tipo, nombre, cx, cz, i, n, extra)=>{ const ang = i/n*6.283 + 0.3; ANIMALES.push(npc(tipo, nombre, cx + Math.cos(ang)*16, cz + Math.sin(ang)*16, Object.assign({zona: 'sabana', r:1.4, vel:1.8, monedas:10}, extra||{}))); };
+  a('leon', 'León', SABANA.x, SABANA.z, 0, 7, {frase:'¡ROAAAR! Soy el rey de la sabana', r:1.2, vel:2.2, monedas:15}); a('leon', 'Leona', SABANA.x, SABANA.z, 1, 7, {frase:'¡Grrr! ¿Traes hamburguesas?', r:1.2, vel:2.2, esc:0.85});
+  a('jirafa', 'Jirafa', SABANA.x, SABANA.z, 2, 7, {frase:'¡Desde aquí arriba veo toda la isla!', r:1.6, vel:1.6}); a('jirafa', 'Jirafita', SABANA.x, SABANA.z, 3, 7, {frase:'¡Mi cuello es el más largo!', r:1.4, vel:1.7, esc:0.7});
+  a('cebra', 'Cebra', SABANA.x, SABANA.z, 4, 7, {frase:'¡Rayas negras y blancas! ¿O blancas y negras?', vel:2.6}); a('cebra', 'Cebra', SABANA.x, SABANA.z, 5, 7, {frase:'¡Corre conmigo, que soy rapidísima!', vel:2.6}); a('cebra', 'Cebrita', SABANA.x, SABANA.z, 6, 7, {frase:'¡Soy una cebrita bebé!', vel:2.4, esc:0.65});
+  const g = (tipo, nombre, i, n, extra)=>{ const ang = i/n*6.283; ANIMALES.push(npc(tipo, nombre, GRANJA.x + Math.cos(ang)*12, GRANJA.z + Math.sin(ang)*12, Object.assign({zona: 'granja', r:1.3, vel:1.2, monedas:8}, extra||{}))); };
+  g('vaca', 'Vaca Lola', 0, 5, {frase:'¡Muuu! ¿Quieres lechita?'}); g('vaca', 'Vaca Pinta', 1, 5, {frase:'¡Muuu! ¡Qué rico el pasto!'}); g('vaca', 'Vaquita', 2, 5, {frase:'¡Muuu! ¡Soy una vaquita bebé!', esc:0.6});
+  g('cerdo', 'Cerdito Pancho', 3, 5, {frase:'¡Oinc, oinc! ¡Me encanta el barro!', r:1.0, vel:1.6}); g('cerdo', 'Cerdita Rosa', 4, 5, {frase:'¡Oinc! ¿Jugamos en el charco?', r:1.0, vel:1.6, esc:0.8});
+}
 const SANTA = npc('santa', 'Santa Claus', MONTANA.x-14+5+3.2, MONTANA.z+12+1.5, {r: 0.9, vel: 0, quieto: true, frase: '¡Jo, jo, jo! ¡Feliz Navidad, pichunguito!', monedas: 30});
 SANTA.ang = -Math.PI/2;
 /* Fernando cantante: aparece frente al micrófono cuando el que juega no es Fernando; al saludarlo, canta */
@@ -905,7 +926,7 @@ for (const k in ZONAS){
 const CANCHA = {x:0, z:128, w:36, d:22};
 const PARQUE = {x:90, z:66};
 const FUENTE = {x:10, z:70, r:3.2};
-const COFRE = {x:-120, z:-470};
+const COFRE = {x:-180, z:-705};
 /* el mapa 2: Coro con sus chivos, los aros de la noche para el pterodáctilo y la nave extraterrestre en el espacio */
 const CORO = {x:150, z:-190, r:36};
 const CHIVOS = [];
@@ -1287,7 +1308,7 @@ function lejosDeTodo(x, z, minimo){
 }
 (function plantar(){
   semilla = 777;
-  for (let i=0;i<6500;i++){
+  for (let i=0;i<14600;i++){
     const x = (azar()-0.5)*TAM, z = (azar()-0.5)*TAM, h = altura(x, z);
     if (h < 1.0) continue;
     const dp = Math.hypot(x-PUEBLO.x, z-PUEBLO.z);
@@ -1457,9 +1478,9 @@ function crearPartida(guardado){
     hora: NOCHE ? 0.0 : 0.32, fantasmas: [], fantasmaDicho: -99999, mascota: null, mascotaPos: null,
     props: PROPS_DEF.map(d=>Object.assign({}, d, {ox:d.x, oz:d.z, y:0, vx:0, vy:0, vz:0, giro:0, ang:d.ang||0, estado:'quieto', t:0, fase:0, huyeT:0, premioT:-9999})),
     aliens: {luna: ZONAS.luna.aliens.map(a=>Object.assign({}, a)), saturno: ZONAS.saturno.aliens.map(a=>Object.assign({}, a)), jupiter: ZONAS.jupiter.aliens.map(a=>Object.assign({}, a))},
-    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
+    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), animales: ANIMALES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
     balas: [], explosiones: [], disparoT: -9999, surfT: -9999, casaEstado: {}, cercaMueble: null, sentado: null, durmiendo: null, columpio: null, trepando: false, balon: {x:CANCHA.x, y:0, z:CANCHA.z, vx:0, vy:0, vz:0, gol:0}, goles: 0,
-    trompetaT: -9999, hipoT: -9999, rugidoLeonT: -9999,
+    trompetaT: -9999, hipoT: -9999, rugidoLeonT: -9999, rugidoSabanaT: -9999, muuT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
   };
@@ -2115,7 +2136,8 @@ function pasoDinos(P){
     if (d.espera > 0){ d.espera--; d.mov = 0; d.fase += DT; continue; }
     if (!d.obj || Math.hypot(d.obj.x-d.x, d.obj.z-d.z) < 2.5){
       let k = 0, ox, oz;
-      do { const a = azar()*6.283, r = 6 + azar()*(VALLE_DINOS.r-6); ox = VALLE_DINOS.x + Math.cos(a)*r; oz = VALLE_DINOS.z + Math.sin(a)*r; k++; }
+      const V = VALLES_DINOS[def.valle||0];
+      do { const a = azar()*6.283, r = 6 + azar()*(V.r-6); ox = V.x + Math.cos(a)*r; oz = V.z + Math.sin(a)*r; k++; }
       while (k < 12 && (altura(ox, oz) < 1.5 || cercaRuta(ox, oz).d < 12));
       d.obj = {x:ox, z:oz}; d.espera = 60*(1 + azar()*4);
       if (def.tipo==='trex' && P.t - P.rugidoDinoT > 60*9 && Math.hypot(d.x-J.x, d.z-J.z) < 70){ P.rugidoDinoT = P.t; evento(P, 'rugidoDino', {x:d.x, y:altura(d.x, d.z), z:d.z}); }
@@ -2132,7 +2154,7 @@ function pasoDinos(P){
     if (dist < 1e-3){ dx = 0; dz = 1; dist = 1; }
     if (dist < rr && Math.abs(altura(d.x, d.z) - J.y) < 4){ J.x = d.x + dx/dist*rr; J.z = d.z + dz/dist*rr; }
   }
-  if (!P.casa && !P.zona && P.t - P.dinosDicho > 60*60*4 && Math.hypot(J.x-VALLE_DINOS.x, J.z-VALLE_DINOS.z) < VALLE_DINOS.r + 14){ P.dinosDicho = P.t; evento(P, 'dinosVistos'); decir(P, 'dinos'); }
+  if (!P.casa && !P.zona && P.t - P.dinosDicho > 60*60*4 && VALLES_DINOS.some(V=>Math.hypot(J.x-V.x, J.z-V.z) < V.r + 14)){ P.dinosDicho = P.t; evento(P, 'dinosVistos'); decir(P, 'dinos'); }
 }
 /* ---- los paseantes: elefantes, vampiros, renos, payasos y extraterrestres dan vueltas por su casa ---- */
 function pasear(n, cx, cz, r, valido){
@@ -2155,6 +2177,10 @@ function pasoBichos(P){
     for (const n of P.elefantes) pasear(n, ISLA_ELEFANTES.x, ISLA_ELEFANTES.z, ISLA_ELEFANTES.r-8, enTierra);
     if (P.t - P.trompetaT > 60*12 && cercaDe(ISLA_ELEFANTES.x, ISLA_ELEFANTES.z, 70)){ P.trompetaT = P.t; const n = P.elefantes[Math.floor(azar()*P.elefantes.length)]; evento(P, 'trompeta', {x:n.x, y:altura(n.x, n.z), z:n.z}); }
   }
+  if (cercaDe(SABANA.x, SABANA.z, 160)) for (const n of P.animales) if (n.zona==='sabana') pasear(n, SABANA.x, SABANA.z, SABANA.r-6, enTierra);
+  if (cercaDe(GRANJA.x, GRANJA.z, 160)) for (const n of P.animales) if (n.zona==='granja') pasear(n, GRANJA.x, GRANJA.z, GRANJA.r-6, enTierra);
+  if (P.t - P.rugidoSabanaT > 60*16 && cercaDe(SABANA.x, SABANA.z, 70)){ P.rugidoSabanaT = P.t; const l = P.animales.find(n=>n.tipo==='leon'); evento(P, 'rugidoLeon', {x:l.x, y:altura(l.x, l.z), z:l.z}); }
+  if (P.t - P.muuT > 60*11 && cercaDe(GRANJA.x, GRANJA.z, 60)){ P.muuT = P.t; const v = P.animales.filter(n=>n.zona==='granja')[Math.floor(azar()*5)]; evento(P, v.tipo==='vaca' ? 'muu' : 'oinc', {x:v.x, y:altura(v.x, v.z), z:v.z}); }
   if (cercaDe(ISLA_VAMPIROS.x, ISLA_VAMPIROS.z, 160)){
     for (const n of P.vampiros) pasear(n, ISLA_VAMPIROS.x, ISLA_VAMPIROS.z, ISLA_VAMPIROS.r-10, enTierra);
     if (P.t - P.hipoT > 60*7 && cercaDe(ISLA_VAMPIROS.x, ISLA_VAMPIROS.z, 60)){ P.hipoT = P.t; const n = P.vampiros[Math.floor(azar()*P.vampiros.length)]; evento(P, 'hipo', {x:n.x, y:altura(n.x, n.z), z:n.z}); }
@@ -2208,6 +2234,8 @@ function npcsCerca(P){
   if (P.visita && P.visita.fase==='pasea') for (const n of P.visita.aliens) lista.push(n);
   if (Math.hypot(J.x-ISLA_ELEFANTES.x, J.z-ISLA_ELEFANTES.z) < 90) for (const n of P.elefantes) lista.push(n);
   if (Math.hypot(J.x-ISLA_VAMPIROS.x, J.z-ISLA_VAMPIROS.z) < 90) for (const n of P.vampiros) lista.push(n);
+  if (Math.hypot(J.x-SABANA.x, J.z-SABANA.z) < 90) for (const n of P.animales) if (n.zona==='sabana') lista.push(n);
+  if (Math.hypot(J.x-GRANJA.x, J.z-GRANJA.z) < 90) for (const n of P.animales) if (n.zona==='granja') lista.push(n);
   if (Math.hypot(J.x-MONTANA.x, J.z-MONTANA.z) < 90){ for (const n of P.renos) lista.push(n); lista.push(P.santa); }
   if (P.pj !== 'fernando' && Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < 90) lista.push(P.cantante);
   return lista;
@@ -2359,6 +2387,8 @@ const PROPS_DEF = [];
   for (const [x,z] of [[22,22],[24,26],[-20,50],[-18,54],[70,74],[72,78],[108,132],[104,134],[-56,110],[92,178],[96,182],[14,146]]) poner('caja', x, z, azar()*6);
   { const gas = CASAS.find(c=>c.gasolinera); for (let i=0;i<6;i++){ const m = puntoRuta(cercaRuta(gas.x, gas.z).s + i*7 - 20); poner('cono', m.x + m.nx*4.4, m.z + m.nz*4.4); } for (let i=0;i<4;i++) poner('cono', PISTA.x + 10, PISTA.z0 + 30 + i*10); }
   for (let i=0;i<8;i++){ const a = i/8*6.283, cx = i < 4 ? -10 : PARQUE.x, cz = i < 4 ? -4 : PARQUE.z + 14; poner('gallina', cx + Math.cos(a)*5, cz + Math.sin(a)*5, azar()*6); }
+  for (let i=0;i<6;i++){ const a = i/6*6.283; poner('gallina', GRANJA.x + 20 + Math.cos(a)*4, GRANJA.z - 12 + Math.sin(a)*4, azar()*6); }
+  for (const [x,z] of [[GRANJA.x+18, GRANJA.z+16],[GRANJA.x+20, GRANJA.z+18],[SABANA.x-30, SABANA.z+10],[VALLE_DINOS2.x+40, VALLE_DINOS2.z+10]]) poner('caja', x, z, azar()*6);
   for (let i=0;i<8;i++){ if (i < 4) poner('sandia', PLAYA.x - 14 + i*2.2, PLAYA.z + 6 + (i%2)*1.6); else poner('sandia', FUENTE.x + 8 + (i-4)*1.6, FUENTE.z + 7 + ((i-4)%2)*1.6); }
 })();
 function pasoProps(P){
@@ -2416,10 +2446,10 @@ function pasoProps(P){
 function pasoMeteoros(P){
   const J = P.J;
   if (P.t >= P.proxMeteoros){
-    P.proxMeteoros = P.t + 60*(70 + azar()*60);
+    P.proxMeteoros = P.t + 60*(40 + azar()*40);
     if (!P.casa && !P.zona && !P.escena){
-      const n = 3 + Math.floor(azar()*4);
-      for (let i=0;i<n;i++){ const a = azar()*6.283, r = 22 + azar()*70; P.meteoros.push({x: J.x + Math.cos(a)*r, z: J.z + Math.sin(a)*r, y: 240 + azar()*60 + i*35, vx:(azar()-0.5)*16, vz:(azar()-0.5)*16, vy: -(62 + azar()*30), r: 0.7 + azar()*0.9, t:0}); }
+      const n = 5 + Math.floor(azar()*5);
+      for (let i=0;i<n;i++){ const a = azar()*6.283, r = 22 + azar()*90; P.meteoros.push({x: J.x + Math.cos(a)*r, z: J.z + Math.sin(a)*r, y: 240 + azar()*60 + i*30, vx:(azar()-0.5)*16, vz:(azar()-0.5)*16, vy: -(62 + azar()*30), r: 0.7 + azar()*1.5, t:0}); }
       evento(P, 'meteoros', {n});
       if (P.t - P.meteoroDicho > 60*45){ P.meteoroDicho = P.t; decir(P, 'meteorito'); }
     }
@@ -2751,7 +2781,7 @@ if (typeof module !== 'undefined' && module.exports){
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
     posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
     CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, INTERIOR_CIRCO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana,
-    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
+    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, R_ISLA, VALLE_DINOS2, VALLES_DINOS, SABANA, GRANJA, ANIMALES, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2878,6 +2908,8 @@ const sfx = {
   campanitas(){ [1319,1568,1319,1568,1760,2093].forEach((f,i)=>beep(f,0.12,'sine',0.08,i*0.12)); },
   trompeta(){ [180,220,260,220].forEach((f,i)=>beep(f,0.3,'sawtooth',0.18,i*0.25)); },
   hipo(){ beep(600,0.05,'square',0.08); beep(900,0.08,'square',0.08,0.05); },
+  muu(){ beep(140,0.5,'sawtooth',0.14); beep(110,0.5,'sawtooth',0.12,0.35); },
+  oinc(){ [300,420,300,440].forEach((f,i)=>beep(f,0.07,'square',0.1,i*0.1)); },
   tele(){ [659,784,988,784,1319].forEach((f,i)=>beep(f,0.12,'square',0.06,i*0.1)); },
   piano(){ const esc = [523,587,659,698,784,880,988,1047]; for (let i=0;i<7;i++) beep(esc[Math.floor(Math.random()*esc.length)],0.22,'triangle',0.09,i*0.18); },
   rocola(){ const m = [523,659,784,659,880,784,659,523,587,698,880,1047]; m.forEach((f,i)=>beep(f,0.16,'square',0.06,i*0.17)); },
@@ -3224,7 +3256,7 @@ const nubes = (()=>{
   const m = new THREE.InstancedMesh(A.geo(), new THREE.MeshLambertMaterial({vertexColors:true, emissive: lin(0x334455), emissiveIntensity:0.18, transparent:true, opacity:0.96}), 40);
   const M = new THREE.Matrix4(); m.datos = [];
   for (let i=0;i<40;i++){
-    const d = {x:(azar()-0.5)*1500, z:(azar()-0.5)*1500, y:130+azar()*80, esc:0.9+azar()*1.6, v:1.5+azar()*2, rot:azar()*6.28};
+    const d = {x:(azar()-0.5)*(TAM+300), z:(azar()-0.5)*(TAM+300), y:130+azar()*80, esc:0.9+azar()*1.6, v:1.5+azar()*2, rot:azar()*6.28};
     m.datos.push(d);
     M.compose(new THREE.Vector3(d.x,d.y,d.z), new THREE.Quaternion().setFromEuler(new THREE.Euler(0,d.rot,0)), new THREE.Vector3(d.esc,d.esc,d.esc));
     m.setMatrixAt(i, M);
@@ -3308,7 +3340,7 @@ const terreno = (()=>{
 
 /* ---------------- El mar: olas, brillo del sol, espuma en la orilla ---------------- */
 const agua = (()=>{
-  const n = 220, lado = 1400, seg = lado/n, k = n+1;
+  const n = 300, lado = TAM + 200, seg = lado/n, k = n+1;
   const pos = new Float32Array(k*k*3), prof = new Float32Array(k*k);
   for (let iy=0; iy<k; iy++) for (let ix=0; ix<k; ix++){
     const i = iy*k+ix, x = ix*seg-lado/2, z = iy*seg-lado/2;
@@ -4107,7 +4139,7 @@ function instanciar(geo, material, datos, arma){
   /* matas de pasto y flores: no chocan, solo adornan */
   semilla = 999;
   const pasto = [], flores = [];
-  for (let i=0;i<14000 && pasto.length<3600;i++){
+  for (let i=0;i<30000 && pasto.length<7500;i++){
     const x = (azar()-0.5)*760, z = (azar()-0.5)*760, h = altura(x, z);
     if (h < 2.0 || h > 32) continue;
     if (cercaRuta(x,z).d < 6 || distPista(x,z) < 12 || enMuelle(x,z) || enRampa(x,z) >= 0) continue;
@@ -4801,6 +4833,28 @@ function armarCuadrupedo(def){
     A.cil(0.04, 0.05, 1.1, c, 0, 2.6, -1.4, 0.6, 0, 0, 4).bola(0.12, '#5a3418', 0, 2.1, -1.8, 4);
     pata(-0.45, 0.55, 2.4, 0.15); pata(0.45, 0.55, 2.4, 0.15); pata(-0.45, -0.55, 2.4, 0.15); pata(0.45, -0.55, 2.4, 0.15);
   }
+  else if (t==='cebra'){
+    A.bola(0.62, c, 0, 1.55, 0, 10, 1, 0.8, 1.6).cil(0.22, 0.28, 0.9, c, 0, 2.0, 0.85, 0.8, 0, 0, 8).bola(0.32, c, 0, 2.5, 1.2, 10, 1, 0.8, 1.25).caja(0.28, 0.24, 0.45, cl, 0, 2.35, 1.6)
+     .bola(0.09, '#fff', -0.15, 2.65, 1.45, 5).bola(0.09, '#fff', 0.15, 2.65, 1.45, 5).bola(0.05, '#111', -0.15, 2.65, 1.53, 4).bola(0.05, '#111', 0.15, 2.65, 1.53, 4)
+     .cono(0.1, 0.35, c, -0.15, 2.75, 1.0, 5, 0, 0, 0.3).cono(0.1, 0.35, c, 0.15, 2.75, 1.0, 5, 0, 0, -0.3).bola(0.08, '#222', 0, 2.3, 1.85, 5);
+    for (let i=0;i<7;i++) A.caja(1.3, 0.12, 0.14, '#111', 0, 1.55 + Math.sin(i*1.1)*0.42, -0.8 + i*0.27, 0, 0, 0);
+    for (let i=0;i<5;i++) A.caja(0.24, 0.16, 0.1, '#111', 0, 2.05 + i*0.15, 0.55 + i*0.1);
+    A.cil(0.04, 0.05, 0.8, c, 0, 1.35, -1.15, 0.9, 0, 0, 4).bola(0.1, '#111', 0, 0.95, -1.5, 4);
+    pata(-0.32, 0.5, 1.1, 0.11); pata(0.32, 0.5, 1.1, 0.11); pata(-0.32, -0.5, 1.1, 0.11); pata(0.32, -0.5, 1.1, 0.11);
+  } else if (t==='vaca'){
+    A.bola(0.85, c, 0, 1.55, 0, 10, 1, 0.85, 1.55).bola(0.45, c, 0, 1.95, 1.35, 10, 1, 0.85, 1.1).caja(0.44, 0.34, 0.4, '#f4b8c8', 0, 1.75, 1.75)
+     .bola(0.06, '#333', -0.12, 1.75, 1.96, 4).bola(0.06, '#333', 0.12, 1.75, 1.96, 4).bola(0.1, '#fff', -0.2, 2.1, 1.65, 5).bola(0.1, '#fff', 0.2, 2.1, 1.65, 5).bola(0.05, '#111', -0.2, 2.1, 1.74, 4).bola(0.05, '#111', 0.2, 2.1, 1.74, 4)
+     .cono(0.06, 0.3, '#e8dcc0', -0.28, 2.35, 1.2, 5, 0, 0, 0.6).cono(0.06, 0.3, '#e8dcc0', 0.28, 2.35, 1.2, 5, 0, 0, -0.6).bola(0.13, c, -0.42, 2.15, 1.25, 5, 1.4, 0.6, 1).bola(0.13, c, 0.42, 2.15, 1.25, 5, 1.4, 0.6, 1)
+     .bola(0.32, '#f4b8c8', 0, 0.95, -0.3, 8, 1, 0.7, 1).cil(0.04, 0.05, 0.9, c, 0, 1.4, -1.3, 0.8, 0, 0, 4).bola(0.1, '#333', 0, 0.9, -1.65, 4)
+     .bola(0.34, cl, -0.45, 1.85, 0.3, 6, 1.2, 0.8, 1.1).bola(0.3, cl, 0.5, 1.5, -0.5, 6, 1.2, 0.8, 1.2).bola(0.25, cl, -0.3, 1.3, -0.7, 6, 1.2, 0.8, 1);
+    pata(-0.4, 0.55, 1.0, 0.14); pata(0.4, 0.55, 1.0, 0.14); pata(-0.4, -0.55, 1.0, 0.14); pata(0.4, -0.55, 1.0, 0.14);
+  } else if (t==='cerdo'){
+    A.bola(0.62, c, 0, 0.9, 0, 10, 1, 0.85, 1.35).bola(0.4, c, 0, 1.05, 0.95, 10).cil(0.18, 0.2, 0.25, cl, 0, 1.0, 1.35, Math.PI/2, 0, 0, 8).bola(0.04, '#333', -0.07, 1.0, 1.49, 4).bola(0.04, '#333', 0.07, 1.0, 1.49, 4)
+     .bola(0.08, '#fff', -0.16, 1.2, 1.2, 5).bola(0.08, '#fff', 0.16, 1.2, 1.2, 5).bola(0.04, '#111', -0.16, 1.2, 1.27, 4).bola(0.04, '#111', 0.16, 1.2, 1.27, 4)
+     .cono(0.1, 0.28, c, -0.22, 1.42, 0.85, 5, 0, 0, 0.5).cono(0.1, 0.28, c, 0.22, 1.42, 0.85, 5, 0, 0, -0.5)
+     .cil(0.03, 0.03, 0.3, c, 0.05, 1.0, -0.85, 0.8, 0, 0.9, 4).cil(0.03, 0.03, 0.25, c, -0.08, 1.05, -0.95, 0.4, 0, -1.2, 4);
+    pata(-0.28, 0.4, 0.55, 0.1); pata(0.28, 0.4, 0.55, 0.1); pata(-0.28, -0.4, 0.55, 0.1); pata(0.28, -0.4, 0.55, 0.1);
+  }
   const cuerpo = A.malla(matMate()); g.add(cuerpo);
   g.partes = {cuerpo, patas}; g.scale.setScalar(def.esc || 1);
   return g;
@@ -4971,6 +5025,23 @@ for (const k in ZONAS){
     const sp = letrero('🧛 ISLA DE LOS VAMPIROS BORRACHOS', '#f4c0ff', 'rgba(40,10,50,0.92)', 3); sp.position.set(I.x, y+14, I.z); mundo.add(sp);
     const sp2 = letrero('🍅 bar de jugo de tomate', '#fff', 'rgba(120,20,40,0.9)', 1.5); sp2.position.set(I.x, y+7.6, I.z+4.2); mundo.add(sp2);
   }
+  { /* la sabana: acacias, rocas y un charco */
+    const S = SABANA, y = altura(S.x, S.z);
+    for (let i=0;i<7;i++){ const a = i*0.9 + 0.4, r = 22 + (i%3)*7, x = S.x + Math.cos(a)*r, z = S.z + Math.sin(a)*r, h = altura(x, z); if (h < 1.5) continue; A.cil(0.25, 0.4, 5.5, '#8a6a3a', x, h+2.75, z, 0,0,0, 7).bola(3.6, '#6a9a3a', x, h+6.2, z, 8, 1, 0.32, 1).bola(2.4, '#7db04a', x + 1.2, h+6.8, z - 0.8, 7, 1, 0.3, 1); }
+    for (let i=0;i<5;i++){ const a = i*1.3 + 1.0, x = S.x + Math.cos(a)*30, z = S.z + Math.sin(a)*30, h = altura(x, z); if (h < 1.5) continue; A.bola(1.2 + (i%2)*0.6, '#9a9082', x, h+0.4, z, 7, 1.3, 0.6, 1); }
+    A.pieza(new THREE.CircleGeometry(6, 18), '#4fa3d8', S.x + 8, altura(S.x+8, S.z-6) + 0.15, S.z - 6, -Math.PI/2, 0, 0);
+    const sp = letrero('🦁 LA SABANA', '#fff6a0', 'rgba(120,90,30,0.92)', 3); sp.position.set(S.x, y+10, S.z); mundo.add(sp);
+  }
+  { /* la granja: cerca, establo rojo, charco de barro y pacas de heno */
+    const G = GRANJA, y = altura(G.x, G.z);
+    for (let i=0;i<28;i++){ const a = i/28*6.283, x = G.x + Math.cos(a)*GRANJA.r, z = G.z + Math.sin(a)*GRANJA.r, h = altura(x, z); if (h < 1.2) continue; A.caja(0.16, 1.1, 0.16, '#d9a066', x, h+0.55, z).caja(0.06, 0.1, 7.7, '#d9a066', x, h+0.9, z, 0, -a, 0).caja(0.06, 0.1, 7.7, '#d9a066', x, h+0.5, z, 0, -a, 0); }
+    A.caja(8, 4, 6, '#c0392b', G.x + 18, y+2, G.z + 4).pieza(techoGeo(8, 6, 2.2), '#6b3e1e', G.x + 18, y+4, G.z + 4).caja(2.2, 2.6, 0.2, '#4a2a10', G.x + 18, y+1.3, G.z + 7.1).caja(0.12, 2.6, 0.12, '#ffffff', G.x + 16.8, y+1.3, G.z + 7.15).caja(0.12, 2.6, 0.12, '#ffffff', G.x + 19.2, y+1.3, G.z + 7.15).caja(2.4, 0.12, 0.12, '#ffffff', G.x + 18, y+2.55, G.z + 7.15);
+    A.pieza(new THREE.CircleGeometry(4, 14), '#6b4a2a', G.x - 10, altura(G.x-10, G.z+8) + 0.12, G.z + 8, -Math.PI/2, 0, 0);
+    for (let i=0;i<4;i++) A.cil(0.9, 0.9, 1.4, '#e8c060', G.x + 12 + (i%2)*2.2, y+0.7, G.z - 10 + Math.floor(i/2)*2.2, Math.PI/2, 0, 0, 10);
+    A.cil(0.12, 0.12, 5, '#8a6a3a', G.x, y+2.5, G.z - 18, 0,0,0, 5).caja(0.3, 0.12, 1.4, '#8a6a3a', G.x, y+3.8, G.z - 18).bola(0.3, '#f4c27a', G.x, y+4.4, G.z - 18, 6).caja(1.0, 0.8, 0.3, '#2a6ad0', G.x, y+3.4, G.z - 18);   /* el espantapájaros */
+    const sp = letrero('🐄 LA GRANJA', '#fff', 'rgba(180,60,40,0.92)', 3); sp.position.set(G.x, y+10, G.z); mundo.add(sp);
+    const sp2 = letrero('🦖 VALLE DE LOS DINOSAURIOS 2', '#fff', 'rgba(60,90,40,0.9)', 3); sp2.position.set(VALLE_DINOS2.x, altura(VALLE_DINOS2.x, VALLE_DINOS2.z)+12, VALLE_DINOS2.z); mundo.add(sp2);
+  }
   { /* la sala de conciertos al aire libre: tarima, fondo, torres con luces, bocinas, micrófono y gradas */
     const E = ESCENARIO, y = altura(E.x, E.z), M = MICROFONO, G = '#8a8a96', NEG = '#15151c';
     A.caja(E.w, 0.36, E.d, '#4a3424', E.x, y+0.18, E.z).caja(E.w+1.2, 0.5, 0.9, '#e63946', E.x, y+0.25, E.z + E.d/2 + 0.45)
@@ -5035,6 +5106,7 @@ function cancionTocar(){
 }
 function cancionParar(){ if (cancion){ try{ cancion.pause(); }catch(e){} VOZ.pendientes.delete(cancion); } }
 /* los bichos vivos, colocados; el ovni de visita; la mascota */
+const animalesMesh = ANIMALES.map(n=>{ const def = n.tipo==='leon' ? {tipo:'leon', color:'#e0a040', claro:'#f4d090'} : n.tipo==='jirafa' ? {tipo:'jirafa', color:'#f0c060', claro:'#f8e0a0'} : n.tipo==='cebra' ? {tipo:'cebra', color:'#f4f4f8', claro:'#e0e0e8'} : n.tipo==='vaca' ? {tipo:'vaca', color:'#f8f6f0', claro:'#222'} : {tipo:'cerdo', color:'#ffb3c6', claro:'#ff8fb0'}; def.esc = (n.esc||1)*(n.tipo==='jirafa' ? 0.85 : 1); const g = armarCuadrupedo(def); const et = letrero((n.tipo==='leon' ? '🦁 ' : n.tipo==='jirafa' ? '🦒 ' : n.tipo==='cebra' ? '🦓 ' : n.tipo==='vaca' ? '🐄 ' : '🐷 ') + n.nombre, '#fff', 'rgba(60,90,40,0.85)', 1.3); et.position.y = (n.tipo==='jirafa' ? 8.5 : n.tipo==='leon' ? 3.2 : n.tipo==='cerdo' ? 2.2 : 3.4)/def.esc; g.add(et); mundo.add(g); return g; });
 const elefantesMesh = ELEFANTES.map(n=>{ const g = armarCuadrupedo({tipo:'elefante', color:'#8a8a98', claro:'#b8b8c4', esc:n.esc}); mundo.add(g); return g; });
 const renosMesh = RENOS.map(n=>{ const g = armarCuadrupedo({tipo:'reno', color:'#8a5a2a', claro:'#d9a066', nariz:n.nariz}); mundo.add(g); return g; });
 const vampirosMesh = VAMPIROS.map(n=>{ const g = armarPersona('vampiro'); const et = letrero('🧛 Vampiro', '#f4c0ff', 'rgba(40,10,50,0.85)', 1.2); et.position.y = 2.7; g.add(et); mundo.add(g); return g; });
@@ -5119,6 +5191,7 @@ function sincronizarMundoNuevo(t){
     if (canta && tick % 8 === 0){ const y = altura(MICROFONO.x, MICROFONO.z); particula(MICROFONO.x + (azar()-0.5)*1.5, y+2.4, MICROFONO.z + 0.6, ['#ff6ec0','#4fc3f7','#ffd23f'][tick%3], (azar()-0.5)*1.5, 2.5+azar()*1.5, 1+azar(), 70, 0.2, {grav:0.5, alfa:0.9}); }
     if (canta && tick % 30 === 0) confeti(ESCENARIO.x + (azar()-0.5)*20, altura(ESCENARIO.x, ESCENARIO.z+12)+6, ESCENARIO.z + 10 + azar()*10, 6);
   }
+  if (Math.hypot(J.x-SABANA.x, J.z-SABANA.z) < 220 || Math.hypot(J.x-GRANJA.x, J.z-GRANJA.z) < 220) P.animales.forEach((n, i)=>poneNPC(animalesMesh[i], n, altura(n.x, n.z)));
   if (Math.hypot(J.x-ISLA_VAMPIROS.x, J.z-ISLA_VAMPIROS.z) < 220) P.vampiros.forEach((n, i)=>{ const g = vampirosMesh[i]; poneNPC(g, n, altura(n.x, n.z)); g.rotation.z = Math.sin(n.fase*2.5 + i)*0.18; g.rotation.x = Math.sin(n.fase*1.7)*0.08; if (g.partes.capa) ondearCapa(g.partes.capa, t, 0.4 + n.mov*0.3); });
   if (Math.hypot(J.x-MONTANA.x, J.z-MONTANA.z) < 220){ P.renos.forEach((n, i)=>poneNPC(renosMesh[i], n, altura(n.x, n.z))); santaMesh.rotation.y = envolver(santaMesh.rotation.y + envolver((Math.hypot(J.x-SANTA.x, J.z-SANTA.z) < 14 ? Math.atan2(J.x-SANTA.x, J.z-SANTA.z) : SANTA.ang) - santaMesh.rotation.y)*0.06); animarPersona(santaMesh, 0, P.santa.fase, false, false); santaMesh.partes.bD.rotation.x = P.t - P.santa.saludoT < 90 ? -2.6 + Math.sin(t*8)*0.4 : -0.3; }
   if (P.casa && P.casa.circo){ const I = P.casa; P.circo.forEach((n, i)=>{ const g = circoMesh[i]; poneNPC(g, n, I.y + (n.tipo==='elefanteCirco' ? 2.4 : n.tipo==='leon' ? 1.1 : 0)); if (n.tipo==='payaso') g.position.y += Math.abs(Math.sin(n.fase*3))*0.15; if (n.tipo==='elefanteCirco') g.rotation.y = t*0.8; }); monosMesh.rotation.x = Math.sin(t*1.6)*0.9; }
@@ -5868,13 +5941,15 @@ function atenderEventos(){
       case 'roca': sfx.hamburguesa(); chispas(e.x, e.y+1, e.z, '#c0c0ff', 16, 5); grande('🌑 ROCA '+e.total+'/6', '#c0c0ff', 60); break;
       case 'cristal': sfx.hamburguesa(); chispas(e.x, e.y+1, e.z, '#7de0ff', 20, 6); grande('💎 CRISTAL '+e.total+'/5', '#7de0ff', 60); break;
       case 'saturniano': grande('👽 SATURNIANO '+e.total+'/4', '#c07dff', 70); break;
-      case 'saludoNPC': sfx.saludo(); chispas(e.x, e.y+2, e.z, '#ff6ec0', 12, 4); grande('¡HOLA, '+e.nombre.toUpperCase()+'! +'+e.monedas+' 🪙', '#ff9ed6', 90); if (e.bicho==='santa') sfx.campanitas(); else if (e.bicho==='leon') sfx.rugido(); else if (e.bicho==='alien') sfx.ovni(); else if (e.bicho==='elefante' || e.bicho==='elefanteCirco') sfx.trompeta(); else if (e.bicho==='vampiro') sfx.hipo(); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
+      case 'saludoNPC': sfx.saludo(); chispas(e.x, e.y+2, e.z, '#ff6ec0', 12, 4); grande('¡HOLA, '+e.nombre.toUpperCase()+'! +'+e.monedas+' 🪙', '#ff9ed6', 90); if (e.bicho==='santa') sfx.campanitas(); else if (e.bicho==='leon') sfx.rugido(); else if (e.bicho==='alien') sfx.ovni(); else if (e.bicho==='elefante' || e.bicho==='elefanteCirco') sfx.trompeta(); else if (e.bicho==='vampiro') sfx.hipo(); else if (e.bicho==='vaca') sfx.muu(); else if (e.bicho==='cerdo') sfx.oinc(); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
       case 'monedas': sfx.moneda(); monedaT = tick; if (e.n >= 5) grande('+'+e.n+' 🪙', '#ffe36e', 50); if (Number.isFinite(e.x)) chispas(e.x, e.y, e.z, '#ffe36e', 6, 3); break;
       case 'compra': sfx.estrella(); confeti(J.x, J.y, J.z, 20); grande('¡'+e.nombre.toUpperCase()+'! '+e.emoji, '#ffe36e', 100); break;
       case 'ropa': sfx.toque(); break;
       case 'fantasma': sfx.fantasma(); chispas(e.x, e.y, e.z, '#c0b0ff', 18, 5); grande('¡BUUU! 👻 +8 🪙', '#c0b0ff', 70); break;
       case 'trompeta': sfx.trompeta(); for (let i=0;i<16;i++) particula(e.x + (azar()-0.5), e.y+3.2, e.z + 3.4, '#8fd3ff', (azar()-0.5)*3, 5+azar()*4, 2+azar()*4, 40, 0.2, {grav:10, alfa:0.8}); break;
       case 'hipo': sfx.hipo(); burbuja('¡Hip!', 'Vampiro'); break;
+      case 'muu': sfx.muu(); burbuja('¡Muuuu!', 'Vaca'); break;
+      case 'oinc': sfx.oinc(); burbuja('¡Oinc, oinc!', 'Cerdito'); break;
       case 'mueble': { const on = e.on; if (e.t==='tele'){ if (on) sfx.tele(); else sfx.toque(); aviso(on ? '📺 ¡Dibujitos!' : '📺 Tele apagada'); } else if (e.t==='lampara'){ sfx.toque(); aviso(on ? '💡 Luz encendida' : '💡 Luz apagada'); } else if (e.t==='chimenea'){ if (on) sfx.trompeta(); else sfx.toque(); aviso(on ? '🔥 ¡Qué calentico!' : '🔥 Chimenea apagada'); } else if (e.t==='rocola'){ if (on) sfx.rocola(); else sfx.toque(); aviso(on ? '🎵 ¡A bailar!' : '🎵 Música apagada'); } else if (e.t==='arbolNavidad'){ sfx.campanitas(); aviso(on ? '🎄 ¡Luces de Navidad!' : '🎄 Luces apagadas'); } else if (e.t==='piano'){ sfx.piano(); for (let i=0;i<8;i++) particula(e.x + (azar()-0.5)*2, e.y + 1.6, e.z + (azar()-0.5)*1, ['#ff6ec0','#4fc3f7','#ffe36e'][i%3], (azar()-0.5)*0.8, 1.5+azar(), (azar()-0.5)*0.8, 60, 0.25, {grav:-0.5, alfa:0.9}); } else if (e.t==='armadura'){ sfx.choque(); sacudida = 5; burbuja('¡CLANK!', 'La armadura'); } break; }
       case 'muebleNada': aviso(e.texto); sfx.toque(); break;
       case 'sentado': sfx.toque(); if (e.t==='trono') grande('👑 ¡EL TRONO!', '#ffe36e', 80); else aviso('😌 Qué cómodo… (A o la palanca para levantarte)'); break;
@@ -6158,6 +6233,7 @@ function ambiente(){
   luzCielo.groundColor.copy(lin(0x4f8a3a)).lerp(lin(0x101a2a), nf);
   luzCielo.intensity = lerp(lerp(0.6, 0.45, bajoF), lerp(0.3, 0.28, bajoF), nf) + rayoLuz*0.5;
   luzAmb.intensity = lerp(lerp(0.1, 0.3, bajoF), lerp(0.16, 0.26, bajoF), nf) + rayoLuz*1.2 + (zona ? 0.12 : 0);
+  cupula.position.copy(camera.position);   /* la cúpula del cielo va con la cámara: el mundo es más ancho que su radio */
   if (NOCHE) sol.position.set(camera.position.x - 500, camera.position.y + 700, camera.position.z - 300);
   else { const a = ((P ? P.hora : 0.32) - 0.25)*6.283; sol.position.set(camera.position.x + Math.cos(a)*700, camera.position.y + Math.sin(a)*600 + 60, camera.position.z + 300); sol.material.opacity = Math.max(0, 1 - nf*1.3); }
   cupula.position.copy(camera.position);
@@ -6253,7 +6329,7 @@ const mapaImg = (()=>{
   const c = document.createElement('canvas'); c.width = c.height = 200;
   const x = c.getContext('2d'), im = x.createImageData(200, 200), d = im.data;
   for (let j=0;j<200;j++) for (let i=0;i<200;i++){
-    const h = alturaMalla((i/200-0.5)*1240, (j/200-0.5)*1240);
+    const h = alturaMalla((i/200-0.5)*(TAM+40), (j/200-0.5)*(TAM+40));
     let r,g,b;
     if (h < -0.4){ const k = clamp(-h/30, 0, 1); r = 40*(1-k)+10*k; g = 150*(1-k)+60*k; b = 220*(1-k)+140*k; }
     else if (h < 1.8){ r = 240; g = 222; b = 160; }
@@ -6263,13 +6339,13 @@ const mapaImg = (()=>{
   }
   x.putImageData(im, 0, 0);
   x.strokeStyle = 'rgba(60,60,80,0.9)'; x.lineWidth = 1.6; x.beginPath();
-  RUTA.M.forEach((m, i)=>{ const px = (m.x/1240+0.5)*200, pz = (m.z/1240+0.5)*200; if (i===0) x.moveTo(px, pz); else x.lineTo(px, pz); }); x.closePath(); x.stroke();
-  x.strokeStyle = 'rgba(200,200,210,0.9)'; x.lineWidth = 2.5; x.beginPath(); x.moveTo((PISTA.x/1240+0.5)*200, (PISTA.z0/1240+0.5)*200); x.lineTo((PISTA.x/1240+0.5)*200, (PISTA.z1/1240+0.5)*200); x.stroke();
-  x.strokeStyle = 'rgba(90,90,110,0.95)'; x.lineWidth = 2; x.beginPath(); x.moveTo((PUENTE.x0/1240+0.5)*200, (PUENTE.z0/1240+0.5)*200); x.lineTo((PUENTE.x1/1240+0.5)*200, (PUENTE.z1/1240+0.5)*200); x.stroke();
+  RUTA.M.forEach((m, i)=>{ const px = (m.x/(TAM+40)+0.5)*200, pz = (m.z/(TAM+40)+0.5)*200; if (i===0) x.moveTo(px, pz); else x.lineTo(px, pz); }); x.closePath(); x.stroke();
+  x.strokeStyle = 'rgba(200,200,210,0.9)'; x.lineWidth = 2.5; x.beginPath(); x.moveTo((PISTA.x/(TAM+40)+0.5)*200, (PISTA.z0/(TAM+40)+0.5)*200); x.lineTo((PISTA.x/(TAM+40)+0.5)*200, (PISTA.z1/(TAM+40)+0.5)*200); x.stroke();
+  x.strokeStyle = 'rgba(90,90,110,0.95)'; x.lineWidth = 2; x.beginPath(); x.moveTo((PUENTE.x0/(TAM+40)+0.5)*200, (PUENTE.z0/(TAM+40)+0.5)*200); x.lineTo((PUENTE.x1/(TAM+40)+0.5)*200, (PUENTE.z1/(TAM+40)+0.5)*200); x.stroke();
   return c;
 })();
 function dibujarMapa(cx, cy, r){
-  const J = P.J, esc_ = (r*2)/1240;
+  const J = P.J, esc_ = (r*2)/(TAM+40);
   const aM = (x, z)=>({x: cx + x*esc_, y: cy + z*esc_});
   ctx.save();
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.clip();
@@ -6279,7 +6355,7 @@ function dibujarMapa(cx, cy, r){
   for (const v of P.vehiculos){ if (P.veh===v) continue; const p = aM(v.x, v.z); ctx.font = '12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.emoji, p.x, p.y); }
   if (obj.x !== null && obj.x !== undefined){ const p = aM(obj.x, obj.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + Math.sin(tick*0.15)*2, 0, Math.PI*2); ctx.stroke(); }
   if (NOCHE){ const q = aM(CORO.x, CORO.z); ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐐', q.x, q.y); }
-  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS], ['🐘', ISLA_ELEFANTES], ['🧛', ISLA_VAMPIROS], ['🎪', ISLA_CIRCO], ['🎤', ISLA_CONCIERTO], ['🎅', MONTANA]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
+  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS], ['🐘', ISLA_ELEFANTES], ['🧛', ISLA_VAMPIROS], ['🎪', ISLA_CIRCO], ['🎤', ISLA_CONCIERTO], ['🎅', MONTANA], ['🦖', VALLE_DINOS2], ['🦁', SABANA], ['🐄', GRANJA]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
   for (const [, r] of RED.remotos){ const q = aM(r.act.x, r.act.z); ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
   const p = aM(J.x, J.z);
   ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI*2); ctx.fill();
@@ -6611,6 +6687,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, VALLE_DINOS2, SABANA, GRANJA, ANIMALES, FARO, ISLITA, R_ISLA, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();

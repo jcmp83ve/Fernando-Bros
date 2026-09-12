@@ -66,7 +66,7 @@ bien('frases:', Object.keys(N.CLIPS).length, 'grabadas y', N.SIN_GRABACION.lengt
   if (pmax - pmin > 0.3) mal('la pista de aterrizaje no está plana ('+(pmax-pmin).toFixed(2)+' m)');
   for (const h of N.HAMBURGUESAS) if (![h.x,h.y,h.z].every(Number.isFinite)) mal('hamburguesa rota');
   if (N.DECOR.arboles.length < 200 || N.DECOR.palmeras.length < 40 || N.DECOR.pinos.length < 20) mal('pocos árboles: '+N.DECOR.arboles.length+'/'+N.DECOR.palmeras.length+'/'+N.DECOR.pinos.length);
-  if (N.DECOR.arboles.length + N.DECOR.palmeras.length + N.DECOR.pinos.length > 700) mal('demasiados árboles para chocar: '+(N.DECOR.arboles.length + N.DECOR.palmeras.length + N.DECOR.pinos.length));
+  if (N.DECOR.arboles.length + N.DECOR.palmeras.length + N.DECOR.pinos.length > 1700) mal('demasiados árboles para chocar: '+(N.DECOR.arboles.length + N.DECOR.palmeras.length + N.DECOR.pinos.length));
   if (!enTierra(N.MARACAIBO.x, N.MARACAIBO.z)) mal('Maracaibo está bajo el agua');
   for (const c of N.CASAS_MCBO) if (!enTierra(c.x, c.z)) mal(c.nombre+' de Maracaibo está en el agua');
   for (const a of N.AREPAS) if (!enTierra(a.x, a.z)) mal('una arepa está en el agua');
@@ -261,8 +261,8 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
 {
   const v = montar(P, 'barco');
   /* bordeando la costa del sur, como lo haría un niño mirando el mapita */
-  const ruta = [[-100,380],[250,330],[400,220],[N.ISLITA.x, N.ISLITA.z]]; let paso_ = 0;
-  const f = correr(P, 60*150, (P)=>{ const w = ruta[paso_]; if (paso_ < ruta.length-1 && Math.hypot(v.x-w[0], v.z-w[1]) < 25) paso_++; return {jy:1, b:true, jx:hacia(v, w[0], w[1])}; }, (P)=>Math.hypot(v.x-N.ISLITA.x, v.z-N.ISLITA.z) < 40);
+  const ruta = [[-150,570],[375,495],[600,330],[N.ISLITA.x, N.ISLITA.z]]; let paso_ = 0;
+  const f = correr(P, 60*260, (P)=>{ const w = ruta[paso_]; if (paso_ < ruta.length-1 && Math.hypot(v.x-w[0], v.z-w[1]) < 25) paso_++; return {jy:1, b:true, jx:hacia(v, w[0], w[1])}; }, (P)=>Math.hypot(v.x-N.ISLITA.x, v.z-N.ISLITA.z) < 40);
   const d = Math.hypot(v.x-N.ISLITA.x, v.z-N.ISLITA.z);
   if (d > 40) mal('el barco no llegó a la islita (quedó a '+d.toFixed(0)+' m)'); else bien('barco: llegó a la islita en', (f/60).toFixed(0), 's');
   correr(P, 60*4, (P)=>({jy:1, jx:hacia(v, N.ISLITA.x, N.ISLITA.z)}));
@@ -282,8 +282,8 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   correr(P, 1, {salir:true});
   if (!P.veh) mal('se bajó del submarino bajo el agua');
   /* bordeando por fuera de Maracaibo */
-  const ruta = [[-330,200],[-480,0],[-545,-190],[-450,-470],[N.COFRE.x, N.COFRE.z]]; let paso_ = 0;
-  const f = correr(P, 60*200, (P)=>{ const w = ruta[paso_]; if (paso_ < ruta.length-1 && Math.hypot(v.x-w[0], v.z-w[1]) < 25) paso_++;
+  const ruta = [[-495,300],[-720,0],[-818,-285],[-675,-705],[N.COFRE.x, N.COFRE.z]]; let paso_ = 0;
+  const f = correr(P, 60*340, (P)=>{ const w = ruta[paso_]; if (paso_ < ruta.length-1 && Math.hypot(v.x-w[0], v.z-w[1]) < 25) paso_++;
     const fondo = N.altura(v.x, v.z); return {jy:1, jx:hacia(v, w[0], w[1]), b: v.y > fondo + 6, a: v.y < fondo + 3}; }, (P)=>P.prog.cofre);
   if (!P.prog.cofre) mal('el submarino no llegó al cofre (a '+Math.hypot(v.x-N.COFRE.x, v.z-N.COFRE.z).toFixed(0)+' m, y '+v.y.toFixed(1)+')');
   else bien('submarino: encontró el cofre en', (f/60).toFixed(0), 's a', v.y.toFixed(0), 'm de profundidad');
@@ -311,10 +311,11 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   /* da la vuelta a la isla por fuera, boya por boya, con un punto intermedio en mar abierto entre cada dos */
   const a0 = Math.atan2(v.z, v.x);
   const orden = N.BOYAS.slice().sort((p, q)=>{ const da = (Math.atan2(p.z,p.x)-a0+Math.PI*4)%(Math.PI*2), db = (Math.atan2(q.z,q.x)-a0+Math.PI*4)%(Math.PI*2); return da-db; });
-  const ruta = [[Math.cos(a0)*400, Math.sin(a0)*400]];
-  for (const b of orden){ const ab = Math.atan2(b.z, b.x), prev = ruta[ruta.length-1], ap = Math.atan2(prev[1], prev[0]); const am = ap + env(ab-ap)/2; ruta.push([Math.cos(am)*400, Math.sin(am)*400]); ruta.push([b.x, b.z]); }
+  const RM = N.R_ISLA + 100;
+  const ruta = [[Math.cos(a0)*RM, Math.sin(a0)*RM]];
+  for (const b of orden){ const ab = Math.atan2(b.z, b.x), prev = ruta[ruta.length-1], ap = Math.atan2(prev[1], prev[0]); const am = ap + env(ab-ap)/2; ruta.push([Math.cos(am)*RM, Math.sin(am)*RM]); ruta.push([b.x, b.z]); }
   let paso_ = 0;
-  const f = correr(P, 60*300, (P)=>{ const w = ruta[Math.min(paso_, ruta.length-1)]; if (Math.hypot(v.x-w[0], v.z-w[1]) < 12) paso_++; return {jy:1, b:true, jx:hacia(v, w[0], w[1])}; }, (P)=>P.estrellas.includes('motoagua'));
+  const f = correr(P, 60*480, (P)=>{ const w = ruta[Math.min(paso_, ruta.length-1)]; if (Math.hypot(v.x-w[0], v.z-w[1]) < 12) paso_++; return {jy:1, b:true, jx:hacia(v, w[0], w[1])}; }, (P)=>P.estrellas.includes('motoagua'));
   if (!P.estrellas.includes('motoagua')) mal('la moto de agua no pasó las 6 boyas ('+P.prog.boyas.length+')'); else bien('moto de agua: las 6 boyas en', (f/60).toFixed(0), 's');
   correr(P, 1, {a:true}); correr(P, 40, {}); if (!tipos.brinco) mal('la moto de agua no brinca');
   correr(P, 60*3, {jy:-1}); correr(P, 60*2, {}); correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó de la moto de agua');
@@ -454,7 +455,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   /* los dinosaurios sueltos: pasean por su valle, en tierra, y empujan al que camina */
   poner(Q, N.VALLE_DINOS.x - 40, N.VALLE_DINOS.z); const antes = Q.dinos.map(d=>({x:d.x, z:d.z}));
   correr(Q, 60*25, {});
-  let movidos = 0; Q.dinos.forEach((d, i)=>{ if (N.altura(d.x, d.z) < 1.4) mal('un dinosaurio se metió al agua'); if (Math.hypot(d.x - N.VALLE_DINOS.x, d.z - N.VALLE_DINOS.z) > N.VALLE_DINOS.r + 8) mal('un dinosaurio se fue del valle'); if (Math.hypot(d.x-antes[i].x, d.z-antes[i].z) > 4) movidos++; });
+  let movidos = 0; Q.dinos.forEach((d, i)=>{ const V = N.VALLES_DINOS[N.DINOS[i].valle||0]; if (N.altura(d.x, d.z) < 1.4) mal('un dinosaurio se metió al agua'); if (Math.hypot(d.x - V.x, d.z - V.z) > V.r + 8) mal('un dinosaurio se fue del valle'); if (Math.hypot(d.x-antes[i].x, d.z-antes[i].z) > 4) movidos++; });
   if (movidos < 2) mal('los dinosaurios no pasean: solo '+movidos+' se movieron');
   if (!tipos.dinosVistos) mal('no se dijo lo de los dinosaurios al acercarse');
   { const d = Q.dinos[0]; Q.J.x = d.x; Q.J.z = d.z; Q.J.y = N.altura(d.x, d.z); correr(Q, 5, {}); if (Math.hypot(Q.J.x-d.x, Q.J.z-d.z) < d.r) mal('el dinosaurio no empuja'); }
