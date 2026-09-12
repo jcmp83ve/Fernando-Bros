@@ -258,6 +258,15 @@ ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
   trepar) y por el techo a dos aguas se camina; y en los **columpios del
   parque** uno se cuelga con A, se impulsa con la palanca y con A salta (10
   monedas si el salto es alto).
+- **El mundo es un 50 % más grande**: la isla mide 900 m de lado a lado
+  (antes 600), el mar y el cielo crecieron con ella y las islas lejanas,
+  Maracaibo con su puente, el faro y el cofre se alejaron en proporción. En
+  las tierras nuevas del anillo de afuera hay **un segundo valle de
+  dinosaurios** (seis más: dos tiranosaurios, dos cuello largo y dos
+  triceratops, 🦖 en el radar), **la sabana** con leones, jirafas y cebras
+  (🦁) y **la granja** con vacas, cerditos, gallinas, establo, pacas de heno y
+  un espantapájaros (🐄). Todos se saludan y hablan. Y los meteoritos caen el
+  doble de seguido, más y más grandes.
 - **La partida no se cae**: la sala manda latidos, el invitado que pierde la
   conexión vuelve a entrar solo (hasta diez intentos), la pantalla no se
   apaga mientras se juega, el botón «atrás» del navegador pausa en vez de
