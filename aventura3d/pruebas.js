@@ -517,6 +517,8 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
     poner(C, N.MICROFONO.x, N.MICROFONO.z + 0.4); correr(C, 10 + N.CANCION_FRAMES, {});
     if (!tipos.ovacion) mal('al terminar la canción no hubo ovación');
     poner(C, 0, -30); correr(C, 90, {jy:1, camYaw:0, b:true}); if (C.J.mov < 15) mal('con B no corre un 60% más rápido: '+C.J.mov.toFixed(1));
+    const vB = C.J.mov; correr(C, 90, {jy:1, camYaw:0, b:true, c:true}); if (C.J.mov < vB*1.4) mal('con C no corre un 50% más: '+C.J.mov.toFixed(1)+' vs '+vB.toFixed(1)); if (!tipos.turboPie) mal('el turbo a pie no deja rayitas');
+    correr(C, 90, {jy:1, camYaw:0, c:true}); if (C.J.mov < 6.2*1.4 || C.J.mov > 6.2*1.6) mal('con C solo, sin B, no va un 50% más que caminando: '+C.J.mov.toFixed(1));
     /* fútbol: correr contra el balón lo patea; llevarlo a la portería es gol */
     const B = C.balon; poner(C, N.CANCHA.x - 4, N.CANCHA.z); correr(C, 3, {});
     correr(C, 40, {jy:1, camYaw: Math.PI/2}); if (!tipos.patada) mal('correr contra el balón no lo patea'); if (Math.hypot(B.vx, B.vz) < 1 && Math.abs(B.x - N.CANCHA.x) < 0.5) mal('el balón no se movió');
@@ -586,7 +588,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
 }
 /* 14) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca','ovacion','patada','gol','disparo','explosion','surfea','mueble','muebleNada','sentado','levanta','rey','dormir','despierta','comidaCasa','regalo','muebleSalto','columpio','columpioSalta','columpioAlto','techo'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca','ovacion','patada','gol','disparo','explosion','surfea','mueble','muebleNada','sentado','levanta','rey','dormir','despierta','comidaCasa','regalo','muebleSalto','columpio','columpioSalta','columpioAlto','techo','turboPie'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);
