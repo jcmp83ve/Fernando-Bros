@@ -511,6 +511,33 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
     if (!tipos.conciertoCerca) mal('no se dijo nada al llegar a la sala de conciertos');
     bien('sala de conciertos: Fernando canta al micrófono, y de cantante canta cuando lo saludan');
   }
+  /* fase 1: ovación tras la canción, correr 60% más, fútbol, tanque, tabla de surf y olas */
+  { const C = N.crearPartida(); C.pj = 'fernando';
+    poner(C, N.MICROFONO.x, N.MICROFONO.z + 0.4); correr(C, 10 + N.CANCION_FRAMES, {});
+    if (!tipos.ovacion) mal('al terminar la canción no hubo ovación');
+    poner(C, 0, -30); correr(C, 90, {jy:1, camYaw:0, b:true}); if (C.J.mov < 15) mal('con B no corre un 60% más rápido: '+C.J.mov.toFixed(1));
+    /* fútbol: correr contra el balón lo patea; llevarlo a la portería es gol */
+    const B = C.balon; poner(C, N.CANCHA.x - 4, N.CANCHA.z); correr(C, 3, {});
+    correr(C, 40, {jy:1, camYaw: Math.PI/2}); if (!tipos.patada) mal('correr contra el balón no lo patea'); if (Math.hypot(B.vx, B.vz) < 1 && Math.abs(B.x - N.CANCHA.x) < 0.5) mal('el balón no se movió');
+    let goles = 0; for (let k=0;k<12 && !goles;k++){ B.x = N.CANCHA.x + N.CANCHA.w/2 - 6; B.z = N.CANCHA.z; B.vx = B.vz = B.vy = 0; poner(C, B.x - 2.5, B.z); correr(C, 3, {}); correr(C, 60, {jy:1, camYaw: Math.PI/2, b:true}); goles = C.goles; }
+    if (!goles || !tipos.gol) mal('no se pudo meter gol'); if (C.monedas < 10) mal('el gol no dio monedas');
+    correr(C, 120, {}); if (Math.hypot(B.x-N.CANCHA.x, B.z-N.CANCHA.z) > 1) mal('tras el gol el balón no volvió al centro');
+    /* el tanque: se monta, con B dispara, la bala estalla y manda a volar una caja */
+    const tq = C.vehiculos.find(v=>v.id==='tanque'); if (!tq) mal('no hay tanque');
+    poner(C, tq.x + 3, tq.z); correr(C, 3, {}); correr(C, 1, {a:true}); if (C.veh !== tq) mal('no se montó en el tanque');
+    const caja = C.props.find(p=>p.tipo==='caja'); tq.ang = Math.atan2(caja.x - tq.x, caja.z - tq.z); const dc = Math.hypot(caja.x-tq.x, caja.z-tq.z); tq.x = caja.x - Math.sin(tq.ang)*Math.min(dc, 30); tq.z = caja.z - Math.cos(tq.ang)*Math.min(dc, 30); tq.y = N.altura(tq.x, tq.z);
+    correr(C, 2, {b:true}); if (!tipos.disparo || !C.balas.length) mal('el tanque no disparó con B');
+    correr(C, 60*4, {}, (P)=>tipos.explosion); if (!tipos.explosion) mal('la bala del tanque no estalló');
+    correr(C, 1, {salir:true}); if (C.veh) mal('no se pudo bajar del tanque');
+    /* las olas grandes y la tabla de surf */
+    let maxOla = 0; for (let k=0;k<200;k++) maxOla = Math.max(maxOla, Math.abs(N.olaGrande(N.OLAS.x, N.OLAS.z, k*0.05))); if (maxOla < 1.8) mal('las olas grandes no son grandes: '+maxOla.toFixed(2));
+    if (Math.abs(N.olaGrande(N.OLAS.x + N.OLAS.r*1.2, N.OLAS.z, 1)) > 0.01) mal('las olas grandes se salen de su zona');
+    const tb = C.vehiculos.find(v=>v.id==='tabla'); if (!tb) mal('no hay tabla de surf'); if (N.altura(tb.x, tb.z) > -1.1) mal('la tabla no está en el agua');
+    C.J.x = tb.x + 2; C.J.z = tb.z; C.J.y = 0; C.J.nadando = true; C.J.suelo = false; correr(C, 3, {}); correr(C, 1, {a:true}); if (C.veh !== tb) mal('no se montó en la tabla');
+    tb.x = N.OLAS.x; tb.z = N.OLAS.z; tb.ang = Math.atan2(-N.OLAS.dx, -N.OLAS.dz); let vmax = 0; correr(C, 60*20, {jy:1}, (P)=>{ vmax = Math.max(vmax, tb.vel); return tipos.surfea; });
+    if (!tipos.surfea) mal('en las olas grandes no se surfea (vel máx '+vmax.toFixed(1)+')'); if (C.monedas < 30) mal('agarrar la ola no dio monedas');
+    bien('fase 1: ovación, carrera 60% más rápida, fútbol con goles, tanque que dispara y tabla de surf en las olas');
+  }
   /* las frases nuevas: cada personaje las dice a su manera */
   for (const k of Object.keys(N.FRASES_NUEVAS)) for (const pj of N.PERSONAJES_RED) if (!N.fraseDe(pj.id, k)) mal('sin frase '+k+' para '+pj.nombre);
   if (!/^¡Épale!/.test(N.fraseDe('nacho', 'castillo'))) mal('Nacho no dice épale');
@@ -519,7 +546,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
 }
 /* 14) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca','ovacion','patada','gol','disparo','explosion','surfea'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);

@@ -603,7 +603,7 @@ const TAM = 1200, NSEG = 240, SEG = TAM/NSEG, MITAD = TAM/2, LIMITE = 590;
 const R_ISLA = 300;
 const ISLITA = {x:430, z:170};
 const MARACAIBO = {x:-400, z:-300, r:110};   /* la isla de las arepas, al noroeste, unida por el puente */
-const LUNA = {x:0, y:700, z:0, r:90};
+const LUNA = {x:0, y:520, z:0, r:90};   /* más baja que antes: se llega más fácil */
 const ISLA_BANANA = {x:-430, z:250, r:48};    /* la isla de las bananas, al suroeste: quien come banana se vuelve gorila */
 const CASTILLO = {x:-150, z:30, r:24, ang:Math.PI/2};   /* el castillo, al oeste del pueblo; la puerta mira al este */
 const VALLE_DINOS = {x:110, z:-110, r:28};    /* el valle donde pasean los dinosaurios sueltos */
@@ -617,8 +617,8 @@ const MICROFONO = {x:ESCENARIO.x, z:ESCENARIO.z+2.6};
 const CANCION_FRAMES = 60*10;   /* la canción de Fernando dura unos diez segundos */
 const enIslaLejana = (x, z)=> [ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO].some(i=>Math.hypot(x-i.x, z-i.z) < i.r + 8);
 /* los planetas, más arriba que la luna: el cohete llega a los tres */
-const SATURNO = {x:350, y:1300, z:-250, r:105};
-const JUPITER = {x:-420, y:1950, z:380, r:150};
+const SATURNO = {x:350, y:900, z:-250, r:105};
+const JUPITER = {x:-420, y:1300, z:380, r:150};
 const MONTANA = {x:-60, z:-200};
 const PUEBLO = {x:20, z:70};
 const FARO = {x:-270, z:-60};
@@ -927,6 +927,8 @@ const VEHICULOS_DEF = [
   {id:'heli',  nombre:'el helicóptero', emoji:'🚁', x:236, z:8, ang:-Math.PI/2, radio:2.6, vuela:true},
   {id:'motoagua', nombre:'la moto de agua', emoji:'🛥️', x:MUELLE.x0 + Math.cos(MUELLE.ang)*34 + Math.sin(MUELLE.ang)*5.5, z:MUELLE.z0 + Math.sin(MUELLE.ang)*34 - Math.cos(MUELLE.ang)*5.5, ang:Math.atan2(Math.cos(MUELLE.ang), Math.sin(MUELLE.ang)), radio:1.6, agua:true},
   {id:'nave',  nombre:'la nave espacial', emoji:'🚀', x:186, z:-56, ang:Math.PI, radio:2.4, vuela:true},
+  {id:'tanque', nombre:'el tanque', emoji:'🪖', x:HANGAR.x-20, z:HANGAR.z+12, ang:-Math.PI/2, radio:2.6, aplasta:true},
+  {id:'tabla', nombre:'la tabla de surf', emoji:'🏄', x:PLAYA.x + Math.cos(PLAYA.ang)*31, z:PLAYA.z + Math.sin(PLAYA.ang)*31, ang:PLAYA.ang + Math.PI/2, radio:1.2, agua:true},
   {id:'ovni',  nombre:'la nave extraterrestre', emoji:'🛸', x:CASTILLO.x, z:CASTILLO.z-44, ang:0, radio:3.2, vuela:true},
   {id:'motonieve', nombre:'la moto de nieve', emoji:'🛷', x:MONTANA.x+16, z:MONTANA.z+10, ang:Math.PI/2, radio:1.6, nieve:true},
   {id:'esquis', nombre:'los esquís', emoji:'⛷️', x:MONTANA.x+20, z:MONTANA.z+16, ang:Math.PI/2, radio:1.0, nieve:true},
@@ -997,6 +999,9 @@ const FRASES_NUEVAS = {
   fantasma: '¡Un fantasma de popo! ¡Buuu!',
   concierto: '¡Un concierto! ¡Voy a cantar mi canción!',
   conciertoFer: '¡Mira, es Fernando! ¡Vamos a saludarlo para que cante!',
+  surf: '¡Surf! ¡Voy a agarrar las olas grandes!',
+  tanque: '¡Al ataque con el tanque! ¡Pum, pum!',
+  gol: '¡Goooool! ¡Qué golazo!',
   flaco: '¡Hice popo y quedé flaquito!',
 };
 const alFinal = (t, suf)=> /!$/.test(t) ? t.replace(/!(?=[^!]*$)/, suf+'!') : t + suf;
@@ -1183,8 +1188,15 @@ function altura(x, z){
 }
 /* lo que ven los barcos: el fondo de verdad, sin puente ni muelle encima */
 const alturaAgua = (x, z)=> alturaMalla(x, z);
+/* frente a la playa hay una zona de olas grandes que ruedan hacia la orilla: ahí se surfea */
+const OLAS = {x: PLAYA.x + Math.cos(PLAYA.ang)*90, z: PLAYA.z + Math.sin(PLAYA.ang)*90, r: 62, dx: Math.cos(PLAYA.ang), dz: Math.sin(PLAYA.ang), amp: 2.4, k: 0.11, w: 1.1};
+function olaGrande(x, z, t){
+  const d = Math.hypot(x-OLAS.x, z-OLAS.z); if (d > OLAS.r) return 0;
+  const f = 1 - smooth(OLAS.r*0.35, OLAS.r, d);
+  return OLAS.amp*f*Math.sin(OLAS.k*(x*OLAS.dx + z*OLAS.dz) + OLAS.w*t);
+}
 function ola(x, z, t){
-  return 0.22*Math.sin(x*0.23 + t*1.3) + 0.16*Math.sin(z*0.29 - t*1.1) + 0.1*Math.sin((x+z)*0.11 + t*0.7);
+  return 0.22*Math.sin(x*0.23 + t*1.3) + 0.16*Math.sin(z*0.29 - t*1.1) + 0.1*Math.sin((x+z)*0.11 + t*0.7) + olaGrande(x, z, t);
 }
 const enAgua = (x, z)=> altura(x, z) < NIVEL_MAR - 1.1;
 
@@ -1395,7 +1407,8 @@ function crearPartida(guardado){
     hora: NOCHE ? 0.0 : 0.32, fantasmas: [], fantasmaDicho: -99999, mascota: null, mascotaPos: null,
     props: PROPS_DEF.map(d=>Object.assign({}, d, {ox:d.x, oz:d.z, y:0, vx:0, vy:0, vz:0, giro:0, ang:d.ang||0, estado:'quieto', t:0, fase:0, huyeT:0, premioT:-9999})),
     aliens: {luna: ZONAS.luna.aliens.map(a=>Object.assign({}, a)), saturno: ZONAS.saturno.aliens.map(a=>Object.assign({}, a)), jupiter: ZONAS.jupiter.aliens.map(a=>Object.assign({}, a))},
-    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999,
+    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
+    balas: [], explosiones: [], disparoT: -9999, surfT: -9999, balon: {x:CANCHA.x, y:0, z:CANCHA.z, vx:0, vy:0, vz:0, gol:0}, goles: 0,
     trompetaT: -9999, hipoT: -9999, rugidoLeonT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
@@ -1484,7 +1497,7 @@ function pasoPie(P, ent){
     dx = (fx*ent.jy + rx*ent.jx)/mag; dz = (fz*ent.jy + rz*ent.jx)/mag;
     J.ang = envolver(J.ang + envolver(Math.atan2(dx, dz) - J.ang)*0.25);
   }
-  let velMax = J.nadando ? 3.2 : (ent.b ? 12.35 : 6.2);                /* con B se corre un 30% más rápido que antes */
+  let velMax = J.nadando ? 3.2 : (ent.b ? 19.8 : 6.2);                 /* con B se corre un 60% más rápido que antes */
   if (P.ganas && !J.nadando) velMax *= 0.72;                          /* con ganas de popo se camina apretado */
   if (P.gorilaT > 0) velMax *= 1.3;                                    /* el gorila corre más */
   else if (P.gordura > 0) velMax *= 1 - 0.05*P.gordura;                /* gordito se camina más lento */
@@ -1616,6 +1629,8 @@ function montar(P, v){
   if (v.id==='ovni') decir(P, 'ovni');
   else if (v.id==='avion' || v.id==='heli' || v.id==='nave' || v.id==='ptero') decir(P, 'volar');
   else if (v.id==='barco' || v.id==='motoagua') decir(P, 'barco');
+  else if (v.id==='tabla') decir(P, 'surf');
+  else if (v.id==='tanque') decir(P, 'tanque');
   else if (v.id==='dino') decir(P, 'dino');
 }
 function puedeBajar(P){
@@ -1623,7 +1638,7 @@ function puedeBajar(P){
   if (Math.abs(v.vel) > 4) return false;
   if ((v.id==='avion' || v.id==='heli' || v.id==='nave' || v.id==='ovni') && v.aire) return false;
   if (v.id==='sub' && v.y < NIVEL_MAR - 0.9) return false;
-  if (v.agua && v.y > NIVEL_MAR + 1.5) return false;
+  if (v.agua && v.y > NIVEL_MAR + ola(v.x, v.z, P.t*DT) + 1.2) return false;   /* solo si está en el aire, no sobre una ola alta */
   return true;
 }
 function saltarParacaidas(P){
@@ -1662,7 +1677,9 @@ const CARACT = {
   sub:   {vmax: 12, acc: 6,  freno: 8,  giro: 1.35, reversa: 5, turbo: 1.3, vertical: 5.5},
   heli:  {vmax: 26, acc: 10, freno: 10, giro: 1.7, reversa: 8, turbo: 1.3, vertical: 7, techo: 220},
   motoagua: {vmax: 32, acc: 12, freno: 12, giro: 2.0, reversa: 4, turbo: 1.35},
-  nave:  {vmax: 48, acc: 14, freno: 14, giro: 1.4, reversa: 0, turbo: 1.4, empuje: 30, techo: 2300},
+  nave:  {vmax: 48, acc: 14, freno: 14, giro: 1.4, reversa: 0, turbo: 1.4, empuje: 40, techo: 1700},
+  tanque: {vmax: 14, acc: 8,  freno: 14, giro: 1.4, reversa: 6, turbo: 1},
+  tabla:  {vmax: 7.5, acc: 6, freno: 8, giro: 2.2, reversa: 2, turbo: 1.2},   /* remando es lenta: la ola es la que la lleva */
   dino:  {vmax: 18, acc: 24, freno: 30, giro: 2.6, reversa: 3, turbo: 1.35},
   ptero: {vmax: 30, acc: 10, freno: 10, giro: 2.1, reversa: 6, turbo: 1.4, vertical: 8, techo: 200},
   ovni:  {vmax: 46, acc: 16, freno: 16, giro: 2.6, reversa: 12, turbo: 1.6, vertical: 13, techo: 420},
@@ -1671,7 +1688,8 @@ const CARACT = {
 };
 function pasoVehiculo(P, v, ent){
   const C = CARACT[v.id];
-  const turbo = ent.b && (v.id!=='sub');
+  const turbo = ent.b && v.id!=='sub' && v.id!=='tanque';
+  if (v.id==='tanque') dispararTanque(P, v, ent);
   v.turbo = turbo ? Math.min(1, v.turbo+0.1) : Math.max(0, v.turbo-0.05);
   const fx = Math.sin(v.ang), fz = Math.cos(v.ang);
   if (v.id==='avion' && v.aire) return pasoAvionAire(P, v, ent, C);
@@ -1683,7 +1701,9 @@ function pasoVehiculo(P, v, ent){
   /* en tierra o sobre el agua: gas, freno, marcha atrás y volante */
   const sobreNieve = v.nieve && altura(v.x, v.z) > 44;
   const enRuta = sobreNieve || cercaRuta(v.x, v.z).d < RUTA.ancho/2 + 1 || distPista(v.x, v.z) < PISTA.ancho/2 || esAgua || esDino || enPuente(v.x, v.z) >= 0 || Math.hypot(v.x-PUEBLO.x, v.z-PUEBLO.z) < 130;
-  const vmax = C.vmax*(enRuta ? 1 : (v.nieve ? 0.4 : 0.68))*(turbo ? C.turbo : 1);
+  /* la tabla: pendiente del agua bajo la tabla (positiva = la ola viene por detrás y empuja) */
+  if (v.id==='tabla'){ const tt = P.t*DT; v.pend = (ola(v.x - fx*3, v.z - fz*3, tt) - ola(v.x + fx*3, v.z + fz*3, tt))/6; }
+  const vmax = C.vmax*(enRuta ? 1 : (v.nieve ? 0.4 : 0.68))*(turbo ? C.turbo : 1)*(v.id==='tabla' && v.pend > -0.03 ? 1.7 : 1);
   if (v.id==='esquis'){ const adel = altura(v.x + fx*3, v.z + fz*3), atr = altura(v.x - fx*3, v.z - fz*3); v.vel += clamp((atr-adel)/6, -1, 1)*(sobreNieve ? 16 : 6)*DT; }   /* los esquís bajan solos la pendiente */
   if (ent.jy > 0.05) v.vel += C.acc*ent.jy*(turbo ? 1.5 : 1)*DT;
   else if (ent.jy < -0.05){ if (v.vel > 0.4) v.vel -= C.freno*(-ent.jy)*DT; else v.vel = Math.max(v.vel - C.acc*0.6*DT, -C.reversa); }
@@ -1701,6 +1721,8 @@ function pasoVehiculo(P, v, ent){
     else { v.x = m.x; v.z = m.z; }
     const sup = NIVEL_MAR + ola(v.x, v.z, P.t*DT);
     if (v.agua){
+      /* la tabla baja las olas: si el agua de atrás está más alta que la de adelante, empuja */
+      if (v.id==='tabla' && v.suelo){ const pend = v.pend; v.vel += clamp(pend, -0.5, 0.5)*(pend > 0 ? 44 : 14)*DT; v.surf = v.vel > 8.2 && Math.hypot(v.x-OLAS.x, v.z-OLAS.z) < OLAS.r ? (v.surf||0) + 1 : 0; if (v.surf === 45 && P.t - P.surfT > 60*6){ P.surfT = P.t; const primera = !P.saludos.surf; P.saludos.surf = true; if (primera){ P.monedas += 20; P.puntos += 300; } evento(P, 'surfea', {x:v.x, y:v.y, z:v.z, primera}); } }
       /* la moto de agua brinca sobre las olas */
       if (v.suelo && ent.aNuevo){ v.vy = 6; v.suelo = false; evento(P, 'brinco', {id:v.id}); }
       if (!v.suelo){ v.vy -= GRAV*DT; v.y += v.vy*DT; if (v.y <= sup){ v.y = sup; v.suelo = true; v.vy = 0; evento(P, 'chapoteo', {x:v.x, z:v.z}); } }
@@ -1727,6 +1749,28 @@ function pasoVehiculo(P, v, ent){
   v.cabeceo = lerp(v.cabeceo, v.suelo ? 0 : clamp(-v.vy*0.03, -0.35, 0.35), 0.1);
   if (v.id==='avion' && v.vel > C.despegue && v.suelo){ v.aire = true; v.suelo = false; v.cabeceo = 0.2; v.vy = 4; v.y = g + 0.8; evento(P, 'despegue'); }
   if (Math.abs(v.vel) > 8 && v.suelo && P.t % 4 === 0) evento(P, 'polvo', {x:v.x - fx*1.5, z:v.z - fz*1.5, y:v.y, agua: g < NIVEL_MAR + 0.4 && v.id==='avion'});
+}
+/* el tanque: con B dispara una bala de cañón que estalla en confeti y manda a volar lo que haya cerca */
+function dispararTanque(P, v, ent){
+  if (!ent.b || P.t - P.disparoT < 45) return;
+  P.disparoT = P.t;
+  const fx = Math.sin(v.ang), fz = Math.cos(v.ang);
+  P.balas.push({x: v.x + fx*3.4, y: v.y + 2.3, z: v.z + fz*3.4, vx: fx*40, vy: 8, vz: fz*40, t:0});
+  evento(P, 'disparo', {x: v.x + fx*3.4, y: v.y + 2.3, z: v.z + fz*3.4});
+}
+function pasoBalas(P){
+  P.explosiones.length = 0;
+  for (let i=P.balas.length-1;i>=0;i--){
+    const b = P.balas[i]; b.t++;
+    b.vy -= GRAV*0.8*DT; b.x += b.vx*DT; b.y += b.vy*DT; b.z += b.vz*DT;
+    const g = Math.max(altura(b.x, b.z), NIVEL_MAR);
+    if (b.y <= g || b.t > 60*5 || Math.abs(b.x) > LIMITE || Math.abs(b.z) > LIMITE){
+      P.balas.splice(i, 1);
+      const agua = altura(b.x, b.z) < NIVEL_MAR - 0.5;
+      P.explosiones.push({x:b.x, y:g, z:b.z});
+      evento(P, 'explosion', {x:b.x, y:g, z:b.z, agua, d: Math.hypot(b.x-P.J.x, b.z-P.J.z)});
+    }
+  }
 }
 /* el helicóptero: A sube, B baja, la palanca lo mueve; se posa donde sea */
 function pasoHeli(P, v, ent, C){
@@ -1755,7 +1799,7 @@ function pasoHeli(P, v, ent, C){
 function pasoNave(P, v, ent, C){
   if (P.zona){
     const Z = P.zona, g = Z.y;
-    if (ent.a){ v.vy = Math.min(v.vy + C.empuje*DT, 28); if (v.suelo){ v.suelo = false; v.aire = true; evento(P, 'despegue'); } if (P.t % 2 === 0) evento(P, 'fuego', {x:v.x, y:v.y, z:v.z}); }
+    if (ent.a){ v.vy = Math.min(v.vy + C.empuje*DT, 38); if (v.suelo){ v.suelo = false; v.aire = true; evento(P, 'despegue'); } if (P.t % 2 === 0) evento(P, 'fuego', {x:v.x, y:v.y, z:v.z}); }
     else if (!v.suelo) v.vy = Math.max(v.vy - 12*DT, -12);
     if (v.suelo){ v.vy = 0; v.y = g; v.vel = 0; v.cabeceo = lerp(v.cabeceo, 0, 0.1); return; }
     v.y = v.y + v.vy*DT;
@@ -1769,7 +1813,7 @@ function pasoNave(P, v, ent, C){
     return;
   }
   const g = Math.max(altura(v.x, v.z), NIVEL_MAR + 0.3);
-  if (ent.a){ v.vy = Math.min(v.vy + C.empuje*DT, 28); if (v.suelo){ v.suelo = false; v.aire = true; evento(P, 'despegue'); } if (P.t % 2 === 0) evento(P, 'fuego', {x:v.x, y:v.y, z:v.z}); }
+  if (ent.a){ v.vy = Math.min(v.vy + C.empuje*DT, 38); if (v.suelo){ v.suelo = false; v.aire = true; evento(P, 'despegue'); } if (P.t % 2 === 0) evento(P, 'fuego', {x:v.x, y:v.y, z:v.z}); }
   else if (!v.suelo) v.vy = Math.max(v.vy - 12*DT, v.y > 300 ? -30 : -12);
   if (v.suelo){ v.vy = 0; v.y = g; v.vel = 0; v.cabeceo = lerp(v.cabeceo, 0, 0.1); return; }
   v.y = clamp(v.y + v.vy*DT, g, C.techo);
@@ -1786,7 +1830,7 @@ function pasoNave(P, v, ent, C){
   if (esp !== P.espacio){ P.espacio = esp; evento(P, esp ? 'espacio' : 'atmosfera'); }
   /* la luna es maciza: si la nave se le echa encima, rebota hacia fuera */
   for (const B of [LUNA, SATURNO, JUPITER]){
-    const dl = Math.hypot(v.x-B.x, v.y-B.y, v.z-B.z), abajo = Math.hypot(v.x-B.x, v.y-(B.y-B.r), v.z-B.z) < 36;
+    const dl = Math.hypot(v.x-B.x, v.y-B.y, v.z-B.z), abajo = Math.hypot(v.x-B.x, v.y-(B.y-B.r), v.z-B.z) < 60;
     if (dl < B.r + 14 && !abajo){
       const k = (B.r + 14)/Math.max(dl, 0.01);
       v.x = B.x + (v.x-B.x)*k; v.y = B.y + (v.y-B.y)*k; v.z = B.z + (v.z-B.z)*k;
@@ -1797,14 +1841,14 @@ function pasoNave(P, v, ent, C){
   /* Saturno y Júpiter: al llegar a su cara de abajo, la nave se posa y se puede pasear */
   if (!P.escena && P.t - P.zonaSalidaT > 60*6) for (const id of ['saturno', 'jupiter']){
     const B = ZONAS[id].planeta;
-    if (Math.hypot(v.x-B.x, v.y-(B.y-B.r), v.z-B.z) < 36){ P.escena = {tipo:'planeta', zona:id, t:0, dur:150}; v.vy = 0; v.vel = 0; evento(P, 'planetaLlega', {id, nombre:ZONAS[id].nombre}); return; }
+    if (Math.hypot(v.x-B.x, v.y-(B.y-B.r), v.z-B.z) < 60){ P.escena = {tipo:'planeta', zona:id, t:0, dur:150}; v.vy = 0; v.vel = 0; evento(P, 'planetaLlega', {id, nombre:ZONAS[id].nombre}); return; }
   }
   /* la luna: al llegar a su cara de abajo, se posa y se planta la bandera */
   if (NOCHE && !P.escena && !P.prog.ovni && Math.hypot(v.x-OVNI.x, v.y-OVNI.y, v.z-OVNI.z) < 42){
     P.escena = {tipo:'ovni', t:0, dur:360}; v.vy = 0; v.vel = 0;
     evento(P, 'ovniLlega'); return;
   }
-  if (!P.escena && P.t - P.zonaSalidaT > 60*6 && Math.hypot(v.x-LUNA.x, v.y-(LUNA.y-LUNA.r), v.z-LUNA.z) < 34){
+  if (!P.escena && P.t - P.zonaSalidaT > 60*6 && Math.hypot(v.x-LUNA.x, v.y-(LUNA.y-LUNA.r), v.z-LUNA.z) < 60){
     P.escena = {tipo:'luna', t:0, dur: P.prog.luna ? 120 : 300}; v.vy = 0; v.vel = 0;
     evento(P, 'lunaLlega'); if (!P.prog.luna) decir(P, NOCHE ? 'marte' : 'luna');
   }
@@ -2096,6 +2140,46 @@ function revisarSaludosNPC(P){
     if (n.zona==='saturno' && !P.prog.saturnianos.includes(n.id)){ P.prog.saturnianos.push(n.id); evento(P, 'saturniano', {total:P.prog.saturnianos.length}); if (P.prog.saturnianos.length >= 4) darEstrella(P, 'saturno'); }
   }
 }
+/* la cancha: un balón que se patea corriendo contra él (con B, patadón), rebota en los bordes y entra por las porterías */
+function pasoBalon(P, ent){
+  const B = P.balon, J = P.J, C = CANCHA;
+  if (Math.abs(J.x-C.x) > 160 || Math.abs(J.z-C.z) > 160) return;
+  if (B.gol){ if (--B.gol <= 0){ B.x = C.x; B.z = C.z; B.y = altura(C.x, C.z) + 0.45; B.vx = B.vz = B.vy = 0; } return; }
+  /* patadas: a pie, con los vehículos y con las explosiones del tanque */
+  const pat = [];
+  if (!P.veh && !P.casa && !P.zona) pat.push({x:J.x, y:J.y, z:J.z, r:1.25, dx:Math.sin(J.ang), dz:Math.cos(J.ang), fuerza: 6 + J.mov*1.1 + (ent.b ? 9 : 0), alto: ent.b ? 5 : 2 + J.mov*0.15, id:'pie'});
+  else if (P.veh && !P.zona) pat.push({x:P.veh.x, y:P.veh.y, z:P.veh.z, r:P.veh.radio + 0.8, dx:Math.sin(P.veh.ang), dz:Math.cos(P.veh.ang), fuerza: 8 + Math.abs(P.veh.vel)*0.9, alto: 3 + Math.abs(P.veh.vel)*0.15, id:P.veh.id});
+  for (const ex of P.explosiones) pat.push({x:ex.x, y:ex.y, z:ex.z, r:7, radial:true, fuerza:16, alto:9, id:'explosion'});
+  for (const k of pat){
+    const d = Math.hypot(B.x-k.x, B.z-k.z);
+    if (d > k.r + 0.45 || Math.abs(B.y-k.y) > 2.2 || (k.id==='pie' && J.mov < 0.6 && !ent.b)) continue;
+    let dx = (B.x-k.x)/Math.max(d, 0.01), dz = (B.z-k.z)/Math.max(d, 0.01);
+    if (!k.radial){ dx = dx*0.5 + k.dx*0.5; dz = dz*0.5 + k.dz*0.5; const m = Math.hypot(dx, dz) || 1; dx /= m; dz /= m; }
+    B.vx = dx*k.fuerza; B.vz = dz*k.fuerza; B.vy = k.alto;
+    B.x = k.x + dx*(k.r + 0.5); B.z = k.z + dz*(k.r + 0.5);
+    evento(P, 'patada', {x:B.x, y:B.y, z:B.z, fuerza:k.fuerza});
+    break;
+  }
+  /* vuela, cae, rueda y frena */
+  const g = altura(B.x, B.z) + 0.45;
+  B.vy -= GRAV*DT; B.x += B.vx*DT; B.z += B.vz*DT; B.y += B.vy*DT;
+  if (B.y <= g){ B.y = g; if (B.vy < -2){ B.vy = -B.vy*0.55; } else B.vy = 0; B.vx *= 0.975; B.vz *= 0.975; }
+  else { B.vx *= 0.998; B.vz *= 0.998; }
+  if (Math.hypot(B.vx, B.vz) < 0.05){ B.vx = B.vz = 0; }
+  /* los bordes: rebota, salvo por la boca de las porterías, que es gol */
+  const hx = C.w/2 + 1.2, hz = C.d/2 + 1.2;
+  if (Math.abs(B.x-C.x) > hx){
+    if (Math.abs(B.z-C.z) < 3 && B.y < g + 2.1){
+      const lado = B.x > C.x ? 'derecha' : 'izquierda';
+      B.gol = 90; P.goles++; ganarMonedas(P, 10, B.x, B.y+1, B.z); P.puntos += 200;
+      evento(P, 'gol', {x:B.x, y:B.y, z:B.z, lado, goles:P.goles});
+      B.vx *= 0.2;
+      return;
+    }
+    B.x = C.x + Math.sign(B.x-C.x)*hx; B.vx = -B.vx*0.6;
+  }
+  if (Math.abs(B.z-C.z) > hz){ B.z = C.z + Math.sign(B.z-C.z)*hz; B.vz = -B.vz*0.6; }
+}
 /* la sala de conciertos: si el que juega es Fernando, canta al pararse frente al micrófono;
    si es otro, Fernando está ahí de cantante y canta cuando lo saludan (revisarSaludosNPC) */
 function empezarCanto(P, quien){
@@ -2109,7 +2193,7 @@ function pasoConcierto(P){
   if (P.canto){
     const C = P.canto; C.t++;
     const lejos = C.quien==='yo' ? (!!P.veh || dm > 4) : dm > 70;
-    if (C.t >= C.dur || lejos || P.casa || P.zona){ P.canto = null; P.cantoT = P.t; evento(P, 'cantoFin', {completo: C.t >= C.dur}); }   /* el descanso de 8 s se cuenta desde el final */
+    if (C.t >= C.dur || lejos || P.casa || P.zona){ P.canto = null; P.cantoT = P.t; const completo = C.t >= C.dur; evento(P, 'cantoFin', {completo}); if (completo){ P.ovacionT = P.t; evento(P, 'ovacion', {x:MICROFONO.x, y:altura(MICROFONO.x, MICROFONO.z), z:MICROFONO.z}); } }   /* el descanso de 8 s se cuenta desde el final */
     return;
   }
   if (P.pj==='fernando' && !P.veh && !P.casa && !P.zona && !P.escena && J.suelo && P.t - P.cantoT > 60*8 && dm < 1.5) empezarCanto(P, 'yo');
@@ -2190,12 +2274,15 @@ function pasoProps(P){
   const J = P.J, golpes = [];
   if (P.veh && Math.abs(P.veh.vel) > 4 && !P.zona) golpes.push({x:P.veh.x, y:P.veh.y, z:P.veh.z, r:P.veh.radio + 0.9, vx:Math.sin(P.veh.ang)*P.veh.vel, vz:Math.cos(P.veh.ang)*P.veh.vel, fuerza:Math.abs(P.veh.vel)});
   else if (!P.veh && !P.casa && !P.zona && J.mov > 3) golpes.push({x:J.x, y:J.y, z:J.z, r:1.0, vx:J.vx, vz:J.vz, fuerza:J.mov});
+  for (const ex of P.explosiones) golpes.push({x:ex.x, y:ex.y, z:ex.z, r:7, vx:0, vz:0, fuerza:22, radial:true});
   for (const p of P.props){
     if (Math.abs(p.x-J.x) > 140 || Math.abs(p.z-J.z) > 140) continue;
     if (p.estado==='roto'){ if (++p.t > 60*60){ p.estado = 'quieto'; p.x = p.ox; p.z = p.oz; p.y = altura(p.x, p.z); p.t = 0; } continue; }
     if (p.estado!=='aire') for (const g of golpes){
       if (Math.hypot(p.x-g.x, p.z-g.z) < g.r && Math.abs(p.y-g.y) < 3){
-        p.vx = g.vx*0.75 + (azar()-0.5)*3; p.vz = g.vz*0.75 + (azar()-0.5)*3; p.vy = 4 + Math.min(14, g.fuerza*0.4); p.giro = (azar()-0.5)*10; p.estado = 'aire'; p.t = 0;
+        if (g.radial){ const d = Math.max(0.5, Math.hypot(p.x-g.x, p.z-g.z)); p.vx = (p.x-g.x)/d*12 + (azar()-0.5)*3; p.vz = (p.z-g.z)/d*12 + (azar()-0.5)*3; }
+        else { p.vx = g.vx*0.75 + (azar()-0.5)*3; p.vz = g.vz*0.75 + (azar()-0.5)*3; }
+        p.vy = 4 + Math.min(14, g.fuerza*0.4); p.giro = (azar()-0.5)*10; p.estado = 'aire'; p.t = 0;
         evento(P, p.tipo==='gallina' ? 'gallinaVuela' : 'propVuela', {tipo:p.tipo, x:p.x, y:p.y, z:p.z, fuerza:g.fuerza});
         if (P.t - p.premioT > 60*15){ p.premioT = P.t; if (p.tipo==='gallina') ganarMonedas(P, 2, p.x, p.y+1, p.z); else if (p.tipo==='cono' || p.tipo==='caja') P.puntos += 20; }
         break;
@@ -2434,6 +2521,8 @@ function objetivo(P){
     if (v.id==='barco' && !tieneEstrella(P,'barco')) return {texto:'Navega hasta la islita de Santi 👶', x:ISLITA.x, z:ISLITA.z, y:3, emoji:'👶'};
     if (v.id==='sub' && !tieneEstrella(P,'sub')) return {texto:'Baja al fondo del mar y busca el cofre 💎', x:COFRE.x, z:COFRE.z, y:altura(COFRE.x,COFRE.z), emoji:'💎'};
     if (v.id==='heli' && !tieneEstrella(P,'heli')){ const h = masCerca(HELIPUERTOS.filter(h=>!P.prog.helipuertos.includes(h.id))); if (h) return {texto:'Pósate en el helipuerto de '+h.nombre+' 🚁 '+P.prog.helipuertos.length+'/'+HELIPUERTOS.length, x:h.x, z:h.z, y:h.y, emoji:'🅗'}; }
+    if (v.id==='tanque') return {texto:'Con B dispara el cañón 💥 (aplasta árboles y rocas)', x:null};
+    if (v.id==='tabla') return {texto: Math.hypot(v.x-OLAS.x, v.z-OLAS.z) < OLAS.r ? '¡Déjate llevar por la ola! 🌊' : 'Rema hasta las olas grandes 🌊', x:OLAS.x, z:OLAS.z, y:0, emoji:'🌊'};
     if (v.id==='motoagua' && !tieneEstrella(P,'motoagua')){ const b = masCerca(BOYAS.filter(b=>!P.prog.boyas.includes(b.id))); if (b) return {texto:'Pasa por las boyas 🛟 '+P.prog.boyas.length+'/'+BOYAS.length, x:b.x, z:b.z, y:0, emoji:'🛟'}; }
     if (v.id==='dino' && !tieneEstrella(P,'dino')){ const h = masCerca(HUEVOS.filter(h=>!P.prog.huevos.includes(h.id))); if (h) return {texto:'Busca los huevos 🥚 '+P.prog.huevos.length+'/'+HUEVOS.length, x:h.x, z:h.z, y:altura(h.x,h.z), emoji:'🥚'}; }
     if (v.id==='nave' && P.zona){ const Z = P.zona; return {texto: (Z.id==='luna' && !tieneEstrella(P,'rocas')) || (Z.id==='jupiter' && !tieneEstrella(P,'jupiter')) || (Z.id==='saturno' && !tieneEstrella(P,'saturno')) ? 'Bájate (E) y pasea por '+Z.nombre : 'Mantén A para despegar de '+Z.nombre+' 🚀', x:null}; }
@@ -2527,7 +2616,7 @@ function pasoPartida(P, ent){
   }
   pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
   pasoDinos(P); pasoMeteoros(P); pasoGorila(P);
-  pasoBichos(P); pasoConcierto(P); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
+  pasoBichos(P); pasoConcierto(P); pasoBalas(P); pasoBalon(P, e2); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
   pasoHora(P); pasoMascota(P); pasoProps(P);
   pasoNoche(P);
 }
@@ -2568,7 +2657,7 @@ if (typeof module !== 'undefined' && module.exports){
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
     posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
     CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, INTERIOR_CIRCO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana,
-    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
+    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2695,6 +2784,9 @@ const sfx = {
   campanitas(){ [1319,1568,1319,1568,1760,2093].forEach((f,i)=>beep(f,0.12,'sine',0.08,i*0.12)); },
   trompeta(){ [180,220,260,220].forEach((f,i)=>beep(f,0.3,'sawtooth',0.18,i*0.25)); },
   hipo(){ beep(600,0.05,'square',0.08); beep(900,0.08,'square',0.08,0.05); },
+  aplausos(){ for (let i=0;i<48;i++) ruidoSonoro(0.025 + Math.random()*0.02, 0.10, 2600 + Math.random()*1200, 900, i*0.075 + Math.random()*0.05); [784,988,1175].forEach((f,i)=>beep(f,0.25,'triangle',0.05,0.4+i*0.3)); },
+  disparo(){ ruidoSonoro(0.18, 0.5, 900, 120); beep(90,0.15,'square',0.2); },
+  explosion(d){ const v = clamp(0.6 - (d||0)/300, 0.08, 0.6); ruidoSonoro(0.55, v, 1400, 60); beep(60,0.3,'sawtooth',v*0.5); },
   gallina(){ [880,1046,880,1046,700].forEach((f,i)=>beep(f,0.08,'square',0.07,i*0.09)); },
   golpe(){ ruidoSonoro(0.15, 0.2, 800, 200); beep(120,0.1,'triangle',0.15); },
   sandia(){ ruidoSonoro(0.25, 0.25, 1500, 300); beep(200,0.12,'sine',0.1); },
@@ -3119,7 +3211,7 @@ const terreno = (()=>{
 
 /* ---------------- El mar: olas, brillo del sol, espuma en la orilla ---------------- */
 const agua = (()=>{
-  const n = 130, lado = 1400, seg = lado/n, k = n+1;
+  const n = 220, lado = 1400, seg = lado/n, k = n+1;
   const pos = new Float32Array(k*k*3), prof = new Float32Array(k*k);
   for (let iy=0; iy<k; iy++) for (let ix=0; ix<k; ix++){
     const i = iy*k+ix, x = ix*seg-lado/2, z = iy*seg-lado/2;
@@ -3137,15 +3229,21 @@ const agua = (()=>{
   const mat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
       t:{value:0}, bajo:{value:0}, sol:{value:new THREE.Vector3(0.45,0.6,0.35).normalize()},
+      olasC:{value:new THREE.Vector3(OLAS.x, OLAS.z, OLAS.r)}, olasD:{value:new THREE.Vector2(OLAS.dx, OLAS.dz)}, olasP:{value:new THREE.Vector3(OLAS.amp, OLAS.k, OLAS.w)},
       hondo:{value:lin(0x0d5c9a)}, claro:{value:lin(0x3fd0d8)}, espuma:{value:lin(0xffffff)}, cielo:{value:lin(0xbfe4ff)},
     }]),
     vertexShader: `
-      uniform float t; attribute float prof;
-      varying float vProf; varying vec3 vPos; varying vec3 vN;
+      uniform float t; attribute float prof; uniform vec3 olasC; uniform vec2 olasD; uniform vec3 olasP;
+      varying float vProf; varying vec3 vPos; varying vec3 vN; varying float vOla; varying float vPend;
       #include <fog_pars_vertex>
       void main(){
         vec3 p = position;
         float h = 0.22*sin(p.x*0.23 + t*1.3) + 0.16*sin(p.z*0.29 - t*1.1) + 0.1*sin((p.x+p.z)*0.11 + t*0.7);
+        float dOla = distance(p.xz, olasC.xy);
+        float fOla = 1.0 - smoothstep(olasC.z*0.35, olasC.z, dOla);
+        float fase = olasP.y*dot(p.xz, olasD) + olasP.z*t;
+        h += olasP.x*fOla*sin(fase);
+        vOla = olasP.x*fOla*sin(fase); vPend = olasP.x*olasP.y*fOla*cos(fase);
         float dhx = 0.0506*cos(p.x*0.23 + t*1.3) + 0.011*cos((p.x+p.z)*0.11 + t*0.7);
         float dhz = 0.0464*cos(p.z*0.29 - t*1.1) + 0.011*cos((p.x+p.z)*0.11 + t*0.7);
         p.y = h;
@@ -3157,14 +3255,14 @@ const agua = (()=>{
         #include <fog_vertex>
       }`,
     fragmentShader: `
-      uniform vec3 hondo, claro, espuma, cielo, sol; uniform float t, bajo;
-      varying float vProf; varying vec3 vPos; varying vec3 vN;
+      uniform vec3 hondo, claro, espuma, cielo, sol; uniform float t, bajo; uniform vec2 olasD;
+      varying float vProf; varying vec3 vPos; varying vec3 vN; varying float vOla; varying float vPend;
       #include <fog_pars_fragment>
       void main(){
         vec3 V = normalize(cameraPosition - vPos);
         float dhx = 0.0506*cos(vPos.x*0.23 + t*1.3) + 0.011*cos((vPos.x+vPos.z)*0.11 + t*0.7) + 0.02*cos(vPos.x*1.3 + vPos.z*0.7 + t*2.6);
         float dhz = 0.0464*cos(vPos.z*0.29 - t*1.1) + 0.011*cos((vPos.x+vPos.z)*0.11 + t*0.7) + 0.02*cos(vPos.z*1.1 - vPos.x*0.6 + t*2.2);
-        vec3 n = normalize(vec3(-dhx*4.0, 1.0, -dhz*4.0));
+        vec3 n = normalize(vec3(-dhx*4.0 - vPend*olasD.x*2.5, 1.0, -dhz*4.0 - vPend*olasD.y*2.5));
         if (bajo > 0.5) n = -n;
         float fres = pow(1.0 - max(dot(n, V), 0.0), 3.0);
         float prof = clamp(-vProf/16.0, 0.0, 1.0);
@@ -3176,6 +3274,7 @@ const agua = (()=>{
         float orilla = smoothstep(-2.6, -0.1, vProf);
         float esp = orilla * (0.5 + 0.5*sin(vPos.x*0.6 + vPos.z*0.45 + t*2.0 + sin(vPos.x*0.17 + vPos.z*0.13)*3.0));
         esp += smoothstep(-0.9, -0.1, vProf)*0.5;
+        esp += smoothstep(1.2, 2.3, vOla)*0.85;   /* la cresta de las olas grandes se pone blanca */
         c = mix(c, espuma, clamp(esp, 0.0, 1.0)*0.9);
         float alfa = mix(0.58, 0.9, prof) + fres*0.1;
         if (bajo > 0.5){ c = mix(c, hondo, 0.4) + vec3(0.2,0.3,0.35)*spec; alfa = 0.8; }
@@ -3339,7 +3438,7 @@ function armarCasa(A, c){
     A.cil(0.1,0.1,2.2,'#ffffff', gx, cy+1.1, CANCHA.z-3, 0,0,0,6); A.cil(0.1,0.1,2.2,'#ffffff', gx, cy+1.1, CANCHA.z+3, 0,0,0,6);
     A.cil(0.1,0.1,6.2,'#ffffff', gx, cy+2.2, CANCHA.z, Math.PI/2,0,0,6);
   }
-  A.bola(0.45,'#ffffff', CANCHA.x+2, cy+0.55, CANCHA.z+1, 8);
+  for (const lado of [-1,1]){ const gx = CANCHA.x + lado*CANCHA.w/2; for (let k=0;k<6;k++) A.caja(0.04, 2.2, 0.04, '#e8e8f0', gx + lado*1.2, cy+1.1, CANCHA.z-3+k*1.2, 0,0,0).caja(1.3, 0.04, 0.04, '#e8e8f0', gx + lado*0.65, cy+0.4+k*0.36, CANCHA.z, 0, Math.PI/2, 0); A.caja(0.04, 0.04, 6.2, '#e8e8f0', gx + lado*1.2, cy+2.2, CANCHA.z); }
   /* el parque: tobogán, columpios y arenero */
   const py = altura(PARQUE.x, PARQUE.z);
   A.caja(1.2, 0.2, 5, '#ffd23f', PARQUE.x, py+1.5, PARQUE.z, -0.55, 0, 0); A.caja(1.4, 0.3, 1.4, '#ff6ec0', PARQUE.x, py+2.75, PARQUE.z-2.4);
@@ -4353,6 +4452,23 @@ function armarVehiculo(id, colores){
     R.cuerpo = A.malla(matBrillo()); g.add(R.cuerpo);
     for (const [x,z,delante] of [[-1.05,1.35,true],[1.05,1.35,true],[-1.05,-1.35,false],[1.05,-1.35,false]]){ const w = rueda(0.42, 0.32); w.dir.position.set(x, 0.42, z); w.delante = delante; g.add(w.dir); R.ruedas.push(w); }
     R.asiento = {x:-0.4, y:0.85, z:-0.45, esc:0.6}; R.altoOjos = 1.4;
+  } else if (id==='tanque'){
+    const c = '#5a7a3a', c2 = '#3f5a28', ORUGA = '#2a2a2e';
+    A.caja(3.0, 1.1, 5.2, c, 0, 1.05, 0).caja(3.2, 0.3, 5.4, c2, 0, 1.62, 0).caja(2.6, 0.4, 1.0, c2, 0, 0.7, 2.7, -0.5, 0, 0)
+     .cil(1.15, 1.3, 0.9, c, 0, 2.2, -0.4, 0,0,0, 14).cil(0.55, 0.62, 0.35, c2, 0.2, 2.8, -0.9, 0,0,0, 10)
+     .caja(0.3, 0.16, 0.16, '#ffd23f', -1.2, 1.4, 2.62).caja(0.3, 0.16, 0.16, '#ffd23f', 1.2, 1.4, 2.62)
+     .caja(0.5, 0.06, 0.06, '#ffffff', 0, 1.8, 0).cil(0.05, 0.05, 1.6, '#d0d0d8', 1.2, 2.6, -1.4, 0,0,0, 6).caja(0.5, 0.35, 0.05, '#e63946', 1.45, 3.2, -1.4);
+    for (const sx of [-1, 1]) A.caja(0.9, 1.3, 5.6, ORUGA, sx*1.95, 0.75, 0).caja(0.94, 0.12, 5.7, '#444', sx*1.95, 1.42, 0);
+    R.cuerpo = A.malla(matBrillo()); g.add(R.cuerpo);
+    const canon = new Armador().cil(0.18, 0.2, 3.4, c2, 0, 0, 1.7, Math.PI/2, 0, 0, 10).cil(0.26, 0.26, 0.4, ORUGA, 0, 0, 3.3, Math.PI/2, 0, 0, 10).malla(matBrillo());
+    canon.position.set(0, 2.35, 0.4); g.add(canon); R.canon = canon; R.retroceso = 0;
+    for (const sx of [-1, 1]) for (let k=0;k<5;k++){ const w = rueda(0.34, 0.5); w.dir.position.set(sx*1.95, 0.42, -2.0 + k*1.0); w.delante = false; g.add(w.dir); R.ruedas.push(w); }
+    R.asiento = {x:0.2, y:2.15, z:-0.9, esc:0.6, parado:true}; R.altoOjos = 3.4;
+  } else if (id==='tabla'){
+    A.caja(0.9, 0.12, 2.8, '#ffd23f', 0, 0.62, 0).caja(0.5, 0.13, 3.1, '#e63946', 0, 0.625, 0).bola(0.45, '#ffd23f', 0, 0.62, 1.4, 8, 1, 0.26, 1).bola(0.45, '#ffd23f', 0, 0.62, -1.4, 8, 1, 0.26, 1)
+     .caja(0.06, 0.4, 0.5, '#ffffff', 0, 0.38, -1.1);
+    R.cuerpo = A.malla(matBrillo()); g.add(R.cuerpo);
+    R.asiento = {x:0, y:0.68, z:-0.2, esc:0.62, parado:true}; R.altoOjos = 2.0;
   } else if (id==='moto'){
     const c = '#4fc3f7';
     A.caja(0.44, 0.42, 1.7, c, 0, 0.8, 0).bola(0.34, c, 0, 1.06, 0.25, 10, 1, 0.7, 1.4).caja(0.5, 0.18, 0.8, '#1a1a20', 0, 1.06, -0.45)
@@ -4777,6 +4893,27 @@ const conciertoLuces = (()=>{
   }
   mundo.add(g); return {g, focos, haces, colores};
 })();
+const balonMesh = (()=>{ const A = new Armador(); A.bola(0.45, '#ffffff', 0, 0, 0, 12); for (let i=0;i<8;i++){ const a = i/8*6.283, b = (i%2 ? 0.6 : -0.6); A.bola(0.16, '#1a1a20', Math.cos(a)*0.38*Math.cos(b), Math.sin(b)*0.38, Math.sin(a)*0.38*Math.cos(b), 6); } const g = A.malla(matBrillo()); scene.add(g); return g; })();
+const balasMesh = [];
+function balaMesh(i){ while (balasMesh.length <= i){ const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 6), new THREE.MeshLambertMaterial({color: 0x222228})); scene.add(m); balasMesh.push(m); } return balasMesh[i]; }
+/* el público del concierto: dos versiones de la misma gente (brazos abajo y brazos arriba) que se intercambian en la ovación */
+const publico = (()=>{
+  const E = ESCENARIO, base = altura(E.x, E.z), camisas = ['#e63946','#4fc3f7','#ffd23f','#7dffa0','#ff6ec0','#ff8a3d','#c07dff','#ffffff','#2a8ad0'], pieles = ['#f1c27d','#e0ac69','#c68642','#8d5524','#ffdbac'];
+  const gente = [];
+  for (let k=0;k<5;k++){ const zk = E.z + E.d/2 + 5 + k*3.6, hk = altura(E.x, zk), ancho = E.w+8+k*1.5, n = Math.floor(ancho/1.5); for (let i=0;i<n;i++) gente.push({x: E.x - ancho/2 + 0.9 + i*1.5 + (azar()-0.5)*0.4, y: hk+0.7+k*0.1, z: zk + (azar()-0.5)*0.3}); }
+  for (let f=0;f<2;f++){ const zf = E.z + E.d/2 + 1.7 + f*1.6; for (let i=0;i<14;i++){ const x = E.x - 10 + i*1.5 + (azar()-0.5)*0.5; gente.push({x, y: altura(x, zf), z: zf}); } }
+  const armar = (arriba)=>{
+    const A = new Armador();
+    gente.forEach((p, i)=>{ const c = camisas[i%camisas.length], piel = pieles[i%pieles.length], x = p.x - E.x, y = p.y - base, z = p.z - E.z;
+      A.caja(0.44, 0.5, 0.3, i%3 ? '#2a3a70' : '#5a4a3a', x, y+0.25, z).caja(0.5, 0.6, 0.32, c, x, y+0.8, z).bola(0.22, piel, x, y+1.32, z, 7).bola(0.24, ['#2a1a0a','#5a3a1a','#111','#c8a040'][i%4], x, y+1.4, z, 7, 1, 0.6, 1);
+      if (arriba) A.caja(0.12, 0.6, 0.12, c, x-0.36, y+1.28, z, 0, 0, 0.45).caja(0.12, 0.6, 0.12, c, x+0.36, y+1.28, z, 0, 0, -0.45).bola(0.09, piel, x-0.5, y+1.56, z, 5).bola(0.09, piel, x+0.5, y+1.56, z, 5);
+      else A.caja(0.12, 0.55, 0.12, c, x-0.32, y+0.8, z).caja(0.12, 0.55, 0.12, c, x+0.32, y+0.8, z).bola(0.09, piel, x-0.32, y+0.5, z, 5).bola(0.09, piel, x+0.32, y+0.5, z, 5); });
+    const m = A.malla(matMate()); m.position.set(E.x, base, E.z); mundo.add(m); return m;
+  };
+  const abajo = armar(false), arriba = armar(true); arriba.visible = false;
+  return {abajo, arriba, base, n: gente.length};
+})();
+let ovacionHasta = 0;
 const cantanteMesh = (()=>{ const g = armarJugador('fernando'); g.position.set(CANTANTE.x, altura(CANTANTE.x, CANTANTE.z) + 0.36, CANTANTE.z); g.rotation.y = CANTANTE.ang; const et = letrero('🎤 Fernando', '#fff', 'rgba(200,40,60,0.88)', 1.4); et.position.y = 2.7; g.add(et); mundo.add(g); return g; })();
 /* la canción de Fernando (el mp3 de la carpeta): suena al cantar y baja de volumen con la distancia */
 let cancion = null;
@@ -4846,8 +4983,14 @@ function sincronizarMundoNuevo(t){
   /* los bichos que pasean */
   const poneNPC = (g, n, y)=>{ g.position.set(n.x, y, n.z); g.rotation.y = n.ang; const amp = Math.min(1, n.mov/1.2), s = Math.sin(n.fase*4); if (g.partes && g.partes.patas) g.partes.patas.forEach((p, k)=>{ p.rotation.x = s*0.5*amp*(k%2 ? -1 : 1)*(k>=2 ? -1 : 1); }); else if (g.partes) animarPersona(g, n.mov*2, n.fase*2.5, false, false); };
   if (Math.hypot(J.x-ISLA_ELEFANTES.x, J.z-ISLA_ELEFANTES.z) < 220) P.elefantes.forEach((n, i)=>poneNPC(elefantesMesh[i], n, altura(n.x, n.z)));
+  { const B = P.balon; balonMesh.visible = Math.abs(J.x-CANCHA.x) < 260 && Math.abs(J.z-CANCHA.z) < 260 && !B.gol; balonMesh.position.set(B.x, B.y, B.z); balonMesh.rotation.x += B.vz*DT/0.45; balonMesh.rotation.z -= B.vx*DT/0.45; }
+  balasMesh.forEach(m=>{ m.visible = false; }); P.balas.forEach((b, i)=>{ const m = balaMesh(i); m.visible = true; m.position.set(b.x, b.y, b.z); });
   if (Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < 260){
     const canta = !!P.canto, deNPC = canta && P.canto.quien==='npc';
+    const ovacion = tick < ovacionHasta;
+    publico.arriba.visible = ovacion; publico.abajo.visible = !ovacion;
+    if (ovacion){ publico.arriba.position.y = publico.base + Math.abs(Math.sin(t*9))*0.35; publico.arriba.rotation.z = Math.sin(t*4)*0.02; if (tick % 2 === 0) for (let i=0;i<3;i++) particula(ESCENARIO.x + (azar()-0.5)*40, publico.base + 22 + azar()*6, ESCENARIO.z + 2 + azar()*24, ['#e63946','#ffd23f','#4fc3f7','#7dffa0','#ff6ec0','#ffffff'][Math.floor(azar()*6)], (azar()-0.5)*2, -1 - azar()*2, (azar()-0.5)*2, 200, 0.16+azar()*0.12, {grav:1.2, confeti:true}); }
+    else { publico.abajo.position.y = publico.base + (canta ? Math.abs(Math.sin(t*3.5))*0.12 : 0); publico.abajo.rotation.z = canta ? Math.sin(t*1.8)*0.015 : 0; }
     cantanteMesh.visible = P.pj !== 'fernando';
     if (cantanteMesh.visible){
       const c = cantanteMesh.partes;
@@ -5270,7 +5413,7 @@ const CAM_CFG = {
   pie:   {d:6.8,  h:3.0, mira:1.4}, nadar: {d:7.5, h:3.6, mira:0.6},
   carro: {d:10.5, h:4.2, mira:1.6}, moto:  {d:8.5, h:3.6, mira:1.4}, barco: {d:14, h:5.8, mira:1.8},
   avion: {d:16,   h:5.5, mira:1.8}, sub:   {d:12,  h:3.8, mira:1.0},
-  heli:  {d:14,   h:5.5, mira:2.0}, motoagua: {d:9, h:3.8, mira:1.2}, nave: {d:20, h:7, mira:4.0}, dino: {d:12, h:5.5, mira:3.5}, ptero: {d:13, h:5.2, mira:2.6}, ovni: {d:15, h:6.5, mira:2.2}, motonieve: {d:8.5, h:3.6, mira:1.4}, esquis: {d:8, h:3.4, mira:1.4},
+  heli:  {d:14,   h:5.5, mira:2.0}, motoagua: {d:9, h:3.8, mira:1.2}, nave: {d:20, h:7, mira:4.0}, dino: {d:12, h:5.5, mira:3.5}, ptero: {d:13, h:5.2, mira:2.6}, ovni: {d:15, h:6.5, mira:2.2}, motonieve: {d:8.5, h:3.6, mira:1.4}, esquis: {d:8, h:3.4, mira:1.4}, tanque: {d:12, h:5.2, mira:2.0}, tabla: {d:8.5, h:3.6, mira:1.2},
   casa: {d:5.4, h:2.9, mira:1.3},
 };
 scene.fog = new THREE.FogExp2(NOCHE ? 0x0a1128 : 0xc9e4ff, 0.0014);
@@ -5616,6 +5759,12 @@ function atenderEventos(){
       case 'fantasma': sfx.fantasma(); chispas(e.x, e.y, e.z, '#c0b0ff', 18, 5); grande('¡BUUU! 👻 +8 🪙', '#c0b0ff', 70); break;
       case 'trompeta': sfx.trompeta(); for (let i=0;i<16;i++) particula(e.x + (azar()-0.5), e.y+3.2, e.z + 3.4, '#8fd3ff', (azar()-0.5)*3, 5+azar()*4, 2+azar()*4, 40, 0.2, {grav:10, alfa:0.8}); break;
       case 'hipo': sfx.hipo(); burbuja('¡Hip!', 'Vampiro'); break;
+      case 'ovacion': ovacionHasta = tick + 60*6; sfx.aplausos(); grande('👏 ¡OVACIÓN! 👏', '#ffe36e', 150); burbuja('¡Bravo, Fernando! ¡Otra, otra!', 'El público'); break;
+      case 'patada': sfx.golpe(); if (e.fuerza > 12) chispas(e.x, e.y, e.z, '#ffffff', 6, 3); break;
+      case 'gol': sfx.estrella(); sfx.aplausos(); confeti(e.x, e.y+1, e.z, 50); grande('⚽ ¡GOOOOOL! +10 🪙', '#7dffa0', 140); sacudida = 6; if (e.goles === 1 || e.goles % 5 === 0) hablar(fraseDe(RED.pj, 'gol'), RED.pj), burbuja(fraseDe(RED.pj, 'gol'), nombreLocal()); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
+      case 'disparo': sfx.disparo(); chispas(e.x, e.y, e.z, '#ffe36e', 10, 6); sacudida = 5; { const vm = vehMesh.tanque; if (vm && vm.partes && vm.partes.canon) vm.partes.retroceso = 1; } break;
+      case 'explosion': sfx.explosion(e.d); chispas(e.x, e.y+0.5, e.z, '#ffa020', 26, 12); chispas(e.x, e.y+0.5, e.z, '#ffe36e', 12, 8); confeti(e.x, e.y+1, e.z, 40); for (let i=0;i<12;i++) particula(e.x + (azar()-0.5)*2, e.y+0.3, e.z + (azar()-0.5)*2, e.agua ? '#dff4ff' : '#8a8a80', (azar()-0.5)*5, 2+azar()*6, (azar()-0.5)*5, 50+azar()*30, 0.5+azar()*0.5, {alfa:0.7, crece:2.5, grav: e.agua ? 10 : 1.5}); if (e.d < 60) sacudida = Math.round(clamp(18 - e.d/4, 4, 18)); break;
+      case 'surfea': sfx.estrella(); grande('🏄 ¡AGARRASTE LA OLA!'+(e.primera ? ' +20 🪙' : ''), '#7de0ff', 110); for (let i=0;i<14;i++) particula(e.x + (azar()-0.5)*3, e.y+0.3, e.z + (azar()-0.5)*3, '#ffffff', (azar()-0.5)*5, 2+azar()*4, (azar()-0.5)*5, 40, 0.3, {alfa:0.8, grav:8}); break;
       case 'canta': cancionTocar(); sfx.estrella(); confeti(e.x, e.y+3, e.z, 40); grande(e.quien==='yo' ? '🎤 ¡A CANTAR!' : '🎤 ¡CANTA, FERNANDO!', '#ff9ed6', 130); if (e.primera) aviso('¡Qué concierto! +25 🪙'); burbuja('🎶 Pichunguito… 🎶', 'Fernando'); redEvento('canta', {x:e.x, y:e.y, z:e.z}); break;
       case 'cantoFin': cancionParar(); if (e.completo) confeti(e.x||MICROFONO.x, altura(MICROFONO.x, MICROFONO.z)+3, e.z||MICROFONO.z, 30); break;
       case 'rugidoLeon': sfx.rugido(); sacudida = 6; burbuja('¡ROAAAR!', 'León Leo'); break;
@@ -5781,6 +5930,7 @@ function animarVehiculo(R, id, montado, vel, aire, alto, t){
   else if (id==='ptero'){ const amp = aire ? 0.7 : 0.08, w = Math.sin(t*(aire ? 7 : 1.5))*amp; R.alas[0].rotation.z = w; R.alas[1].rotation.z = -w; }
   else if (id==='ovni'){ R.anillo.rotation.y += montado ? 0.09 : 0.015; R.luces.forEach((l, i)=>{ l.visible = Math.floor(t*(montado ? 8 : 2) + i) % 3 !== 0; }); R.cuerpo.position.y = aire ? Math.sin(t*2.2)*0.18 : 0; R.cupula.position.y = 1.4 + (aire ? Math.sin(t*2.2)*0.18 : 0); R.haz.visible = montado && aire; if (R.haz.visible) R.haz.scale.set(1 + Math.sin(t*5)*0.08, 1, 1 + Math.cos(t*5)*0.08); }
   else if (id==='nave'){ if (R.fuego){ R.fuego.visible = montado && aire; R.fuego.scale.set(1 + Math.sin(t*40)*0.15, 1 + Math.sin(t*33)*0.25, 1 + Math.cos(t*40)*0.15); } }
+  else if (id==='tanque'){ if (R.retroceso > 0){ R.retroceso -= 0.06; R.canon.position.z = 0.4 - R.retroceso*0.6; } else R.canon.position.z = 0.4; }
   else if (id==='dino'){ const amp = Math.min(1, Math.abs(vel)/4), s = Math.sin(t*9); R.patas[0].rotation.x = s*0.7*amp; R.patas[1].rotation.x = -s*0.7*amp; R.cuerpo.position.y = Math.abs(Math.cos(t*9))*0.18*amp; }
   else if (R.helice) R.helice.rotation.z += (montado ? 0.3 + Math.abs(vel)*0.03 : 0.02);
 }
@@ -6323,6 +6473,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();
