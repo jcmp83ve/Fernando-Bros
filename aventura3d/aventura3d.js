@@ -538,7 +538,7 @@ const TONO_PJ = {
   santi:{pitch:2.0, rate:0.9}, mama:{pitch:1.3, rate:1.0}, papa:{pitch:0.7, rate:1.0}, abu:{pitch:1.1, rate:0.85}, nacho:{pitch:0.85, rate:1.15},
   yanny:{pitch:1.45, rate:1.0}, tiofran:{pitch:0.65, rate:1.0}, romulo:{pitch:0.35, rate:0.8}, beto:{pitch:0.75, rate:1.0}, giuliana:{pitch:1.3, rate:1.05},
   penny:{pitch:1.6, rate:1.2}, sheldon:{pitch:0.9, rate:1.2}, srpopo:{pitch:0.5, rate:0.92},
-  npc_santa:{pitch:0.5, rate:0.9}, npc_vampiro:{pitch:0.6, rate:0.85}, npc_payaso:{pitch:1.6, rate:1.2}, npc_alien:{pitch:1.5, rate:1.3}, npc_elefante:{pitch:0.4, rate:0.8}, npc_vaca:{pitch:0.5, rate:0.75}, npc_cerdo:{pitch:1.5, rate:1.2}, npc_cebra:{pitch:1.2, rate:1.1}, npc_elefanteCirco:{pitch:0.45, rate:0.85}, npc_leon:{pitch:0.3, rate:0.7}, npc_reno:{pitch:1.2, rate:1.0}, npc_jirafa:{pitch:1.3, rate:1.0},
+  npc_santa:{pitch:0.5, rate:0.9}, npc_vampiro:{pitch:0.6, rate:0.85}, npc_payaso:{pitch:1.6, rate:1.2}, npc_alien:{pitch:1.5, rate:1.3}, npc_elefante:{pitch:0.4, rate:0.8}, npc_vaca:{pitch:0.5, rate:0.75}, npc_guajiro:{pitch:0.8, rate:0.9}, npc_gaitero:{pitch:0.9, rate:1.1}, npc_agui:{pitch:1.4, rate:1.15}, npc_pelotero:{pitch:1.0, rate:1.05}, npc_cerdo:{pitch:1.5, rate:1.2}, npc_cebra:{pitch:1.2, rate:1.1}, npc_elefanteCirco:{pitch:0.45, rate:0.85}, npc_leon:{pitch:0.3, rate:0.7}, npc_reno:{pitch:1.2, rate:1.0}, npc_jirafa:{pitch:1.3, rate:1.0},
 };
 function hablarTTS(texto, pj){
   if (typeof speechSynthesis === 'undefined'){ hablando = false; reproducirCola(); return; }
@@ -602,7 +602,7 @@ function fbm(x, z, oct){
 const TAM = 1800, NSEG = 360, SEG = TAM/NSEG, MITAD = TAM/2, LIMITE = 890;   /* el mundo creció un 50 %: la isla mide 900 m de lado a lado */
 const R_ISLA = 450;
 const ISLITA = {x:645, z:255};
-const MARACAIBO = {x:-600, z:-450, r:110};   /* la isla de las arepas, al noroeste, unida por el puente */
+const MARACAIBO = {x:-600, z:-450, r:200};   /* la isla de las arepas, al noroeste, unida por el puente; ahora es una ciudad grande */
 const LUNA = {x:0, y:520, z:0, r:90};   /* más baja que antes: se llega más fácil */
 const ISLA_BANANA = {x:-645, z:375, r:48};    /* la isla de las bananas, al suroeste: quien come banana se vuelve gorila */
 const CASTILLO = {x:-150, z:30, r:24, ang:Math.PI/2};   /* el castillo, al oeste del pueblo; la puerta mira al este */
@@ -645,7 +645,7 @@ function alturaBase(x, z){
   const m2 = 1 - smooth(14, 60, d2);
   h = lerp(h, -8 + 11*m2, m2);
   const d3 = Math.hypot(x-MARACAIBO.x, z-MARACAIBO.z);
-  const m3 = 1 - smooth(70, 130, d3);
+  const m3 = 1 - smooth(150, 240, d3);
   h = lerp(h, 3.5 + 2.5*m3 + 4*m3*(ruido(x/50+8, z/50+2)-0.5), m3);
   const d4 = Math.hypot(x-ISLA_BANANA.x, z-ISLA_BANANA.z);
   const m4 = 1 - smooth(20, 72, d4);
@@ -705,6 +705,20 @@ RUTA.ancho = 10;
   }
   for (let i=0;i<RUTA.N;i++) RUTA.M[i].h = Math.max(h[i], 1.2);
 }
+/* la carretera costera de Maracaibo: un anillo que bordea la vereda del lago */
+const RUTA_MCBO = (()=>{
+  const R = MARACAIBO.r - 18, N = Math.round(2*Math.PI*R/2), M = [];
+  for (let i=0;i<N;i++){ const a = i/N*6.283; M.push({x: MARACAIBO.x + Math.cos(a)*R, z: MARACAIBO.z + Math.sin(a)*R, nx: Math.cos(a), nz: Math.sin(a), tx: -Math.sin(a), tz: Math.cos(a), s: i*2}); }
+  let h = M.map(m=>alturaBase(m.x, m.z));
+  for (let pasada=0; pasada<3; pasada++){ const s2 = new Array(N).fill(0); for (let i=0;i<N;i++){ let acc=0; for (let k=-22;k<=22;k++) acc += h[(i+k+N)%N]; s2[i] = acc/45; } h = s2; }
+  for (let i=0;i<N;i++) M[i].h = Math.max(h[i], 1.6);
+  return {M, N, R, ancho: 10, paso: 2};
+})();
+function cercaRutaMcbo(x, z){
+  const d = Math.hypot(x-MARACAIBO.x, z-MARACAIBO.z);
+  const i = ((Math.round(Math.atan2(z-MARACAIBO.z, x-MARACAIBO.x)/6.283*RUTA_MCBO.N) % RUTA_MCBO.N) + RUTA_MCBO.N) % RUTA_MCBO.N;
+  return {i, d: Math.abs(d - RUTA_MCBO.R)};
+}
 function cercaRuta(x, z){
   /* primero a saltos grandes, luego se afina alrededor del mejor */
   let mejor = 0, md = Infinity;
@@ -759,7 +773,7 @@ const PUENTE = (()=>{
   const ux = MARACAIBO.x/500, uz = MARACAIBO.z/500;
   const o = orilla(MARACAIBO.x, MARACAIBO.z);
   const x0 = o.x - ux*10, z0 = o.z - uz*10;
-  let d = 0; while (d < 140 && alturaBase(MARACAIBO.x - ux*d, MARACAIBO.z - uz*d) > 0.3) d += 1;
+  let d = 0; while (d < MARACAIBO.r + 80 && alturaBase(MARACAIBO.x - ux*d, MARACAIBO.z - uz*d) > 0.3) d += 1;
   const x1 = MARACAIBO.x - ux*(d-10), z1 = MARACAIBO.z - uz*(d-10);
   const L = Math.hypot(x1-x0, z1-z0);
   const h0 = Math.max(1.5, alturaBase(x0 - ux*6, z0 - uz*6)), h1 = Math.max(1.5, alturaBase(x1 + ux*6, z1 + uz*6));
@@ -822,8 +836,43 @@ const CASAS_MCBO = [
   {x:MARACAIBO.x+34, z:MARACAIBO.z+8,  w:8, d:7, h:3.6, color:'#fff59d', techo:'#f57f17', nombre:'casa amarilla', puerta:-Math.PI/2},
   {x:MARACAIBO.x-34, z:MARACAIBO.z+18, w:9, d:8, h:3.8, color:'#c5e1a5', techo:'#33691e', nombre:'casa verde', puerta:Math.PI/2},
   {x:MARACAIBO.x-4,  z:MARACAIBO.z+36, w:9, d:7, h:3.8, color:'#f6c453', techo:'#8b4513', nombre:'casa gaitera', puerta:Math.PI},
+  /* la calle Carabobo: casitas coloniales de colores vivos, pegaditas en fila, con la puerta a la calle (al norte) */
+  ...[['#e63946','#ffffff'],['#1e88e5','#ffd23f'],['#ffd23f','#e63946'],['#43a047','#ffffff'],['#f06292','#7b1fa2'],['#ff8a3d','#1e88e5']].map(([color, techo], i)=>({x:MARACAIBO.x-58-i*11, z:MARACAIBO.z+32, w:8, d:7, h:4.2, color, techo, nombre:'casa de la calle Carabobo', carabobo:true, puerta:Math.PI})),
 ];
 const PLAZA_MCBO = {x:MARACAIBO.x, z:MARACAIBO.z-6};
+/* el estadio de las Águilas del Zulia: redondo, con la entrada mirando a la plaza; adentro el diamante y el home */
+const ESTADIO = (()=>{ const x = MARACAIBO.x + 95, z = MARACAIBO.z - 55, entrada = Math.atan2(PLAZA_MCBO.z - z, PLAZA_MCBO.x - x); return {x, z, r: 46, entrada}; })();
+const BEISBOL = (()=>{ const dir = ESTADIO.entrada + Math.PI, hx = ESTADIO.x + Math.cos(ESTADIO.entrada)*22, hz = ESTADIO.z + Math.sin(ESTADIO.entrada)*22;
+  const bases = [1, 2, 3].map(k=>{ const a = dir + (k===1 ? -0.785 : k===2 ? 0 : 0.785), d = k===2 ? 25.4 : 18; return {x: hx + Math.cos(a)*d, z: hz + Math.sin(a)*d}; });
+  return {home:{x:hx, z:hz}, dir, bases, monticulo:{x: hx + Math.cos(dir)*12.7, z: hz + Math.sin(dir)*12.7}}; })();
+/* el Aeropuerto Internacional La Chinita: la pista va de oeste a este por el sur de la ciudad */
+const LA_CHINITA = {x0: MARACAIBO.x - 112, x1: MARACAIBO.x + 42, z: MARACAIBO.z + 100, ancho: 18, terminal:{x: MARACAIBO.x - 40, z: MARACAIBO.z + 126, w: 46, d: 12, h: 7}, torre:{x: MARACAIBO.x + 12, z: MARACAIBO.z + 130}, apron:{x: MARACAIBO.x + 20, z: MARACAIBO.z + 118}};
+const AVIONES_DEF = [{id:'chinita1', color:'#e63946', espera: 60*18, x: LA_CHINITA.x0 + 12}, {id:'chinita2', color:'#1560d0', espera: 60*52, x: LA_CHINITA.x0 + 26}];
+const EMPANADAS = [];
+const TIPOS_COMIDA = ['empanada', 'patacon', 'tequeno', 'mandoca'];
+for (const [ox,oz] of [[-52,-22],[52,-10],[-10,-62],[62,42],[-72,52],[22,66],[-32,-72],[74,-34]]) EMPANADAS.push({id:'e'+EMPANADAS.length, x: MARACAIBO.x+ox, z: MARACAIBO.z+oz, tipo: TIPOS_COMIDA[EMPANADAS.length % 4]});
+/* Maracaibo de verdad: la Basílica de La Chinita, la Torre del Reloj de la plaza Baralt, los palafitos de Santa Rosa de Agua y los gaiteros */
+const BASILICA = {x: MARACAIBO.x - 86, z: MARACAIBO.z - 50, w: 16, d: 26, h: 9};   /* la puerta mira al este, hacia la plaza */
+const TORRE_RELOJ = {x: MARACAIBO.x + 18, z: MARACAIBO.z - 26, h: 12};
+const PALAFITOS = [0,1,2,3,4].map(i=>{ const a = 3.85 + i*0.12, r = 198; return {id:i, x: MARACAIBO.x + Math.cos(a)*r, z: MARACAIBO.z + Math.sin(a)*r, ang: a, color: ['#ff8a3d','#7de0ff','#ffd23f','#c5e1a5','#f06292'][i]}; });
+Object.assign(PALAFITOS, {alto: 1.6, rPasarela: 193, a0: 3.80, a1: 4.38, aEntrada: 4.09, rEntrada: 184});
+/* la pasarela de madera: un arco frente a las casitas, un ramal desde la carretera y la tarima de cada casa */
+function enPalafitos(x, z){
+  const dx = x - MARACAIBO.x, dz = z - MARACAIBO.z, d = Math.hypot(dx, dz); if (d < 180 || d > 203) return false;
+  const a = Math.atan2(dz, dx) < 0 ? Math.atan2(dz, dx) + 2*Math.PI : Math.atan2(dz, dx);
+  if (Math.abs(d - PALAFITOS.rPasarela) < 2.0 && a > PALAFITOS.a0 && a < PALAFITOS.a1) return true;
+  if (Math.abs(a - PALAFITOS.aEntrada)*d < 2.0 && d >= PALAFITOS.rEntrada && d <= PALAFITOS.rPasarela) return true;
+  for (const p of PALAFITOS) if (Math.abs(x - p.x) < 3.7 && Math.abs(z - p.z) < 3.7) return true;
+  for (let i=1;i<PALAFITOS.length;i++){ const p = PALAFITOS[i-1], q = PALAFITOS[i], vx = q.x-p.x, vz = q.z-p.z, L2 = vx*vx+vz*vz, t = clamp(((x-p.x)*vx + (z-p.z)*vz)/L2, 0, 1); if (Math.hypot(x - p.x - vx*t, z - p.z - vz*t) < 1.6) return true; }
+  return false;
+}
+const LUGARES_MCBO = [
+  {id:'basilica',  x:BASILICA.x, z:BASILICA.z, r:26, frase:'basilica', titulo:'⛪ ¡LA BASÍLICA DE LA CHINITA!', color:'#ffe6a0'},
+  {id:'carabobo',  x:MARACAIBO.x-86, z:MARACAIBO.z+26, r:30, frase:'carabobo', titulo:'🏘️ ¡LA CALLE CAROBOBO!'.replace('CAROBOBO','CARABOBO'), color:'#ffb3c1'},
+  {id:'torreReloj', x:TORRE_RELOJ.x, z:TORRE_RELOJ.z, r:9, frase:'torreReloj', titulo:'🕰️ ¡LA TORRE DEL RELOJ DE LA PLAZA BARALT!', color:'#ffe6a0'},
+  {id:'palafitos', x:PALAFITOS[2].x, z:PALAFITOS[2].z, r:34, frase:'palafitos', titulo:'🏠 ¡LOS PALAFITOS DE SANTA ROSA DE AGUA!', color:'#a0e8ff'},
+];
+const SABORES = ['colita', 'fresa', 'tamarindo', 'limón', 'papelón', 'colita'];
 const HELIPUERTOS = [
   {id:0, nombre:'la montaña',   x:MONTANA.x+4, z:MONTANA.z-6},
   {id:1, nombre:'el faro',      x:FARO.x+16, z:FARO.z+14},
@@ -833,9 +882,9 @@ const HELIPUERTOS = [
 /* la vereda del lago: un paseo de madera por la orilla de Maracaibo, mirando al lago y al puente */
 const VEREDA = (()=>{
   const pts = [], a0 = Math.atan2(MARACAIBO.z, MARACAIBO.x) + Math.PI;   /* la dirección del puente, hacia la isla grande */
-  for (let i=0;i<=34;i++){
-    const a = a0 + 0.42 + i/34*1.5;
-    let r = 60; while (r < 150 && alturaBase(MARACAIBO.x + Math.cos(a)*r, MARACAIBO.z + Math.sin(a)*r) > 1.0) r += 1;
+  for (let i=0;i<=64;i++){
+    const a = a0 + 0.42 + i/64*2.7;
+    let r = 120; while (r < MARACAIBO.r + 80 && alturaBase(MARACAIBO.x + Math.cos(a)*r, MARACAIBO.z + Math.sin(a)*r) > 1.0) r += 1;
     const rr = r - 4.5;
     pts.push({x: MARACAIBO.x + Math.cos(a)*rr, z: MARACAIBO.z + Math.sin(a)*rr, a});
   }
@@ -886,6 +935,13 @@ const ANIMALES = [];
   g('vaca', 'Vaca Lola', 0, 5, {frase:'¡Muuu! ¿Quieres lechita?'}); g('vaca', 'Vaca Pinta', 1, 5, {frase:'¡Muuu! ¡Qué rico el pasto!'}); g('vaca', 'Vaquita', 2, 5, {frase:'¡Muuu! ¡Soy una vaquita bebé!', esc:0.6});
   g('cerdo', 'Cerdito Pancho', 3, 5, {frase:'¡Oinc, oinc! ¡Me encanta el barro!', r:1.0, vel:1.6}); g('cerdo', 'Cerdita Rosa', 4, 5, {frase:'¡Oinc! ¿Jugamos en el charco?', r:1.0, vel:1.6, esc:0.8});
 }
+const GUAJIRO = npc('guajiro', 'El guajiro', PLAZA_MCBO.x + 15, PLAZA_MCBO.z + 9, {r: 1.0, vel: 0, quieto: true, cepillado: true, frase: '¡Cepillados! ¿De qué sabor lo quieres, mi hermano?', monedas: 5});
+GUAJIRO.ang = Math.atan2(PLAZA_MCBO.x - GUAJIRO.x, PLAZA_MCBO.z - GUAJIRO.z);
+const GAITEROS = [['furro', 'El del furro', '¡Ay, qué gaita tan sabrosa! ¡Ese furro suena bien!'], ['cuatro', 'El del cuatro', '¡La gaita zuliana! ¡Bailá, pichunguito!'], ['tambora', 'El de la tambora', '¡Pum, pum! ¡Gaita pa\' toda la noche!']].map(([instrumento, nombre, frase], i)=>npc('gaitero', nombre, MARACAIBO.x - 28 + i*3.4, MARACAIBO.z + 52 - (i===1 ? 1.5 : 0), {r: 0.9, vel: 0, quieto: true, gaitero: true, instrumento, frase, monedas: 6}));
+GAITEROS.forEach(n=>{ n.ang = Math.atan2(PLAZA_MCBO.x - n.x, PLAZA_MCBO.z - n.z); });
+const AGUI = npc('agui', 'Agui', ESTADIO.x + 8, ESTADIO.z + 8, {r: 1.0, vel: 2.2, agui: true, frase: '¡Vamos Águilas del Zulia! ¡Soy Agui!', monedas: 20});
+const PELOTEROS = BEISBOL.bases.concat([BEISBOL.monticulo]).map((b, i)=>npc('pelotero', ['Primera base', 'Segunda base', 'Tercera base', 'El pícher'][i], b.x + 1.2, b.z + 1.2, {r: 0.9, vel: 0, quieto: true, frase: ['¡Corre a primera, pichunguito!', '¡Segunda base, dale!', '¡Tercera! ¡Ya casi!', '¡Te lanzo la bola, batea duro!'][i], monedas: 8}));
+PELOTEROS.forEach(n=>{ n.ang = Math.atan2(BEISBOL.home.x - n.x, BEISBOL.home.z - n.z); });
 const SANTA = npc('santa', 'Santa Claus', MONTANA.x-14+5+3.2, MONTANA.z+12+1.5, {r: 0.9, vel: 0, quieto: true, frase: '¡Jo, jo, jo! ¡Feliz Navidad, pichunguito!', monedas: 30});
 SANTA.ang = -Math.PI/2;
 /* Fernando cantante: aparece frente al micrófono cuando el que juega no es Fernando; al saludarlo, canta */
@@ -1023,6 +1079,20 @@ const FRASES_NUEVAS = {
   surf: '¡Surf! ¡Voy a agarrar las olas grandes!',
   tanque: '¡Al ataque con el tanque! ¡Pum, pum!',
   gol: '¡Goooool! ¡Qué golazo!',
+  cepillado: '¡Un cepillado! ¡Qué rico y qué frío!',
+  cepilladoColita: '¡Un cepillado de colita! ¡Mi favorito!',
+  empanada: '¡Empanada! ¡Qué rica!',
+  jonron: '¡Jonrón! ¡Vamos Águilas del Zulia!',
+  estadio: '¡El estadio de las Águilas del Zulia! ¡Quiero batear!',
+  aeropuerto: '¡El aeropuerto La Chinita! ¡Mira los aviones!',
+  patacon: '¡Un patacón maracucho! ¡Es gigante!',
+  tequeno: '¡Tequeños! ¡Los de Maracaibo son los más grandes!',
+  mandoca: '¡Mandocas! ¡Qué ricas con queso!',
+  gaita: '¡Gaita zuliana! ¡Qué buena está la fiesta!',
+  basilica: '¡La Basílica de La Chinita! ¡La virgen de Maracaibo!',
+  carabobo: '¡La calle Carabobo! ¡Mira las casas de colores!',
+  torreReloj: '¡La Torre del Reloj de la plaza Baralt! ¿Qué hora es?',
+  palafitos: '¡Los palafitos! ¡Casas sobre el agua, como Venecia!',
   flaco: '¡Hice popo y quedé flaquito!',
 };
 const alFinal = (t, suf)=> /!$/.test(t) ? t.replace(/!(?=[^!]*$)/, suf+'!') : t + suf;
@@ -1054,7 +1124,7 @@ solar(HANGAR.x, HANGAR.z, 12, PISTA.h); solar(FARO.x, FARO.z, 9); solar(CANCHA.x
 solar(FUENTE.x, FUENTE.z, 8);
 for (const b of BANOS) solar(b.x, b.z, 5);
 for (const c of CASAS_MCBO) solar(c.x, c.z, Math.max(c.w,c.d)/2+3);
-solar(PLAZA_MCBO.x, PLAZA_MCBO.z, 10);
+solar(PLAZA_MCBO.x, PLAZA_MCBO.z, 10); solar(ESTADIO.x, ESTADIO.z, 50); solar(BASILICA.x, BASILICA.z, 18); solar(TORRE_RELOJ.x, TORRE_RELOJ.z, 4); solar(MARACAIBO.x - 28, MARACAIBO.z + 52, 6); for (let x = LA_CHINITA.x0 - 10; x <= LA_CHINITA.x1 + 10; x += 14) solar(x, LA_CHINITA.z, 16, alturaBase(MARACAIBO.x - 35, LA_CHINITA.z)); solar(LA_CHINITA.terminal.x, LA_CHINITA.terminal.z, 30, alturaBase(MARACAIBO.x - 35, LA_CHINITA.z));
 for (const h of HELIPUERTOS) solar(h.x, h.z, 8);
 solar(186, -56, 9, PISTA.h); solar(-40, -60, 9);
 solar(CASTILLO.x, CASTILLO.z, 26); solar(CASTILLO.x, CASTILLO.z-44, 9, alturaBase(CASTILLO.x, CASTILLO.z)); solar(ISLA_BANANA.x, ISLA_BANANA.z, 12);
@@ -1073,6 +1143,8 @@ function alturaTerreno(x, z){
   let h = alturaBase(x, z);
   const c = cercaRuta(x, z);
   if (c.d < 9) h = lerp(h, RUTA.M[c.i].h, 1 - smooth(4.5, 9, c.d));
+  const cm = cercaRutaMcbo(x, z);
+  if (cm.d < 9) h = lerp(h, RUTA_MCBO.M[cm.i].h, 1 - smooth(4.5, 9, cm.d));
   const dp = distPista(x, z);
   if (dp < 18) h = lerp(h, PISTA.h, 1 - smooth(10, 18, dp));
   for (const s of SOLARES){
@@ -1095,6 +1167,7 @@ function alturaMalla(x, z){
   return c + (b-c)*(1-u) + (d-c)*(1-v);
 }
 for (const h of HELIPUERTOS) h.y = alturaMalla(h.x, h.z);
+for (const e of EMPANADAS) e.y = alturaMalla(e.x, e.z) + 1.0;
 for (const b of BANANAS) b.y = alturaMalla(b.x, b.z) + 1.0;
 /* ---------------- Por dentro de las casas y del castillo ----------------
    Cada casa tiene un cuarto escondido 220 m bajo la isla, justo debajo de ella. Al tocar
@@ -1253,6 +1326,7 @@ function altura(x, z){
   const t = enRampa(x, z);
   if (t >= 0) return RAMPA.base + RAMPA.alto*(t/RAMPA.largo);
   if (enMuelle(x, z)) return MUELLE.alto;
+  if (enPalafitos(x, z)) return PALAFITOS.alto;
   const tp = enPuente(x, z);
   if (tp >= 0) return Math.max(alturaMalla(x, z), alturaPuente(tp));
   return alturaMalla(x, z);
@@ -1286,6 +1360,7 @@ function agregarObst(o){
 function obstaculosCerca(x, z){ return OBST.get(claveCelda(x, z)) || []; }
 function lejosDeTodo(x, z, minimo){
   if (cercaRuta(x, z).d < 14) return false;
+  if (cercaRutaMcbo(x, z).d < 14) return false;
   if (enPuente(x, z) >= 0) return false;
   for (const c of CASAS_MCBO) if (Math.hypot(x-c.x, z-c.z) < 12) return false;
   for (const h of HELIPUERTOS) if (Math.hypot(x-h.x, z-h.z) < 14) return false;
@@ -1338,6 +1413,8 @@ function lejosDeTodo(x, z, minimo){
   for (const c of CASAS) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2, alto: altura(c.x, c.z) + c.h});
   for (const c of CASAS_MCBO) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2, alto: altura(c.x, c.z) + c.h});
   agregarObst({x:HANGAR.x, z:HANGAR.z, hx:HANGAR.w/2, hz:HANGAR.d/2});
+  agregarObst({x:BASILICA.x, z:BASILICA.z, hx:BASILICA.w/2, hz:BASILICA.d/2, alto: altura(BASILICA.x, BASILICA.z) + BASILICA.h});
+  agregarObst({x:TORRE_RELOJ.x, z:TORRE_RELOJ.z, hx:1.6, hz:1.6, alto: altura(TORRE_RELOJ.x, TORRE_RELOJ.z) + TORRE_RELOJ.h});
   agregarObst({x:CASTILLO.x, z:CASTILLO.z, hx:15, hz:15});
   agregarObst({x:CIRCO_DEF.x, z:CIRCO_DEF.z, r:18});
   for (const p of PLATANOS) agregarObst({x:p.x, z:p.z, r:0.6*p.esc});
@@ -1478,7 +1555,9 @@ function crearPartida(guardado){
     hora: NOCHE ? 0.0 : 0.32, fantasmas: [], fantasmaDicho: -99999, mascota: null, mascotaPos: null,
     props: PROPS_DEF.map(d=>Object.assign({}, d, {ox:d.x, oz:d.z, y:0, vx:0, vy:0, vz:0, giro:0, ang:d.ang||0, estado:'quieto', t:0, fase:0, huyeT:0, premioT:-9999})),
     aliens: {luna: ZONAS.luna.aliens.map(a=>Object.assign({}, a)), saturno: ZONAS.saturno.aliens.map(a=>Object.assign({}, a)), jupiter: ZONAS.jupiter.aliens.map(a=>Object.assign({}, a))},
-    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), animales: ANIMALES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
+    visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), animales: ANIMALES.map(n=>Object.assign({}, n)), guajiro: Object.assign({}, GUAJIRO), gaiteros: GAITEROS.map(n=>Object.assign({}, n)), agui: Object.assign({}, AGUI), peloteros: PELOTEROS.map(n=>Object.assign({}, n)),
+    cepillados: 0, empanadas: 0, comidasEmpanadas: new Set(), pelota: {x:BEISBOL.home.x, y:0, z:BEISBOL.home.z, vx:0, vy:0, vz:0, estado:'quieta', t:0}, jonrones: 0, aguiFiestaT: -9999, estadioDicho: -99999, aeropuertoDicho: -99999, lugaresDichos: {}, gaitas: 0,
+    aviones: AVIONES_DEF.map(d=>({id:d.id, x:d.x, y:0, z:LA_CHINITA.z + 16, ang:Math.PI/2, vel:0, cabeceo:0, estado:'parado', t: 60*60 - d.espera, ang2:0})), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
     balas: [], explosiones: [], disparoT: -9999, surfT: -9999, casaEstado: {}, cercaMueble: null, sentado: null, durmiendo: null, columpio: null, trepando: false, balon: {x:CANCHA.x, y:0, z:CANCHA.z, vx:0, vy:0, vz:0, gol:0}, goles: 0,
     trompetaT: -9999, hipoT: -9999, rugidoLeonT: -9999, rugidoSabanaT: -9999, muuT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
@@ -1496,7 +1575,7 @@ function exportar(P){
   for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos','chivos','arosNoche','rocas','saturnianos','cristales','casas']) prog[k] = P.prog[k].slice();
   for (const k of ['rampa','santi','cofre','popo','luna','maracaibo','ovni','coroDicho']) prog[k] = P.prog[k];
   prog.rayos = P.prog.rayos;
-  return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas], arepas: P.arepas, comidasArepas: [...P.comidasArepas], popitos: P.popitos.length, prog, gordura: P.gordura, monedas: P.monedas, zonasVistas: P.zonasVistas.slice(), hora: P.hora};
+  return {estrellas: P.estrellas.slice(), puntos: P.puntos, hamburguesas: P.hamburguesas, comidas: [...P.comidas], arepas: P.arepas, comidasArepas: [...P.comidasArepas], empanadas: P.empanadas, comidasEmpanadas: [...P.comidasEmpanadas], cepillados: P.cepillados, gaitas: P.gaitas, popitos: P.popitos.length, prog, gordura: P.gordura, monedas: P.monedas, zonasVistas: P.zonasVistas.slice(), hora: P.hora};
 }
 function importar(P, g){
   try{
@@ -1510,6 +1589,7 @@ function importar(P, g){
     if (Number.isFinite(g.hora) && !NOCHE) P.hora = clamp(g.hora, 0, 1);
     if (Array.isArray(g.zonasVistas)) P.zonasVistas = g.zonasVistas.filter(z=>ZONAS[z]);
     if (Array.isArray(g.comidasArepas)) P.comidasArepas = new Set(g.comidasArepas);
+    if (Array.isArray(g.comidasEmpanadas)) P.comidasEmpanadas = new Set(g.comidasEmpanadas); if (Number.isFinite(g.empanadas)) P.empanadas = g.empanadas; if (Number.isFinite(g.cepillados)) P.cepillados = g.cepillados; if (Number.isFinite(g.gaitas)) P.gaitas = g.gaitas;
     if (g.prog){ for (const k of ['banos','banderas','aros','familia','helipuertos','boyas','huevos','chivos','arosNoche','rocas','saturnianos','cristales','casas']) if (Array.isArray(g.prog[k])) P.prog[k] = g.prog[k].slice();
       for (const k of ['rampa','santi','cofre','popo','luna','maracaibo','ovni','coroDicho']) if (typeof g.prog[k]==='boolean') P.prog[k] = g.prog[k];
       if (Number.isFinite(g.prog.rayos)) P.prog.rayos = g.prog.rayos; }
@@ -1811,7 +1891,7 @@ function pasoVehiculo(P, v, ent){
   if (esDino && ent.b && P.t - P.rugidoT > 90){ P.rugidoT = P.t; evento(P, 'rugido', {x:v.x, y:v.y, z:v.z}); }
   /* en tierra o sobre el agua: gas, freno, marcha atrás y volante */
   const sobreNieve = v.nieve && altura(v.x, v.z) > 44;
-  const enRuta = sobreNieve || cercaRuta(v.x, v.z).d < RUTA.ancho/2 + 1 || distPista(v.x, v.z) < PISTA.ancho/2 || esAgua || esDino || enPuente(v.x, v.z) >= 0 || Math.hypot(v.x-PUEBLO.x, v.z-PUEBLO.z) < 130;
+  const enRuta = sobreNieve || cercaRuta(v.x, v.z).d < RUTA.ancho/2 + 1 || cercaRutaMcbo(v.x, v.z).d < RUTA_MCBO.ancho/2 + 1 || distPista(v.x, v.z) < PISTA.ancho/2 || esAgua || esDino || enPuente(v.x, v.z) >= 0 || Math.hypot(v.x-PUEBLO.x, v.z-PUEBLO.z) < 130;
   /* la tabla: pendiente del agua bajo la tabla (positiva = la ola viene por detrás y empuja) */
   if (v.id==='tabla'){ const tt = P.t*DT; v.pend = (ola(v.x - fx*3, v.z - fz*3, tt) - ola(v.x + fx*3, v.z + fz*3, tt))/6; }
   const vmax = C.vmax*(enRuta ? 1 : (v.nieve ? 0.4 : 0.68))*(turbo ? C.turbo : 1)*(v.id==='tabla' && v.pend > -0.03 ? 1.7 : 1);
@@ -2092,6 +2172,11 @@ function revisarRecogibles(P){
     const dx = h.x-J.x, dz = h.z-J.z, dy = h.y-(J.y+1);
     if (dx*dx+dz*dz+dy*dy < alcance*alcance) comerHamburguesa(P, h);
   }
+  for (const e of EMPANADAS){
+    if (P.comidasEmpanadas.has(e.id)) continue;
+    const dx = e.x-J.x, dz = e.z-J.z, dy = e.y-(J.y+1);
+    if (dx*dx+dz*dz+dy*dy < alcance*alcance){ P.comidasEmpanadas.add(e.id); P.empanadas++; P.puntos += 150; P.monedas += 3; P.popo = Math.min(1, P.popo + 0.3); engordar(P); evento(P, 'empanada', {id:e.id, comida:e.tipo, x:e.x, y:e.y, z:e.z, total:P.empanadas}); if (P.t - P.ultimaHamb > 60) decir(P, e.tipo); P.ultimaHamb = P.t; P.pedoT = 14; if (P.popo >= 0.99 && !P.ganas){ P.ganas = true; evento(P, 'ganas'); } }
+  }
   for (const a of AREPAS){
     if (P.comidasArepas.has(a.id)) continue;
     const dx = a.x-J.x, dz = a.z-J.z, dy = a.y-(J.y+1);
@@ -2178,6 +2263,7 @@ function pasoBichos(P){
     for (const n of P.elefantes) pasear(n, ISLA_ELEFANTES.x, ISLA_ELEFANTES.z, ISLA_ELEFANTES.r-8, enTierra);
     if (P.t - P.trompetaT > 60*12 && cercaDe(ISLA_ELEFANTES.x, ISLA_ELEFANTES.z, 70)){ P.trompetaT = P.t; const n = P.elefantes[Math.floor(azar()*P.elefantes.length)]; evento(P, 'trompeta', {x:n.x, y:altura(n.x, n.z), z:n.z}); }
   }
+  if (cercaDe(ESTADIO.x, ESTADIO.z, 160)){ pasear(P.agui, ESTADIO.x, ESTADIO.z, ESTADIO.r - 14, (x, z)=>Math.hypot(x-BEISBOL.home.x, z-BEISBOL.home.z) > 4); if (P.t - P.aguiFiestaT < 60*4) P.agui.fase += DT*3; }
   if (cercaDe(SABANA.x, SABANA.z, 160)) for (const n of P.animales) if (n.zona==='sabana') pasear(n, SABANA.x, SABANA.z, SABANA.r-6, enTierra);
   if (cercaDe(GRANJA.x, GRANJA.z, 160)) for (const n of P.animales) if (n.zona==='granja') pasear(n, GRANJA.x, GRANJA.z, GRANJA.r-6, enTierra);
   if (P.t - P.rugidoSabanaT > 60*16 && cercaDe(SABANA.x, SABANA.z, 70)){ P.rugidoSabanaT = P.t; const l = P.animales.find(n=>n.tipo==='leon'); evento(P, 'rugidoLeon', {x:l.x, y:altura(l.x, l.z), z:l.z}); }
@@ -2236,6 +2322,8 @@ function npcsCerca(P){
   if (Math.hypot(J.x-ISLA_ELEFANTES.x, J.z-ISLA_ELEFANTES.z) < 90) for (const n of P.elefantes) lista.push(n);
   if (Math.hypot(J.x-ISLA_VAMPIROS.x, J.z-ISLA_VAMPIROS.z) < 90) for (const n of P.vampiros) lista.push(n);
   if (Math.hypot(J.x-SABANA.x, J.z-SABANA.z) < 90) for (const n of P.animales) if (n.zona==='sabana') lista.push(n);
+  if (Math.hypot(J.x-PLAZA_MCBO.x, J.z-PLAZA_MCBO.z) < 90){ lista.push(P.guajiro); for (const n of P.gaiteros) lista.push(n); }
+  if (Math.hypot(J.x-ESTADIO.x, J.z-ESTADIO.z) < 90){ lista.push(P.agui); for (const n of P.peloteros) lista.push(n); }
   if (Math.hypot(J.x-GRANJA.x, J.z-GRANJA.z) < 90) for (const n of P.animales) if (n.zona==='granja') lista.push(n);
   if (Math.hypot(J.x-MONTANA.x, J.z-MONTANA.z) < 90){ for (const n of P.renos) lista.push(n); lista.push(P.santa); }
   if (P.pj !== 'fernando' && Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < 90) lista.push(P.cantante);
@@ -2255,6 +2343,8 @@ function revisarSaludosNPC(P){
     P.monedas += monedas; P.puntos += 100;
     evento(P, 'saludoNPC', {bicho:n.tipo, nombre:n.nombre, texto:n.frase, monedas, x:n.x, y: y === null ? altura(n.x, n.z) : y, z:n.z, alien:n.alien});
     if (n.canta) empezarCanto(P, 'npc'); else evento(P, 'hablar', {texto:n.frase, quien:n.nombre, pj:'npc_'+n.tipo});
+    if (n.cepillado){ const sabor = SABORES[Math.floor(azar()*SABORES.length)]; P.cepillados++; P.puntos += 100; P.popo = Math.min(1, P.popo + 0.1); evento(P, 'cepillado', {sabor, favorito: sabor==='colita', total:P.cepillados, x:n.x, y:altura(n.x, n.z), z:n.z}); decir(P, sabor==='colita' ? 'cepilladoColita' : 'cepillado'); }
+    if (n.gaitero){ P.gaitas++; P.puntos += 50; evento(P, 'gaita', {x:n.x, y:altura(n.x, n.z), z:n.z, total:P.gaitas}); decir(P, 'gaita'); }
     if (n.zona==='saturno' && !P.prog.saturnianos.includes(n.id)){ P.prog.saturnianos.push(n.id); evento(P, 'saturniano', {total:P.prog.saturnianos.length}); if (P.prog.saturnianos.length >= 4) darEstrella(P, 'saturno'); }
   }
 }
@@ -2297,6 +2387,67 @@ function pasoBalon(P, ent){
     B.x = C.x + Math.sign(B.x-C.x)*hx; B.vx = -B.vx*0.6;
   }
   if (Math.abs(B.z-C.z) > hz){ B.z = C.z + Math.sign(B.z-C.z)*hz; B.vz = -B.vz*0.6; }
+}
+/* el béisbol: parado en el home con A se batea; si la pelota sale del estadio es jonrón */
+const cercaHome = (P)=> !P.veh && !P.casa && !P.zona && P.J.suelo && P.pelota.estado==='quieta' && Math.hypot(P.J.x-BEISBOL.home.x, P.J.z-BEISBOL.home.z) < 2.2;
+function batear(P, fuerte){
+  const B = P.pelota, a = BEISBOL.dir + (azar()-0.5)*1.0, v = 30 + azar()*13 + (fuerte ? 6 : 0), el = 0.6 + azar()*0.35;
+  B.estado = 'aire'; B.t = 0; B.x = BEISBOL.home.x; B.z = BEISBOL.home.z; B.y = altura(B.x, B.z) + 1.0;
+  B.vx = Math.cos(a)*v*Math.cos(el); B.vz = Math.sin(a)*v*Math.cos(el); B.vy = v*Math.sin(el);
+  evento(P, 'batazo', {x:B.x, y:B.y, z:B.z, fuerte: v > 40});
+}
+function pasoBeisbol(P){
+  const B = P.pelota;
+  if (B.estado==='quieta') return;
+  if (B.estado==='cayo'){ if (++B.t > 150){ B.estado = 'quieta'; B.x = BEISBOL.home.x; B.z = BEISBOL.home.z; B.y = altura(B.x, B.z) + 0.3; B.vx = B.vy = B.vz = 0; } return; }
+  B.vy -= GRAV*DT; B.x += B.vx*DT; B.z += B.vz*DT; B.y += B.vy*DT; B.t++;
+  const g = Math.max(altura(B.x, B.z), NIVEL_MAR) + 0.3;
+  if (B.y <= g){
+    B.y = g; B.estado = 'cayo'; B.t = 0;
+    const d = Math.hypot(B.x-ESTADIO.x, B.z-ESTADIO.z);
+    if (d > ESTADIO.r + 1){ P.jonrones++; P.monedas += 15; P.puntos += 500; P.aguiFiestaT = P.t; evento(P, 'jonron', {x:B.x, y:B.y, z:B.z, total:P.jonrones}); decir(P, 'jonron'); }
+    else evento(P, 'pelotaCae', {x:B.x, y:B.y, z:B.z, d: Math.hypot(B.x-BEISBOL.home.x, B.z-BEISBOL.home.z)});
+  }
+}
+/* los aviones de La Chinita: esperan en la rampa, despegan, dan la vuelta a la ciudad y aterrizan solos */
+function pasoAviones(P){
+  const J = P.J, C = LA_CHINITA, cerca = Math.hypot(J.x-MARACAIBO.x, J.z-MARACAIBO.z) < 420;
+  for (const a of P.aviones){
+    const g = altura(C.x0 + 20, C.z);
+    a.t++;
+    if (a.estado==='parado'){ a.vel = 0; a.y = g; a.cabeceo = 0; if (a.t > 60*60){ a.estado = 'despegue'; a.t = 0; a.z = C.z; a.ang = Math.PI/2; if (cerca) evento(P, 'avionNPC', {fase:'despega', x:a.x, y:a.y, z:a.z}); } }
+    else if (a.estado==='despegue'){
+      a.vel = Math.min(46, a.vel + 12*DT); a.x += a.vel*DT;
+      if (a.vel > 28){ a.y += (a.vel - 28)*0.55*DT; a.cabeceo = lerp(a.cabeceo, 0.28, 0.05); } else a.y = g;
+      if (a.x > C.x1 + 70 || a.y > g + 45){ a.estado = 'vuelo'; a.t = 0; a.ang2 = Math.atan2(a.z - MARACAIBO.z, a.x - MARACAIBO.x); a.radio = Math.hypot(a.x - MARACAIBO.x, a.z - MARACAIBO.z); }
+    } else if (a.estado==='vuelo'){
+      const R = 250; a.radio = lerp(a.radio, R, 0.01); a.y = lerp(a.y, g + 75, 0.01); a.cabeceo = lerp(a.cabeceo, 0, 0.03);
+      a.ang2 += (a.vel/a.radio)*DT; a.x = MARACAIBO.x + Math.cos(a.ang2)*a.radio; a.z = MARACAIBO.z + Math.sin(a.ang2)*a.radio; a.ang = envolver(Math.atan2(-Math.sin(a.ang2), Math.cos(a.ang2)) );
+      a.ang = Math.atan2(-Math.sin(a.ang2)*1, Math.cos(a.ang2)*1);   /* rumbo tangente: sin(ang)=dx, cos(ang)=dz */
+      a.ang = Math.atan2(-Math.sin(a.ang2), Math.cos(a.ang2));
+      /* tras una vuelta larga, cuando pasa por el oeste, entra a la final por la pista */
+      const aprox = Math.atan2(C.z - MARACAIBO.z, (C.x0 - 230) - MARACAIBO.x);
+      if (a.t > 60*30 && Math.abs(envolver(a.ang2 - aprox)) < 0.05){ a.estado = 'final'; a.t = 0; a.x = C.x0 - 230; a.z = C.z; a.ang = Math.PI/2; }
+      if (cerca && a.t % 240 === 0) evento(P, 'avionNPC', {fase:'vuela', x:a.x, y:a.y, z:a.z});
+    } else if (a.estado==='final'){
+      a.vel = 34; a.x += a.vel*DT; const k = clamp((a.x - (C.x0 - 230))/250, 0, 1); a.y = g + (1-k)*(1-k)*55; a.cabeceo = -0.12*(1-k);
+      if (a.x >= C.x0 + 20){ a.estado = 'rodaje'; a.t = 0; a.y = g; a.cabeceo = 0; if (cerca) evento(P, 'avionNPC', {fase:'aterriza', x:a.x, y:a.y, z:a.z}); }
+    } else if (a.estado==='rodaje'){
+      a.vel = Math.max(6, a.vel - 14*DT); a.x += a.vel*DT; a.y = g;
+      if (a.x >= C.x1 - 30){ a.estado = 'taxi'; a.t = 0; }
+    } else if (a.estado==='taxi'){
+      const ox = AVIONES_DEF.find(d=>d.id===a.id).x, oz = C.z + 16;
+      const dx = ox - a.x, dz = oz - a.z, d = Math.hypot(dx, dz); a.vel = 6; a.y = g;
+      if (d < 2){ a.x = ox; a.z = oz; a.ang = Math.PI/2; a.estado = 'parado'; a.t = 0; }
+      else { a.ang = Math.atan2(dx, dz); a.x += dx/d*a.vel*DT; a.z += dz/d*a.vel*DT; }
+    }
+  }
+  /* al llegar al estadio o al aeropuerto, se comenta */
+  if (!P.veh && !P.casa && !P.zona){
+    if (P.t - P.estadioDicho > 60*60*4 && Math.hypot(J.x-ESTADIO.x, J.z-ESTADIO.z) < ESTADIO.r + 12){ P.estadioDicho = P.t; evento(P, 'estadioCerca'); decir(P, 'estadio'); }
+    if (P.t - P.aeropuertoDicho > 60*60*4 && Math.abs(J.z - C.z) < 40 && J.x > C.x0 - 20 && J.x < C.x1 + 20){ P.aeropuertoDicho = P.t; evento(P, 'aeropuertoCerca'); decir(P, 'aeropuerto'); }
+    for (const L of LUGARES_MCBO){ if (P.t - (P.lugaresDichos[L.id] ?? -99999) > 60*60*4 && Math.hypot(J.x-L.x, J.z-L.z) < L.r){ P.lugaresDichos[L.id] = P.t; evento(P, 'lugarMcbo', {id:L.id, titulo:L.titulo, color:L.color}); decir(P, L.frase); } }
+  }
 }
 /* la sala de conciertos: si el que juega es Fernando, canta al pararse frente al micrófono;
    si es otro, Fernando está ahí de cantante y canta cuando lo saludan (revisarSaludosNPC) */
@@ -2736,12 +2887,13 @@ function pasoPartida(P, ent){
     else if (aNuevo && P.cercaVeh){ montar(P, P.cercaVeh); e2.aNuevo = false; e2.a = false; }
     else if (aNuevo && P.sentado){ P.sentado = null; evento(P, 'levanta'); e2.aNuevo = false; e2.a = false; }
     else if (aNuevo && P.casa && P.cercaMueble){ usarMueble(P, P.cercaMueble); e2.aNuevo = false; e2.a = false; }
+    else if (aNuevo && cercaHome(P)){ batear(P, !!ent.b); e2.aNuevo = false; e2.a = false; }
     if (P.veh) pasoVehiculo(P, P.veh, {jx:0, jy:0, a:false, b:false, aNuevo:false, bNuevo:false});
     else pasoPie(P, e2);
   }
   pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
   pasoDinos(P); pasoMeteoros(P); pasoGorila(P);
-  pasoBichos(P); pasoConcierto(P); pasoBalas(P); pasoBalon(P, e2); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
+  pasoBichos(P); pasoConcierto(P); pasoBalas(P); pasoBalon(P, e2); pasoBeisbol(P); pasoAviones(P); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
   pasoHora(P); pasoMascota(P); pasoProps(P);
   pasoNoche(P);
 }
@@ -2782,7 +2934,7 @@ if (typeof module !== 'undefined' && module.exports){
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
     posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
     CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, INTERIOR_CIRCO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana,
-    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, R_ISLA, VALLE_DINOS2, VALLES_DINOS, SABANA, GRANJA, ANIMALES, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
+    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, R_ISLA, RUTA_MCBO, cercaRutaMcbo, ESTADIO, BEISBOL, LA_CHINITA, AVIONES_DEF, EMPANADAS, GUAJIRO, AGUI, PELOTEROS, SABORES, cercaHome, batear, BASILICA, TORRE_RELOJ, PALAFITOS, enPalafitos, LUGARES_MCBO, GAITEROS, TIPOS_COMIDA, VALLE_DINOS2, VALLES_DINOS, SABANA, GRANJA, ANIMALES, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2909,6 +3061,7 @@ const sfx = {
   campanitas(){ [1319,1568,1319,1568,1760,2093].forEach((f,i)=>beep(f,0.12,'sine',0.08,i*0.12)); },
   trompeta(){ [180,220,260,220].forEach((f,i)=>beep(f,0.3,'sawtooth',0.18,i*0.25)); },
   hipo(){ beep(600,0.05,'square',0.08); beep(900,0.08,'square',0.08,0.05); },
+  avionLejos(tipo){ const f0 = tipo==='aterriza' ? 260 : 120, f1 = tipo==='aterriza' ? 100 : 320; try{ const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f0, AC.currentTime); o.frequency.exponentialRampToValueAtTime(f1, AC.currentTime + 2.2); g.gain.setValueAtTime(0.0001, AC.currentTime); g.gain.exponentialRampToValueAtTime(0.08, AC.currentTime + 0.4); g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + 2.4); o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime + 2.5); }catch(e){} },
   muu(){ beep(140,0.5,'sawtooth',0.14); beep(110,0.5,'sawtooth',0.12,0.35); },
   oinc(){ [300,420,300,440].forEach((f,i)=>beep(f,0.07,'square',0.1,i*0.1)); },
   tele(){ [659,784,988,784,1319].forEach((f,i)=>beep(f,0.12,'square',0.06,i*0.1)); },
@@ -3449,6 +3602,8 @@ function cinta(muestras, a, b, color, alza, cerrada){
   const asfalto = new THREE.Mesh(cinta(RUTA.M, -5, 5, '#4a4a55', 0.1, true), mat); asfalto.receiveShadow = true; mundo.add(asfalto);
   mundo.add(new THREE.Mesh(cinta(RUTA.M, -5.2, -4.6, '#e8e8ea', 0.14, true), mat));
   mundo.add(new THREE.Mesh(cinta(RUTA.M, 4.6, 5.2, '#e8e8ea', 0.14, true), mat));
+  /* la carretera costera de Maracaibo, que bordea la vereda */
+  { const R = RUTA_MCBO.M.map(m=>({x:m.x, z:m.z, nx:m.nx, nz:m.nz})); mundo.add(new THREE.Mesh(cinta(R, -5, 5, '#4a4a55', 0.1, true), mat)); mundo.add(new THREE.Mesh(cinta(R, -5.2, -4.6, '#e8e8ea', 0.14, true), mat)); mundo.add(new THREE.Mesh(cinta(R, 4.6, 5.2, '#e8e8ea', 0.14, true), mat)); mundo.add(new THREE.Mesh(cinta(R, -0.15, 0.15, '#ffd23f', 0.14, true), mat)); }
   for (let i=0;i<RUTA.N;i+=8){
     const tramo = []; for (let k=0;k<5;k++) tramo.push(RUTA.M[(i+k)%RUTA.N]);
     mundo.add(new THREE.Mesh(cinta(tramo, -0.22, 0.22, '#ffd23f', 0.15, false), mat));
@@ -3687,6 +3842,7 @@ function lanzarRayo(x, z){
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xdfe8ff, transparent:true, opacity:0.8, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(90, 90, 1); sp.position.set(x, 120, z); scene.add(sp); NOCHE_VISTA.rayos.push({m: sp, t: 10});
 }
 
+const PIEL = '#ffc8a0';   /* el color de piel de la familia; va aquí arriba porque los vecinos de Maracaibo se arman antes que el resto */
 /* ---------------- Maracaibo y su puente sobre el lago ---------------- */
 function arepaGeo(){
   const A = new Armador();
@@ -3701,8 +3857,70 @@ const arepasMesh = AREPAS.map(a=>{
   brillo.scale.set(2.2,2.2,1); brillo.position.y = 0.4; m.add(brillo);
   mundo.add(m); return m;
 });
+function empanadaGeo(){ const A = new Armador(); A.bola(0.5, '#f2c060', 0, 0.25, 0, 12, 1, 0.5, 0.62).bola(0.46, '#e8a840', 0, 0.28, -0.02, 12, 1, 0.42, 0.5); for (let i=0;i<7;i++){ const a = -1.2 + i*0.4; A.bola(0.06, '#e0a030', Math.cos(a)*0.5, 0.25, Math.sin(a)*0.31 - 0.02, 5); } return A.geo(); }
+function pataconGeo(){ const A = new Armador(); A.cil(0.55, 0.5, 0.12, '#e8c860', 0, 0.06, 0, 0,0,0, 14).cil(0.5, 0.5, 0.16, '#a0522d', 0, 0.2, 0, 0,0,0, 14).cil(0.55, 0.55, 0.06, '#66bb6a', 0, 0.31, 0, 0,0,0, 14).cil(0.5, 0.5, 0.08, '#fff3c0', 0, 0.38, 0, 0,0,0, 14).cil(0.5, 0.55, 0.12, '#e8c860', 0, 0.48, 0, 0,0,0, 14); return A.geo(); }
+function tequenoGeo(){ const A = new Armador(); for (let i=0;i<3;i++){ const a = -0.5 + i*0.5; A.cil(0.13, 0.13, 1.1, '#e8b850', Math.cos(a)*0.2, 0.14, Math.sin(a)*0.2, Math.PI/2, 0, a, 8).bola(0.12, '#fff3c0', Math.cos(a)*0.2 - Math.sin(a)*0.55, 0.14, Math.sin(a)*0.2 + Math.cos(a)*0.55, 8); } return A.geo(); }
+function mandocaGeo(){ const A = new Armador(); A.pieza(new THREE.TorusGeometry(0.34, 0.14, 8, 16), '#c8862a', 0, 0.15, 0, Math.PI/2, 0, 0).pieza(new THREE.TorusGeometry(0.34, 0.14, 8, 16), '#d89838', 0.5, 0.15, 0.25, Math.PI/2, 0, 0.6); return A.geo(); }
+const geoEmpanada = empanadaGeo(), geoComida = {empanada: geoEmpanada, patacon: pataconGeo(), tequeno: tequenoGeo(), mandoca: mandocaGeo()};
+const empanadasMesh = EMPANADAS.map(e=>{ const m = new THREE.Mesh(geoComida[e.tipo] || geoEmpanada, matBrillo()); m.scale.set(1.5, 1.5, 1.5); m.position.set(e.x, e.y, e.z); const brillo = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xfff0c0, transparent:true, opacity:0.45, depthWrite:false, blending:THREE.AdditiveBlending})); brillo.scale.set(2.2, 2.2, 1); brillo.position.y = 0.4; m.add(brillo); mundo.add(m); return m; });
+const guajiroMesh = (()=>{ const g = armarPersona('guajiro'); g.position.set(GUAJIRO.x, altura(GUAJIRO.x, GUAJIRO.z), GUAJIRO.z); g.rotation.y = GUAJIRO.ang; const et = letrero('🍧 Cepillados', '#fff', 'rgba(200,40,60,0.88)', 1.4); et.position.y = 2.9; g.add(et); mundo.add(g); return g; })();
+const gaiterosMesh = GAITEROS.map((n, i)=>{ const g = armarPersona('gaitero', {instrumento: n.instrumento, piel: ['#c68642','#8d5524','#e8b088'][i]}); g.position.set(n.x, altura(n.x, n.z), n.z); g.rotation.y = n.ang; const et = letrero('🎶 '+n.nombre, '#fff', 'rgba(120,40,160,0.9)', 1.3); et.position.y = 2.9; g.add(et); mundo.add(g); return g; });
+{ const y = altura(MARACAIBO.x - 28, MARACAIBO.z + 52); const A = new Armador(); A.caja(12, 0.3, 5, '#8b5a2b', MARACAIBO.x - 25, y + 0.15, MARACAIBO.z + 52.5); for (const dx of [-5.5, 5.5]) for (const dz of [-2.2, 2.2]) A.cil(0.1, 0.1, 3.2, '#d9a066', MARACAIBO.x - 25 + dx, y + 1.8, MARACAIBO.z + 52.5 + dz, 0,0,0, 6); for (let i=0;i<9;i++) A.caja(0.6, 0.5, 0.04, ['#e63946','#ffd23f','#1e88e5'][i%3], MARACAIBO.x - 30.5 + i*1.35, y + 3.0, MARACAIBO.z + 50.2, 0.3, 0, 0); mundo.add(A.malla(matMate())); const sp = letrero('🎶 GAITA ZULIANA', '#fff', 'rgba(120,40,160,0.92)', 2.2); sp.position.set(MARACAIBO.x - 25, y + 5.2, MARACAIBO.z + 52.5); mundo.add(sp); }
+const aguiMesh = (()=>{ const g = armarPersona('agui'); const et = letrero('🦅 Agui', '#fff', 'rgba(255,122,26,0.9)', 1.4); et.position.y = 2.7; g.add(et); mundo.add(g); return g; })();
+const peloterosMesh = PELOTEROS.map((n, i)=>{ const g = armarPersona('pelotero', {piel: ['#e8b088','#c68642','#f1c27d','#8d5524'][i]}); g.position.set(n.x, altura(n.x, n.z), n.z); g.rotation.y = n.ang; const et = letrero('⚾ '+n.nombre, '#fff', 'rgba(26,42,90,0.88)', 1.2); et.position.y = 2.7; g.add(et); mundo.add(g); return g; });
+const pelotaMesh = (()=>{ const A = new Armador(); A.bola(0.3, '#ffffff', 0, 0, 0, 10); for (let i=0;i<8;i++){ const a = i/8*6.283; A.bola(0.04, '#e63946', Math.cos(a)*0.26, Math.sin(a*2)*0.12, Math.sin(a)*0.26, 4); } const m = A.malla(matBrillo()); mundo.add(m); return m; })();
+const avionesNPCMesh = AVIONES_DEF.map(d=>{ const m = armarVehiculo('avion'); mundo.add(m); return m; });
 (function construirMaracaibo(){
   const A = new Armador();
+  { /* el carrito de cepillados del guajiro: triciclo con caja roja, blanca y naranja, techito y botellas de sirope */
+    const G = GUAJIRO, y = altura(G.x, G.z), ang = G.ang, sx = Math.sin(ang), cz = Math.cos(ang), rx = Math.cos(ang), rz = -Math.sin(ang);
+    const P_ = (f, l, h)=>[G.x + sx*f + rx*l, y + h, G.z + cz*f + rz*l];
+    let q; q = P_(-1.6, 0, 0); A.caja(2.0, 1.6, 1.6, '#e63946', q[0], q[1]+0.9, q[2], 0, ang, 0);
+    q = P_(-1.6, 0, 0); A.caja(2.02, 0.7, 1.62, '#ffffff', q[0], q[1]+0.55, q[2], 0, ang, 0).caja(1.0, 0.8, 1.64, '#ff8a3d', q[0], q[1]+1.3, q[2], 0, ang, 0);
+    for (let i=0;i<7;i++){ q = P_(-1.6 - 0.5 + (i%4)*0.35, -0.6 + i*0.2, 1.75); A.cil(0.07, 0.07, 0.34, ['#e63946','#ffd23f','#2a9c3a','#ff8a3d','#e63946','#7de0ff','#c0392b'][i], q[0], q[1], q[2], 0,0,0, 6).cil(0.03, 0.03, 0.1, '#ffffff', q[0], q[1]+0.22, q[2], 0,0,0, 5); }
+    q = P_(-1.6, 0, 0); A.caja(2.6, 0.06, 2.2, '#c0392b', q[0], q[1]+2.75, q[2], 0, ang, 0).caja(2.5, 0.05, 2.1, '#d9a066', q[0], q[1]+2.78, q[2], 0, ang, 0);
+    for (const [f, l] of [[-2.6, -0.9], [-2.6, 0.9], [-0.6, -0.9], [-0.6, 0.9]]){ q = P_(f, l, 0); A.cil(0.04, 0.04, 2.7, '#c0392b', q[0], q[1]+1.4, q[2], 0,0,0, 5); }
+    for (const l of [-0.9, 0.9]){ q = P_(-2.6, l, 0.45); A.pieza(new THREE.TorusGeometry(0.42, 0.06, 6, 14), '#222', q[0], q[1], q[2], 0, ang + Math.PI/2, 0); }
+    q = P_(1.4, 0, 0.5); A.pieza(new THREE.TorusGeometry(0.5, 0.06, 6, 14), '#222', q[0], q[1], q[2], 0, ang + Math.PI/2, 0); q = P_(0.4, 0, 0.8); A.caja(0.1, 0.1, 1.2, '#333', q[0], q[1], q[2], 0, ang, 0); q = P_(0.3, 0, 1.2); A.caja(0.6, 0.06, 0.06, '#333', q[0], q[1], q[2], 0, ang, 0);
+    const sp = letrero('🍧 CEPILLADOS · el de colita es el favorito', '#fff', 'rgba(200,40,60,0.9)', 1.6); q = P_(-1.6, 0, 3.6); sp.position.set(q[0], q[1], q[2]); mundo.add(sp);
+  }
+  { /* el estadio Luis Aparicio de las Águilas del Zulia: gradas redondas azules y naranjas, torres de luz, diamante y home */
+    const E = ESTADIO, y = altura(E.x, E.z), AZ = '#1a4a90', NA = '#ff7a1a', n = 24;
+    for (let k=0;k<n;k++){
+      const a = (k + 0.5)/n*6.283, gap = Math.abs(envolver(a - E.entrada)) < 0.33; if (gap) continue;
+      const w = 2*Math.PI*(E.r+3)/n + 0.3;
+      for (let f=0;f<4;f++){ const r = E.r - 6 + f*2.6, alto = 1.2 + f*1.5; A.caja(w, alto, 2.6, f%2 ? NA : AZ, E.x + Math.cos(a)*r, y + alto/2, E.z + Math.sin(a)*r, 0, -a, 0); }
+      A.caja(w + 0.4, 9, 1.2, AZ, E.x + Math.cos(a)*(E.r + 4.6), y + 4.5, E.z + Math.sin(a)*(E.r + 4.6), 0, -a, 0).caja(w + 0.4, 1.6, 1.3, NA, E.x + Math.cos(a)*(E.r + 4.6), y + 8.6, E.z + Math.sin(a)*(E.r + 4.6), 0, -a, 0);
+    }
+    for (let k=0;k<4;k++){ const a = E.entrada + Math.PI/4 + k*Math.PI/2, x = E.x + Math.cos(a)*(E.r + 9), z = E.z + Math.sin(a)*(E.r + 9); A.cil(0.35, 0.5, 26, '#8a8a96', x, y + 13, z, 0,0,0, 8).caja(4, 2.2, 0.6, '#3a3a44', x, y + 26.5, z, 0, -a, 0); for (let i=0;i<6;i++) A.bola(0.28, '#fff8d0', x + Math.cos(a + Math.PI/2)*(-1.5 + (i%3)*1.5), y + 26.1 + Math.floor(i/3)*0.9, z + Math.sin(a + Math.PI/2)*(-1.5 + (i%3)*1.5), 5); }
+    A.pieza(new THREE.CircleGeometry(E.r - 7, 40), '#4caf50', E.x, y + 0.06, E.z, -Math.PI/2, 0, 0);
+    const H = BEISBOL.home, d = BEISBOL.dir;
+    A.pieza(new THREE.CircleGeometry(19, 30), '#c9a06a', H.x + Math.cos(d)*12.7, y + 0.1, H.z + Math.sin(d)*12.7, -Math.PI/2, 0, 0);
+    A.pieza(new THREE.CircleGeometry(4, 16), '#b8904a', BEISBOL.monticulo.x, y + 0.12, BEISBOL.monticulo.z, -Math.PI/2, 0, 0).bola(2.4, '#c9a06a', BEISBOL.monticulo.x, y - 2.0, BEISBOL.monticulo.z, 10, 1, 0.12, 1);
+    for (const b of BEISBOL.bases) A.caja(0.9, 0.12, 0.9, '#ffffff', b.x, y + 0.16, b.z, 0, -d, 0);
+    A.caja(0.9, 0.12, 0.9, '#ffffff', H.x, y + 0.16, H.z, 0, -d + Math.PI/4, 0).caja(0.12, 0.12, 8, '#ffffff', H.x + Math.cos(d - 0.785)*4, y + 0.14, H.z + Math.sin(d - 0.785)*4, 0, -(d - 0.785) + Math.PI/2, 0).caja(0.12, 0.12, 8, '#ffffff', H.x + Math.cos(d + 0.785)*4, y + 0.14, H.z + Math.sin(d + 0.785)*4, 0, -(d + 0.785) + Math.PI/2, 0);
+    const bx = E.x + Math.cos(E.entrada + Math.PI)*(E.r + 4.6), bz = E.z + Math.sin(E.entrada + Math.PI)*(E.r + 4.6);
+    A.caja(12, 5, 0.8, '#1a1a24', bx, y + 12.5, bz, 0, -(E.entrada + Math.PI), 0);
+    const sp = letrero('⚾ ESTADIO LUIS APARICIO "EL GRANDE"', '#fff6a0', 'rgba(26,74,144,0.92)', 3.6); sp.position.set(E.x, y + 34, E.z); mundo.add(sp);
+    const spA = letrero("🦅 CASA DE LAS ÁGUILAS DEL ZULIA", "#ffffff", "rgba(255,122,26,0.92)", 2.4); spA.position.set(E.x, y + 29.5, E.z); mundo.add(spA);
+    const sp2 = letrero('ÁGUILAS 5 · VISITANTE 2', '#ffe36e', 'rgba(20,20,30,0.9)', 2.2); sp2.position.set(bx, y + 12.6, bz); mundo.add(sp2);
+    const sp3 = letrero('⚾ Párate en el home y batea con A', '#fff', 'rgba(26,42,90,0.85)', 1.5); sp3.position.set(H.x, y + 4, H.z); mundo.add(sp3);
+  }
+  { /* el Aeropuerto Internacional La Chinita: pista, terminal con su letrero rojo, torre de control y rampa */
+    const C = LA_CHINITA, y = altura(C.x0 + 20, C.z), T = C.terminal;
+    A.caja(C.x1 - C.x0 + 40, 0.3, C.ancho, '#3a3a44', (C.x0 + C.x1)/2, y + 0.15, C.z);
+    for (let x = C.x0 - 10; x < C.x1 + 10; x += 8) A.caja(4, 0.08, 0.5, '#ffffff', x, y + 0.32, C.z);
+    for (let k=0;k<6;k++){ A.caja(6, 0.08, 1.0, '#ffffff', C.x0 - 12, y + 0.32, C.z - 6 + k*2.4).caja(6, 0.08, 1.0, '#ffffff', C.x1 + 12, y + 0.32, C.z - 6 + k*2.4); }
+    A.caja(60, 0.3, 26, '#5a5a66', C.apron.x - 10, y + 0.14, C.apron.z);
+    A.caja(T.w, T.h, T.d, '#f4f4f0', T.x, y + T.h/2, T.z).caja(T.w + 4, 1.0, T.d + 4, '#e8e8ea', T.x, y + T.h + 0.5, T.z).caja(T.w + 2, 2.2, 1.0, '#e63946', T.x, y + T.h - 0.6, T.z - T.d/2 - 0.5)
+     .caja(T.w + 4.2, 0.5, 0.4, '#ffd23f', T.x, y + T.h + 1.2, T.z - T.d/2 - 2.1).caja(T.w + 4.2, 0.5, 0.4, '#1560d0', T.x, y + T.h + 0.7, T.z - T.d/2 - 2.1).caja(T.w + 4.2, 0.5, 0.4, '#e63946', T.x, y + T.h + 0.2, T.z - T.d/2 - 2.1)
+     .caja(T.w - 6, 3.2, 0.3, '#7de0ff', T.x, y + 1.8, T.z - T.d/2 - 0.1).caja(3, 3.4, 0.4, '#1a4a90', T.x, y + 1.7, T.z - T.d/2 - 0.2);
+    for (let i=0;i<6;i++) A.cil(0.3, 0.3, T.h - 0.5, '#c8c8d0', T.x - T.w/2 + 3 + i*(T.w - 6)/5, y + (T.h - 0.5)/2, T.z - T.d/2 - 3.4, 0,0,0, 8);
+    A.cil(1.6, 2.2, 26, '#c8c8d0', C.torre.x, y + 13, C.torre.z, 0,0,0, 12).cil(3.0, 2.4, 3.2, '#3a4a5a', C.torre.x, y + 27.6, C.torre.z, 0,0,0, 12).cil(2.8, 2.8, 1.2, '#7de0ff', C.torre.x, y + 27.4, C.torre.z, 0,0,0, 12).cil(0.08, 0.08, 4, '#e63946', C.torre.x, y + 31, C.torre.z, 0,0,0, 5).bola(0.25, '#ff2020', C.torre.x, y + 33, C.torre.z, 6);
+    A.cil(0.06, 0.06, 5, '#c8c8d0', C.x1 + 6, y + 2.5, C.z + 14, 0,0,0, 5).cono(0.35, 1.6, '#ff8a3d', C.x1 + 6.8, y + 5.0, C.z + 14, 8, 0, 0, -Math.PI/2);
+    const sp = letrero('✈️ AEROPUERTO INTERNACIONAL LA CHINITA', '#fff', 'rgba(230,57,70,0.94)', 3.4); sp.position.set(T.x, y + T.h + 5.5, T.z - T.d/2 - 1); mundo.add(sp);
+    const sp2 = letrero('BIENVENIDOS · WELCOME', '#fff', 'rgba(26,74,144,0.9)', 1.8); sp2.position.set(T.x, y + T.h + 3.2, T.z - T.d/2 - 1); mundo.add(sp2);
+  }
   for (const c of CASAS_MCBO) armarCasa(A, c);
   for (const L of ESCALERAS){ if (!CASAS_MCBO.includes(L.c)) continue; const h = L.top - L.base + 0.5; for (const dz of [-0.35, 0.35]) A.caja(0.1, h, 0.1, '#d9a066', L.x, L.base + h/2, L.z + dz); for (let y = 0.45; y < h - 0.2; y += 0.45) A.caja(0.12, 0.08, 0.8, '#8b5a2b', L.x, L.base + y, L.z); }
   /* la plaza con su sol de Maracaibo */
@@ -3785,7 +4003,57 @@ const arepasMesh = AREPAS.map(a=>{
   const dv = VEHICULOS_DEF.find(v=>v.id==='dino'), dy = altura(dv.x, dv.z);
   A.cil(4.5, 5, 0.6, '#a5713f', dv.x, dy+0.3, dv.z, 0,0,0,16);
   const m = A.malla(matMate()); mundo.add(m);
-  const carteles = [['🫓 MARACAIBO', 'rgba(20,90,160,0.92)', MARACAIBO.x, py+9, MARACAIBO.z-6, 3], ['🌉 PUENTE', 'rgba(90,90,110,0.9)', PUENTE.x0, altura(PUENTE.x0,PUENTE.z0)+6, PUENTE.z0, 1.8],
+  { /* lo de la Maracaibo de verdad va en su propia malla, porque la de arriba ya se cerró */
+  const A = new Armador();
+  { /* la Basílica de Nuestra Señora de Chiquinquirá, "La Chinita": blanca y crema, con dos torres al frente y una cúpula; la puerta mira al este, hacia la plaza */
+    const B = BASILICA, y = altura(B.x, B.z), CREMA = '#f6ecd2', BLANCO = '#ffffff', DORADO = '#e0b040';
+    A.caja(B.w, B.h, B.d, CREMA, B.x, y + B.h/2, B.z);
+    A.caja(B.w + 1.2, 0.6, B.d + 1.2, BLANCO, B.x, y + B.h, B.z);
+    A.pieza(techoGeo(B.w, B.d, 3.2), '#c9a86a', B.x, y + B.h + 0.5, B.z, 0, Math.PI/2, 0);
+    for (const lado of [-1, 1]){ const tx = B.x + B.w/2 - 2.2, tz = B.z + lado*(B.d/2 - 2.2);
+      A.caja(4.2, B.h + 7, 4.2, CREMA, tx, y + (B.h + 7)/2, tz); A.caja(4.6, 0.5, 4.6, BLANCO, tx, y + B.h + 7, tz);
+      for (let k=0;k<3;k++) A.caja(0.9, 1.6, 0.2, '#4a6a9a', tx + 2.1, y + 2.5 + k*4.2, tz);
+      A.bola(2.0, DORADO, tx, y + B.h + 8.4, tz, 12, 1, 0.9, 1); A.caja(0.16, 1.6, 0.16, DORADO, tx, y + B.h + 11.0, tz).caja(0.8, 0.16, 0.16, DORADO, tx, y + B.h + 11.3, tz); }
+    A.cil(3.4, 3.4, 1.6, CREMA, B.x - 2, y + B.h + 1.2, B.z, 0,0,0, 16).bola(3.4, DORADO, B.x - 2, y + B.h + 2.0, B.z, 16, 1, 0.8, 1).caja(0.16, 1.4, 0.16, DORADO, B.x - 2, y + B.h + 5.4, B.z);
+    A.caja(0.4, 5.2, 3.4, '#3a2a1a', B.x + B.w/2 + 0.05, y + 2.6, B.z); A.bola(1.7, '#3a2a1a', B.x + B.w/2 + 0.05, y + 5.2, B.z, 12, 0.25, 1, 1);
+    A.cil(1.6, 1.6, 0.3, '#4a6a9a', B.x + B.w/2 + 0.05, y + B.h - 1.6, B.z, 0, 0, Math.PI/2, 16);
+    for (let k=0;k<5;k++) for (const lado of [-1, 1]) A.caja(0.2, 2.6, 1.0, '#4a6a9a', B.x + lado*(B.w/2 + 0.05), y + 5.2, B.z - 8 + k*4);
+    for (let k=0;k<4;k++) A.caja(0.9, 0.4, 3.4, BLANCO, B.x + B.w/2 + 0.9, y + 0.2 + k*0.35, B.z, 0,0,0);
+    const sp = letrero('⛪ BASÍLICA DE LA CHINITA', '#fff6d0', 'rgba(120,80,30,0.92)', 3.0); sp.position.set(B.x + 6, y + B.h + 14, B.z); mundo.add(sp);
+    const sp2 = letrero('Nuestra Señora de Chiquinquirá · patrona del Zulia', '#3a2a1a', 'rgba(255,246,210,0.92)', 1.4); sp2.position.set(B.x + B.w/2 + 2.6, y + 7.6, B.z); mundo.add(sp2);
+  }
+  { /* la Torre del Reloj de la plaza Baralt */
+    const T = TORRE_RELOJ, y = altura(T.x, T.z);
+    A.caja(3.6, 1.0, 3.6, '#c9b48c', T.x, y + 0.5, T.z).caja(2.8, T.h, 2.8, '#f0e0c0', T.x, y + T.h/2 + 1, T.z).caja(3.2, 0.5, 3.2, '#c9b48c', T.x, y + T.h + 1.2, T.z).cono(2.2, 2.4, '#8b2a2a', T.x, y + T.h + 2.6, T.z, 4, 0, Math.PI/4, 0);
+    for (let k=0;k<4;k++){ const a = k*Math.PI/2, cx = T.x + Math.sin(a)*1.45, cz = T.z + Math.cos(a)*1.45;
+      A.cil(1.0, 1.0, 0.1, '#ffffff', cx, y + T.h - 1.2, cz, Math.PI/2, a, 0, 20).cil(1.02, 1.02, 0.06, '#8b2a2a', cx, y + T.h - 1.2, cz, Math.PI/2, a, 0, 20);
+      A.caja(0.1, 0.7, 0.06, '#222', cx + Math.cos(a)*0.0, y + T.h - 0.9, cz, 0, a, 0).caja(0.5, 0.1, 0.06, '#222', cx + Math.cos(a)*0.25, y + T.h - 1.2, cz - Math.sin(a)*0.25, 0, a, 0); }
+    const sp = letrero('🕰️ PLAZA BARALT', '#fff', 'rgba(120,60,20,0.9)', 1.8); sp.position.set(T.x, y + T.h + 5.2, T.z); mundo.add(sp);
+  }
+  { /* la calle Carabobo: la calle empedrada frente a las casitas de colores, con banderitas */
+    const cx = MARACAIBO.x - 85.5, cz = MARACAIBO.z + 24, y = altura(cx, cz);
+    A.caja(74, 0.14, 7, '#9a9a96', cx, y + 0.07, cz); for (let i=0;i<24;i++) A.caja(2.4, 0.16, 0.5, i%2 ? '#8a8a86' : '#aaaaa6', cx - 35 + i*3.05, y + 0.08, cz + (i%2 ? 1.6 : -1.6));
+    for (let i=0;i<6;i++){ const hx = MARACAIBO.x - 58 - i*11; A.caja(8.4, 0.5, 0.3, '#ffffff', hx, y + 4.3, MARACAIBO.z + 32 - 3.65); for (const dx of [-2.6, 2.6]) A.caja(1.4, 1.4, 0.12, '#ffffff', hx + dx, y + 2.2, MARACAIBO.z + 32 - 3.55).caja(1.1, 1.1, 0.14, '#4a6a9a', hx + dx, y + 2.2, MARACAIBO.z + 32 - 3.5); }
+    for (let i=0;i<7;i++){ const px = MARACAIBO.x - 52 - i*11; A.cil(0.1, 0.12, 5.0, '#5a4a3a', px, y + 2.5, cz + 3.8, 0,0,0, 6); for (let k=0;k<10;k++) A.caja(0.5, 0.4, 0.03, ['#e63946','#ffd23f','#1e88e5','#43a047'][(i+k)%4], px - 0.6 - k*1.05, y + 4.8 - Math.sin(k/9*Math.PI)*0.5, cz + 3.8 - 0.4 + Math.sin(k/9*Math.PI)*3.6, 0.2, 0, 0); }
+    const sp = letrero('🏘️ CALLE CARABOBO', '#fff', 'rgba(200,60,90,0.92)', 2.6); sp.position.set(MARACAIBO.x - 86, y + 8.5, cz); mundo.add(sp);
+  }
+  { /* los palafitos de Santa Rosa de Agua: casitas de colores sobre pilotes en el lago, con pasarela de madera */
+    const PAL = PALAFITOS, MAD = '#8b5a2b', MAD2 = '#a06a3a', H = PAL.alto;
+    const tabla = (x, z, w, d, ang)=>{ A.caja(w, 0.22, d, MAD, x, H - 0.11, z, 0, ang, 0); };
+    for (let i=1;i<PAL.length;i++){ const p = PAL[i-1], q = PAL[i], L = Math.hypot(q.x-p.x, q.z-p.z), ang = Math.atan2(q.z-p.z, q.x-p.x); for (let k = 3.6; k < L - 3.6; k += 1.1) tabla(p.x + Math.cos(ang)*k, p.z + Math.sin(ang)*k, 1.0, 3.0, -ang); for (const l of [-1.5, 1.5]) A.cil(0.05, 0.05, 0.9, MAD2, (p.x+q.x)/2 - Math.sin(ang)*l, H + 0.5, (p.z+q.z)/2 + Math.cos(ang)*l, 0,0,0, 5); }
+    for (let a = PAL.a0; a <= PAL.a1; a += 2.2/PAL.rPasarela){ const x = MARACAIBO.x + Math.cos(a)*PAL.rPasarela, z = MARACAIBO.z + Math.sin(a)*PAL.rPasarela; tabla(x, z, 2.3, 4.0, -a); if (Math.round(a*100) % 3 === 0){ A.cil(0.12, 0.14, 4.6, MAD2, x, H - 2.4, z, 0,0,0, 6); } }
+    for (let r = PAL.rEntrada; r <= PAL.rPasarela; r += 2.2){ const x = MARACAIBO.x + Math.cos(PAL.aEntrada)*r, z = MARACAIBO.z + Math.sin(PAL.aEntrada)*r; tabla(x, z, 2.3, 4.0, -PAL.aEntrada + Math.PI/2); }
+    for (let a = PAL.a0; a <= PAL.a1; a += 4.4/PAL.rPasarela){ const x = MARACAIBO.x + Math.cos(a)*(PAL.rPasarela - 1.4), z = MARACAIBO.z + Math.sin(a)*(PAL.rPasarela - 1.4); A.cil(0.06, 0.06, 1.0, MAD2, x, H + 0.5, z, 0,0,0, 5); }
+    for (const p of PAL){ const g0 = Math.max(altura(p.x, p.z), -8), gy = altura(p.x, p.z) < 0.5 ? g0 : 0;
+      for (const dx of [-3, 0, 3]) for (const dz of [-3, 0, 3]) A.cil(0.16, 0.2, H - gy + 0.2, MAD2, p.x + dx, (H + gy)/2, p.z + dz, 0,0,0, 6);
+      A.caja(7.4, 0.26, 7.4, MAD, p.x, H - 0.13, p.z); A.caja(5, 3.0, 4.4, p.color, p.x, H + 1.5, p.z, 0, -p.ang, 0); A.pieza(techoGeo(5, 4.4, 1.9), '#8b2a2a', p.x, H + 3.0, p.z, 0, -p.ang, 0);
+      const fx = Math.cos(p.ang), fz = Math.sin(p.ang); A.caja(0.16, 2.1, 1.0, '#3a2a1a', p.x - fx*2.5, H + 1.05, p.z - fz*2.5, 0, -p.ang, 0); for (const l of [-1, 1]) A.caja(0.14, 0.9, 0.9, '#4a6a9a', p.x - fz*l*2.25, H + 1.9, p.z + fx*l*2.25, 0, -p.ang + Math.PI/2, 0);
+      for (let k=0;k<8;k++){ const a = k/8*6.283; A.cil(0.05, 0.05, 0.9, MAD2, p.x + Math.cos(a)*3.5, H + 0.45, p.z + Math.sin(a)*3.5, 0,0,0, 5); }
+      A.caja(1.4, 0.3, 0.7, '#e63946', p.x + fx*4.6, 0.15, p.z + fz*4.6, 0, -p.ang, 0); }
+    const c = PAL[2]; const sp = letrero('🏠 PALAFITOS DE SANTA ROSA DE AGUA', '#fff', 'rgba(20,120,160,0.92)', 2.6); sp.position.set(c.x, H + 8.5, c.z); mundo.add(sp);
+  }
+  const mReal = A.malla(matMate()); mReal.castShadow = true; mReal.receiveShadow = true; mundo.add(mReal); }
+  const carteles = [['🫓 MARACAIBO · PLAZA BARALT', 'rgba(20,90,160,0.92)', MARACAIBO.x, py+9, MARACAIBO.z-6, 3], ['🌉 PUENTE GENERAL RAFAEL URDANETA', 'rgba(90,90,110,0.9)', PUENTE.x0, altura(PUENTE.x0,PUENTE.z0)+6, PUENTE.z0, 1.8],
     ['🚀 PLATAFORMA', 'rgba(60,40,120,0.9)', nv.x, ny+11, nv.z, 1.8], ['🦖 NIDO', 'rgba(60,110,40,0.9)', dv.x, dy+6, dv.z, 1.6]];
   for (const [t, f, x, y, z, e] of carteles){ const sp = letrero(t, '#fff', f, e); sp.position.set(x, y, z); mundo.add(sp); }
   for (const h of HELIPUERTOS){ const sp = letrero('🅗 '+h.nombre.toUpperCase(), '#fff', 'rgba(40,40,60,0.9)', 1.4); sp.position.set(h.x, h.y+6, h.z); mundo.add(sp); }
@@ -4350,7 +4618,6 @@ function confeti(x, y, z, n){
 
 /* ---------------- Los personajes: cajitas con brazos y piernas que se mueven ----------------
    Cada uno mira hacia +z y tiene los pies en el origen. */
-const PIEL = '#ffc8a0';
 /* brazos y piernas redondeados: un cilindro con una manito (bola) o un zapato (bola aplastada) al final */
 function extremidad(w, h, d, color, pie, colorPie){
   const A = new Armador();
@@ -4434,12 +4701,26 @@ function armarPersona(id, extra){
       cabeza('#ffe8d8'); A.bola(0.09, '#e63946', 0, 1.74, 0.34, 8); A.caja(0.24, 0.05, 0.04, '#e63946', 0, 1.62, 0.3);
       for (let i=0;i<7;i++){ const a = i/7*6.283; A.bola(0.16, extra.pelo || '#ff8a3d', Math.cos(a)*0.3, 2.02 + Math.sin(a*2)*0.05, Math.sin(a)*0.3, 8); } A.bola(0.16, extra.pelo || '#ff8a3d', 0, 2.14, 0, 8);
       A.bola(0.07, '#4fc3f7', -0.12, 1.85, 0.3, 5); A.bola(0.07, '#4fc3f7', 0.12, 1.85, 0.3, 5); esc = 0.96; brazoColor = extra.color || '#e63946'; break;
+    case 'agui': ropa = '#ff7a1a'; piel = '#8a5a2a'; torso(ropa); A.caja(0.24, 0.3, 0.05, '#ffffff', 0, 1.06, 0.31).caja(0.12, 0.2, 0.04, '#1a2a5a', 0, 1.06, 0.34);
+      cabeza(piel); A.bola(0.1, '#ffffff', -0.13, 1.84, 0.27, 8).bola(0.1, '#ffffff', 0.13, 1.84, 0.27, 8).bola(0.05, '#111', -0.12, 1.84, 0.35, 6).bola(0.05, '#111', 0.14, 1.84, 0.35, 6)
+       .cono(0.13, 0.4, '#ffd23f', 0, 1.7, 0.46, 8, Math.PI/2, 0, 0).bola(0.3, piel, 0, 1.5, 0.05, 10, 1.1, 0.5, 1).caja(0.34, 0.04, 0.04, '#e06020', 0, 1.6, 0.44);
+      casco(0.335, piel, 1.85, 1.02, 0.7, 1.0); gorra('#1a2a5a'); A.caja(0.22, 0.1, 0.02, '#ff7a1a', 0, 2.0, 0.34); esc = 1.08; brazoColor = piel; break;
+    case 'pelotero': ropa = '#ff7a1a'; piel = extra.piel || PIEL; torso(ropa); A.caja(0.24, 0.3, 0.05, '#ffffff', 0, 1.06, 0.31).caja(0.12, 0.2, 0.04, '#1a2a5a', 0, 1.06, 0.34);
+      cabeza(piel); casco(0.335, '#2a1a0a', 1.85, 1.02, 0.7, 1.0); gorra('#1a2a5a'); esc = 1.0; break;
+    case 'gaitero': { const inst = extra.instrumento || 'furro'; ropa = inst==='furro' ? '#ffd23f' : inst==='cuatro' ? '#e63946' : '#1e88e5'; piel = extra.piel || '#c68642'; torso(ropa); cabeza(piel); pelo('#1a1a1a');
+      A.cil(0.62, 0.62, 0.05, '#e8c060', 0, 2.02, 0, 0,0,0, 16).cil(0.3, 0.34, 0.3, '#e8c060', 0, 2.18, 0, 0,0,0, 12).cil(0.31, 0.31, 0.06, inst==='furro' ? '#e63946' : inst==='cuatro' ? '#1e88e5' : '#ffd23f', 0, 2.08, 0, 0,0,0, 12);
+      if (inst==='furro') A.cil(0.3, 0.26, 0.5, '#8b5a2b', 0, 0.9, 0.5, 0,0,0, 12).cil(0.31, 0.31, 0.04, '#f4e4c0', 0, 1.16, 0.5, 0,0,0, 12).cil(0.03, 0.03, 0.7, '#d9a066', 0, 1.5, 0.5, 0,0,0, 6);
+      else if (inst==='cuatro') A.caja(0.46, 0.14, 0.56, '#c8862a', 0.1, 1.1, 0.45, 0, 0, 0.3).caja(0.08, 0.06, 0.7, '#5a3a1a', -0.15, 1.18, 0.8, 0, 0, 0.3).caja(0.3, 0.02, 0.32, '#3a2a1a', 0.1, 1.18, 0.45, 0, 0, 0.3);
+      else A.cil(0.34, 0.34, 0.42, '#c0392b', 0, 1.0, 0.5, Math.PI/2, 0, 0, 12).cil(0.35, 0.35, 0.04, '#f4e4c0', 0, 1.0, 0.72, Math.PI/2, 0, 0, 12).cil(0.02, 0.02, 0.5, '#d9a066', 0.25, 1.35, 0.55, 0, 0, 0.5, 6);
+      esc = 1.0; break; }
+    case 'guajiro': ropa = '#f4f4f0'; piel = '#c68642'; torso(ropa); A.caja(0.5, 0.08, 0.04, '#e63946', 0, 1.3, 0.3).caja(0.5, 0.08, 0.04, '#ffd23f', 0, 1.18, 0.3).caja(0.5, 0.08, 0.04, '#2a6ad0', 0, 1.06, 0.3);
+      cabeza(piel); bigote(); pelo('#111'); A.cil(0.62, 0.62, 0.05, '#e8c060', 0, 2.02, 0, 0,0,0, 16).cil(0.3, 0.34, 0.3, '#e8c060', 0, 2.18, 0, 0,0,0, 12).cil(0.31, 0.31, 0.06, '#c0392b', 0, 2.08, 0, 0,0,0, 12); esc = 1.0; break;
     default: torso(ropa); cabeza(); pelo('#3a2a1a');
   }
   const cuerpo = A.malla(matMate()); g.add(cuerpo);
   const bI = extremidad(0.19, 0.62, 0.19, brazoColor||ropa, false, piel), bD = extremidad(0.19, 0.62, 0.19, brazoColor||ropa, false, piel);
   bI.position.set(-0.36, 1.38, 0); bD.position.set(0.36, 1.38, 0);
-  const colP = id==='cucu'||id==='yanny'||id==='abu'||id==='mama'||id==='giuliana' ? PIEL : id==='fernando' ? '#2038ec' : id==='romulo' ? piel : id==='santa' ? '#c0392b' : id==='vampiro' ? '#1a1a24' : id==='payaso' ? (extra.pantalon || '#ffd23f') : '#3a4a8a', colZ = id==='fernando' ? '#5a3418' : id==='payaso' ? '#e63946' : '#2a2a2a';
+  const colP = id==='cucu'||id==='yanny'||id==='abu'||id==='mama'||id==='giuliana' ? PIEL : id==='fernando' ? '#2038ec' : id==='romulo' ? piel : id==='santa' ? '#c0392b' : id==='vampiro' ? '#1a1a24' : id==='payaso' ? (extra.pantalon || '#ffd23f') : id==='agui' || id==='pelotero' ? '#ffffff' : id==='guajiro' ? '#2a2a34' : '#3a4a8a', colZ = id==='fernando' ? '#5a3418' : id==='payaso' ? '#e63946' : '#2a2a2a';
   const pI = extremidad(0.25, 0.7, 0.26, colP, true, colZ), pD = extremidad(0.25, 0.7, 0.26, colP, true, colZ);
   if (id==='payaso'){ for (const pp of [pI, pD]){ const z = new Armador().bola(0.3, '#e63946', 0, -0.68, 0.25, 8, 1, 0.5, 1.6).malla(matMate()); pp.add(z); } }
   pI.position.set(-0.15, 0.72, 0); pD.position.set(0.15, 0.72, 0);
@@ -5196,6 +5477,15 @@ function sincronizarMundoNuevo(t){
     if (canta && tick % 30 === 0) confeti(ESCENARIO.x + (azar()-0.5)*20, altura(ESCENARIO.x, ESCENARIO.z+12)+6, ESCENARIO.z + 10 + azar()*10, 6);
   }
   if (Math.hypot(J.x-SABANA.x, J.z-SABANA.z) < 220 || Math.hypot(J.x-GRANJA.x, J.z-GRANJA.z) < 220) P.animales.forEach((n, i)=>poneNPC(animalesMesh[i], n, altura(n.x, n.z)));
+  if (Math.hypot(J.x-MARACAIBO.x, J.z-MARACAIBO.z) < 460){
+    const n = P.agui, fiesta = P.t - P.aguiFiestaT < 60*4; poneNPC(aguiMesh, n, altura(n.x, n.z) + (fiesta ? Math.abs(Math.sin(t*9))*0.6 : 0)); if (fiesta){ aguiMesh.partes.bI.rotation.x = -2.6; aguiMesh.partes.bD.rotation.x = -2.6; }
+    P.peloteros.forEach((q, i)=>{ const g = peloterosMesh[i]; const sal = P.t - q.saludoT < 90; g.partes.bD.rotation.x = sal ? -2.4 + Math.sin(t*9)*0.4 : -0.3; g.partes.bI.rotation.x = -0.2; if (i===3 && P.pelota.estado==='quieta'){ g.partes.bD.rotation.x = -1.2 + Math.sin(t*1.5)*0.3; } });
+    { const B = P.pelota; pelotaMesh.position.set(B.x, B.y, B.z); pelotaMesh.rotation.x += B.vz*DT*2; pelotaMesh.rotation.z -= B.vx*DT*2; }
+    guajiroMesh.rotation.y = envolver(guajiroMesh.rotation.y + envolver((Math.hypot(J.x-GUAJIRO.x, J.z-GUAJIRO.z) < 12 ? Math.atan2(J.x-GUAJIRO.x, J.z-GUAJIRO.z) : GUAJIRO.ang) - guajiroMesh.rotation.y)*0.06);
+    { const sal = P.t - P.guajiro.saludoT < 90; guajiroMesh.partes.bD.rotation.x = sal ? -2.4 + Math.sin(t*9)*0.4 : -0.6; }
+    P.gaiteros.forEach((q, i)=>{ const g = gaiterosMesh[i], vivo = P.t - q.saludoT < 60*6; const rap = vivo ? 9 : 5; g.partes.bD.rotation.x = -1.1 + Math.sin(t*rap + i)*0.5; g.partes.bI.rotation.x = -0.9 + Math.cos(t*rap + i*1.3)*0.35; g.position.y = altura(q.x, q.z) + (vivo ? Math.abs(Math.sin(t*6 + i))*0.25 : 0); g.rotation.z = vivo ? Math.sin(t*3 + i)*0.1 : 0; });
+    P.aviones.forEach((a, i)=>{ const m = avionesNPCMesh[i], R = m.partes; m.position.set(a.x, a.y, a.z); m.rotation.set(-a.cabeceo, a.ang, a.estado==='vuelo' ? -0.22 : 0, 'YXZ'); animarVehiculo(R, 'avion', a.estado!=='parado', a.vel, a.estado==='vuelo' || a.estado==='final' || (a.estado==='despegue' && a.y > altura(a.x, a.z) + 0.5), false, t); if (R.sombra) R.sombra.visible = true; });
+  }
   if (Math.hypot(J.x-ISLA_VAMPIROS.x, J.z-ISLA_VAMPIROS.z) < 220) P.vampiros.forEach((n, i)=>{ const g = vampirosMesh[i]; poneNPC(g, n, altura(n.x, n.z)); g.rotation.z = Math.sin(n.fase*2.5 + i)*0.18; g.rotation.x = Math.sin(n.fase*1.7)*0.08; if (g.partes.capa) ondearCapa(g.partes.capa, t, 0.4 + n.mov*0.3); });
   if (Math.hypot(J.x-MONTANA.x, J.z-MONTANA.z) < 220){ P.renos.forEach((n, i)=>poneNPC(renosMesh[i], n, altura(n.x, n.z))); santaMesh.rotation.y = envolver(santaMesh.rotation.y + envolver((Math.hypot(J.x-SANTA.x, J.z-SANTA.z) < 14 ? Math.atan2(J.x-SANTA.x, J.z-SANTA.z) : SANTA.ang) - santaMesh.rotation.y)*0.06); animarPersona(santaMesh, 0, P.santa.fase, false, false); santaMesh.partes.bD.rotation.x = P.t - P.santa.saludoT < 90 ? -2.6 + Math.sin(t*8)*0.4 : -0.3; }
   if (P.casa && P.casa.circo){ const I = P.casa; P.circo.forEach((n, i)=>{ const g = circoMesh[i]; poneNPC(g, n, I.y + (n.tipo==='elefanteCirco' ? 2.4 : n.tipo==='leon' ? 1.1 : 0)); if (n.tipo==='payaso') g.position.y += Math.abs(Math.sin(n.fase*3))*0.15; if (n.tipo==='elefanteCirco') g.rotation.y = t*0.8; }); monosMesh.rotation.x = Math.sin(t*1.6)*0.9; }
@@ -5953,6 +6243,16 @@ function atenderEventos(){
       case 'trompeta': sfx.trompeta(); for (let i=0;i<16;i++) particula(e.x + (azar()-0.5), e.y+3.2, e.z + 3.4, '#8fd3ff', (azar()-0.5)*3, 5+azar()*4, 2+azar()*4, 40, 0.2, {grav:10, alfa:0.8}); break;
       case 'hipo': sfx.hipo(); burbuja('¡Hip!', 'Vampiro'); break;
       case 'turboPie': for (let i=0;i<3;i++) particula(e.x + (azar()-0.5)*1.2, e.y + 0.3 + azar()*1.2, e.z + (azar()-0.5)*1.2, '#ffffff', -J.vx*0.3, 0.5, -J.vz*0.3, 14, 0.14, {alfa:0.7, grav:0}); break;
+      case 'cepillado': sfx.campanitas(); chispas(e.x, e.y+1.6, e.z, e.favorito ? '#ffd23f' : '#7de0ff', 14, 4); if (e.favorito) confeti(e.x, e.y+1, e.z, 24); grande('🍧 CEPILLADO DE '+e.sabor.toUpperCase()+(e.favorito ? ' ¡MI FAVORITO!' : ''), e.favorito ? '#ffe36e' : '#bfe9ff', 110); break;
+      case 'empanada': sfx.hamburguesa(); chispas(e.x, e.y, e.z, '#f2c060', 16, 5); { const i = EMPANADAS.findIndex(a=>a.id===e.id); if (i>=0) empanadasMesh[i].visible = false; } grande(({empanada:'¡EMPANADA! 🥟', patacon:'¡PATACÓN MARACUCHO! 🍔', tequeno:'¡TEQUEÑOS! 🧀', mandoca:'¡MANDOCAS! 🍩'})[e.comida] || '¡EMPANADA! 🥟', '#f2c060', 60); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
+      case 'batazo': sfx.golpe(); sfx.toque(); chispas(e.x, e.y, e.z, '#ffffff', 8, 4); if (e.fuerte) grande('⚾ ¡QUÉ BATAZO!', '#fff', 50); break;
+      case 'jonron': sfx.estrella(); sfx.aplausos(); confeti(J.x, J.y+2, J.z, 50); grande('⚾ ¡JONRÓN! +15 🪙', '#ffe36e', 150); burbuja('¡Jonrón! ¡Vamos Águilas!', 'Agui'); break;
+      case 'pelotaCae': aviso('⚾ Cayó a '+Math.round(e.d)+' m · dale con B para más fuerza'); break;
+      case 'avionNPC': sfx.avionLejos(e.fase); if (e.fase==='despega') aviso('✈️ Despega un avión de La Chinita'); else if (e.fase==='aterriza') aviso('✈️ Aterriza un avión en La Chinita'); break;
+      case 'estadioCerca': grande('⚾ ¡ÁGUILAS DEL ZULIA!', '#ff7a1a', 110); break;
+      case 'lugarMcbo': sfx.campanitas(); grande(e.titulo, e.color || '#ffe6a0', 120); break;
+      case 'gaita': sfx.rocola(); confeti(e.x, e.y + 2, e.z, 30); chispas(e.x, e.y + 1.6, e.z, '#d070ff', 16, 4); grande('🎶 ¡GAITA ZULIANA!', '#d070ff', 100); break;
+      case 'aeropuertoCerca': grande('✈️ ¡LA CHINITA!', '#e63946', 110); break;
       case 'muu': sfx.muu(); burbuja('¡Muuuu!', 'Vaca'); break;
       case 'oinc': sfx.oinc(); burbuja('¡Oinc, oinc!', 'Cerdito'); break;
       case 'mueble': { const on = e.on; if (e.t==='tele'){ if (on) sfx.tele(); else sfx.toque(); aviso(on ? '📺 ¡Dibujitos!' : '📺 Tele apagada'); } else if (e.t==='lampara'){ sfx.toque(); aviso(on ? '💡 Luz encendida' : '💡 Luz apagada'); } else if (e.t==='chimenea'){ if (on) sfx.trompeta(); else sfx.toque(); aviso(on ? '🔥 ¡Qué calentico!' : '🔥 Chimenea apagada'); } else if (e.t==='rocola'){ if (on) sfx.rocola(); else sfx.toque(); aviso(on ? '🎵 ¡A bailar!' : '🎵 Música apagada'); } else if (e.t==='arbolNavidad'){ sfx.campanitas(); aviso(on ? '🎄 ¡Luces de Navidad!' : '🎄 Luces apagadas'); } else if (e.t==='piano'){ sfx.piano(); for (let i=0;i<8;i++) particula(e.x + (azar()-0.5)*2, e.y + 1.6, e.z + (azar()-0.5)*1, ['#ff6ec0','#4fc3f7','#ffe36e'][i%3], (azar()-0.5)*0.8, 1.5+azar(), (azar()-0.5)*0.8, 60, 0.25, {grav:-0.5, alfa:0.9}); } else if (e.t==='armadura'){ sfx.choque(); sacudida = 5; burbuja('¡CLANK!', 'La armadura'); } break; }
@@ -6345,6 +6645,7 @@ const mapaImg = (()=>{
   x.putImageData(im, 0, 0);
   x.strokeStyle = 'rgba(60,60,80,0.9)'; x.lineWidth = 1.6; x.beginPath();
   RUTA.M.forEach((m, i)=>{ const px = (m.x/(TAM+40)+0.5)*200, pz = (m.z/(TAM+40)+0.5)*200; if (i===0) x.moveTo(px, pz); else x.lineTo(px, pz); }); x.closePath(); x.stroke();
+  x.beginPath(); x.arc((MARACAIBO.x/(TAM+40)+0.5)*200, (MARACAIBO.z/(TAM+40)+0.5)*200, RUTA_MCBO.R/(TAM+40)*200, 0, Math.PI*2); x.stroke();
   x.strokeStyle = 'rgba(200,200,210,0.9)'; x.lineWidth = 2.5; x.beginPath(); x.moveTo((PISTA.x/(TAM+40)+0.5)*200, (PISTA.z0/(TAM+40)+0.5)*200); x.lineTo((PISTA.x/(TAM+40)+0.5)*200, (PISTA.z1/(TAM+40)+0.5)*200); x.stroke();
   x.strokeStyle = 'rgba(90,90,110,0.95)'; x.lineWidth = 2; x.beginPath(); x.moveTo((PUENTE.x0/(TAM+40)+0.5)*200, (PUENTE.z0/(TAM+40)+0.5)*200); x.lineTo((PUENTE.x1/(TAM+40)+0.5)*200, (PUENTE.z1/(TAM+40)+0.5)*200); x.stroke();
   return c;
@@ -6360,7 +6661,7 @@ function dibujarMapa(cx, cy, r){
   for (const v of P.vehiculos){ if (P.veh===v) continue; const p = aM(v.x, v.z); ctx.font = '12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(v.emoji, p.x, p.y); }
   if (obj.x !== null && obj.x !== undefined){ const p = aM(obj.x, obj.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + Math.sin(tick*0.15)*2, 0, Math.PI*2); ctx.stroke(); }
   if (NOCHE){ const q = aM(CORO.x, CORO.z); ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🐐', q.x, q.y); }
-  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS], ['🐘', ISLA_ELEFANTES], ['🧛', ISLA_VAMPIROS], ['🎪', ISLA_CIRCO], ['🎤', ISLA_CONCIERTO], ['🎅', MONTANA], ['🦖', VALLE_DINOS2], ['🦁', SABANA], ['🐄', GRANJA]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
+  { ctx.font = '13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; for (const [e, o] of [['🏰', CASTILLO], ['🍌', ISLA_BANANA], ['🦕', VALLE_DINOS], ['🐘', ISLA_ELEFANTES], ['🧛', ISLA_VAMPIROS], ['🎪', ISLA_CIRCO], ['🎤', ISLA_CONCIERTO], ['🎅', MONTANA], ['🦖', VALLE_DINOS2], ['🦁', SABANA], ['🐄', GRANJA], ['⚾', ESTADIO], ['✈️', LA_CHINITA.terminal], ['⛪', BASILICA], ['🏠', PALAFITOS[2]]]){ const q = aM(o.x, o.z); ctx.fillText(e, q.x, q.y); } }
   for (const [, r] of RED.remotos){ const q = aM(r.act.x, r.act.z); ctx.fillStyle = '#4fc3f7'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke(); }
   const p = aM(J.x, J.z);
   ctx.fillStyle = '#e63946'; ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI*2); ctx.fill();
@@ -6692,6 +6993,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, VALLE_DINOS2, SABANA, GRANJA, ANIMALES, FARO, ISLITA, R_ISLA, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, VALLE_DINOS2, SABANA, GRANJA, ANIMALES, FARO, ISLITA, R_ISLA, MARACAIBO, PLAZA_MCBO, ESTADIO, BEISBOL, LA_CHINITA, EMPANADAS, GUAJIRO, AGUI, RUTA_MCBO, BASILICA, TORRE_RELOJ, PALAFITOS, LUGARES_MCBO, GAITEROS, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();

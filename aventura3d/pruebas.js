@@ -282,7 +282,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   correr(P, 1, {salir:true});
   if (!P.veh) mal('se bajó del submarino bajo el agua');
   /* bordeando por fuera de Maracaibo */
-  const ruta = [[-495,300],[-720,0],[-818,-285],[-675,-705],[N.COFRE.x, N.COFRE.z]]; let paso_ = 0;
+  const ruta = [[-495,300],[-740,0],[-860,-300],[-700,-760],[N.COFRE.x, N.COFRE.z]]; let paso_ = 0;
   const f = correr(P, 60*340, (P)=>{ const w = ruta[paso_]; if (paso_ < ruta.length-1 && Math.hypot(v.x-w[0], v.z-w[1]) < 25) paso_++;
     const fondo = N.altura(v.x, v.z); return {jy:1, jx:hacia(v, w[0], w[1]), b: v.y > fondo + 6, a: v.y < fondo + 3}; }, (P)=>P.prog.cofre);
   if (!P.prog.cofre) mal('el submarino no llegó al cofre (a '+Math.hypot(v.x-N.COFRE.x, v.z-N.COFRE.z).toFixed(0)+' m, y '+v.y.toFixed(1)+')');
