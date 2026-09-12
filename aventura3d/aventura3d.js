@@ -4806,115 +4806,103 @@ for (const v of VEHICULOS_DEF){
   et.position.y = v.id==='avion' ? 4.2 : v.id==='barco' ? 5.6 : v.id==='sub' ? 4.8 : v.id==='heli' ? 5.2 : v.id==='nave' ? 9.5 : v.id==='dino' ? 6.8 : v.id==='ptero' ? 5.2 : v.id==='ovni' ? 4.6 : 3.0; m.add(et); m.etiqueta = et;
 }
 
-/* ---------------- Jugar con amigos: PeerJS ----------------
-   Los navegadores se conectan directo entre sí (WebRTC); el servidor
-   público de PeerJS solo presenta a los dos aparatos por el código de sala.
-   El que crea la sala es el anfitrión: recibe lo de cada amigo y se lo
-   reenvía a los demás. Cada quien juega su propia partida y ve a los otros
-   corriendo, manejando y volando por la misma isla. */
-const RED = {estado:'off', peer:null, conns:new Map(), sala:'', anfitrion:false, remotos:new Map(), pj:'fernando', error:'', codigo:'', pendiente:'', entrandoCodigo:false, avisos:[], reintento:null, chauPedido:false};
+/* ---------------- Jugar con amigos: Trystero ----------------
+   Los navegadores se conectan directo entre sí (WebRTC). Para presentarse
+   usan varios relés públicos a la vez (Nostr, y si ninguno responde, MQTT):
+   si uno se cae los demás siguen, así que la sala no depende de un solo
+   servidor. Todos se conectan con todos (malla); cada quien juega su propia
+   partida y ve a los otros corriendo, manejando y volando por la misma isla. */
+const RED = {estado:'off', room:null, pares:new Set(), otroMapa:new Set(), sala:'', anfitrion:false, anfitrionId:'', remotos:new Map(), pj:'fernando', error:'', codigo:'', pendiente:'', entrandoCodigo:false, avisos:[], medio:'nostr', medioPreferido:'nostr', t0:0, enviarM:null, aviso_:''};
 try{ const g = localStorage.getItem('aventura3d.pj'); if (g && PERSONAJES_RED.some(p=>p.id===g)) RED.pj = g; }catch(e){}
 try{ const c = normalizarCodigo(new URL(location.href).searchParams.get('sala')); if (c.length===4) RED.pendiente = c; }catch(e){}
 const nombreLocal = ()=> PERSONAJES_RED.find(p=>p.id===RED.pj).nombre;
-const hayPeerJS = ()=> typeof Peer !== 'undefined';
-const redActiva = ()=> !!RED.peer && (RED.estado==='sala' || RED.estado==='conectado');
+const hayRed = ()=> typeof Trystero !== 'undefined' && !!(Trystero.nostr && Trystero.mqtt);
+const redActiva = ()=> !!RED.room && (RED.estado==='sala' || RED.estado==='conectado');
 const enlaceSala = ()=> location.origin + location.pathname + '?sala=' + RED.sala + (MAPA===2 ? '&mapa=2' : '');
-/* Los servidores que ayudan a que dos aparatos se encuentren: STUN para
+/* Los servidores que ayudan a que dos aparatos se hablen directo: STUN para
    descubrir la dirección de cada uno, y TURN (relevo gratuito de Open Relay)
    para cuando el router no deja hablar directo, por ejemplo en WiFi con
    aislamiento entre aparatos o cuando uno está con datos móviles. */
-const RED_CONFIG = {debug:0, config:{iceServers:[
-  {urls:'stun:stun.l.google.com:19302'}, {urls:'stun:stun1.l.google.com:19302'}, {urls:'stun:stun.relay.metered.ca:80'},
+const RED_CONFIG = {appId:'fernando-bros-aventura3d', relayConfig:{redundancy:4, warnOnRelayFailure:false}, rtcConfig:{iceServers:[
+  {urls:'stun:stun.l.google.com:19302'}, {urls:'stun:stun1.l.google.com:19302'}, {urls:'stun:stun.cloudflare.com:3478'}, {urls:'stun:stun.relay.metered.ca:80'},
   {urls:'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject'},
   {urls:'turn:openrelay.metered.ca:443', username:'openrelayproject', credential:'openrelayproject'},
   {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
 ]}};
-function textoErrorRed(e){
-  const t = e && e.type;
-  if (t==='peer-unavailable') return 'No encontré la sala '+RED.sala+'. Revisa el código, o pide que la creen otra vez.';
-  if (t==='network' || t==='server-error' || t==='socket-error' || t==='socket-closed') return 'No pude hablar con el servidor de salas. Revisa el internet y vuelve a intentar.';
-  if (t==='browser-incompatible') return 'Este navegador no puede jugar en línea. Prueba con Chrome o Safari actualizados.';
-  return 'Algo falló en la conexión ('+(t||'?')+'). Vuelve a intentar.';
-}
-function redLimpiar(){
+/* los relés: null = la lista pública de Trystero; en las pruebas se ponen los de la misma máquina */
+const RED_RELES = {nostr:null, mqtt:null};
+function redRelesAbiertos(){ try{ const s = Trystero[RED.medio].getRelaySockets(); return Object.values(s).filter(w=>w && w.readyState===1).length; }catch(e){ return 0; } }
+function redCerrarSala(){
   vozCortarTodo();
-  if (RED.peer){ try{ RED.peer.destroy(); }catch(e){} }
-  RED.peer = null; RED.conns.clear();
+  if (RED.room){ const r = RED.room; RED.room = null; try{ r.leave(); }catch(e){} }
+  RED.enviarM = null; RED.pares.clear(); RED.otroMapa.clear(); RED.anfitrionId = '';
   for (const id of [...RED.remotos.keys()]) quitarRemoto(id);
-  RED.anfitrion = false;
+}
+function redLimpiar(){ redCerrarSala(); RED.anfitrion = false; }
+function redAbrirSala(codigo, medio){
+  const cfg = Object.assign({}, RED_CONFIG, {relayConfig: Object.assign({}, RED_CONFIG.relayConfig, RED_RELES[medio] ? {urls: RED_RELES[medio]} : {})});
+  RED.medio = medio; RED.t0 = Date.now();
+  const room = Trystero[medio].joinRoom(cfg, 'sala-'+codigo+'-v'+VERSION_RED);
+  RED.room = room;
+  const accion = room.makeAction('m');
+  RED.enviarM = (m, id)=> accion.send(m, id ? {target:id} : {});
+  accion.onMessage = (m, ctx)=>{ if (RED.room!==room || !ctx) return; redRecibir(ctx.peerId, m); };
+  room.onPeerJoin = id=>{
+    if (RED.room!==room) return;
+    RED.pares.add(id);
+    if (RED.estado==='creando') RED.estado = 'sala';
+    if (RED.estado==='uniendo'){ RED.estado = 'conectado'; RED.aviso_ = ''; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
+    else if (RED.estado==='sala' && !RED.anfitrion) RED.estado = 'conectado';
+    redSaludar(id);
+    if (VOZ.stream) vozLlamar(id);
+  };
+  room.onPeerLeave = id=>{
+    if (RED.room!==room) return;
+    RED.pares.delete(id); RED.otroMapa.delete(id); vozCortar(id);
+    const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋');
+    quitarRemoto(id);
+    if (id===RED.anfitrionId) RED.anfitrionId = '';
+    if (RED.estado==='conectado' && !RED.pares.size){ RED.estado = 'sala'; aviso('Te quedaste solo en la sala '+RED.sala+'; si vuelven, se conectan solos 🔄'); }
+  };
+  room.onPeerStream = (st, id)=>{ if (RED.room!==room) return; vozLlegaStream(id, st); };
 }
 function redCrear(){
-  if (!hayPeerJS()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
-  redLimpiar(); RED.estado = 'creando'; RED.sala = codigoSala(); RED.anfitrion = true; RED.error = '';
-  const peer = new Peer('fernando-bros-'+RED.sala, RED_CONFIG);
-  RED.peer = peer;
-  peer.on('open', ()=>{ if (RED.peer===peer) RED.estado = 'sala'; });
-  peer.on('call', c=>{ if (RED.peer===peer) atenderLlamada(c); });
-  peer.on('connection', conn=>{
-    if (RED.peer!==peer) return;
-    if (RED.conns.size >= MAX_JUGADORES-1){ conn.on('open', ()=>{ try{ conn.send({t:'llena', max:MAX_JUGADORES}); }catch(e){} setTimeout(()=>{ try{ conn.close(); }catch(e){} }, 800); }); return; }
-    prepararConn(conn);
-  });
-  peer.on('error', e=>{ if (RED.peer!==peer) return; if (e.type==='unavailable-id'){ redCrear(); return; } RED.estado = 'error'; RED.error = textoErrorRed(e); RED.anfitrion = false; });
-  peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
-  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='creando'){ RED.estado = 'error'; RED.error = 'El servidor de salas no respondió. Revisa el internet y vuelve a intentar.'; } }, 15000);
+  if (!hayRed()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
+  redLimpiar(); RED.estado = 'creando'; RED.sala = codigoSala(); RED.anfitrion = true; RED.error = ''; RED.aviso_ = '';
+  try{ redAbrirSala(RED.sala, RED.medioPreferido); }catch(e){ RED.estado = 'error'; RED.error = 'Algo falló al abrir la sala ('+(e && e.message || '?')+'). Vuelve a intentar.'; }
 }
 function redUnirse(codigo){
   codigo = normalizarCodigo(codigo);
   if (codigo.length !== 4){ RED.error = 'El código tiene 4 letras o números'; return; }
-  if (!hayPeerJS()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
-  redLimpiar(); RED.estado = 'uniendo'; RED.sala = codigo; RED.anfitrion = false; RED.error = ''; RED.entrandoCodigo = false; RED.aviso_ = ''; RED.chauPedido = false;
-  const peer = new Peer(RED_CONFIG);
-  RED.peer = peer;
-  peer.on('call', c=>{ if (RED.peer===peer) atenderLlamada(c); });
-  peer.on('open', ()=>{ if (RED.peer!==peer) return; prepararConn(peer.connect('fernando-bros-'+codigo, {reliable:true, serialization:'json'})); });
-  peer.on('error', e=>{ if (RED.peer!==peer) return; RED.estado = 'error'; RED.error = textoErrorRed(e); });
-  peer.on('disconnected', ()=>{ try{ if (RED.peer===peer && !peer.destroyed) peer.reconnect(); }catch(e){} });
-  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='uniendo') RED.aviso_ = 'Encontré la sala, conectando con el anfitrión… puede tardar unos segundos'; }, 6000);
-  setTimeout(()=>{ if (RED.peer===peer && RED.estado==='uniendo'){ RED.estado = 'error'; RED.error = 'Encontré la sala '+codigo+' pero no se abrió la conexión. Prueba: los dos en el mismo mapa · el que la creó con la sala abierta en el juego · los dos por WiFi (o los dos con datos) · y vuelve a intentar.'; } }, 25000);
+  if (!hayRed()){ RED.estado = 'error'; RED.error = 'No se cargó la parte de red. Revisa la conexión y recarga la página.'; return; }
+  redLimpiar(); RED.estado = 'uniendo'; RED.sala = codigo; RED.anfitrion = false; RED.error = ''; RED.entrandoCodigo = false; RED.aviso_ = '';
+  try{ redAbrirSala(codigo, RED.medioPreferido); }catch(e){ RED.estado = 'error'; RED.error = 'Algo falló al entrar a la sala ('+(e && e.message || '?')+'). Vuelve a intentar.'; }
 }
-function redSalir(){ RED.reintento = null; RED.chauPedido = false; if (RED.conns.size) redEnviar({t:'chau'}); redLimpiar(); RED.estado = 'off'; RED.sala = ''; }
-function prepararConn(conn){
-  conn.on('open', ()=>{
-    RED.conns.set(conn.peer, conn);
-    try{ conn.send({t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED, es:P.estrellas.slice(), mapa:MAPA}); }catch(e){}
-    if (VOZ.stream) vozLlamar(conn.peer);
-    if (!RED.anfitrion){ RED.estado = 'conectado'; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
-  });
-  conn.on('data', m=>{ conn.ultimo = tick; redRecibir(conn.peer, m); });
-  const cerrar = ()=>{
-    if (!RED.conns.has(conn.peer)) return;
-    RED.conns.delete(conn.peer);
-    const r = RED.remotos.get(conn.peer);
-    if (r && !RED.anfitrion && !RED.chauPedido) aviso('Se cortó la conexión con la sala: reconectando… 🔄'); else if (r) aviso(r.nombre+' se fue de la isla 👋');
-    quitarRemoto(conn.peer);
-    if (RED.anfitrion) redEnviar({t:'r', de:conn.peer, m:{t:'chau'}});
-    else if (RED.chauPedido){ RED.chauPedido = false; aviso('Se cerró la sala; sigues jugando solo'); redLimpiar(); RED.estado = 'off'; RED.sala = ''; }
-    else { /* se cayó sin querer: se vuelve a intentar entrar a la misma sala, hasta 10 veces */ const sala = RED.sala; redLimpiar(); RED.estado = 'off'; RED.sala = sala; RED.reintento = {sala, n:0, t: tick + 120}; }
-  };
-  conn.on('close', cerrar); conn.on('error', cerrar);
-}
-function redEnviar(m){ for (const [,c] of RED.conns){ try{ if (c.open) c.send(m); }catch(e){} } }
-function redEvento(tipo, datos){ if (RED.conns.size) redEnviar(Object.assign({t:'ev', tipo}, datos||{})); }
+function redSalir(){ if (RED.pares.size) redEnviar({t:'chau'}); redLimpiar(); RED.estado = 'off'; RED.sala = ''; }
+function redSaludar(id){ redEnviarA(id, {t:'hola', pj:RED.pj, n:nombreLocal(), v:VERSION_RED, es:P.estrellas.slice(), mapa:MAPA, anf: RED.anfitrion}); }
+function redEnviar(m){ if (!RED.enviarM || !RED.pares.size) return; try{ RED.enviarM(m).catch(()=>{}); }catch(e){} }
+function redEnviarA(id, m){ if (!RED.enviarM || !RED.pares.has(id)) return; try{ RED.enviarM(m, id).catch(()=>{}); }catch(e){} }
+function redEvento(tipo, datos){ if (RED.pares.size) redEnviar(Object.assign({t:'ev', tipo}, datos||{})); }
 function redRecibir(id, m){
   if (!m || typeof m !== 'object') return;
-  if (m.t==='r'){ if (!RED.anfitrion && typeof m.de==='string' && m.m && typeof m.m==='object') redRecibir(m.de, m.m); return; }
-  if (RED.anfitrion && m.t!=='ping'){ for (const [pid, c] of RED.conns) if (pid!==id){ try{ if (c.open) c.send({t:'r', de:id, m}); }catch(e){} } }
-  if (m.t==='mapa' && !RED.anfitrion && (m.mapa===1 || m.mapa===2) && m.mapa !== MAPA){
+  if (RED.otroMapa.has(id) && m.t!=='hola') return;
+  if (m.t==='mapa' && !RED.anfitrion && (!RED.anfitrionId || id===RED.anfitrionId) && (m.mapa===1 || m.mapa===2) && m.mapa !== MAPA){
     const sala = RED.sala; redLimpiar(); RED.estado = 'error';
     RED.error = 'La sala '+sala+' está en el mapa '+(m.mapa===2 ? '2, Maracaibo de noche 🌙' : '1, la isla de día ☀️')+'. Te llevo allá…';
     try{ localStorage.setItem('aventura3d.mapa', String(m.mapa)); }catch(e){}
     setTimeout(()=>{ salidaAvisada = true; location.href = location.pathname + '?mapa=' + m.mapa + '&sala=' + sala; }, 1800);
     return;
   }
-  if (m.t==='llena'){ if (!RED.anfitrion){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
+  if (m.t==='llena'){ if (!RED.anfitrion && (!RED.anfitrionId || id===RED.anfitrionId)){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
   if (m.t==='voz'){ const r = RED.remotos.get(id); if (r){ r.hablando = !!m.on; r.hablaT = tick; } return; }
-  if (m.t==='ping'){ return; }
-  if (m.t==='chau'){ if (!RED.anfitrion) RED.chauPedido = true; const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
+  if (m.t==='chau'){ const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
   if (m.t==='hola'){
     const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
     const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
-    if (m.mapa && m.mapa !== MAPA){ aviso('🗺️ '+nombre+' estaba en el otro mapa: lo traigo a este'); try{ const c = RED.conns.get(id); if (c){ c.send({t:'mapa', mapa:MAPA}); setTimeout(()=>{ try{ c.close(); }catch(e){} }, 1200); } }catch(e){} return; }
+    if (m.anf) RED.anfitrionId = id;
+    if (m.mapa && m.mapa !== MAPA){ RED.otroMapa.add(id); if (RED.anfitrion){ aviso('🗺️ '+nombre+' estaba en el otro mapa: lo traigo a este'); redEnviarA(id, {t:'mapa', mapa:MAPA}); } return; }
+    RED.otroMapa.delete(id);
+    if (RED.anfitrion && !RED.remotos.has(id) && RED.remotos.size >= MAX_JUGADORES-1){ redEnviarA(id, {t:'llena', max:MAX_JUGADORES}); return; }
     if (!RED.remotos.has(id)) crearRemoto(id, {pj, nombre, x:P.J.x, y:P.J.y, z:P.J.z, ang:0, veh:'', mov:0, fase:0, nadando:false, suelo:true, cabeceo:0, giro:0, vel:0, aire:false, popitos:0, ganas:false, estrellas:0});
     aviso('👋 '+nombre+' entró a la isla'); sfx.saludo();
     /* las estrellas se comparten: lo que ya ganó cualquiera es de todos */
@@ -4965,7 +4953,7 @@ function crearRemoto(id, e){
   r.etiqueta = letrero('👤 '+e.nombre, '#fff', 'rgba(20,80,170,0.88)', 1.4); r.etiqueta.position.y = 2.6/r.g.esc; r.g.add(r.etiqueta);
   r.bocina = letrero('🔊', '#fff', 'rgba(40,160,80,0.9)', 0.9); r.bocina.position.y = 3.4/r.g.esc; r.bocina.visible = false; r.g.add(r.bocina);
   r.hablando = false; r.hablaT = 0;
-  RED.remotos.set(id, r); if (VOZ.stream) vozLlamar(id); return r;
+  RED.remotos.set(id, r); return r;
 }
 function quitarRemoto(id, mantenerVoz){
   if (!mantenerVoz) vozCortar(id);
@@ -5006,22 +4994,31 @@ function sincronizarRemotos(){
     r.bocina.visible = r.hablando && !o.veh;
   }
 }
-function redPaso(){
-  /* si la conexión se cayó sin querer, se vuelve a entrar a la misma sala sola */
-  if (RED.reintento && (RED.estado==='off' || RED.estado==='error')){
-    const R = RED.reintento;
-    if (tick >= R.t){
-      if (R.n >= 10){ RED.reintento = null; RED.estado = 'off'; RED.sala = ''; aviso('No pude volver a la sala '+R.sala+'; sigues jugando solo. Entra otra vez desde 👥'); }
-      else { R.n++; R.t = tick + 60*6; aviso('🔄 Reconectando a la sala '+R.sala+'… (intento '+R.n+')'); redUnirse(R.sala); }
+/* el vigilante de la conexión corre cada medio segundo por reloj, aparte de los cuadros: en un
+   teléfono lento (o con la pestaña de fondo) los cuadros van despacio y esto no puede esperar */
+function redVigilar(){
+  if (!RED.room) return;
+  const dt = Date.now() - RED.t0;
+  if (RED.estado==='creando' || RED.estado==='uniendo'){
+    const abiertos = redRelesAbiertos();
+    if (RED.estado==='creando' && abiertos > 0){ RED.estado = 'sala'; RED.aviso_ = ''; return; }
+    if (RED.estado==='uniendo' && abiertos > 0 && !RED.aviso_) RED.aviso_ = 'Buscando a tus amigos en la sala '+RED.sala+'… puede tardar unos segundos';
+    if (abiertos === 0 && dt > 10000){
+      if (RED.medio==='nostr'){
+        /* los relés principales no contestan: se prueba por el otro camino, con la misma sala */
+        const sala = RED.sala, anf = RED.anfitrion, est = RED.estado; redCerrarSala(); RED.sala = sala; RED.anfitrion = anf; RED.estado = est;
+        RED.aviso_ = 'Los relés principales no responden: probando por otro camino… 🔄';
+        try{ redAbrirSala(sala, 'mqtt'); }catch(e){ RED.estado = 'error'; RED.error = 'Algo falló al abrir la sala ('+(e && e.message || '?')+'). Vuelve a intentar.'; }
+      } else { RED.estado = 'error'; RED.error = 'No pude conectar con ningún relé de salas. Revisa el internet (si estás por WiFi prueba con datos, o al revés) y vuelve a intentar.'; redCerrarSala(); }
+      return;
     }
-    return;
+    if (RED.estado==='uniendo' && dt > 45000){ RED.estado = 'error'; RED.error = 'No encontré a nadie en la sala '+RED.sala+'. Revisa el código, que quien la creó siga con el juego abierto y que estén en el mismo mapa; luego vuelve a intentar.'; redCerrarSala(); }
   }
-  if (RED.reintento && RED.estado==='conectado'){ RED.reintento = null; aviso('✅ ¡De vuelta en la sala '+RED.sala+'!'); }
-  if (!redActiva() || !RED.conns.size) return;
+}
+setInterval(()=>{ try{ redVigilar(); }catch(e){} }, 500);
+function redPaso(){
+  if (!redActiva() || !RED.pares.size) return;
   if (tick % 4 === 0) redEnviar(empaquetarEstado(P, RED.pj, nombreLocal(), ROPA));
-  if (tick % 120 === 0) redEnviar({t:'ping'});
-  /* un amigo del que no llega nada en 15 s se da por caído (él se reconecta solo) */
-  for (const [, c] of RED.conns) if (c.ultimo !== undefined && tick - c.ultimo > 60*15){ try{ c.close(); }catch(e){} }
 }
 /* ---- el walkie-talkie: mantener 🎙️ (o V) para hablar; la voz viaja por WebRTC ----
    El micrófono se pide una sola vez, la primera que se aprieta el botón. Los
@@ -5081,30 +5078,22 @@ function vozParar(){
   redEnviar({t:'voz', on:0});
 }
 function vozLlamar(id){
-  if (!VOZ.stream || !RED.peer || VOZ.llamadas.has(id)) return;
-  try{ const c = RED.peer.call(id, VOZ.stream); if (!c) return; VOZ.llamadas.set(id, c); prepararLlamada(id, c); }catch(e){}
+  /* se le manda el micro a un amigo (una sola vez por amigo) */
+  if (!VOZ.stream || !RED.room || VOZ.llamadas.has(id) || !RED.pares.has(id)) return;
+  try{ RED.room.addStream(VOZ.stream, {target:id}); VOZ.llamadas.set(id, true); }catch(e){}
 }
-function vozLlamarATodos(){ for (const id of RED.conns.keys()) vozLlamar(id); for (const id of RED.remotos.keys()) vozLlamar(id); }
-function atenderLlamada(c){
-  /* llega la voz de un amigo: se contesta con el micro propio si ya se pidió, o sin nada (solo se escucha) */
-  try{ c.answer(VOZ.stream || undefined); }catch(e){ return; }
-  prepararLlamada(c.peer, c);
-}
-function prepararLlamada(id, c){
-  c.on('stream', st=>{
-    let a = VOZ.audios.get(id);
-    if (a && a.el){ try{ a.el.pause(); }catch(e){} }
-    if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.srcObject = null; a.el.remove(); }catch(e){} }
-    const el = document.createElement('audio'); el.autoplay = true; el.playsInline = true; el.setAttribute('playsinline', ''); el.setAttribute('autoplay', ''); el.controls = false;
-    el.muted = VOZ.silencio; vozCaja().appendChild(el); el.srcObject = st;
-    VOZ.audios.set(id, {el, st});
-    vozReproducir(el);
-  });
-  const fin = ()=>{ if (VOZ.llamadas.get(id)===c) VOZ.llamadas.delete(id); const a = VOZ.audios.get(id); if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.pause(); a.el.srcObject = null; a.el.remove(); }catch(e){} VOZ.audios.delete(id); } };
-  c.on('close', fin); c.on('error', fin);
+function vozLlamarATodos(){ for (const id of RED.pares) vozLlamar(id); }
+function vozLlegaStream(id, st){
+  /* llega la voz de un amigo: se cuelga en un <audio> escondido */
+  let a = VOZ.audios.get(id);
+  if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.pause(); a.el.srcObject = null; a.el.remove(); }catch(e){} }
+  const el = document.createElement('audio'); el.autoplay = true; el.playsInline = true; el.setAttribute('playsinline', ''); el.setAttribute('autoplay', ''); el.controls = false;
+  el.muted = VOZ.silencio; vozCaja().appendChild(el); el.srcObject = st;
+  VOZ.audios.set(id, {el, st});
+  vozReproducir(el);
 }
 function vozCortar(id){
-  const c = VOZ.llamadas.get(id); if (c){ try{ c.close(); }catch(e){} VOZ.llamadas.delete(id); }
+  if (VOZ.llamadas.has(id)){ try{ if (RED.room && VOZ.stream && RED.pares.has(id)) RED.room.removeStream(VOZ.stream, {target:id}); }catch(e){} VOZ.llamadas.delete(id); }
   const a = VOZ.audios.get(id); if (a && a.el){ VOZ.pendientes.delete(a.el); try{ a.el.pause(); a.el.srcObject = null; a.el.remove(); }catch(e){} VOZ.audios.delete(id); }
 }
 function vozCortarTodo(){ for (const id of [...new Set([...VOZ.llamadas.keys(), ...VOZ.audios.keys()])]) vozCortar(id); vozParar(); }
@@ -5229,9 +5218,7 @@ document.addEventListener('visibilitychange', ()=>{
   if (document.visibilityState !== 'visible') return;
   pedirPantallaViva();
   try{ vozDesbloquear(); }catch(e){}
-  /* al volver, si la sala se quedó sin conexión, se vuelve a entrar */
-  if (RED.sala && !RED.anfitrion && RED.estado!=='conectado' && RED.estado!=='uniendo' && !RED.reintento) RED.reintento = {sala: RED.sala, n:0, t: tick};
-  if (RED.peer && RED.peer.disconnected && !RED.peer.destroyed){ try{ RED.peer.reconnect(); }catch(e){} }
+  /* la sala se reconecta sola: los relés y los amigos se vuelven a encontrar por su cuenta */
 });
 /* el botón «atrás» del teléfono abre la pausa en vez de salir del juego */
 try{ history.pushState({juego:1}, ''); }catch(e){}
@@ -5987,7 +5974,7 @@ function dibujarAmigos(){
     { const cw = Math.min(660, W-40); cristal(W/2-cw/2, 226, cw, 78, 16, 0.5);
     textoAjustado('Uno crea la sala y comparte el enlace o el código de 4 letras.', W/2, 250, 15, cw-30, '#fff');
     textoAjustado('Los demás entran con ese código y juegan en la misma isla; las estrellas que gane uno son de todos.', W/2, 272, 14, cw-30, '#bcd6ff');
-    textoAjustado(hayPeerJS() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 292, 13, cw-30, hayPeerJS() ? '#7dffa0' : '#ff9e9e'); }
+    textoAjustado(hayRed() ? 'Gratis, sin cuentas, hasta '+MAX_JUGADORES+' jugadores. Todos los aparatos necesitan internet.' : '⚠️ No se cargó la parte de red: revisa la conexión y recarga.', W/2, 292, 13, cw-30, hayRed() ? '#7dffa0' : '#ff9e9e'); }
     boton(z.crear.x, z.crear.y, z.crear.w, z.crear.h, '🏝️ CREAR UNA SALA', '#3aa040', '#1e6a24', 20, true);
     boton(z.unirme.x, z.unirme.y, z.unirme.w, z.unirme.h, '🔑 ENTRAR CON CÓDIGO', '#2a8ad0', '#1a4a90', 20);
     return;
@@ -6216,6 +6203,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();

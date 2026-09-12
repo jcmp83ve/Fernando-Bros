@@ -1,6 +1,6 @@
 /* Prueba del walkie-talkie de punta a punta, con navegadores de verdad.
-   Se necesitan Playwright (con Chromium), un servidor PeerJS local y la página servida:
-     npx peerjs --port 9000 --path / --host 127.0.0.1      (paquete «peer»)
+   Se necesitan Playwright (con Chromium), un broker MQTT local sobre WebSocket y la página servida:
+     node aventura3d/broker_local.js                       (paquetes «aedes» y «ws»; escucha en ws://127.0.0.1:1884)
      python3 -m http.server 8765                           (desde la raíz del repo)
      node aventura3d/pruebas_voz.js
    Dos navegadores con micrófonos falsos: el anfitrión crea la sala, el invitado entra y
@@ -12,23 +12,27 @@ const ARGS = ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swifts
   '--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required'];
 const URL_ = 'http://127.0.0.1:8765/aventura3d/?mapa=1';
 async function pagina(browser, nombre){
-  const ctx = await browser.newContext({viewport:{width:960, height:540}, permissions:['microphone']});
+  const ctx = await browser.newContext({viewport:{width:480, height:270}, permissions:['microphone']});
   const pg = await ctx.newPage();
   pg.on('pageerror', e=>console.log('  [' + nombre + '] error de página:', e.message));
   pg.on('console', m=>{ if (m.type()==='error') console.log('  ['+nombre+'] consola:', m.text().slice(0,160)); });
   await pg.goto(URL_, {waitUntil:'domcontentloaded', timeout:90000});
-  await pg.waitForFunction(()=>window.AV && window.Peer, null, {timeout:60000});
+  await pg.waitForFunction(()=>window.AV && window.Trystero, null, {timeout:60000});
   await pg.evaluate((n)=>{
     localStorage.removeItem('aventura3d.partida'); localStorage.setItem('aventura3d.nombre', n);
-    const c = AV.RED_CONFIG; c.host = '127.0.0.1'; c.port = 9000; c.path = '/'; c.secure = false; c.config = {iceServers:[]};
+    AV.RED.medioPreferido = 'mqtt'; AV.RED_RELES.mqtt = ['ws://127.0.0.1:1884']; AV.RED_CONFIG.rtcConfig = {iceServers:[]};
     AV.empezar();
   }, nombre);
   return pg;
 }
 /* energía RMS del stream remoto de un amigo durante ~700 ms */
-async function energia(pg){
-  return pg.evaluate(async ()=>{
-    const [id, a] = [...AV.VOZ.audios.entries()][0] || [];
+async function energia(pg, quien){
+  /* la voz tarda un momento en empezar a fluir tras la renegociación: se mide hasta cuatro veces */
+  let e = null; for (let i=0;i<4;i++){ e = await energia1(pg, quien); if (e.rms > 0.01) return e; await pg.waitForTimeout(600); } return e;
+}
+async function energia1(pg, quien){
+  return pg.evaluate(async (quien)=>{
+    const [id, a] = (quien ? [[quien, AV.VOZ.audios.get(quien)]] : [...AV.VOZ.audios.entries()])[0] || [];
     if (!a) return {id:null, rms:-1};
     const ac = new AudioContext(); await ac.resume();
     const src = ac.createMediaStreamSource(a.st), an = ac.createAnalyser(); an.fftSize = 2048; src.connect(an);
@@ -37,7 +41,7 @@ async function energia(pg){
     ac.close();
     const t = a.st.getAudioTracks()[0];
     return {id, rms:+max.toFixed(4), paused:a.el.paused, enDOM:!!a.el.parentNode, muted:a.el.muted, ready:a.el.readyState, pista:t && t.readyState, pistaMuda:t && t.muted, pendientes:AV.VOZ.pendientes.size};
-  });
+  }, quien || null);
 }
 const espera = (pg, fn, ms)=>pg.waitForFunction(fn, null, {timeout:ms||20000});
 (async ()=>{
@@ -83,10 +87,11 @@ const espera = (pg, fn, ms)=>pg.waitForFunction(fn, null, {timeout:ms||20000});
   /* un tercero: otro invitado entra y oye a H sin pedir micro nunca */
   const K = await pagina(browser, 'Tercero');
   await K.evaluate((s)=>AV.redUnirse(s), sala);
-  await espera(K, ()=>AV.RED.estado==='conectado'); await espera(H, ()=>AV.RED.remotos.size===2);
+  await espera(K, ()=>AV.RED.estado==='conectado', 90000); await espera(H, ()=>AV.RED.remotos.size===2, 60000);
   await H.keyboard.down('v'); await espera(H, ()=>AV.VOZ.hablando, 15000);
-  await espera(K, ()=>AV.VOZ.audios.size>=1, 15000); await K.waitForTimeout(800);
-  e = await energia(K); console.log('Tercero oye a H:', JSON.stringify(e));
+  /* el tercero recibe la voz de los dos (malla); se mide la del anfitrión */
+  await espera(K, ()=>AV.RED.anfitrionId && AV.VOZ.audios.has(AV.RED.anfitrionId), 15000); await K.waitForTimeout(800);
+  e = await energia(K, await K.evaluate(()=>AV.RED.anfitrionId)); console.log('Tercero oye a H:', JSON.stringify(e));
   if (e.rms < 0.01) throw new Error('el tercero no oye a H');
   console.log('✓ un tercero que nunca pidió micrófono también oye');
   await H.keyboard.up('v');

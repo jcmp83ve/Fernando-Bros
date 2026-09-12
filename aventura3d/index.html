@@ -33,9 +33,9 @@
   var s = document.createElement('script');
   s.src = '../kart3d/three.min.js';
   s.onload = function(){
-    /* la parte de red (PeerJS, MIT) es opcional: si no carga, se juega solo */
+    /* la parte de red (Trystero, MIT) es opcional: si no carga, se juega solo */
     var r = document.createElement('script');
-    r.src = 'peerjs.min.js';
+    r.src = 'trystero.min.js?t=' + t;
     r.onload = juego; r.onerror = juego;
     document.body.appendChild(r);
   };
