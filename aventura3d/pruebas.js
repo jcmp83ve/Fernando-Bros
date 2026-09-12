@@ -538,6 +538,45 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
     if (!tipos.surfea) mal('en las olas grandes no se surfea (vel máx '+vmax.toFixed(1)+')'); if (C.monedas < 30) mal('agarrar la ola no dio monedas');
     bien('fase 1: ovación, carrera 60% más rápida, fútbol con goles, tanque que dispara y tabla de surf en las olas');
   }
+  /* fase 2: cuartos grandes con muebles que se usan, dormir, sentarse; afuera cajas, escaleras a los techos y columpios */
+  { const C = N.crearPartida(); C.pj = 'fernando';
+    const I = N.INTERIORES.find(I=>I.nombre==='CASA DE FERNANDO');
+    if (I.hw < 9 || I.hd < 7) mal('la casa por dentro no creció: '+I.hw+'×'+I.hd);
+    if (Math.max(N.INTERIOR_CASTILLO.hw, N.INTERIOR_CASTILLO.hd) < 18) mal('el castillo por dentro no creció');
+    if (!I.muebles.some(m=>m.t==='nevera') || !I.muebles.some(m=>m.t==='piano')) mal('faltan la nevera o el piano en la casa');
+    poner(C, I.ex, I.ez); correr(C, 2, {}); correr(C, 1, {a:true}); if (!C.casa) mal('no entró a la casa de Fernando');
+    const junto = (t)=>{ const m = I.muebles.find(m=>m.t===t); C.J.x = m.x - Math.sin(m.ang)*(m.d/2+0.6); C.J.z = m.z - Math.cos(m.ang)*(m.d/2+0.6); C.J.y = I.y; C.J.vx = C.J.vz = 0; correr(C, 2, {}); return m; };
+    junto('tele'); if (!C.cercaMueble || C.cercaMueble.t!=='tele') mal('junto a la tele no se ofrece usarla: '+(C.cercaMueble && C.cercaMueble.t));
+    correr(C, 1, {a:true}); if (!tipos.mueble) mal('la tele no se prendió'); const kTele = Object.keys(C.casaEstado).find(k=>/tele/.test(k)); if (!kTele || !C.casaEstado[kTele].on) mal('la tele no quedó encendida');
+    const hamb = C.hamburguesas; junto('nevera'); correr(C, 1, {a:true}); if (C.hamburguesas !== hamb+1 || !tipos.comidaCasa) mal('la nevera no dio hamburguesa');
+    correr(C, 2, {}); correr(C, 1, {a:true}); if (C.hamburguesas !== hamb+1 || !tipos.muebleNada) mal('la nevera dio otra hamburguesa enseguida');
+    junto('sofa'); correr(C, 1, {a:true}); if (!C.sentado) mal('no se sentó en el sofá'); correr(C, 30, {}); if (!C.sentado) mal('se levantó solo'); correr(C, 5, {jy:1}); if (C.sentado) mal('no se levantó con la palanca');
+    junto('piano'); correr(C, 1, {a:true}); if (!tipos.mueble || tipos.mueble < 2) mal('el piano no sonó');
+    const hora = C.hora; junto('cama'); correr(C, 1, {a:true}); if (!C.durmiendo) mal('no se durmió en la cama'); correr(C, 200, {jy:1}); if (C.durmiendo) mal('no se despertó'); if (!tipos.despierta) mal('no avisó al despertar'); if (Math.abs(((C.hora - hora) + 1) % 1 - 0.25) > 0.02) mal('dormir no adelantó la hora: '+hora.toFixed(2)+' → '+C.hora.toFixed(2));
+    C.J.x = I.px - Math.sin(I.ang)*1.2; C.J.z = I.pz - Math.cos(I.ang)*1.2; correr(C, 2, {}); correr(C, 1, {a:true}); if (C.casa) mal('no salió de la casa');
+    /* el trono del castillo hace rey */
+    const K = N.INTERIOR_CASTILLO; poner(C, K.ex, K.ez); correr(C, 2, {}); correr(C, 1, {a:true}); if (!C.casa || !C.casa.castillo) mal('no entró al castillo');
+    { const m = K.muebles.find(m=>m.t==='trono'); C.J.x = m.x - Math.sin(m.ang)*(m.d/2+0.6); C.J.z = m.z - Math.cos(m.ang)*(m.d/2+0.6); C.J.y = K.y; correr(C, 2, {}); correr(C, 1, {a:true}); if (!C.sentado || !tipos.rey) mal('el trono no lo hizo rey'); }
+    C.sentado = null; C.J.x = K.px - Math.sin(K.ang)*1.2; C.J.z = K.pz - Math.cos(K.ang)*1.2; correr(C, 2, {}); correr(C, 1, {a:true}); if (C.casa) mal('no salió del castillo');
+    /* los regalos de Santa y las llantas de la gasolinera */
+    for (const [nombre, t, ev] of [['santa', 'regalos', 'regalo'], ['gasolinera', 'llantas', 'muebleSalto']]){
+      const S = N.INTERIORES.find(I=>I.c[nombre]); poner(C, S.ex, S.ez); correr(C, 2, {}); correr(C, 1, {a:true}); if (!C.casa) mal('no entró a la casa con '+t);
+      const m = S.muebles.find(m=>m.t===t); C.J.x = m.x - Math.sin(m.ang)*(m.d/2+0.6); C.J.z = m.z - Math.cos(m.ang)*(m.d/2+0.6); C.J.y = S.y; correr(C, 2, {}); correr(C, 1, {a:true});
+      if (!tipos[ev]) mal('usar '+t+' no dio el evento '+ev);
+      C.J.x = S.px - Math.sin(S.ang)*1.2; C.J.z = S.pz - Math.cos(S.ang)*1.2; C.J.y = S.y; C.J.suelo = true; C.J.vy = 0; correr(C, 2, {}); correr(C, 1, {a:true}); if (C.casa) mal('no salió de la casa con '+t);
+    }
+    /* una caja se pisa: encima de ella el suelo es su tapa */
+    const caja = C.props.find(p=>p.tipo==='caja'); poner(C, caja.x, caja.z); C.J.y = caja.y + 1.0; correr(C, 20, {}); if (Math.abs(C.J.y - (caja.y + 1.0)) > 0.05) mal('encima de la caja se cae: y='+C.J.y.toFixed(2)+' tapa='+(caja.y+1).toFixed(2));
+    /* la escalera: palanca arriba trepa hasta el techo */
+    const L = N.ESCALERAS[0]; poner(C, L.x + L.lado*0.6, L.z); correr(C, 2, {}); correr(C, 150, {jy:1}, (P)=>tipos.techo);
+    if (!tipos.techo) mal('no subió al techo por la escalera'); if (C.J.y < L.top - 0.5) mal('en el techo está bajo: '+C.J.y.toFixed(1)+' < '+L.top.toFixed(1));
+    correr(C, 40, {jx:1}); if (C.J.y < L.top - 0.8) mal('caminando por el techo se cae: '+C.J.y.toFixed(1));
+    /* el columpio: A para montarse, palanca para impulsarse, A para saltar */
+    const co = N.COLUMPIOS[0]; poner(C, co.x, co.z + 0.5); correr(C, 2, {}); correr(C, 1, {a:true}); if (!C.columpio) mal('no se montó en el columpio');
+    let amp = 0; correr(C, 60*6, {jy:1}, (P)=>{ amp = Math.max(amp, Math.abs(P.columpio ? P.columpio.ang : 0)); return false; }); if (amp < 0.9) mal('el columpio no se impulsa: '+amp.toFixed(2));
+    correr(C, 1, {a:true}); if (C.columpio) mal('no saltó del columpio'); if (!tipos.columpioSalta) mal('no avisó el salto del columpio');
+    bien('fase 2: casas grandes con tele, nevera, sofá, piano y cama; trono real; cajas y techos que se pisan; columpio');
+  }
   /* las frases nuevas: cada personaje las dice a su manera */
   for (const k of Object.keys(N.FRASES_NUEVAS)) for (const pj of N.PERSONAJES_RED) if (!N.fraseDe(pj.id, k)) mal('sin frase '+k+' para '+pj.nombre);
   if (!/^¡Épale!/.test(N.fraseDe('nacho', 'castillo'))) mal('Nacho no dice épale');
@@ -546,7 +585,7 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
 }
 /* 14) los eventos que la vista necesita salieron todos */
-for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca','ovacion','patada','gol','disparo','explosion','surfea'])
+for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca','ovacion','patada','gol','disparo','explosion','surfea','mueble','muebleNada','sentado','levanta','rey','dormir','despierta','comidaCasa','regalo','muebleSalto','columpio','columpioSalta','columpioAlto','techo'])
   if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ La Gran Aventura sin fallos');
 process.exit(fallos ? 1 : 0);
