@@ -316,10 +316,14 @@ juego sigue en solitario.
 - El motor 3D es el mismo `three.min.js` (r128, MIT) de la carpeta
   `kart3d/`, así que no se repite. La red usa `trystero.min.js` (Trystero
   0.25, MIT, licencia en `TRYSTERO-LICENSE.txt`), también incluido en la
-  carpeta: WebRTC directo entre aparatos, y para presentarse usa **varios
-  relés públicos a la vez** (Nostr; y si ninguno contesta en diez segundos,
-  brokers MQTT). Antes dependía del servidor público de PeerJS, que se cae o
-  tarda minutos en contestar, y la sala se quedaba en «No se pudo».
+  carpeta: WebRTC directo entre aparatos, y para presentarse usa **dos
+  caminos a la vez, cada uno con varios relés públicos** (Nostr y brokers
+  MQTT); basta con que un relé cualquiera funcione en los dos aparatos. A
+  cada amigo se le habla por el camino en que se lo vio primero, así nada
+  llega repetido. Antes dependía del servidor público de PeerJS, que se cae o
+  tarda minutos en contestar, y la sala se quedaba en «No se pudo». En la
+  pantalla de amigos sale una línea chiquita de diagnóstico (relés
+  conectados por camino, amigos vistos, enlaces fallidos).
 - Para jugar con amigos, todos se conectan con todos (malla) y cada aparato
   manda quince veces por segundo un paquete chiquito (posición, vehículo,
   animación, ropa) a los demás; los paquetes se limpian al llegar (números
