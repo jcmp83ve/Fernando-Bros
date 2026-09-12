@@ -1096,6 +1096,7 @@ function muebles(c, HW, HD){
     for (const sx of [-1, 1]) m('armadura', sx*3.2, -HD+2.6, 1.0, 1.0);
     m('chimenea', HW-0.9, HD*0.5, 1.6, 3.2, {ang: -Math.PI/2});
     m('cuadro', 0, -HD+0.3, 3, 0.2, {suave:true, alto: 4.6, texto:'🏰'});
+    m('piano', HW*0.55, -HD*0.2, 2.8, 1.3, {ang: -Math.PI/2});
   } else if (c.circo){
     m('pista', 0, 0, 20, 20, {suave:true});
     m('poste', 0, 0, 0.8, 0.8);
@@ -1138,13 +1139,16 @@ function muebles(c, HW, HD){
     m('cocina', HW-0.6, -HD*0.35, 1.1, 4.2, {ang: -Math.PI/2});
     m('alfombra', 0.3, HD*0.05, 4.2, 3.2, {suave:true, color: c.color});
     m('lampara', HW-1.1, HD-1.2, 0.6, 0.6);
+    m('nevera', HW-0.75, HD*0.3, 1.1, 1.1, {ang: -Math.PI/2});
+    m('piano', -HW*0.15, -HD+0.9, 2.8, 1.3);
+    m('planta', -HW+0.7, HD-0.7, 0.8, 0.8, {suave:true});
     m('cuadro', -HW+0.3, -HD*0.2, 0.2, 2.2, {suave:true, alto: 2.4, texto: c.nombre==='CASA DE FERNANDO' ? '🧢' : c.nombre==='CASA DE ABU' ? '👵' : '🖼️'});
     m('ventana', 0, -HD+0.3, 2.4, 0.2, {suave:true, alto: 2.2});
   }
   return M;
 }
 const INTERIORES = CASAS.concat(CASAS_MCBO, [CASTILLO_DEF, CIRCO_DEF]).map((c, i)=>{
-  const HW = c.castillo ? 14 : c.circo ? 17 : 7, HD = c.castillo ? 11 : c.circo ? 17 : 5.5, alto = c.castillo ? 9 : c.circo ? 12 : 4.2, a = c.puerta;
+  const HW = c.castillo ? 19 : c.circo ? 17 : 10, HD = c.castillo ? 15 : c.circo ? 17 : 8, alto = c.castillo ? 11 : c.circo ? 12 : 5.2, a = c.puerta;   /* cuartos amplios: casas de 20×16, castillo de 38×30 */
   const gira = (x, z)=>({x: x*Math.cos(a) + z*Math.sin(a), z: -x*Math.sin(a) + z*Math.cos(a)});
   const lado = Math.abs(Math.sin(a)) > 0.5;                     /* la puerta mira al este u oeste: el cuarto va girado */
   const hw = lado ? HD : HW, hd = lado ? HW : HD;
@@ -1156,6 +1160,52 @@ const INTERIORES = CASAS.concat(CASAS_MCBO, [CASTILLO_DEF, CIRCO_DEF]).map((c, i
     ix: px - sx*1.7, iz: pz - cz*1.7};                                          /* donde se aparece al entrar, un pasito adentro */
 });
 const INTERIOR_CASTILLO = INTERIORES.find(I=>I.castillo), INTERIOR_CIRCO = INTERIORES.find(I=>I.circo);
+/* los muebles con los que se juega (A al lado): qué hacen y qué dice el botón */
+const USOS = {tele:'VER LA TELE 📺', cama:'DORMIR 🛏️', nevera:'COMER 🍔', cocina:'COCINAR 🍳', piano:'TOCAR 🎹', lampara:'LUZ 💡', sofa:'SENTARSE 🛋️', banqueta:'SENTARSE 🪑', trono:'SENTARSE EN EL TRONO 👑',
+  rocola:'MÚSICA 🎵', chimenea:'ENCENDER 🔥', regalos:'ABRIR 🎁', arbolNavidad:'LUCES 🎄', armadura:'TOCAR 🛡️', llantas:'SALTAR 🛞', mostrador:'PEDIR COMIDA 🍽️', mesaBanquete:'BANQUETE 🍗', grada:'SENTARSE 🪑'};
+const SE_SIENTA = {sofa:true, banqueta:true, trono:true, grada:true};
+function muebleCerca(P){
+  const J = P.J, I = P.casa; if (!I) return null;
+  let mejor = null, md = 1.25;
+  for (let i=0;i<I.muebles.length;i++){ const m = I.muebles[i]; if (!USOS[m.t]) continue;
+    const hx = m.w/2, hz = m.d/2, cx = clamp(J.x, m.x-hx, m.x+hx), cz = clamp(J.z, m.z-hz, m.z+hz), d = Math.hypot(J.x-cx, J.z-cz);
+    if (d < md){ md = d; mejor = m; } }
+  return mejor;
+}
+function estadoCasa(P, m){ const k = P.casa.id + '/' + m.t + '/' + Math.round(m.x) + ',' + Math.round(m.z); if (!P.casaEstado[k]) P.casaEstado[k] = {on:false, usos:0, ultimo:-9999}; return P.casaEstado[k]; }
+function usarMueble(P, m){
+  const I = P.casa, J = P.J, e = estadoCasa(P, m), primera = e.usos === 0; e.usos++;
+  const base = {t:m.t, x:m.x, y:I.y, z:m.z, primera, nombre:I.nombre};
+  if (SE_SIENTA[m.t]){
+    P.sentado = {m, t:0}; J.vx = J.vz = 0; J.mov = 0;
+    if (m.t==='trono'){ J.x = m.x; J.z = m.z; J.ang = envolver(m.ang + Math.PI); }
+    else { const sx = Math.sin(m.ang), cz = Math.cos(m.ang); J.x = m.x - sx*0.05; J.z = m.z - cz*0.05; J.ang = envolver(m.ang + Math.PI); }
+    evento(P, 'sentado', base);
+    if (m.t==='trono' && !P.saludos.rey){ P.saludos.rey = true; P.monedas += 15; P.puntos += 300; evento(P, 'rey', base); }
+    return;
+  }
+  if (m.t==='cama'){ P.durmiendo = {t:0, dur:170}; J.vx = J.vz = 0; J.mov = 0; J.x = m.x; J.z = m.z; evento(P, 'dormir', base); return; }
+  if (m.t==='nevera' || m.t==='cocina' || m.t==='mostrador' || m.t==='mesaBanquete'){
+    if (P.t - e.ultimo < 60*20){ evento(P, 'muebleNada', Object.assign({texto:'Ya comiste hace poquito 😅'}, base)); return; }
+    e.ultimo = P.t;
+    const arepa = m.comida==='AREPAS';
+    if (arepa){ P.arepas++; } else P.hamburguesas++;
+    P.puntos += 100; P.monedas += 2; P.popo = Math.min(1, P.popo + 0.34); engordar(P);
+    evento(P, 'comidaCasa', Object.assign({arepa, total: arepa ? P.arepas : P.hamburguesas}, base));
+    if (P.t - P.ultimaHamb > 60){ decir(P, arepa ? 'arepa' : 'hamburguesa'); } P.ultimaHamb = P.t;
+    P.pedoT = 14;
+    return;
+  }
+  if (m.t==='regalos'){
+    if (e.on){ evento(P, 'muebleNada', Object.assign({texto:'Ya abriste los regalos 🎁'}, base)); return; }
+    e.on = true; P.monedas += 15; P.puntos += 200; evento(P, 'regalo', base); return;
+  }
+  if (m.t==='llantas'){ J.vy = 13; J.suelo = false; evento(P, 'muebleSalto', base); return; }
+  if (m.t==='piano' || m.t==='armadura'){ evento(P, 'mueble', Object.assign({on:true}, base)); return; }
+  /* lo demás se prende y se apaga: tele, lámpara, chimenea, rocola, árbol */
+  e.on = !e.on; evento(P, 'mueble', Object.assign({on:e.on}, base));
+}
+function usoDe(m){ return USOS[m.t] || 'USAR'; }
 for (const n of CIRCO_NPCS){ n.x += INTERIOR_CIRCO.x; n.z += INTERIOR_CIRCO.z; n.hx = n.x; n.hz = n.z; }
 /* moverse dentro de un cuarto: paredes y muebles, sin árboles ni mar */
 function moverEnCasa(J, nx, nz, I){
@@ -1264,8 +1314,8 @@ function lejosDeTodo(x, z, minimo){
   for (const a of DECOR.palmeras) agregarObst({x:a.x, z:a.z, r:0.7*a.esc});
   for (const a of DECOR.pinos) agregarObst({x:a.x, z:a.z, r:0.9*a.esc});
   for (const r of DECOR.rocas) if (!r.agua && r.esc > 1.0) agregarObst({x:r.x, z:r.z, r:1.1*r.esc});
-  for (const c of CASAS) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2});
-  for (const c of CASAS_MCBO) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2});
+  for (const c of CASAS) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2, alto: altura(c.x, c.z) + c.h});
+  for (const c of CASAS_MCBO) agregarObst({x:c.x, z:c.z, hx:c.w/2, hz:c.d/2, alto: altura(c.x, c.z) + c.h});
   agregarObst({x:HANGAR.x, z:HANGAR.z, hx:HANGAR.w/2, hz:HANGAR.d/2});
   agregarObst({x:CASTILLO.x, z:CASTILLO.z, hx:15, hz:15});
   agregarObst({x:CIRCO_DEF.x, z:CIRCO_DEF.z, r:18});
@@ -1408,7 +1458,7 @@ function crearPartida(guardado){
     props: PROPS_DEF.map(d=>Object.assign({}, d, {ox:d.x, oz:d.z, y:0, vx:0, vy:0, vz:0, giro:0, ang:d.ang||0, estado:'quieto', t:0, fase:0, huyeT:0, premioT:-9999})),
     aliens: {luna: ZONAS.luna.aliens.map(a=>Object.assign({}, a)), saturno: ZONAS.saturno.aliens.map(a=>Object.assign({}, a)), jupiter: ZONAS.jupiter.aliens.map(a=>Object.assign({}, a))},
     visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
-    balas: [], explosiones: [], disparoT: -9999, surfT: -9999, balon: {x:CANCHA.x, y:0, z:CANCHA.z, vx:0, vy:0, vz:0, gol:0}, goles: 0,
+    balas: [], explosiones: [], disparoT: -9999, surfT: -9999, casaEstado: {}, cercaMueble: null, sentado: null, durmiendo: null, columpio: null, trepando: false, balon: {x:CANCHA.x, y:0, z:CANCHA.z, vx:0, vy:0, vz:0, gol:0}, goles: 0,
     trompetaT: -9999, hipoT: -9999, rugidoLeonT: -9999,
     saludos: {}, escena: null, srPopo: {bano: 0, visible: true, saludo: -9999}, cercaVeh: null, final: false, finalT: 0,
     aPrev: false, bPrev: false, salirPrev: false, avisoBano: -9999, ultimoChoque: -9999,
@@ -1465,6 +1515,8 @@ function moverChocando(e, nx, nz){
   for (const o of lista){
     if (o.r){
       if (e.aplasta) continue;                                     /* el dinosaurio pasa por encima de árboles y rocas */
+    } else if (o.alto !== undefined && e.y !== undefined && e.y >= o.alto - 0.6){
+      continue;                                                    /* sobre el techo de la casa no chocan sus paredes */
       const dx = nx-o.x, dz = nz-o.z, d = Math.hypot(dx,dz), rr = o.r + e.radio;
       if (d < rr){ if (d > 1e-6){ nx = o.x + dx/d*rr; nz = o.z + dz/d*rr; } else { nx += rr; } choco = true; }
     } else {
@@ -1482,6 +1534,21 @@ function moverChocando(e, nx, nz){
     }
   }
   return {x:nx, z:nz, choco};
+}
+/* los techos se pisan: cada casa tiene una escalera en un costado; el techo es a dos aguas con la cumbrera a lo largo de z */
+function techoAltura(c, x, z){
+  const hx = c.w/2 + 0.6, hz = c.d/2 + 0.6;
+  if (Math.abs(x-c.x) > hx || Math.abs(z-c.z) > hz) return -Infinity;
+  return altura(c.x, c.z) + c.h + c.h*0.55*(1 - Math.abs(x-c.x)/hx);
+}
+const ESCALERAS = CASAS.concat(CASAS_MCBO).map(c=>{ const lado = Math.abs(Math.sin(c.puerta)) > 0.5 && Math.sin(c.puerta) < 0 ? 1 : -1; return {c, x: c.x + lado*(c.w/2 + 0.6), z: c.z, lado, base: altura(c.x, c.z), top: altura(c.x, c.z) + c.h}; });
+function escaleraCerca(J){ for (const L of ESCALERAS) if (Math.hypot(J.x-L.x, J.z-L.z) < 1.2 && J.y >= L.base - 0.5 && J.y <= L.top + 0.5) return L; return null; }
+/* lo que se puede pisar además del suelo: las cajas quietas y los techos (solo si ya se está a esa altura) */
+function plataformaEn(P, x, z, y){
+  let g = -Infinity;
+  for (const p of P.props){ if (p.tipo!=='caja' || p.estado!=='quieto') continue; if (Math.abs(p.x-x) <= 0.78 && Math.abs(p.z-z) <= 0.78){ const top = p.y + 1.0; if (y >= top - 0.7 && top > g) g = top; } }
+  for (const c of (NOCHE ? CASAS_MCBO : CASAS)){ const t = techoAltura(c, x, z); if (t > -Infinity && y >= t - 0.7 && t > g) g = t; }
+  return g;
 }
 /* el escalón máximo que se sube de golpe (más alto es pared: el fondo de la rampa, el muelle desde el mar) */
 const ESCALON = 1.3;
@@ -1504,16 +1571,36 @@ function pasoPie(P, ent){
   if (P.casa){ pasoEnCasa(P, ent, dx, dz, velMax, mag); return; }
   if (P.zona){ pasoEnZona(P, ent, dx, dz, velMax, mag); return; }
   if (P.paracaidas) velMax = 9;
+  /* en el columpio: péndulo que se impulsa con la palanca; con A se salta */
+  if (P.columpio){
+    const C = P.columpio, c = COLUMPIOS[C.i];
+    if (ent.aNuevo){ P.columpio = null; J.x = c.x; J.z = c.z + Math.sin(C.ang)*c.largo; J.y = c.py + c.pivote - Math.cos(C.ang)*c.largo - 0.4; J.vz = C.vel*c.largo*Math.cos(C.ang)*1.1; J.vx = 0; J.vy = 6 + Math.abs(C.vel)*1.5; J.suelo = false; evento(P, 'columpioSalta', {x:J.x, y:J.y, z:J.z, fuerte: Math.abs(C.vel) > 1.6}); if (Math.abs(C.vel) > 1.6 && !P.saludos.columpioAlto){ P.saludos.columpioAlto = true; P.monedas += 10; evento(P, 'columpioAlto', {x:J.x, y:J.y, z:J.z}); } return; }
+    const empuje = ent.jy > 0.2 && Math.abs(C.ang) < 1.35 ? 2.6*Math.sign(C.vel || 1) : 0;
+    C.vel += (-(GRAV/c.largo)*Math.sin(C.ang) - 0.12*C.vel + empuje)*DT; C.ang += C.vel*DT; C.ang = clamp(C.ang, -1.5, 1.5); C.t++;
+    J.x = c.x; J.z = c.z + Math.sin(C.ang)*c.largo; J.y = c.py + c.pivote - Math.cos(C.ang)*c.largo - 0.55; J.ang = 0; J.vx = J.vz = J.vy = 0; J.mov = 0; J.suelo = true; J.nadando = false;
+    P.cercaVeh = null; P.cercaPuerta = null; return;
+  }
+  if (!P.paracaidas && !J.nadando && J.suelo && ent.aNuevo){ for (let i=0;i<COLUMPIOS.length;i++){ const c = COLUMPIOS[i]; if (Math.hypot(J.x-c.x, J.z-c.z) < 1.4 && Math.abs(J.y-c.py) < 2){ P.columpio = {i, ang:0.15, vel:0, t:0}; evento(P, 'columpio', {i, x:c.x, y:c.py, z:c.z}); return; } } }
+  /* en la escalera de una casa: con la palanca hacia arriba se trepa hasta el techo, hacia abajo se baja */
+  { const L = !J.nadando && !P.paracaidas ? escaleraCerca(J) : null;
+    if (L && (ent.jy > 0.2 || (P.trepando && ent.jy < -0.2) || (P.trepando && Math.abs(ent.jx) < 0.3 && J.y > L.base + 0.3))){
+      P.trepando = true; J.x += (L.x - J.x)*0.3; J.z += (L.z - J.z)*0.3; J.vx = J.vz = J.vy = 0; J.mov = ent.jy > 0.2 || ent.jy < -0.2 ? 1.2 : 0; J.suelo = true; J.ang = Math.atan2(-L.lado, 0);
+      J.y = clamp(J.y + (ent.jy > 0.2 ? 4.2 : ent.jy < -0.2 ? -4.2 : 0)*DT, L.base, L.top); J.fase += DT*6*(J.mov ? 1 : 0);
+      if (J.y >= L.top - 0.01 && ent.jy > 0.2){ P.trepando = false; J.x = L.c.x + L.lado*(L.c.w/2 - 0.7); J.z = L.c.z; J.y = techoAltura(L.c, J.x, J.z); evento(P, 'techo', {x:J.x, y:J.y, z:J.z, nombre:L.c.nombre}); if (!P.saludos.techo){ P.saludos.techo = true; P.monedas += 10; } }
+      else if (J.y <= L.base + 0.01 && ent.jy < -0.2) P.trepando = false;
+      P.cercaVeh = null; P.cercaPuerta = null; return;
+    }
+    P.trepando = false; }
   const objx = dx*velMax*mag, objz = dz*velMax*mag;
   const k = J.suelo || J.nadando ? 0.18 : (P.paracaidas ? 0.08 : 0.04);
   J.vx += (objx - J.vx)*k; J.vz += (objz - J.vz)*k;
   J.mov = Math.hypot(J.vx, J.vz);
   const nx = J.x + J.vx*DT, nz = J.z + J.vz*DT;
   const m = moverChocando(J, nx, nz);
-  const gNueva = altura(m.x, m.z);
+  const gNueva = Math.max(altura(m.x, m.z), plataformaEn(P, m.x, m.z, J.y));
   if (!J.nadando && gNueva - J.y > ESCALON && J.suelo){ J.vx *= 0.2; J.vz *= 0.2; }   /* pared */
   else { J.x = m.x; J.z = m.z; if (m.choco){ J.vx *= 0.5; J.vz *= 0.5; } }
-  const g = altura(J.x, J.z);
+  const g = Math.max(altura(J.x, J.z), plataformaEn(P, J.x, J.z, J.y));
   if (g < NIVEL_MAR - 1.1 && J.y <= NIVEL_MAR + 0.3){
     if (P.paracaidas){ P.paracaidas = false; evento(P, 'paracaidasSuelo', {agua:true}); }
     if (!J.nadando){ J.nadando = true; J.suelo = false; J.vy = 0; evento(P, 'chapoteo', {x:J.x, z:J.z}); }
@@ -1546,6 +1633,7 @@ function pasoPie(P, ent){
 /* dentro de una casa: piso plano, paredes, muebles y la puerta para salir */
 function pasoEnCasa(P, ent, dx, dz, velMax, mag){
   const J = P.J, I = P.casa;
+  if (P.sentado){ P.sentado.t++; if (mag > 0.3 && P.sentado.t > 10){ P.sentado = null; evento(P, 'levanta'); } else { J.mov = 0; J.vx = J.vz = 0; J.y = I.y; J.suelo = true; J.fase += DT*0.5; P.cercaMueble = null; P.cercaPuerta = null; return; } }
   const objx = dx*velMax*mag, objz = dz*velMax*mag;
   J.vx += (objx - J.vx)*0.18; J.vz += (objz - J.vz)*0.18;
   J.mov = Math.hypot(J.vx, J.vz);
@@ -1562,6 +1650,7 @@ function pasoEnCasa(P, ent, dx, dz, velMax, mag){
   J.fase += J.mov*DT*2.2;
   P.cercaVeh = null;
   P.cercaPuerta = Math.hypot(I.px-J.x, I.pz-J.z) < 2.4 ? I : null;
+  P.cercaMueble = P.cercaPuerta ? null : muebleCerca(P);
 }
 function pasoEnZona(P, ent, dx, dz, velMax, mag){
   const J = P.J, Z = P.zona;
@@ -2261,6 +2350,8 @@ function pasoMascota(P){
   m.fase += m.mov*DT*3 + DT*3;
 }
 /* ---- la física de juguete: cajas, conos, gallinas y sandías que salen volando ---- */
+/* los columpios del parque: se cuelga uno, se impulsa con la palanca y con A salta */
+const COLUMPIOS = [-1.1, 1.1].map(ox=>({x: PARQUE.x + 6 + ox, z: PARQUE.z - 1, py: altura(PARQUE.x, PARQUE.z), pivote: 3.0, largo: 2.1}));
 const PROPS_DEF = [];
 (function ponerProps(){
   let id = 0;
@@ -2603,6 +2694,7 @@ function pasoPartida(P, ent){
   P.aPrev = !!ent.a; P.bPrev = !!ent.b; P.salirPrev = !!ent.salir;
   if (Number.isFinite(ent.camYaw)) P.camYaw = ent.camYaw;
   if (P.escena){ pasoEscena(P); pasoPerros(P); pasoPopitos(P); return; }
+  if (P.durmiendo){ const D = P.durmiendo; D.t++; if (D.t >= D.dur){ P.durmiendo = null; if (!NOCHE){ P.hora += 0.25; if (P.hora >= 1) P.hora -= 1; } P.popo = Math.max(0, P.popo - 0.15); const primera = !P.saludos.siesta; P.saludos.siesta = true; if (primera){ P.monedas += 10; } evento(P, 'despierta', {primera}); } return; }
   const e2 = {jx, jy, a:!!ent.a, b:!!ent.b, aNuevo, bNuevo};
   if (P.veh){
     pasoVehiculo(P, P.veh, e2);
@@ -2611,6 +2703,8 @@ function pasoPartida(P, ent){
   } else {
     if (aNuevo && P.cercaPuerta){ if (P.casa) salirCasa(P); else entrarCasa(P, P.cercaPuerta); e2.aNuevo = false; e2.a = false; }
     else if (aNuevo && P.cercaVeh){ montar(P, P.cercaVeh); e2.aNuevo = false; e2.a = false; }
+    else if (aNuevo && P.sentado){ P.sentado = null; evento(P, 'levanta'); e2.aNuevo = false; e2.a = false; }
+    else if (aNuevo && P.casa && P.cercaMueble){ usarMueble(P, P.cercaMueble); e2.aNuevo = false; e2.a = false; }
     if (P.veh) pasoVehiculo(P, P.veh, {jx:0, jy:0, a:false, b:false, aNuevo:false, bNuevo:false});
     else pasoPie(P, e2);
   }
@@ -2657,7 +2751,7 @@ if (typeof module !== 'undefined' && module.exports){
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
     posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
     CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, INTERIOR_CIRCO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana,
-    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
+    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
 }
 if (!EN_NAVEGADOR) return;
 
@@ -2784,6 +2878,9 @@ const sfx = {
   campanitas(){ [1319,1568,1319,1568,1760,2093].forEach((f,i)=>beep(f,0.12,'sine',0.08,i*0.12)); },
   trompeta(){ [180,220,260,220].forEach((f,i)=>beep(f,0.3,'sawtooth',0.18,i*0.25)); },
   hipo(){ beep(600,0.05,'square',0.08); beep(900,0.08,'square',0.08,0.05); },
+  tele(){ [659,784,988,784,1319].forEach((f,i)=>beep(f,0.12,'square',0.06,i*0.1)); },
+  piano(){ const esc = [523,587,659,698,784,880,988,1047]; for (let i=0;i<7;i++) beep(esc[Math.floor(Math.random()*esc.length)],0.22,'triangle',0.09,i*0.18); },
+  rocola(){ const m = [523,659,784,659,880,784,659,523,587,698,880,1047]; m.forEach((f,i)=>beep(f,0.16,'square',0.06,i*0.17)); },
   aplausos(){ for (let i=0;i<48;i++) ruidoSonoro(0.025 + Math.random()*0.02, 0.10, 2600 + Math.random()*1200, 900, i*0.075 + Math.random()*0.05); [784,988,1175].forEach((f,i)=>beep(f,0.25,'triangle',0.05,0.4+i*0.3)); },
   disparo(){ ruidoSonoro(0.18, 0.5, 900, 120); beep(90,0.15,'square',0.2); },
   explosion(d){ const v = clamp(0.6 - (d||0)/300, 0.08, 0.6); ruidoSonoro(0.55, v, 1400, 60); beep(60,0.3,'sawtooth',v*0.5); },
@@ -3420,6 +3517,7 @@ function armarCasa(A, c){
 (function construirPueblo(){
   const A = new Armador();
   for (const c of CASAS) armarCasa(A, c);
+  for (const L of ESCALERAS){ if (!CASAS.includes(L.c)) continue; const h = L.top - L.base + 0.5; for (const dz of [-0.35, 0.35]) A.caja(0.1, h, 0.1, '#d9a066', L.x, L.base + h/2, L.z + dz); for (let y = 0.45; y < h - 0.2; y += 0.45) A.caja(0.12, 0.08, 0.8, '#8b5a2b', L.x, L.base + y, L.z); }
   /* la fuente de la plaza */
   const fy = altura(FUENTE.x, FUENTE.z);
   A.cil(FUENTE.r, FUENTE.r+0.3, 0.9, '#d9d9e0', FUENTE.x, fy+0.45, FUENTE.z, 0,0,0,20);
@@ -3446,7 +3544,7 @@ function armarCasa(A, c){
   for (let i=0;i<4;i++) A.caja(0.9, 0.08, 0.3, '#2a6ad0', PARQUE.x, py+0.4+i*0.55, PARQUE.z-2.8);
   const sx = PARQUE.x+6, sz = PARQUE.z-1;
   A.cil(0.12,0.12,3,'#2a9c3a', sx-2.5, py+1.5, sz, 0,0,0,6); A.cil(0.12,0.12,3,'#2a9c3a', sx+2.5, py+1.5, sz, 0,0,0,6); A.cil(0.1,0.1,5.2,'#2a9c3a', sx, py+3, sz, 0,0,Math.PI/2,6);
-  for (const ox of [-1.1, 1.1]){ A.caja(0.9,0.12,0.4,'#e63946', sx+ox, py+0.9, sz); A.cil(0.03,0.03,2.1,'#dddddd', sx+ox-0.4, py+1.95, sz, 0,0,0,4); A.cil(0.03,0.03,2.1,'#dddddd', sx+ox+0.4, py+1.95, sz, 0,0,0,4); }
+  /* los asientos y las cuerdas de los columpios son aparte, porque se mueven (columpiosMesh) */
   A.caja(5, 0.3, 4, '#f2dfa6', PARQUE.x-6, py+0.15, PARQUE.z+2); A.caja(5.4, 0.5, 0.4, '#a5713f', PARQUE.x-6, py+0.25, PARQUE.z); A.caja(5.4, 0.5, 0.4, '#a5713f', PARQUE.x-6, py+0.25, PARQUE.z+4);
   A.caja(0.4, 0.5, 4.4, '#a5713f', PARQUE.x-8.5, py+0.25, PARQUE.z+2); A.caja(0.4, 0.5, 4.4, '#a5713f', PARQUE.x-3.5, py+0.25, PARQUE.z+2);
   const spP = letrero('🛝 PARQUE DE CUCÚ', '#fff', 'rgba(200,60,140,0.9)', 1.6); spP.position.set(PARQUE.x, py+5, PARQUE.z); mundo.add(spP);
@@ -3570,6 +3668,7 @@ const arepasMesh = AREPAS.map(a=>{
 (function construirMaracaibo(){
   const A = new Armador();
   for (const c of CASAS_MCBO) armarCasa(A, c);
+  for (const L of ESCALERAS){ if (!CASAS_MCBO.includes(L.c)) continue; const h = L.top - L.base + 0.5; for (const dz of [-0.35, 0.35]) A.caja(0.1, h, 0.1, '#d9a066', L.x, L.base + h/2, L.z + dz); for (let y = 0.45; y < h - 0.2; y += 0.45) A.caja(0.12, 0.08, 0.8, '#8b5a2b', L.x, L.base + y, L.z); }
   /* la plaza con su sol de Maracaibo */
   const py = altura(PLAZA_MCBO.x, PLAZA_MCBO.z);
   A.cil(6, 6.4, 0.5, '#e8d8b0', PLAZA_MCBO.x, py+0.25, PLAZA_MCBO.z, 0,0,0,20);
@@ -3849,6 +3948,11 @@ function armarMueble(m, I){
       .caja(lw, 0.7, 0.45, '#e8e8ea', 0, 2.1, -ld/2+0.22).caja(0.9, 1.9, 0.8, '#f4f4f8', -lw/2+0.45, 0.95, ld/2+0.45).caja(0.06, 0.6, 0.06, '#8a8a94', -lw/2+0.9, 1.1, ld/2+0.86); break;
     case 'alfombra': B.pieza(new THREE.CylinderGeometry(1, 1, 0.04, 20), aclarar(col, 0.2), 0, 0.03, 0, 0,0,0, lw/2, 1, ld/2).pieza(new THREE.CylinderGeometry(1, 1, 0.045, 20), '#ffffff', 0, 0.03, 0, 0,0,0, lw/2-0.5, 1, ld/2-0.5); break;
     case 'alfombraRoja': B.caja(lw, 0.05, ld, '#c0392b', 0, 0.03, 0).caja(0.25, 0.06, ld, '#ffd23f', -lw/2+0.12, 0.03, 0).caja(0.25, 0.06, ld, '#ffd23f', lw/2-0.12, 0.03, 0); break;
+    case 'nevera': B.caja(lw, 2.0, ld, '#e8f0f4', 0, 1.0, 0).caja(lw-0.1, 0.05, 0.05, '#8a8a94', 0, 1.25, ld/2+0.01).caja(0.06, 0.5, 0.06, '#8a8a94', lw*0.35, 1.6, ld/2+0.05).caja(0.06, 0.6, 0.06, '#8a8a94', lw*0.35, 0.7, ld/2+0.05).bola(0.16, '#ff6ec0', -lw*0.25, 1.55, ld/2+0.03, 6, 1, 1, 0.3); break;
+    case 'piano': B.caja(lw, 1.0, ld*0.55, '#1a1a20', 0, 0.5, -ld*0.2).caja(lw, 0.12, ld*0.45, '#1a1a20', 0, 0.9, ld*0.25).caja(lw-0.3, 0.06, ld*0.35, '#ffffff', 0, 0.97, ld*0.27);
+      for (let i=0;i<10;i++) B.caja(0.08, 0.05, ld*0.2, '#111', -lw/2 + 0.32 + i*(lw-0.6)/9, 1.01, ld*0.22);
+      B.caja(lw, 0.5, 0.06, '#1a1a20', 0, 1.25, -ld*0.47).caja(0.9, 0.4, 0.5, '#8b5a2b', 0, 0.2, ld*0.7); break;
+    case 'planta': B.cil(0.3, 0.22, 0.5, '#c0392b', 0, 0.25, 0, 0,0,0, 8); for (let i=0;i<5;i++){ const a = i/5*6.283; B.bola(0.32, '#2a9c3a', Math.cos(a)*0.28, 0.85 + (i%2)*0.2, Math.sin(a)*0.28, 6, 1, 1.4, 1); } break;
     case 'lampara': B.cil(0.3, 0.3, 0.05, '#333', 0, 0.03, 0, 0,0,0, 8).cil(0.04, 0.04, 1.6, '#333', 0, 0.8, 0, 0,0,0, 5).cil(0.22, 0.36, 0.4, '#ffe36e', 0, 1.75, 0, 0,0,0, 10); break;
     case 'cuadro': { const y = m.alto || 2.2, pared = lw > ld; B.caja(pared ? lw : 0.12, 1.1, pared ? 0.12 : ld, '#6b3e1e', 0, y, 0).caja(pared ? lw-0.24 : 0.2, 0.86, pared ? 0.2 : ld-0.24, '#8ecbff', 0, y, 0); break; }
     case 'ventana': { const y = m.alto || 2.2; B.caja(lw, 1.5, 0.16, '#bfe9ff', 0, y, 0).caja(lw+0.16, 0.12, 0.2, '#ffffff', 0, y+0.78, 0).caja(lw+0.16, 0.12, 0.2, '#ffffff', 0, y-0.78, 0).caja(0.1, 1.5, 0.2, '#ffffff', 0, y, 0).caja(lw, 0.1, 0.2, '#ffffff', 0, y, 0); break; }
@@ -3912,7 +4016,11 @@ const interioresMesh = INTERIORES.map(I=>{
   /* la lámpara del techo */
   if (!c.castillo && !c.circo) A.cil(0.03, 0.03, 0.7, '#333', 0, H-0.35, 0, 0,0,0, 4).cil(0.3, 0.55, 0.4, '#ffe36e', 0, H-0.9, 0, 0,0,0, 12).bola(0.16, '#fff8e0', 0, H-1.0, 0, 6);
   g.add(A.malla(matMate()));
-  for (const m of I.muebles){ const mm = armarMueble(m, I); g.add(mm); if (m.t==='cuadro' && m.texto){ const sp = letrero(m.texto, '#fff', 'rgba(0,0,0,0)', 0.8); sp.position.set(m.x - I.x + (m.w > m.d ? 0 : (m.x > I.x ? -0.25 : 0.25)), (m.alto||2.2), m.z - I.z + (m.w > m.d ? (m.z > I.z ? -0.25 : 0.25) : 0)); g.add(sp); } }
+  for (const m of I.muebles){ const mm = armarMueble(m, I); g.add(mm);
+    { const lw = Math.abs(Math.sin(m.ang)) > 0.5 ? m.d : m.w;
+      if (m.t==='tele'){ const pn = new THREE.Mesh(new THREE.PlaneGeometry(lw-0.4, 0.8), new THREE.MeshBasicMaterial({color:0x1a2a3a})); pn.position.set(0, 1.05, 0.1); mm.add(pn); m.vista = {pantalla:pn}; }
+      else if (m.t==='lampara'){ const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xffe9a0, transparent:true, opacity:0.55, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(3, 3, 1); sp.position.set(0, 1.75, 0); sp.visible = false; mm.add(sp); m.vista = {brillo:sp}; }
+      else if (m.t==='arbolNavidad'){ const luces = []; for (let i=0;i<10;i++){ const l = new THREE.Mesh(new THREE.SphereGeometry(0.09, 5, 4), new THREE.MeshBasicMaterial({color: [0xff4040, 0x40ff60, 0x4090ff, 0xffe040][i%4]})); const a = i*1.9, r = 0.55 - i*0.04; l.position.set(Math.cos(a)*r, 1.0 + i*0.19, Math.sin(a)*r); l.visible = false; mm.add(l); luces.push(l); } m.vista = {luces}; } } if (m.t==='cuadro' && m.texto){ const sp = letrero(m.texto, '#fff', 'rgba(0,0,0,0)', 0.8); sp.position.set(m.x - I.x + (m.w > m.d ? 0 : (m.x > I.x ? -0.25 : 0.25)), (m.alto||2.2), m.z - I.z + (m.w > m.d ? (m.z > I.z ? -0.25 : 0.25) : 0)); g.add(sp); } }
   const et = letrero((c.castillo ? '🏰 ' : c.circo ? '🎪 ' : c.santa ? '🎅 ' : c.letrero==='BAR' ? '🍺 ' : c.letrero==='BURGER' ? '🍔 ' : c.letrero==='AREPAS' ? '🫓 ' : c.gasolinera ? '⛽ ' : '🏠 ') + c.nombre.toUpperCase(), '#fff', 'rgba(20,20,50,0.8)', c.castillo || c.circo ? 3 : 1.6);
   et.position.set(0, H-0.6-(c.castillo ? 1.2 : 0), -D2+0.6); g.add(et);
   if (NOCHE){ const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: texturaResplandor(), color: 0xffd27a, transparent:true, opacity:0.5, depthWrite:false, blending:THREE.AdditiveBlending})); sp.scale.set(8, 8, 1); sp.position.set(0, H-1.0, 0); g.add(sp); }
@@ -4893,6 +5001,7 @@ const conciertoLuces = (()=>{
   }
   mundo.add(g); return {g, focos, haces, colores};
 })();
+const columpiosMesh = COLUMPIOS.map(c=>{ const g = new THREE.Group(); g.position.set(c.x, c.py + c.pivote, c.z); const A = new Armador(); A.caja(0.9, 0.12, 0.4, '#e63946', 0, -c.largo, 0).cil(0.03, 0.03, c.largo, '#dddddd', -0.4, -c.largo/2, 0, 0,0,0, 4).cil(0.03, 0.03, c.largo, '#dddddd', 0.4, -c.largo/2, 0, 0,0,0, 4); g.add(A.malla(matMate())); g.ang = 0; mundo.add(g); return g; });
 const balonMesh = (()=>{ const A = new Armador(); A.bola(0.45, '#ffffff', 0, 0, 0, 12); for (let i=0;i<8;i++){ const a = i/8*6.283, b = (i%2 ? 0.6 : -0.6); A.bola(0.16, '#1a1a20', Math.cos(a)*0.38*Math.cos(b), Math.sin(b)*0.38, Math.sin(a)*0.38*Math.cos(b), 6); } const g = A.malla(matBrillo()); scene.add(g); return g; })();
 const balasMesh = [];
 function balaMesh(i){ while (balasMesh.length <= i){ const m = new THREE.Mesh(new THREE.SphereGeometry(0.34, 8, 6), new THREE.MeshLambertMaterial({color: 0x222228})); scene.add(m); balasMesh.push(m); } return balasMesh[i]; }
@@ -4983,6 +5092,13 @@ function sincronizarMundoNuevo(t){
   /* los bichos que pasean */
   const poneNPC = (g, n, y)=>{ g.position.set(n.x, y, n.z); g.rotation.y = n.ang; const amp = Math.min(1, n.mov/1.2), s = Math.sin(n.fase*4); if (g.partes && g.partes.patas) g.partes.patas.forEach((p, k)=>{ p.rotation.x = s*0.5*amp*(k%2 ? -1 : 1)*(k>=2 ? -1 : 1); }); else if (g.partes) animarPersona(g, n.mov*2, n.fase*2.5, false, false); };
   if (Math.hypot(J.x-ISLA_ELEFANTES.x, J.z-ISLA_ELEFANTES.z) < 220) P.elefantes.forEach((n, i)=>poneNPC(elefantesMesh[i], n, altura(n.x, n.z)));
+  columpiosMesh.forEach((g, i)=>{ const obj = P.columpio && P.columpio.i===i ? P.columpio.ang : Math.sin(t*1.1 + i)*0.06; g.ang += (obj - g.ang)*(P.columpio && P.columpio.i===i ? 1 : 0.05); g.rotation.x = g.ang; });
+  if (P.casa){ const I = P.casa; for (const m of I.muebles){ if (!m.vista && m.t!=='chimenea' && m.t!=='rocola') continue; const k = I.id + '/' + m.t + '/' + Math.round(m.x) + ',' + Math.round(m.z), e = P.casaEstado[k], on = !!(e && e.on);
+      if (m.t==='tele' && m.vista){ m.vista.pantalla.material.color.setHex(on ? [0x4fc3f7, 0xff6ec0, 0xffe36e, 0x7dffa0, 0xffffff][Math.floor(t*2.5)%5] : 0x1a2a3a); }
+      else if (m.t==='lampara' && m.vista){ m.vista.brillo.visible = on; }
+      else if (m.t==='arbolNavidad' && m.vista){ m.vista.luces.forEach((l, i)=>{ l.visible = on && Math.floor(t*3 + i) % 3 !== 0; }); }
+      else if (m.t==='chimenea' && on && tick % 3 === 0){ const sx = Math.sin(m.ang), cz = Math.cos(m.ang); particula(m.x + sx*0.4 + (azar()-0.5)*0.6, I.y + 0.5, m.z + cz*0.4 + (azar()-0.5)*0.4, azar() < 0.5 ? '#ffa020' : '#ffe36e', (azar()-0.5)*0.4, 1.2+azar()*1.2, (azar()-0.5)*0.4, 30, 0.22, {grav:-2, alfa:0.9}); }
+      else if (m.t==='rocola' && on && tick % 12 === 0){ particula(m.x + (azar()-0.5)*0.8, I.y + 2.0, m.z + (azar()-0.5)*0.8, ['#ff6ec0','#4fc3f7','#ffe36e'][tick%3], (azar()-0.5)*0.6, 1.5, (azar()-0.5)*0.6, 60, 0.25, {grav:-0.5, alfa:0.9}); } } }
   { const B = P.balon; balonMesh.visible = Math.abs(J.x-CANCHA.x) < 260 && Math.abs(J.z-CANCHA.z) < 260 && !B.gol; balonMesh.position.set(B.x, B.y, B.z); balonMesh.rotation.x += B.vz*DT/0.45; balonMesh.rotation.z -= B.vx*DT/0.45; }
   balasMesh.forEach(m=>{ m.visible = false; }); P.balas.forEach((b, i)=>{ const m = balaMesh(i); m.visible = true; m.position.set(b.x, b.y, b.z); });
   if (Math.hypot(J.x-ISLA_CONCIERTO.x, J.z-ISLA_CONCIERTO.z) < 260){
@@ -5759,6 +5875,20 @@ function atenderEventos(){
       case 'fantasma': sfx.fantasma(); chispas(e.x, e.y, e.z, '#c0b0ff', 18, 5); grande('¡BUUU! 👻 +8 🪙', '#c0b0ff', 70); break;
       case 'trompeta': sfx.trompeta(); for (let i=0;i<16;i++) particula(e.x + (azar()-0.5), e.y+3.2, e.z + 3.4, '#8fd3ff', (azar()-0.5)*3, 5+azar()*4, 2+azar()*4, 40, 0.2, {grav:10, alfa:0.8}); break;
       case 'hipo': sfx.hipo(); burbuja('¡Hip!', 'Vampiro'); break;
+      case 'mueble': { const on = e.on; if (e.t==='tele'){ if (on) sfx.tele(); else sfx.toque(); aviso(on ? '📺 ¡Dibujitos!' : '📺 Tele apagada'); } else if (e.t==='lampara'){ sfx.toque(); aviso(on ? '💡 Luz encendida' : '💡 Luz apagada'); } else if (e.t==='chimenea'){ if (on) sfx.trompeta(); else sfx.toque(); aviso(on ? '🔥 ¡Qué calentico!' : '🔥 Chimenea apagada'); } else if (e.t==='rocola'){ if (on) sfx.rocola(); else sfx.toque(); aviso(on ? '🎵 ¡A bailar!' : '🎵 Música apagada'); } else if (e.t==='arbolNavidad'){ sfx.campanitas(); aviso(on ? '🎄 ¡Luces de Navidad!' : '🎄 Luces apagadas'); } else if (e.t==='piano'){ sfx.piano(); for (let i=0;i<8;i++) particula(e.x + (azar()-0.5)*2, e.y + 1.6, e.z + (azar()-0.5)*1, ['#ff6ec0','#4fc3f7','#ffe36e'][i%3], (azar()-0.5)*0.8, 1.5+azar(), (azar()-0.5)*0.8, 60, 0.25, {grav:-0.5, alfa:0.9}); } else if (e.t==='armadura'){ sfx.choque(); sacudida = 5; burbuja('¡CLANK!', 'La armadura'); } break; }
+      case 'muebleNada': aviso(e.texto); sfx.toque(); break;
+      case 'sentado': sfx.toque(); if (e.t==='trono') grande('👑 ¡EL TRONO!', '#ffe36e', 80); else aviso('😌 Qué cómodo… (A o la palanca para levantarte)'); break;
+      case 'rey': sfx.estrella(); sfx.campanitas(); confeti(J.x, J.y+2, J.z, 40); grande('👑 ¡EL REY DEL CASTILLO! +15 🪙', '#ffe36e', 150); break;
+      case 'levanta': sfx.toque(); break;
+      case 'dormir': sfx.toque(); cortina = 60; grande('💤 ¡A DORMIR!', '#bfe9ff', 120); break;
+      case 'despierta': cortina = 40; sfx.campanitas(); aviso(e.primera ? '☀️ ¡Buenos días! Qué siesta. +10 🪙' : '☀️ ¡Buenos días! Pasó un ratico'); break;
+      case 'comidaCasa': sfx.hamburguesa(); chispas(J.x, J.y+1.2, J.z, '#ffe36e', 10, 4); grande(e.arepa ? '🫓 ¡AREPA!' : '🍔 ¡HAMBURGUESA!', '#ffe36e', 70); break;
+      case 'regalo': sfx.campanitas(); sfx.estrella(); confeti(e.x, e.y+1, e.z, 40); grande('🎁 ¡REGALO! +15 🪙', '#ff9ed6', 130); break;
+      case 'muebleSalto': sfx.salto(); aviso('🛞 ¡Boing!'); break;
+      case 'columpio': sfx.toque(); aviso('🎠 Palanca arriba para impulsarte · A para saltar'); break;
+      case 'columpioSalta': sfx.salto(); if (e.fuerte) grande('🎠 ¡WIIII!', '#ff9ed6', 60); break;
+      case 'columpioAlto': sfx.estrella(); confeti(e.x, e.y+1, e.z, 30); grande('🎠 ¡SALTO DESDE EL COLUMPIO! +10 🪙', '#ff9ed6', 130); break;
+      case 'techo': sfx.estrella(); grande('🏠 ¡ARRIBA DEL TECHO!', '#ffe36e', 110); break;
       case 'ovacion': ovacionHasta = tick + 60*6; sfx.aplausos(); grande('👏 ¡OVACIÓN! 👏', '#ffe36e', 150); burbuja('¡Bravo, Fernando! ¡Otra, otra!', 'El público'); break;
       case 'patada': sfx.golpe(); if (e.fuerza > 12) chispas(e.x, e.y, e.z, '#ffffff', 6, 3); break;
       case 'gol': sfx.estrella(); sfx.aplausos(); confeti(e.x, e.y+1, e.z, 50); grande('⚽ ¡GOOOOOL! +10 🪙', '#7dffa0', 140); sacudida = 6; if (e.goles === 1 || e.goles % 5 === 0) hablar(fraseDe(RED.pj, 'gol'), RED.pj), burbuja(fraseDe(RED.pj, 'gol'), nombreLocal()); redEvento('hamburguesa', {x:e.x, y:e.y, z:e.z}); break;
@@ -5794,7 +5924,11 @@ function sincronizar(){
   const apretado = P.ganas && !J.nadando;
   animarModelo(fer, J.mov*(apretado ? 1.8 : 1), J.fase*(apretado ? 1.6 : 1), !J.suelo && !J.nadando, J.nadando);
   fer.rotation.x = J.nadando ? (fer.tipo==='persona' ? 1.2 : 0.3) : 0;
-  if (fer.tipo==='persona'){
+  if (P.columpio){ animarModelo(fer, 0, 0, false, false, true); fer.rotation.x = -P.columpio.ang; }
+  else if (P.sentado){ animarModelo(fer, 0, 0, false, false, true); }
+  else if (P.durmiendo){ animarModelo(fer, 0, 0, false, false, false); fer.position.y = J.y + 0.95; fer.rotation.x = -Math.PI/2; fer.partes.bI.rotation.x = 0; fer.partes.bD.rotation.x = 0; }
+  else if (P.trepando){ const s = tick*DT; fer.partes.bI.rotation.x = -2.2 + Math.sin(s*8)*0.4; fer.partes.bD.rotation.x = -2.2 - Math.sin(s*8)*0.4; fer.partes.pI.rotation.x = -0.6 - Math.sin(s*8)*0.4; fer.partes.pD.rotation.x = -0.6 + Math.sin(s*8)*0.4; }
+  if (fer.tipo==='persona' && !P.columpio && !P.sentado && !P.durmiendo && !P.trepando){
     if (P.canto && P.canto.quien==='yo'){ const s = tick*DT; fer.partes.bD.rotation.x = -1.7 + Math.sin(s*6)*0.15; fer.partes.bI.rotation.x = -0.5 + Math.sin(s*4)*0.5; fer.partes.bI.rotation.z = -0.5; fer.partes.cuerpo.position.y = Math.abs(Math.sin(s*7))*0.08; fer.rotation.z = Math.sin(s*1.5)*0.06; }
     else if (apretado){ fer.partes.pI.rotation.z = 0.25; fer.partes.pD.rotation.z = -0.25; fer.partes.bI.rotation.x = -1.2; fer.partes.bD.rotation.x = -1.2; fer.rotation.z = Math.sin(J.fase*1.6)*0.08; }
     else { fer.partes.pI.rotation.z = 0; fer.partes.pD.rotation.z = 0; fer.rotation.z = 0; }
@@ -6316,6 +6450,10 @@ function dibujarHUD(){
   /* avisos y frases */
   if (P.cercaPuerta && !P.veh && !P.escena) textoBorde((tactil ? 'A' : 'ESPACIO')+' = '+(P.casa ? 'SALIR 🚪' : (P.cercaPuerta.castillo ? 'ENTRAR AL CASTILLO 🏰' : 'ENTRAR 🏠')), W/2, H-96, 22, '#fff', 'center', true);
   else if (P.cercaVeh && !P.veh && !P.escena) textoBorde((tactil ? 'A' : 'ESPACIO')+' = MONTAR '+P.cercaVeh.emoji, W/2, H-96, 22, '#fff', 'center', true);
+  else if (P.sentado) textoBorde((tactil ? 'A' : 'ESPACIO')+' = LEVANTARSE', W/2, H-96, 20, '#fff', 'center', true);
+  else if (P.columpio) textoBorde((tactil ? 'A' : 'ESPACIO')+' = ¡SALTAR! 🎠  (palanca arriba: impulso)', W/2, H-96, 20, '#fff', 'center', true);
+  else if (P.casa && P.cercaMueble && !P.durmiendo) textoBorde((tactil ? 'A' : 'ESPACIO')+' = '+usoDe(P.cercaMueble), W/2, H-96, 22, '#fff', 'center', true);
+  else if (!P.veh && !P.casa && !P.zona && !P.escena){ const L = escaleraCerca(J); if (L) textoBorde('⬆ = TREPAR AL TECHO 🪜', W/2, H-96, 20, '#fff', 'center', true); else if (COLUMPIOS.some(c=>Math.hypot(J.x-c.x, J.z-c.z) < 1.4 && Math.abs(J.y-c.py) < 2)) textoBorde((tactil ? 'A' : 'ESPACIO')+' = COLUMPIARSE 🎠', W/2, H-96, 20, '#fff', 'center', true); }
   if (P.veh){
     const rapidez = (P.veh.id==='nave' || P.veh.id==='heli' || P.veh.id==='ovni' || P.veh.id==='ptero') ? Math.hypot(P.veh.vel, P.veh.vy||0) : Math.abs(P.veh.vel);
     textoBorde(Math.round(rapidez*3.6)+' km/h', W/2, H-30, 18, '#fff');
@@ -6473,6 +6611,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();

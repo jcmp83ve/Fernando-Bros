@@ -244,6 +244,20 @@ ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
 - **El tanque 🪖**, junto al hangar: lento, aplasta árboles y rocas, y con B
   dispara balas de cañón que estallan en confeti y mandan a volar las cajas,
   las gallinas, las sandías y el balón.
+- **Las casas y el castillo son más grandes por dentro** (casas de 20×16 m,
+  castillo de 38×30) y **los muebles se usan** con A al lado: la tele se
+  prende (dibujitos de colores), la nevera y la cocina dan hamburguesas (la
+  arepera y la hamburguesería, desde el mostrador), el piano suena, la lámpara
+  y la chimenea se encienden, la rocola pone música, en el sofá y las
+  banquetas uno se sienta, en la cama se duerme (pasa un cuarto de día y
+  quita ganas de popo), el trono hace rey (15 monedas), los regalos de Santa
+  se abren, el árbol de Navidad prende sus luces, la armadura hace CLANK y las
+  llantas de la gasolinera hacen saltar altísimo.
+- **Se sube a las cosas**: saltando encima de una caja se camina sobre ella;
+  cada casa tiene una **escalera** en un costado (palanca hacia arriba para
+  trepar) y por el techo a dos aguas se camina; y en los **columpios del
+  parque** uno se cuelga con A, se impulsa con la palanca y con A salta (10
+  monedas si el salto es alto).
 - **La partida no se cae**: la sala manda latidos, el invitado que pierde la
   conexión vuelve a entrar solo (hasta diez intentos), la pantalla no se
   apaga mientras se juega, el botón «atrás» del navegador pausa en vez de
