@@ -257,9 +257,11 @@ cualquiera ya suena. Revisa también que el botón de la pantalla de amigos
 diga **🔊 OÍR A LOS AMIGOS** (no 🔇), el volumen del aparato, y en iPhone que
 en Ajustes → Safari → Micrófono no esté en «Denegar».
 
-Por dentro es **WebRTC con PeerJS**: los navegadores se conectan directo
-entre sí y el servidor público de PeerJS solo los presenta por el código.
-Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
+Por dentro es **WebRTC con Trystero**: los navegadores se conectan directo
+entre sí, y para presentarse por el código usan varios relés públicos a la
+vez (si uno se cae, siguen los otros; no hay un servidor único del que
+dependa la sala). Sin cuentas ni pagos; si la parte de red no carga, el
+juego sigue en solitario.
 
 👉 **[Guía paso a paso para jugar con amigos](https://jcmp83ve.github.io/Fernando-Bros/aventura3d/amigos.html)**
 
@@ -312,12 +314,20 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
   las misiones; no toca la pantalla) y la **vista** (Three.js y el marcador en
   2D).
 - El motor 3D es el mismo `three.min.js` (r128, MIT) de la carpeta
-  `kart3d/`, así que no se repite. La red usa `peerjs.min.js` (1.5.4, MIT,
-  licencia en `PEERJS-LICENSE.txt`), también incluido en la carpeta.
-- Para jugar con amigos, cada aparato manda quince veces por segundo un
-  paquete chiquito (posición, vehículo, animación) al anfitrión, que se lo
-  reenvía a los demás; los paquetes se limpian al llegar (números acotados,
-  personajes y vehículos conocidos, nombres sin símbolos).
+  `kart3d/`, así que no se repite. La red usa `trystero.min.js` (Trystero
+  0.25, MIT, licencia en `TRYSTERO-LICENSE.txt`), también incluido en la
+  carpeta: WebRTC directo entre aparatos, y para presentarse usa **varios
+  relés públicos a la vez** (Nostr; y si ninguno contesta en diez segundos,
+  brokers MQTT). Antes dependía del servidor público de PeerJS, que se cae o
+  tarda minutos en contestar, y la sala se quedaba en «No se pudo».
+- Para jugar con amigos, todos se conectan con todos (malla) y cada aparato
+  manda quince veces por segundo un paquete chiquito (posición, vehículo,
+  animación, ropa) a los demás; los paquetes se limpian al llegar (números
+  acotados, personajes y vehículos conocidos, nombres sin símbolos). El que
+  creó la sala solo decide dos cosas: si está llena y a qué mapa se juega.
+- Si un aparato pierde el internet un rato, Trystero vuelve a conectar los
+  relés y los amigos se reencuentran solos en la misma sala; no hay que
+  volver a escribir el código.
 - El terreno se calcula **una sola vez** en una malla de 241×241 alturas, y
   de esa misma malla salen lo que se ve y lo que se pisa.
 - Los personajes, casas y vehículos se arman con cajitas de colores fundidas
@@ -364,7 +374,8 @@ Sin cuentas ni pagos; si la parte de red no carga, el juego sigue en solitario.
 ```
 node pruebas.js          # el mapa 1: la isla de día
 node pruebas_noche.js    # el mapa 2: Maracaibo de noche
-node pruebas_voz.js      # el walkie-talkie, con dos navegadores (ver la cabecera del archivo)
+node pruebas_voz.js      # el walkie-talkie, con tres navegadores y un broker MQTT local (ver la cabecera del archivo)
+node broker_local.js     # ese broker, para probar la sala sin internet (npm i aedes ws)
 ```
 
 El banco del mapa 1 también recorre lo nuevo: entra y sale del castillo y de
