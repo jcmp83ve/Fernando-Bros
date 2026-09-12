@@ -19,7 +19,7 @@ Controles pensados para manos pequeñas: **la palanca mueve, A sube, B corre, C 
 | Teclado | Mando 🎮 | Celular 📱 | Acción |
 |---|---|---|---|
 | Flechas / WASD | Palanca izquierda o cruceta | Palanca (aparece donde pongas el dedo, en la mitad izquierda) | Caminar · volante y gas/freno · subir y bajar el avión · adelante y atrás en el submarino |
-| ESPACIO / Z | Botón inferior (A/B) | **A** | **Saltar** · **montarse** en un vehículo · brinco del carro y la moto · **subir** el submarino |
+| ESPACIO / Z | Botón inferior (A/B) | **A** | **Saltar** · **montarse** en un vehículo · brinco del carro y la moto · **subir** el submarino · **batear** parado en el home del estadio |
 | MAYÚS / X | Botón lateral (X) o gatillos | **B** | **Correr** · **turbo** del carro, la moto, el barco y el avión · **bajar** el submarino |
 | C / CTRL | Botón Y | **C** | **Turbo a pie**: un 50 % más rápido, y se suma a B (los dos juntos: casi 30 m/s) |
 | E / ENTER | Hombros (L/R) o − | **🚪** | **Bajarse** del vehículo (parado, en tierra o en la superficie) |
@@ -133,6 +133,48 @@ ventanas encendidas, y con once misiones nuevas:
 
 En multijugador los dos deben estar en el mismo mapa (el enlace de invitación
 ya lleva el mapa). Se prueba con `node aventura3d/pruebas_noche.js`.
+
+### 🫓 Maracaibo grande, como la de verdad
+
+Maracaibo (en los dos mapas) ahora es una ciudad de verdad, del tamaño de
+una isla entera, con lo que tiene la Maracaibo real:
+
+- **🍧 El guajiro de los cepillados**: en la plaza, con su triciclo rojo,
+  blanco y naranja lleno de botellas de sirope. Al saludarlo te vende un
+  cepillado (raspado) de sabor al azar: fresa, tamarindo, limón, papelón… y el
+  favorito, **el de colita**, que cae con confeti.
+- **🥟 La comida maracucha**: por toda la ciudad hay empanadas, patacones,
+  tequeños y mandocas que se comen al pasar (llenan la barra de popo, como las
+  hamburguesas) y cada una tiene su frase.
+- **⚾ El estadio Luis Aparicio «El Grande»**, la casa de las **Águilas del
+  Zulia**: gradas azules y naranja, cuatro torres de luz, un diamante con sus
+  bases y un marcador. **Agui**, la mascota (un águila con franela naranja,
+  pantalón blanco y gorra), pasea por ahí y los cuatro peloteros cuidan las
+  bases. Parado en el home, **A batea** (con **B** más fuerte); si la bola
+  pasa las gradas es **jonrón**: confeti, aplausos, 15 monedas y Agui se pone
+  a brincar.
+- **✈️ El Aeropuerto Internacional La Chinita**: pista, plataforma, terminal
+  con su franja roja y torre de control al sur de la ciudad. Dos aviones
+  despegan, dan la vuelta a la ciudad y aterrizan por su cuenta, y al llegar
+  se avisa.
+- **⛪ La Basílica de La Chinita** (Nuestra Señora de Chiquinquirá): blanca y
+  crema, con dos torres, cúpula dorada y su portal, al oeste de la plaza.
+- **🕰️ La Torre del Reloj de la plaza Baralt**, con un reloj a cada lado.
+- **🏘️ La calle Carabobo**: seis casitas coloniales de colores vivos en fila,
+  con calle empedrada, banderitas y ventanas con marco blanco; se entra en
+  todas.
+- **🏠 Los palafitos de Santa Rosa de Agua**: cinco casitas de colores sobre
+  pilotes en el lago, unidas por una pasarela de madera por la que se camina
+  (sale de la carretera de la orilla).
+- **🎶 Los gaiteros**: un trío con furro, cuatro y tambora en una tarima
+  frente a la casa gaitera; al saludarlos suena la gaita zuliana.
+- **🛣️ La carretera de la orilla** bordea toda la ciudad (con línea amarilla
+  y palmeras) y por ella pasan los carros; la **vereda del lago** va pegada al
+  agua mirando al **Puente General Rafael Urdaneta**.
+
+Al llegar a cada lugar el personaje lo comenta en voz alta (con la voz del
+navegador), y el radar marca el estadio, el aeropuerto, la basílica y los
+palafitos.
 
 ## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
 
