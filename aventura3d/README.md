@@ -275,6 +275,11 @@ palafitos.
   arepas en Maracaibo, vos!») y él remata («¡Dame otra, vos, que todavía
   tengo hambre!»). Cada personaje lo dice a su manera, y todo suena con la
   voz del navegador.
+- **Los kioscos venden de verdad** (v46.2): el algodón de azúcar y las
+  cotufas de la feria y el jugo de patilla de la vereda se comen (y tienen
+  su diálogo maracucho); el jugo quita el calor. Toda la comida de Maracaibo
+  vuelve a salir a los tres minutos de comida, y se corrigió un tumbarrancho
+  que había quedado enterrado bajo las gradas del estadio nuevo.
 
 ## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
 

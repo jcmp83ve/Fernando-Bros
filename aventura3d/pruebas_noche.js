@@ -162,13 +162,23 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   if (!dichos.some(d=>d.k && /^mcbo/.test(d.k))) mal('al comer en Maracaibo no habló en maracucho'); else if (!dichos.some(d=>d.pj && d.pj.startsWith('npc_') && /vos|mi hermano|pichunguito|os /.test(d.texto))) mal('nadie de la ciudad contestó en voseo'); else bien('diálogo maracucho al comer:', dichos.filter(d=>(d.k && /^mcbo/.test(d.k)) || (d.pj||'').startsWith('npc_')).slice(0, 3).map(d=>d.quien+': '+d.texto).join(' / '));
   if (comidas.length !== 4) mal('no comió las 4 comidas ('+comidas.length+')'); else bien('comió:', comidas.map(c=>c.comida).join(', '), '· dijo:', dichos.filter(d=>['empanada','patacon','tequeno','mandoca'].includes(d.k)).map(d=>d.texto).join(' / '));
   for (const [t, k] of [['patacon','mcboPatacon1'],['mandoca','mcboMandoca1']]) if (!dichos.some(d=>d.k===t || d.k===k)) mal('no dijo nada del '+t);
+  /* toda la comida de Maracaibo se puede comer (ninguna enterrada ni dentro de una casa), con su diálogo en maracucho, y vuelve a salir a los tres minutos */
+  { let sinComer = [], sinDialogo = [];
+    for (const e of N.EMPANADAS.slice(4).concat(N.AREPAS)){ P.dialogo.length = 0; poner(P, e.x - 5, e.z); let ok = false, dial = false;
+      correr(P, 60*4, (P)=>({jy: 1, camYaw: Math.atan2(e.x-P.J.x, e.z-P.J.z)}), (P, evs)=>{ for (const v of evs){ if ((v.tipo==='empanada' || v.tipo==='arepa') && v.id===e.id) ok = true; if (v.tipo==='dialogoMcbo') dial = true; } return ok; });
+      if (!ok) sinComer.push(e.id + (e.tipo ? ' ' + e.tipo : ' arepa')); else if (!dial) sinDialogo.push(e.id); }
+    if (sinComer.length) mal('comida de Maracaibo que no se deja comer: ' + sinComer.join(', ')); else bien('las', N.EMPANADAS.length, 'comidas y las', N.AREPAS.length, 'arepas de Maracaibo se comen todas');
+    if (sinDialogo.length) mal('comida sin diálogo maracucho: ' + sinDialogo.join(', ')); else bien('todas arman su diálogo con voseo');
+    const e0 = N.EMPANADAS[4]; P.t += 60*181; poner(P, e0.x - 4, e0.z); let otra = false; correr(P, 60*3, (P)=>({jy:1, camYaw: Math.atan2(e0.x-P.J.x, e0.z-P.J.z)}), (P, evs)=>{ for (const v of evs) if (v.tipo==='empanada' && v.id===e0.id) otra = true; return otra; });
+    if (!otra) mal('la comida no vuelve a salir a los tres minutos'); else bien('a los tres minutos la comida vuelve a salir');
+    P.gordura = 0; P.popo = 0; P.ganas = false;   /* después de tanta comida, como si hubiera ido al baño: si no camina lentísimo */ }
   /* los gaiteros */
   dichos.length = 0; let gaita = null;
   const g0 = N.GAITEROS[1]; poner(P, g0.x, g0.z - 7);
   correr(P, 60*6, (P)=>({jy: 1, camYaw: Math.atan2(g0.x-P.J.x, g0.z-P.J.z)}), (P, evs)=>{ oir(P, evs); for (const e of evs) if (e.tipo==='gaita') gaita = e; return !!gaita; });
   if (!gaita) mal('no sonó la gaita al saludar a los gaiteros'); else bien('gaita zuliana con', gaita.total, 'saludo(s) · dijo:', (dichos.find(d=>d.k==='gaita')||{}).texto);
   /* los lugares de verdad: al llegar se comentan */
-  const vistos = {};
+  const vistos = {}; P.lugaresDichos = {};   /* comiendo por ahí ya se comentaron algunos lugares */
   for (const L of N.LUGARES_MCBO){ dichos.length = 0; poner(P, L.x + (L.id==='basilica' ? 22 : L.id==='palafitos' ? 0 : 6), L.z + (L.id==='carabobo' ? 0 : 4)); if (L.id==='palafitos') P.J.y = N.PALAFITOS.alto;
     correr(P, 60*3, {}, (P, evs)=>{ oir(P, evs); for (const e of evs) if (e.tipo==='lugarMcbo') vistos[e.id] = e.titulo; return !!vistos[L.id]; });
     if (!vistos[L.id]) mal('no comentó '+L.id); else if (!dichos.some(d=>d.k===L.frase)) mal('no dijo la frase de '+L.id); else bien(vistos[L.id], '→', dichos.find(d=>d.k===L.frase).texto); }
