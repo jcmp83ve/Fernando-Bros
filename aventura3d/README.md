@@ -533,6 +533,17 @@ juego sigue en solitario.
   rápido y es el único que lleva la voz). Los mensajes llevan número de
   secuencia para descartar repetidos, y en la línea de diagnóstico aparece
   «🛰 2/2». Se prueba con `node aventura3d/pruebas_rele.js`.
+- **La sala está en el mapa del anfitrión (v46.3)**: cuando el anfitrión
+  estaba en Maracaibo de noche y el invitado escribía el código desde la isla
+  de día (sin el enlace, que ya trae el mapa), los dos entraban a la sala pero
+  cada uno se quedaba solo con «1 jugador (esperando…)»: el invitado marcaba
+  al anfitrión como «del otro mapa» al recibir su saludo, y con eso descartaba
+  el mensaje siguiente, justo el que le decía a qué mapa irse. Ahora el
+  invitado se va solo al mapa del anfitrión en cuanto recibe su saludo (con
+  aviso grande en pantalla), la página se recarga allá con la misma sala y
+  entra con un toque; los avisos de sala («vente a este mapa», «sala llena»)
+  ya no se descartan nunca. La pantalla de la sala dice en qué mapa está. Se
+  prueba en la sección 3 de `pruebas_rele.js`.
 - Para jugar con amigos, todos se conectan con todos (malla) y cada aparato
   manda quince veces por segundo un paquete chiquito (posición, vehículo,
   animación, ropa) a los demás; los paquetes se limpian al llegar (números
