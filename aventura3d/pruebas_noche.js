@@ -197,6 +197,36 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
     for (const c of P.carritos) if (N.cercaRutaMcbo(c.x, c.z).d > 4) mal('un carrito se salió de la carretera');
     const c = P.carritos[0]; const p = N.puntoRutaMcbo(c.s + 6); poner(P, p.x, p.z); let boc = false; correr(P, 60*5, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='bocina') boc = true; return boc && c.vel < 0.5; });
     if (!boc) mal('el carrito no tocó la bocina con el personaje delante'); else if (c.vel > 0.5) mal('el carrito no frenó (vel '+c.vel.toFixed(1)+')'); else bien('el carrito frenó y tocó la bocina; se aparta uno y sigue'); }
+  /* la feria: la rueda de la fortuna sube y da la vuelta; el carrusel */
+  { const R = N.FERIA.rueda; poner(P, R.x, R.z + 3.2); correr(P, 5, {}); correr(P, 1, {a:true});
+    if (!P.paseo || P.paseo.tipo!=='rueda') mal('no se subió a la rueda de la fortuna'); else { let maxY = 0; const y0 = N.altura(R.x, R.z); const f = correr(P, R.vuelta + 120, {}, (P)=>{ maxY = Math.max(maxY, P.J.y - y0); return !P.paseo; });
+      if (P.paseo) mal('la rueda no lo bajó al terminar la vuelta'); else if (maxY < R.eje + R.R - 3) mal('la rueda no subió ('+maxY.toFixed(1)+' m)'); else bien('rueda de la fortuna: subió hasta', maxY.toFixed(1), 'm y bajó solo en', (f/60).toFixed(0), 's'); }
+    const C = N.FERIA.carrusel; poner(P, C.x + C.R + 1.2, C.z); correr(P, 5, {}); correr(P, 1, {a:true});
+    if (!P.paseo || P.paseo.tipo!=='carrusel') mal('no se montó en el carrusel'); else { const x0 = P.J.x, z0 = P.J.z; correr(P, 60*3, {}); const d = Math.hypot(P.J.x-x0, P.J.z-z0); correr(P, 1, {a:true}); if (P.paseo) mal('no se bajó del carrusel con A'); else if (d < 2) mal('el carrusel no gira'); else bien('carrusel: dio vueltas ('+d.toFixed(1)+' m en 3 s) y se bajó con A'); } }
+  /* el tranvía: se espera en la parada de la plaza, se sube, viaja y se baja */
+  { const pd = N.TRANVIA.paradas[0], q = N.puntoRutaMcbo(pd.s); poner(P, q.x, q.z); let paro = false;
+    correr(P, 60*300, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='tranviaPara' && e.nombre===pd.nombre) paro = true; return paro; });
+    if (!paro) mal('el tranvía nunca paró en la plaza'); else { poner(P, P.tranvia.x, P.tranvia.z + 2); correr(P, 3, {}); correr(P, 1, {a:true});
+      if (!P.paseo || P.paseo.tipo!=='tranvia') mal('no se subió al tranvía'); else { const x0 = P.J.x, z0 = P.J.z; correr(P, 60*25, {}); const d = Math.hypot(P.J.x-x0, P.J.z-z0); correr(P, 1, {a:true});
+        if (P.paseo) mal('no se bajó del tranvía'); else if (d < 40) mal('el tranvía no lo llevó ('+d.toFixed(0)+' m)'); else if (N.altura(P.J.x, P.J.z) < 1) mal('se bajó del tranvía en el agua'); else bien('tranvía: paró en la plaza, lo llevó', d.toFixed(0), 'm y se bajó en la acera'); } } }
+  /* la pesca en el palafito: espera, pica y saca un pez */
+  { const p = N.PESCA[0]; poner(P, p.x, p.z); P.J.y = N.PALAFITOS.alto; correr(P, 3, {}); correr(P, 1, {a:true});
+    if (!P.paseo || P.paseo.tipo!=='pesca') mal('no empezó a pescar'); else { let pico = false; correr(P, 60*12, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='pica') pico = true; return pico; });
+      if (!pico) mal('nunca picó'); else { let pez = null; correr(P, 1, {a:true}, (P, evs)=>{ for (const e of evs) if (e.tipo==='pez') pez = e; return false; }); if (!pez) mal('al dar A no sacó el pez'); else bien('pesca: sacó', pez.nombre, 'de', pez.tam, 'cm (+'+pez.monedas+' monedas)'); }
+      correr(P, 20, {jy:1}); if (P.paseo) mal('moverse no termina la pesca'); } }
+  /* el castillo de San Carlos: por la rampa a la muralla y un cañonazo al lago */
+  { const S = N.SANCARLOS, base = N.alturaBase(S.x, S.z); poner(P, S.x - 7.4, S.z - 5); const y0 = P.J.y;
+    correr(P, 60*6, (P)=>({jy:1, camYaw: 0}), (P)=>P.J.y - base > S.alto - 0.1);
+    if (P.J.y - base < S.alto - 0.1) mal('no subió a la muralla por la rampa (y '+(P.J.y-base).toFixed(1)+')'); else bien('San Carlos: subió por la rampa a la muralla (+'+(P.J.y-base).toFixed(1)+' m)');
+    const c = S.canones[0]; poner(P, c.x + 0.5, c.z + 0.8); correr(P, 3, {}); let tiro = null; correr(P, 1, {a:true}, (P, evs)=>{ for (const e of evs) if (e.tipo==='canonazo') tiro = e; return false; });
+    if (!tiro) mal('el cañón no disparó'); else { let expl = null; correr(P, 60*6, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='explosion') expl = e; return !!expl; }); if (!expl || !expl.agua) mal('la bala del cañón no cayó al lago'); else bien('cañonazo: la bala cayó al lago a', Math.hypot(expl.x-c.x, expl.z-c.z).toFixed(0), 'm'); } }
+  /* el mercado y el zoológico: saludos */
+  { const v = P.vendedores[0], pu = N.PULGAS_PUESTOS[1], lado = v.z > pu.z ? -1 : 1; poner(P, v.x, pu.z + lado*4); dichos.length = 0;   /* del lado de los clientes, con el puesto en medio */ correr(P, 60*5, (P)=>({jy:1, camYaw: Math.atan2(v.x-P.J.x, v.z-P.J.z)}), (P, evs)=>{ oir(P, evs); return dichos.some(d=>d.pj==='npc_vendedor'); });
+    if (!dichos.some(d=>d.pj==='npc_vendedor')) mal('el vendedor del mercado no saludó'); else bien('en Las Pulgas:', dichos.find(d=>d.pj==='npc_vendedor').texto);
+    const cu = P.cuidador; poner(P, cu.x, cu.z + 3); dichos.length = 0; correr(P, 60*5, (P)=>({jy:1, camYaw: Math.atan2(cu.x-P.J.x, cu.z-P.J.z)}), (P, evs)=>{ oir(P, evs); return dichos.some(d=>d.pj==='npc_cuidador'); });
+    if (!dichos.some(d=>d.pj==='npc_cuidador')) mal('el cuidador del zoo no saludó'); else bien('en el zoo:', dichos.find(d=>d.pj==='npc_cuidador').texto);
+    for (const a of P.animales.filter(a=>a.zona==='zoo')){ const c = N.ZOO.corrales[a.corral]; if (Math.hypot(a.x-c.x, a.z-c.z) > c.r) mal(a.nombre+' se salió del corral'); }
+    bien('los', P.animales.filter(a=>a.zona==='zoo').length, 'animales del zoo siguen en sus corrales'); }
   /* Agui y los peloteros saludan */
   { const ag = P.agui; poner(P, ag.x + 3, ag.z); dichos.length = 0; correr(P, 60*5, (P)=>({jy:1, camYaw: Math.atan2(ag.x-P.J.x, ag.z-P.J.z)}), (P, evs)=>{ oir(P, evs); return dichos.some(d=>d.pj==='npc_agui'); });
     if (!dichos.some(d=>d.pj==='npc_agui')) mal('Agui no saludó'); else bien('Agui dijo:', dichos.find(d=>d.pj==='npc_agui').texto); }
@@ -218,6 +248,6 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   if (P2.estrellas.length !== P.estrellas.length || P2.prog.chivos.length !== 8 || P2.prog.rayos !== P.prog.rayos || !P2.prog.ovni) mal('el guardado del mapa 2 no conserva chivos, rayos o el ovni');
   else bien('la partida de noche se guarda y se recupera con', P2.estrellas.length, 'estrellas');
 }
-for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna','cepillado','empanada','gaita','lugarMcbo','batazo','jonron','pelotaCae','avionNPC','estadioCerca','aeropuertoCerca','cocada','bocina']) if (!tipos[t]) mal('nunca salió el evento '+t);
+for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna','cepillado','empanada','gaita','lugarMcbo','batazo','jonron','pelotaCae','avionNPC','estadioCerca','aeropuertoCerca','cocada','bocina','paseo','paseoFin','tranviaPara','pica','pez','canonazo']) if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ Maracaibo de noche sin fallos');
 process.exit(fallos ? 1 : 0);
