@@ -5527,7 +5527,7 @@ try{ const g = localStorage.getItem('aventura3d.pj'); if (g && PERSONAJES_RED.so
 try{ const c = normalizarCodigo(new URL(location.href).searchParams.get('sala')); if (c.length===4) RED.pendiente = c; }catch(e){}
 const nombreLocal = ()=> PERSONAJES_RED.find(p=>p.id===RED.pj).nombre;
 const hayRed = ()=> typeof Trystero !== 'undefined' && !!(Trystero.nostr && Trystero.mqtt);
-const redAbierta = ()=> Object.keys(RED.rooms).length > 0;
+const redAbierta = ()=> Object.keys(RED.rooms).length > 0 || !!RELE.sala;
 const redActiva = ()=> redAbierta() && (RED.estado==='sala' || RED.estado==='conectado');
 const enlaceSala = ()=> location.origin + location.pathname + '?sala=' + RED.sala + (MAPA===2 ? '&mapa=2' : '');
 /* Los servidores que ayudan a que dos aparatos se hablen directo: STUN para
@@ -5541,22 +5541,84 @@ const RED_CONFIG = {appId:'fernando-bros-aventura3d', relayConfig:{redundancy:4,
   {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
 ]}};
 /* los relés: null = la lista pública de Trystero; en las pruebas se ponen los de la misma máquina */
-const RED_RELES = {nostr:null, mqtt:null};
+const RED_RELES = {nostr:null, mqtt:null, rele:null};
+/* ---- el camino de reserva ("relé"): cuando el enlace directo entre aparatos (WebRTC) no abre —pasa mucho con
+   datos móviles, donde la operadora no deja pasar la conexión— el juego se manda por los mismos brokers MQTT
+   públicos, como mensajitos. Se abre desde el principio, así los amigos se ven en un par de segundos; en cuanto
+   el enlace directo se abre, se usa ese (es más rápido y lleva la voz). La voz no pasa por el relé. ---- */
+const RELE_BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+const RELE = {clientes: [], vistos: new Map(), sala: '', ultimoAqui: 0, id: '', seq: 0, nE: 0, avisados: new Set()};
+function releId(){ if (!RELE.id){ try{ RELE.id = String(Trystero.mqtt.selfId || ''); }catch(e){} if (!RELE.id) RELE.id = 'r' + Math.random().toString(36).slice(2, 12); } return RELE.id; }
+function releTema(){ return 'fernando-bros/av3d/v' + VERSION_RED + '/sala-' + RELE.sala; }
+function releAbrir(codigo){
+  releCerrar(); RELE.sala = codigo;
+  const M = typeof Trystero !== 'undefined' && Trystero.MQTT; if (!M || !M.connect) return 0;
+  const urls = RED_RELES.rele || RELE_BROKERS; let abiertos = 0;
+  for (const url of urls){
+    try{
+      const c = M.connect(url, {keepalive: 20, reconnectPeriod: 5000, connectTimeout: 12000, clean: true, clientId: 'av3d_' + releId().slice(0, 10) + '_' + Math.random().toString(36).slice(2, 6)});
+      const tema = releTema();
+      c.on('connect', ()=>{ try{ c.subscribe(tema + '/+', {qos: 0}); }catch(e){} });
+      c.on('message', (t, carga)=>{
+        if (RELE.sala !== codigo) return;
+        const de = String(t).split('/').pop(); if (!de || de === releId()) return;
+        let sobre; try{ sobre = JSON.parse(carga.toString()); }catch(e){ return; }
+        if (!sobre || typeof sobre !== 'object') return;
+        if (sobre.a && sobre.a !== releId()) return;                       /* iba para otro */
+        releLlega(de, sobre);
+      });
+      c.on('error', ()=>{});
+      RELE.clientes.push(c); abiertos++;
+    }catch(e){}
+  }
+  return abiertos;
+}
+function releCerrar(){ for (const c of RELE.clientes){ try{ c.end(true); }catch(e){} } RELE.clientes = []; RELE.vistos.clear(); RELE.avisados.clear(); RELE.sala = ''; }
+function releAbiertos(){ let n = 0; for (const c of RELE.clientes) if (c.connected) n++; return {abiertos: n, total: RELE.clientes.length}; }
+/* se publica por todos los brokers conectados (cada quien está suscrito a todos); el que recibe descarta los repetidos por el número de secuencia */
+function relePublicar(a, m){
+  if (!RELE.sala) return;
+  if (m && m.t === 'e'){ RELE.nE++; if (RELE.nE % 3) return; }                /* el estado va a 5 por segundo por el relé, no a 15 */
+  const carga = JSON.stringify({a: a || '', s: ++RELE.seq, m}), tema = releTema() + '/' + releId();
+  for (const c of RELE.clientes){ if (!c.connected) continue; try{ c.publish(tema, carga, {qos: 0}); }catch(e){} }
+}
+function releLlega(de, sobre){
+  let v = RELE.vistos.get(de); if (!v){ v = {t: 0, seqs: []}; RELE.vistos.set(de, v); }
+  v.t = Date.now();
+  if (Number.isFinite(sobre.s)){ if (v.seqs.includes(sobre.s)) return; v.seqs.push(sobre.s); if (v.seqs.length > 64) v.seqs.shift(); }
+  const set = RED.pares.get(de);
+  if (!set || !set.size) redLlegaPar('rele', de); else if (!set.has('rele')) set.add('rele');
+  const m = sobre.m; if (!m || typeof m !== 'object' || m.t === 'aqui') return;
+  if (redMedioDe(de) !== 'rele') return;                                   /* ya hay enlace directo: lo del relé es repetido */
+  redRecibir(de, m);
+}
+function releVigilar(){
+  if (!RELE.sala) return;
+  const ahora = Date.now();
+  if (ahora - RELE.ultimoAqui > 1500){ RELE.ultimoAqui = ahora; relePublicar('', {t: 'aqui'}); }
+  for (const [de, v] of RELE.vistos){
+    if (ahora - v.t > 7000){ RELE.vistos.delete(de); redSeVaPar('rele', de); continue; }
+    const set = RED.pares.get(de);
+    if (set && set.size === 1 && set.has('rele') && !RELE.avisados.has(de) && ahora - RED.t0 > 40000){ RELE.avisados.add(de); const r = RED.remotos.get(de); if (r) aviso('📡 Con ' + r.nombre + ' vas por el relé: se juega igual, pero la voz no pasa por ahí'); }
+  }
+}
 function redReles(medio){ try{ const s = Trystero[medio].getRelaySockets(); const t = Object.values(s); return {abiertos: t.filter(w=>w && w.readyState===1).length, total: t.length}; }catch(e){ return {abiertos:0, total:0}; } }
-function redRelesAbiertos(){ let n = 0; for (const m of MEDIOS) if (RED.rooms[m]) n += redReles(m).abiertos; return n; }
+function redRelesAbiertos(){ let n = 0; for (const m of MEDIOS) if (RED.rooms[m]) n += redReles(m).abiertos; return n + releAbiertos().abiertos; }
 /* lo que se ve en pantalla para saber por dónde va la conexión */
 function redDiagnostico(){
   const partes = MEDIOS.filter(m=>RED.rooms[m]).map(m=>{ const r = redReles(m); return (m==='nostr' ? '🐦 ' : '📡 ')+r.abiertos+'/'+r.total; });
+  if (RELE.sala){ const r = releAbiertos(); partes.push('🛰 '+r.abiertos+'/'+r.total); }
   if (RED.vistos) partes.push('amigos vistos: '+RED.vistos);
   if (RED.fallos) partes.push('enlaces fallidos: '+RED.fallos);
   return partes.length ? 'relés '+partes.join(' · ') : '';
 }
 /* por cuál camino se le habla a un amigo: el primero en el que se lo vio */
-function redMedioDe(id){ const m = RED.pares.get(id); return m && m.size ? [...m][0] : null; }
+function redMedioDe(id){ const m = RED.pares.get(id); if (!m || !m.size) return null; for (const md of m) if (md !== 'rele') return md; return 'rele'; }
 function redCerrarSala(){
   vozCortarTodo();
   const rooms = RED.rooms; RED.rooms = {}; RED.acciones = {};
   for (const m in rooms){ try{ rooms[m].leave(); }catch(e){} }
+  releCerrar();
   RED.pares.clear(); RED.otroMapa.clear(); RED.anfitrionId = ''; RED.fallos = 0; RED.vistos = 0;
   for (const id of [...RED.remotos.keys()]) quitarRemoto(id);
 }
@@ -5576,13 +5638,14 @@ function redAbrirSala(codigo){
       abiertos++;
     }catch(e){ console.warn('sala por '+medio+': '+(e && e.message)); }
   }
+  try{ if (releAbrir(codigo)){ abiertos++; RED.acciones.rele = {send: (m, o)=>{ relePublicar(o && typeof o.target === 'string' ? o.target : '', m); return Promise.resolve(); }}; } }catch(e){ console.warn('relé: '+(e && e.message)); }
   if (!abiertos) throw new Error('ningún camino disponible');
 }
 function redLlegaPar(medio, id){
   let set = RED.pares.get(id); const primero = !set || !set.size;
   if (!set){ set = new Set(); RED.pares.set(id, set); }
   set.add(medio);
-  if (!primero) return;   /* ya lo teníamos por el otro camino */
+  if (!primero){ if (medio !== 'rele' && VOZ.stream && !VOZ.llamadas.has(id)) vozLlamar(id); return; }   /* ya lo teníamos por otro camino; si este es directo, ahora sí va la voz */
   RED.vistos++;
   if (RED.estado==='creando') RED.estado = 'sala';
   if (RED.estado==='uniendo'){ RED.estado = 'conectado'; RED.aviso_ = ''; if (estado!=='juego'){ estado = 'juego'; cortina = 20; } aviso('👥 ¡Entraste a la sala '+RED.sala+'!'); sfx.estrella(); }
@@ -5740,6 +5803,7 @@ function sincronizarRemotos(){
    teléfono lento (o con la pestaña de fondo) los cuadros van despacio y esto no puede esperar */
 function redVigilar(){
   if (!redAbierta()) return;
+  try{ releVigilar(); }catch(e){}
   const dt = Date.now() - RED.t0;
   if (RED.estado==='creando' || RED.estado==='uniendo'){
     const abiertos = redRelesAbiertos();
@@ -5749,7 +5813,7 @@ function redVigilar(){
     /* si ya vio amigos (aunque el enlace haya fallado) se le da hasta minuto y medio: los relés vuelven a presentarlos solos */
     if (RED.estado==='uniendo' && dt > (RED.vistos || RED.fallos ? 90000 : 45000)){
       RED.estado = 'error';
-      RED.error = RED.fallos ? 'Vi a tus amigos en la sala '+RED.sala+' pero no se abrió el enlace directo entre los aparatos ('+RED.fallos+' intentos). Prueba con los dos por WiFi, o los dos con datos, y vuelve a intentar.'
+      RED.error = RED.fallos ? 'Vi a tus amigos en la sala '+RED.sala+' pero no se abrió el enlace entre los aparatos ('+RED.fallos+' intentos). Recarguen la página los dos (para tener la versión nueva) y vuelvan a intentar; si sigue, prueben con los dos por WiFi.'
         : 'No encontré a nadie en la sala '+RED.sala+' ('+redDiagnostico()+'). Revisa el código, que quien la creó siga con el juego abierto y con la versión nueva (que recargue la página), y que estén en el mismo mapa.';
       redCerrarSala();
     }
@@ -6767,7 +6831,7 @@ function dibujarAmigos(){
     const puntos = '.'.repeat(1 + Math.floor(tick/20)%3);
     titulo(RED.estado==='creando' ? 'Creando la sala'+puntos : 'Entrando a la sala '+RED.sala+puntos, W/2, H/2, 34, '#fff6a0', '#ffb000');
     texto(RED.estado==='uniendo' && RED.aviso_ ? RED.aviso_ : 'Esto tarda unos segundos', W/2, H/2+40, 15, '#bcd6ff');
-    { const d = redDiagnostico(); if (d) texto(d + ' · v44.2', W/2, H/2+66, 12, 'rgba(255,255,255,0.55)'); }
+    { const d = redDiagnostico(); if (d) texto(d + ' · v45.5', W/2, H/2+66, 12, 'rgba(255,255,255,0.55)'); }
     return;
   }
   if (RED.estado==='error'){
@@ -6796,7 +6860,7 @@ function dibujarAmigos(){
   texto(tactil ? '🎙️ Para hablar: mantén apretado el botón del micrófono' : '🎙️ Para hablar: mantén apretada la tecla V (o el botón del micrófono)', W/2, 342, 13, '#bcd6ff');
   pastilla('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, 376, 14, '#fff', 0.5, Math.min(660, W-40));
   boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ ¡A JUGAR!', '#3aa040', '#1e6a24', 20, true);
-  { const d = redDiagnostico(); if (d) texto(d + ' · v44.2', W/2, 398, 11, 'rgba(255,255,255,0.5)'); }
+  { const d = redDiagnostico(); if (d) texto(d + ' · v45.5', W/2, 398, 11, 'rgba(255,255,255,0.5)'); }
   boton(W-190, H-64, 176, 46, '🚪 SALIR DE LA SALA', '#8a3a30', '#5a1a10', 13);
   boton(14, H-64, 190, 46, VOZ.silencio ? '🔇 AMIGOS EN SILENCIO' : '🔊 OÍR A LOS AMIGOS', VOZ.silencio ? '#8a3a30' : '#3aa040', VOZ.silencio ? '#5a1a10' : '#1e6a24', 13);
 }
@@ -6993,6 +7057,6 @@ function bucle(ahora){
   dibujar();
 }
 /* asas para las pruebas automáticas (no hacen nada en el juego) */
-window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, VALLE_DINOS2, SABANA, GRANJA, ANIMALES, FARO, ISLITA, R_ISLA, MARACAIBO, PLAZA_MCBO, ESTADIO, BEISBOL, LA_CHINITA, EMPANADAS, GUAJIRO, AGUI, RUTA_MCBO, BASILICA, TORRE_RELOJ, PALAFITOS, LUGARES_MCBO, GAITEROS, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
+window.AV = { get W(){ return W; }, get H(){ return H; }, get estado(){ return estado; }, set estado(v){ estado = v; }, get camYaw(){ return camYaw; }, set camYaw(v){ camYaw = v; }, get P(){ return P; }, camera, scene, renderer, tecla: procesarTecla, paso: actualizar, empezar, set entrada(v){ entradaForzada = v; }, RED, VOZ, RELE, redRecibir, empaquetar: ()=>empaquetarEstado(P, RED.pj, nombreLocal(), ROPA), ponerPersonaje, get particulas(){ return particulas.length; }, get CAL(){ return CAL; }, get vozLog(){ return vozLog; }, get burbujas(){ return burbujas; }, HAMBURGUESAS, MAPA, CORO, OVNI, AROS_NOCHE, PERSONAJES_RED, zonaPersonaje, PUENTE, MARACAIBO, LUNA, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, VEHICULOS_DEF, FAMILIA, RED_CONFIG, RED_RELES, redCrear, redUnirse, redSalir, CONF, CASTILLO, INTERIORES, INTERIOR_CASTILLO, ISLA_BANANA, BANANAS, VALLE_DINOS, DINOS, VEREDA, ZONAS, SATURNO, JUPITER, MONTANA, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, OLAS, CANCHA, COLUMPIOS, VALLE_DINOS2, SABANA, GRANJA, ANIMALES, FARO, ISLITA, R_ISLA, MARACAIBO, PLAZA_MCBO, ESTADIO, BEISBOL, LA_CHINITA, EMPANADAS, GUAJIRO, AGUI, RUTA_MCBO, BASILICA, TORRE_RELOJ, PALAFITOS, LUGARES_MCBO, GAITEROS, ESCALERAS, USOS, SANTA, INTERIOR_CIRCO, CIRCO_DEF, MONEDAS, ITEMS_TIENDA, get ROPA(){ return ROPA; }, PROPS_DEF, altura, get tick(){ return tick; } };
 requestAnimationFrame(bucle);
 })();

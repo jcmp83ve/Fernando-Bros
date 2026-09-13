@@ -415,6 +415,19 @@ juego sigue en solitario.
   tarda minutos en contestar, y la sala se quedaba en «No se pudo». En la
   pantalla de amigos sale una línea chiquita de diagnóstico (relés
   conectados por camino, amigos vistos, enlaces fallidos).
+- **El relé de reserva (v45.5)**: con datos móviles es común que el enlace
+  directo WebRTC nunca abra (la operadora no deja pasar la conexión y el
+  relevo TURN gratuito no siempre alcanza): en la pantalla se veía «relés
+  📡 4/4 · enlaces fallidos: 2» y la sala no entraba. Ahora, desde el primer
+  segundo, el juego también se manda por dos brokers MQTT públicos
+  (`broker.emqx.io` y `broker.hivemq.com`, con el cliente MQTT.js que va
+  dentro de `trystero.min.js`): cada aparato publica su presencia y su estado
+  (a 5 por segundo por ese camino) en un tema con el código de la sala, y
+  los demás lo reciben aunque el enlace directo falle. Los amigos se ven en
+  un par de segundos; en cuanto el enlace directo abre, se usa ese (es más
+  rápido y es el único que lleva la voz). Los mensajes llevan número de
+  secuencia para descartar repetidos, y en la línea de diagnóstico aparece
+  «🛰 2/2». Se prueba con `node aventura3d/pruebas_rele.js`.
 - Para jugar con amigos, todos se conectan con todos (malla) y cada aparato
   manda quince veces por segundo un paquete chiquito (posición, vehículo,
   animación, ropa) a los demás; los paquetes se limpian al llegar (números
@@ -470,6 +483,7 @@ juego sigue en solitario.
 node pruebas.js          # el mapa 1: la isla de día
 node pruebas_noche.js    # el mapa 2: Maracaibo de noche
 node pruebas_voz.js      # el walkie-talkie, con tres navegadores y un broker MQTT local (ver la cabecera del archivo)
+node pruebas_rele.js     # el relé de reserva: con el enlace directo imposible, la sala entra igual por MQTT
 node broker_local.js     # ese broker, para probar la sala sin internet (npm i aedes ws)
 ```
 

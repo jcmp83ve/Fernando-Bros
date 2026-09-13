@@ -8,7 +8,8 @@
    soltar. Después al revés, luego un toque reintenta un audio bloqueado, y por último un
    tercero que nunca pidió micrófono también oye. */
 const { chromium } = require('playwright');
-const ARGS = ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader',
+/* sin frenar los temporizadores de las pestañas de fondo: si no, el navegador deja de mandar los «ping» MQTT de las páginas que no están al frente y el broker las desconecta (en un teléfono de verdad cada juego está al frente) */
+const ARGS = ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows',
   '--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream','--autoplay-policy=no-user-gesture-required'];
 const URL_ = 'http://127.0.0.1:8765/aventura3d/?mapa=1';
 async function pagina(browser, nombre){
