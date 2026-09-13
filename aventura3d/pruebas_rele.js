@@ -7,24 +7,29 @@
       ninguno, como un teléfono con datos detrás de una operadora que no deja pasar), el anfitrión y el invitado
       se ven igual por el relé: el invitado entra a la sala, los muñecos se mueven y los eventos llegan; el enlace
       directo falla (fallos > 0) sin que se caiga la sala.
-   2) Con el enlace directo sano, el juego lo prefiere al relé en cuanto abre. */
+   2) Con el enlace directo sano, el juego lo prefiere al relé en cuanto abre.
+   3) La sala vive en el mapa del anfitrión: si el invitado escribe el código desde el otro mapa (sin el enlace,
+      que ya trae el mapa), al recibir el saludo del anfitrión se va solo a ese mapa con la misma sala y entra. */
 const { chromium } = require('playwright');
 /* sin frenar los temporizadores de las pestañas de fondo (ver pruebas_voz.js) */
 const ARGS = ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows'];
-const URL_ = 'http://127.0.0.1:8765/aventura3d/?mapa=1';
+const URL_ = 'http://127.0.0.1:8765/aventura3d/?mapa=';
 let fallos = 0; const mal = m=>{ console.log('✗', m); fallos++; }, bien = (...m)=>console.log('✓', ...m);
-async function pagina(browser, nombre, romperRTC){
-  const ctx = await browser.newContext({viewport:{width:480, height:270}});
-  const pg = await ctx.newPage();
-  pg.on('pageerror', e=>console.log('  [' + nombre + '] error de página:', e.message));
-  await pg.goto(URL_, {waitUntil:'domcontentloaded', timeout:90000});
-  await pg.waitForFunction(()=>window.AV && window.Trystero, null, {timeout:60000});
-  await pg.evaluate(([n, romper])=>{
-    localStorage.removeItem('aventura3d.partida'); localStorage.setItem('aventura3d.nombre', n);
+/* los relés de la misma máquina y arrancar; se vuelve a llamar cuando la página se recarga sola (cambio de mapa) */
+const preparar = (pg, nombre, romperRTC)=>pg.evaluate(([n, romper])=>{
+    localStorage.setItem('aventura3d.nombre', n);
     AV.RED_RELES.mqtt = ['ws://127.0.0.1:1884']; AV.RED_RELES.nostr = ['ws://127.0.0.1:65530']; AV.RED_RELES.rele = ['ws://127.0.0.1:1884'];
     AV.RED_CONFIG.rtcConfig = romper ? {iceServers:[], iceTransportPolicy:'relay'} : {iceServers:[]};
     AV.empezar();
   }, [nombre, !!romperRTC]);
+async function pagina(browser, nombre, romperRTC, mapa){
+  const ctx = await browser.newContext({viewport:{width:480, height:270}});
+  const pg = await ctx.newPage();
+  pg.on('pageerror', e=>console.log('  [' + nombre + '] error de página:', e.message));
+  await pg.goto(URL_ + (mapa || 1), {waitUntil:'domcontentloaded', timeout:90000});
+  await pg.waitForFunction(()=>window.AV && window.Trystero, null, {timeout:60000});
+  await pg.evaluate(()=>localStorage.removeItem('aventura3d.partida'));
+  await preparar(pg, nombre, romperRTC);
   return pg;
 }
 const espera = async (pg, fn, ms, que)=>{ try{ await pg.waitForFunction(fn, null, {timeout:ms||20000}); return true; }catch(e){ mal('no pasó: '+que); return false; } };
@@ -78,7 +83,27 @@ const posRemoto = pg=>pg.evaluate(()=>{ const r = [...AV.RED.remotos.values()][0
       bien('con el enlace directo sano el invitado tiene al anfitrión por', md, '· se prefiere el', pref);
       if (md.indexOf('mqtt') < 0) mal('faltó el camino directo');
     }
-    await G.evaluate(()=>AV.redSalir()); await H.evaluate(()=>AV.redSalir());
+    await G.evaluate(()=>AV.redSalir()); await H.evaluate(()=>AV.redSalir()); await H.context().close(); await G.context().close();
+  }
+  /* 3) el anfitrión en Maracaibo (mapa 2) y el invitado escribe el código desde la isla de día (mapa 1) */
+  {
+    const t0 = Date.now();
+    const H = await pagina(browser, 'Anfitrion', false, 2), G = await pagina(browser, 'Invitado', false, 1);
+    await H.evaluate(()=>AV.redCrear()); await espera(H, ()=>AV.RED.estado==='sala', 20000, 'sala 3');
+    await H.evaluate(()=>{ AV.estado = 'juego'; });
+    const sala = await H.evaluate(()=>AV.RED.sala); await G.evaluate((s)=>AV.redUnirse(s), sala);
+    let fue = false;
+    for (let i = 0; i < 60 && !fue; i++){ await H.waitForTimeout(1000); const u = G.url(); fue = u.includes('mapa=2') && u.includes('sala='+sala); }
+    if (!fue) mal('el invitado no se fue solo al mapa del anfitrión: sigue en '+G.url()+' · '+(await G.evaluate(()=>AV.RED.estado+' '+AV.RED.error).catch(()=>'?')));
+    else {
+      bien('el invitado se fue solo al mapa 2 con la sala', sala, 'en', ((Date.now()-t0)/1000).toFixed(0), 's');
+      await G.waitForFunction(()=>window.AV && window.Trystero, null, {timeout:90000});
+      await preparar(G, 'Invitado', false);                                   /* la página nueva entra sola con el código del enlace */
+      if (await espera(G, ()=>AV.MAPA===2 && AV.RED.estado==='conectado' && AV.RED.remotos.size===1, 40000, 'el invitado entró a la sala en el mapa 2')
+        && await espera(H, ()=>AV.RED.remotos.size===1 && AV.RED.otroMapa.size===0, 40000, 'el anfitrión ve al invitado ya en su mapa'))
+        bien('los dos se ven en Maracaibo:', await G.evaluate(()=>[...AV.RED.remotos.values()][0].nombre), 'y', await H.evaluate(()=>[...AV.RED.remotos.values()][0].nombre), '·', ((Date.now()-t0)/1000).toFixed(0), 's');
+    }
+    await G.evaluate(()=>AV.redSalir()).catch(()=>{}); await H.evaluate(()=>AV.redSalir()); await H.context().close(); await G.context().close();
   }
   await browser.close();
   console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ el relé sin fallos');

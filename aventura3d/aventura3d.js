@@ -6149,7 +6149,7 @@ for (const v of VEHICULOS_DEF){
    nuestro. Todos se conectan con todos (malla); cada quien juega su propia
    partida y ve a los otros corriendo, manejando y volando por la isla. */
 const MEDIOS = ['nostr', 'mqtt'];
-const RED = {estado:'off', rooms:{}, acciones:{}, pares:new Map(), otroMapa:new Set(), sala:'', anfitrion:false, anfitrionId:'', remotos:new Map(), pj:'fernando', error:'', codigo:'', pendiente:'', entrandoCodigo:false, avisos:[], t0:0, aviso_:'', fallos:0, vistos:0};
+const RED = {estado:'off', rooms:{}, acciones:{}, pares:new Map(), otroMapa:new Set(), sala:'', anfitrion:false, anfitrionId:'', remotos:new Map(), pj:'fernando', error:'', codigo:'', pendiente:'', entrandoCodigo:false, avisos:[], t0:0, aviso_:'', fallos:0, vistos:0, yendoAlMapa:false};
 try{ const g = localStorage.getItem('aventura3d.pj'); if (g && PERSONAJES_RED.some(p=>p.id===g)) RED.pj = g; }catch(e){}
 try{ const c = normalizarCodigo(new URL(location.href).searchParams.get('sala')); if (c.length===4) RED.pendiente = c; }catch(e){}
 const nombreLocal = ()=> PERSONAJES_RED.find(p=>p.id===RED.pj).nombre;
@@ -6314,16 +6314,23 @@ function redEnviar(m){
 }
 function redEnviarA(id, m){ const md = redMedioDe(id), ac = md && RED.acciones[md]; if (!ac) return; try{ ac.send(m, {target:id}).catch(()=>{}); }catch(e){} }
 function redEvento(tipo, datos){ if (RED.pares.size) redEnviar(Object.assign({t:'ev', tipo}, datos||{})); }
+/* la sala vive en el mapa del anfitrión: si entré desde el otro mapa (escribí el código sin el enlace),
+   me voy al suyo con la misma sala; la página se recarga allá y se vuelve a entrar sola */
+function redIrAlMapa(mapa){
+  if (RED.yendoAlMapa) return; RED.yendoAlMapa = true;
+  const sala = RED.sala; redLimpiar(); RED.estado = 'error';
+  const nombreMapa = mapa===2 ? '2, Maracaibo de noche 🌙' : '1, la isla de día ☀️';
+  RED.error = 'La sala '+sala+' está en el mapa '+nombreMapa+'. Te llevo allá…';
+  grande('🗺️ LA SALA '+sala+' ESTÁ EN EL MAPA '+nombreMapa.toUpperCase()+': ¡TE LLEVO ALLÁ!', '#fff6a0', 200);
+  try{ localStorage.setItem('aventura3d.mapa', String(mapa)); }catch(e){}
+  try{ guardar(); }catch(e){}
+  setTimeout(()=>{ salidaAvisada = true; location.href = location.pathname + '?mapa=' + mapa + '&sala=' + sala; }, 1800);
+}
 function redRecibir(id, m){
   if (!m || typeof m !== 'object') return;
-  if (RED.otroMapa.has(id) && m.t!=='hola') return;
-  if (m.t==='mapa' && !RED.anfitrion && (!RED.anfitrionId || id===RED.anfitrionId) && (m.mapa===1 || m.mapa===2) && m.mapa !== MAPA){
-    const sala = RED.sala; redLimpiar(); RED.estado = 'error';
-    RED.error = 'La sala '+sala+' está en el mapa '+(m.mapa===2 ? '2, Maracaibo de noche 🌙' : '1, la isla de día ☀️')+'. Te llevo allá…';
-    try{ localStorage.setItem('aventura3d.mapa', String(m.mapa)); }catch(e){}
-    setTimeout(()=>{ salidaAvisada = true; location.href = location.pathname + '?mapa=' + m.mapa + '&sala=' + sala; }, 1800);
-    return;
-  }
+  /* de un amigo que está en el otro mapa solo se atienden el saludo y los avisos de sala (a qué mapa ir, sala llena) */
+  if (RED.otroMapa.has(id) && m.t!=='hola' && m.t!=='mapa' && m.t!=='llena') return;
+  if (m.t==='mapa' && !RED.anfitrion && (!RED.anfitrionId || id===RED.anfitrionId) && (m.mapa===1 || m.mapa===2) && m.mapa !== MAPA){ redIrAlMapa(m.mapa); return; }
   if (m.t==='llena'){ if (!RED.anfitrion && (!RED.anfitrionId || id===RED.anfitrionId)){ redLimpiar(); RED.estado = 'error'; RED.error = 'La sala '+RED.sala+' está llena: ya hay '+MAX_JUGADORES+' jugadores. Pídele a alguien que cree otra sala.'; if (estado==='juego') estado = 'amigos'; } return; }
   if (m.t==='voz'){ const r = RED.remotos.get(id); if (r){ r.hablando = !!m.on; r.hablaT = tick; } return; }
   if (m.t==='chau'){ const r = RED.remotos.get(id); if (r) aviso(r.nombre+' se fue de la isla 👋'); quitarRemoto(id); return; }
@@ -6331,7 +6338,12 @@ function redRecibir(id, m){
     const pj = PERSONAJES_RED.some(p=>p.id===m.pj) ? m.pj : 'fernando';
     const nombre = String(m.n||'').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PERSONAJES_RED.find(p=>p.id===pj).nombre;
     if (m.anf) RED.anfitrionId = id;
-    if (m.mapa && m.mapa !== MAPA){ RED.otroMapa.add(id); if (RED.anfitrion){ aviso('🗺️ '+nombre+' estaba en el otro mapa: lo traigo a este'); redEnviarA(id, {t:'mapa', mapa:MAPA}); } return; }
+    if (m.mapa && m.mapa !== MAPA){
+      RED.otroMapa.add(id);
+      if (RED.anfitrion){ aviso('🗺️ '+nombre+' estaba en el otro mapa: lo traigo a este'); redEnviarA(id, {t:'mapa', mapa:MAPA}); }
+      else if (m.anf && (m.mapa===1 || m.mapa===2)) redIrAlMapa(m.mapa);   /* el anfitrión manda: me voy a su mapa sin esperar a que me lo pida */
+      return;
+    }
     RED.otroMapa.delete(id);
     if (RED.anfitrion && !RED.remotos.has(id) && RED.remotos.size >= MAX_JUGADORES-1){ redEnviarA(id, {t:'llena', max:MAX_JUGADORES}); return; }
     if (!RED.remotos.has(id)) crearRemoto(id, {pj, nombre, x:P.J.x, y:P.J.y, z:P.J.z, ang:0, veh:'', mov:0, fase:0, nadando:false, suelo:true, cabeceo:0, giro:0, vel:0, aire:false, popitos:0, ganas:false, estrellas:0});
@@ -7487,7 +7499,7 @@ function dibujarAmigos(){
     const puntos = '.'.repeat(1 + Math.floor(tick/20)%3);
     titulo(RED.estado==='creando' ? 'Creando la sala'+puntos : 'Entrando a la sala '+RED.sala+puntos, W/2, H/2, 34, '#fff6a0', '#ffb000');
     texto(RED.estado==='uniendo' && RED.aviso_ ? RED.aviso_ : 'Esto tarda unos segundos', W/2, H/2+40, 15, '#bcd6ff');
-    { const d = redDiagnostico(); if (d) texto(d + ' · v45.5', W/2, H/2+66, 12, 'rgba(255,255,255,0.55)'); }
+    { const d = redDiagnostico(); if (d) texto(d + ' · v46.3', W/2, H/2+66, 12, 'rgba(255,255,255,0.55)'); }
     return;
   }
   if (RED.estado==='error'){
@@ -7505,7 +7517,7 @@ function dibujarAmigos(){
   if (RED.estado==='sala'){
     texto('Tu sala está lista. Diles este código:', W/2, 96, 17, '#fff');
     cristal(W/2-170, 116, 340, 76, 20, 0.6); titulo(RED.sala.split('').join('  '), W/2, 154, 54, '#fff6a0', '#ffb000');
-    texto('o mándales el enlace por WhatsApp:', W/2, 212, 15, '#bcd6ff');
+    texto('o mándales el enlace por WhatsApp (ya trae el mapa '+MAPA+', '+(MAPA===2 ? 'Maracaibo de noche 🌙' : 'la isla de día ☀️')+'):', W/2, 212, 15, '#bcd6ff');
     { const lw = Math.min(660, W-40); cristal(W/2-lw/2, 226, lw, 34, 17, 0.5); textoAjustado(enlaceSala(), W/2, 243, 13, lw-30, '#7de0ff'); }
     boton(z.compartir.x, z.compartir.y, z.compartir.w, z.compartir.h, '📲 COMPARTIR', '#2a8ad0', '#1a4a90', 18);
     boton(z.copiar.x, z.copiar.y, z.copiar.w, z.copiar.h, '📋 COPIAR ENLACE', '#4a6ad0', '#2a3a90', 18);
@@ -7516,7 +7528,7 @@ function dibujarAmigos(){
   texto(tactil ? '🎙️ Para hablar: mantén apretado el botón del micrófono' : '🎙️ Para hablar: mantén apretada la tecla V (o el botón del micrófono)', W/2, 342, 13, '#bcd6ff');
   pastilla('👥 En la isla: '+nombres.join(' · ')+(nombres.length===1 ? '  (esperando amigos…)' : ''), W/2, 376, 14, '#fff', 0.5, Math.min(660, W-40));
   boton(z.jugar.x, z.jugar.y, z.jugar.w, z.jugar.h, '▶ ¡A JUGAR!', '#3aa040', '#1e6a24', 20, true);
-  { const d = redDiagnostico(); if (d) texto(d + ' · v45.5', W/2, 398, 11, 'rgba(255,255,255,0.5)'); }
+  { const d = redDiagnostico(); if (d) texto(d + ' · v46.3', W/2, 398, 11, 'rgba(255,255,255,0.5)'); }
   boton(W-190, H-64, 176, 46, '🚪 SALIR DE LA SALA', '#8a3a30', '#5a1a10', 13);
   boton(14, H-64, 190, 46, VOZ.silencio ? '🔇 AMIGOS EN SILENCIO' : '🔊 OÍR A LOS AMIGOS', VOZ.silencio ? '#8a3a30' : '#3aa040', VOZ.silencio ? '#5a1a10' : '#1e6a24', 13);
 }
