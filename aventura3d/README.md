@@ -207,6 +207,33 @@ palafitos.
   del Zulia; el aeropuerto, su letrero rojo grande de verdad y un tótem en
   la calle, y los aviones avisan con campanitas al despegar y aterrizar.
 
+### 🎡 Y todavía más Maracaibo (v45.7)
+
+- **La Feria de La Chinita**, junto a la vereda: una **rueda de la fortuna**
+  de ocho cabinas (se sube con A en la taquilla de abajo, da una vuelta
+  entera de 24 s y arriba el personaje dice que ve todo el lago) y un
+  **carrusel** de seis caballitos que suben y bajan. Kioscos de algodón de
+  azúcar y cotufas, cuerdas de bombillos, y **de noche, fuegos
+  artificiales**.
+- **El Castillo de San Carlos de la Barra**: una islita mar adentro (se
+  llega en barco o nadando) con la fortaleza de murallas y bastiones, la
+  rampa para subir a la muralla, almenas, bandera y **cuatro cañones que
+  disparan al lago con A** (monedas por los primeros cañonazos).
+- **El tranvía de Maracaibo**: da la vuelta por la carretera de la orilla
+  y para en cinco paradas (plaza, estadio, monumento, aeropuerto y
+  basílica); cuando está parado uno se sube con A, viaja sentado a la
+  sombra y se baja con A en la acera. Timbra al llegar a cada parada.
+- **El Mercado Las Pulgas**, al noroeste: ocho puestos con toldos de
+  colores y tres vendedores que gritan sus ofertas en maracucho.
+- **La pesca**: en la esquina de dos palafitos y en la baranda de la vereda
+  hay puntos para pescar con A. Hay que esperar quieto a que pique (el
+  flotador se sacude), dar A a tiempo y sale un bocachico, una lisa, un
+  róbalo, una sardina, un bagre o una corvina de tantos centímetros, con
+  monedas según el tamaño. Moverse termina la pesca.
+- **El zoológico de Maracaibo**, al norte de la plaza: tres corrales con
+  reja (un león, una jirafa y dos cebras que pasean adentro) y el cuidador
+  en la entrada.
+
 ## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
 
 - **Se entra a las casas**: frente a la puerta de cualquier casa (las doce del
