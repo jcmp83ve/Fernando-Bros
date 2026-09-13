@@ -266,6 +266,15 @@ palafitos.
   para en la vereda (con muelle), los palafitos, las torres petroleras
   (cuyas plataformas ahora se caminan) y el castillo de San Carlos. Se sube
   y se baja con A cuando está parada, y se baja en la tarima o el muelle.
+- **Diálogos en maracucho al comer** (v46.1): cada vez que el personaje come
+  algo en Maracaibo (arepa, empanada, patacón, tequeño, mandoca,
+  tumbarrancho, pastelito, huevos chimbos, cepillado, cocada o hamburguesa)
+  arma un dialoguito con voseo zuliano: él habla («¡Qué molleja de arepa, mi
+  hermano!»), le contesta alguien de la ciudad (el guajiro, la señora de las
+  cocadas, la arepera o el vecino más cercano: «¿Viste? ¡Así se hacen las
+  arepas en Maracaibo, vos!») y él remata («¡Dame otra, vos, que todavía
+  tengo hambre!»). Cada personaje lo dice a su manera, y todo suena con la
+  voz del navegador.
 
 ## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
 
