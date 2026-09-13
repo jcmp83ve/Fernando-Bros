@@ -995,6 +995,21 @@ const AVENIDAS = [
 const puntoAvenida = (a, t, lado)=>({x: a.x0 + (a.x1 - a.x0)*t + (-(a.z1 - a.z0)/a.L)*(lado||0), z: a.z0 + (a.z1 - a.z0)*t + ((a.x1 - a.x0)/a.L)*(lado||0)});
 function cercaAvenida(x, z){ let mejor = 1e9; for (const a of AVENIDAS){ const dx = a.x1 - a.x0, dz = a.z1 - a.z0, t = clamp(((x - a.x0)*dx + (z - a.z0)*dz)/(a.L*a.L), 0, 1); mejor = Math.min(mejor, Math.hypot(x - a.x0 - dx*t, z - a.z0 - dz*t)); } return mejor; }
 /* los vecinos: gente de Maracaibo que camina por las avenidas, la plaza y la vereda, y suelta frases en maracucho al pasar */
+/* lo que contesta la gente de Maracaibo cuando el personaje come algo (quién habla y qué dice) */
+const DIALOGOS_COMIDA = {
+  arepa: {k:'mcboArepa', quien:'La arepera', pj:'npc_vecino', dice:'¿Viste? ¡Así se hacen las arepas en Maracaibo, vos!'},
+  empanada: {k:'mcboEmpanada', pj:'npc_vecino', dice:'¡Comé despacio, pichunguito, que os vais a atragantar!'},
+  patacon: {k:'mcboPatacon', pj:'npc_vecino', dice:'¡Así es el patacón, mi hermano, pa\' que os llenéis!'},
+  tequeno: {k:'mcboTequeno', pj:'npc_vecino', dice:'¡Los tequeños de Maracaibo son los más grandes, pichunguito!'},
+  mandoca: {k:'mcboMandoca', pj:'npc_vecino', dice:'¿Sabéis que se hacen con plátano y papelón, vos?'},
+  tumbarrancho: {k:'mcboTumbarrancho', pj:'npc_vecino', dice:'¡Con mortadela, queso y repollo, vos! ¡Así se come aquí!'},
+  pastelito: {k:'mcboPastelito', pj:'npc_vecino', dice:'¡Soplale, pichunguito, soplale!'},
+  huevoChimbo: {k:'mcboHuevoChimbo', pj:'npc_vecino', dice:'¡Son de yema y almíbar, mi reina, pa\' que os endulcéis!'},
+  cepillado: {k:'mcboCepillado', quien:'El guajiro', pj:'npc_guajiro', dice:'¡Tomalo despacio, mi hermano, que con este calor se derrite!'},
+  cepilladoColita: {k:'mcboColita', quien:'El guajiro', pj:'npc_guajiro', dice:'¡Ese es el sabor de Maracaibo, pichunguito!'},
+  cocada: {k:'mcboCocada', quien:'La señora de las cocadas', pj:'npc_cocadera', dice:'¿Verdad que sí, mi amor? ¡Es con coco del Zulia!'},
+  hamburguesa: {k:'mcboHamburguesa', pj:'npc_vecino', dice:'¡Con papitas y salsa rosada, pichunguito, como en la Bella Vista!'},
+};
 const FRASES_CALLE = ['¡Épale, mi hermano! ¿Cómo estáis vos?', '¡Qué molleja de sol hace hoy!', '¿Vais pa\' la vereda? ¡Vamos!', '¡Ese cepillado de colita es lo máximo!', '¡Vamos Águilas! ¡Este año sí!', '¡Mirá, el tranvía! ¡Corré!', '¡Ay, qué calor, primo!', '¡Buenas, pichunguito! ¡Bienvenido a Maracaibo!', '¿Ya fuisteis a La Chinita?', '¡Un patacón pa\' vos, mi reina!', '¡Qué bonito está el lago hoy, vos!', '¡Dale, que la gaita ya empezó!'];
 const VECINOS = ['Carlos', 'María', 'José', 'Yusmeli', 'Ender', 'Rosa', 'Jhonny', 'Carmen', 'Luis', 'Yajaira', 'Douglas', 'Gaby', 'Neguito', 'Anaís'].map((nombre, i)=>{ const av = AVENIDAS[i % AVENIDAS.length], p = puntoAvenida(av, 0.25 + (i % 4)*0.18, (i % 2 ? 3 : -3)); return npc('vecino', nombre, p.x, p.z, {r: 0.9, vel: 1.5 + (i % 3)*0.4, monedas: 2, frase: FRASES_CALLE[i % FRASES_CALLE.length], av: i % AVENIDAS.length, t: 0.4, ropa: ['#e63946','#4fc3f7','#ffd23f','#7dffa0','#ff6ec0','#ff8a3d','#c07dff','#ffffff','#2a8ad0','#43a047','#f4ecd0','#1a1a1a','#ffb3c1','#8b5a2b'][i], piel: ['#f1c27d','#e0ac69','#c68642','#8d5524','#ffdbac'][i % 5], pelo: ['#2a1a0a','#5a3a1a','#111','#c8a040','#8b2a2a'][i % 5], mujer: i % 2 === 1, dichoT: -99999}); });
 /* la lancha taxi del lago: da la vuelta por fuera de la ciudad parando en la vereda, los palafitos, las torres petroleras y el castillo */
@@ -1202,6 +1217,19 @@ const FRASES_NUEVAS = {
   ponche: '¡Ponchado! ¡Ay, no…!',
   carrera: '¡Carrera para las Águilas! ¡Vamos!',
   out: '¡Out! ¡Casi llego!',
+  /* comer en Maracaibo: el personaje habla maracucho, alguien de la ciudad le contesta, y él remata */
+  mcboArepa1: '¡Qué molleja de arepa, mi hermano!', mcboArepa2: '¡Dame otra, vos, que todavía tengo hambre!',
+  mcboEmpanada1: '¡Una empanada bien crujiente! ¡Qué molleja!', mcboEmpanada2: '¡No puedo comer despacio, vos, está demasiado rica!',
+  mcboPatacon1: '¡Un patacón maracucho! ¡Es más grande que mi cabeza, vos!', mcboPatacon2: '¡Qué molleja! ¡Ya no puedo ni caminar!',
+  mcboTequeno1: '¡Tequeños! ¡El queso se estira hasta allá, vos!', mcboTequeno2: '¡Verdad, mi hermano! ¡Dame otro!',
+  mcboMandoca1: '¡Mandocas con queso! ¡Qué molleja de ricas!', mcboMandoca2: '¡Con razón están tan dulces, vos!',
+  mcboTumbarrancho1: '¡Un tumbarrancho! ¡La arepa más maracucha que hay!', mcboTumbarrancho2: '¡Qué molleja! ¡Me voy a comer otro, vos!',
+  mcboPastelito1: '¡Pastelitos calienticos! ¡Cuidado que queman, vos!', mcboPastelito2: '¡Ay! ¡Me quemé la lengua, mi hermano!',
+  mcboHuevoChimbo1: '¡Huevos chimbos! ¡Dulcísimos, vos!', mcboHuevoChimbo2: '¡Qué molleja de dulce! ¡Me tiemblan los dientes!',
+  mcboCepillado1: '¡Un cepillado bien frío! ¡Se me congela el cerebro, vos!', mcboCepillado2: '¡Qué molleja de rico! ¡Otro de colita, por favor!',
+  mcboColita1: '¡De colita! ¡Mi favorito, vos!', mcboColita2: '¡Qué molleja! ¡El mejor cepillado del mundo!',
+  mcboCocada1: '¡Una cocada bien fría! ¡Qué fresquito, vos!', mcboCocada2: '¡Gracias, señora! ¡Ya se me quitó el calor!',
+  mcboHamburguesa1: '¡Una hamburguesa maracucha, con todo, vos!', mcboHamburguesa2: '¡Qué molleja de hamburguesa, mi hermano!',
   flaco: '¡Hice popo y quedé flaquito!',
 };
 const alFinal = (t, suf)=> /!$/.test(t) ? t.replace(/!(?=[^!]*$)/, suf+'!') : t + suf;
@@ -1676,7 +1704,7 @@ function crearPartida(guardado){
     props: PROPS_DEF.map(d=>Object.assign({}, d, {ox:d.x, oz:d.z, y:0, vx:0, vy:0, vz:0, giro:0, ang:d.ang||0, estado:'quieto', t:0, fase:0, huyeT:0, premioT:-9999})),
     aliens: {luna: ZONAS.luna.aliens.map(a=>Object.assign({}, a)), saturno: ZONAS.saturno.aliens.map(a=>Object.assign({}, a)), jupiter: ZONAS.jupiter.aliens.map(a=>Object.assign({}, a))},
     visita: null, proxVisita: 60*150, elefantes: ELEFANTES.map(n=>Object.assign({}, n)), animales: ANIMALES.map(n=>Object.assign({}, n)), guajiro: Object.assign({}, GUAJIRO), gaiteros: GAITEROS.map(n=>Object.assign({}, n)), cocadera: Object.assign({}, COCADERA), vendedores: VENDEDORES.map(n=>Object.assign({}, n)), cuidador: Object.assign({}, CUIDADOR), agui: Object.assign({}, AGUI), peloteros: PELOTEROS.map(n=>Object.assign({}, n)),
-    cepillados: 0, empanadas: 0, comidasEmpanadas: new Set(), pelota: {x:BEISBOL.home.x, y:0, z:BEISBOL.home.z, vx:0, vy:0, vz:0, estado:'quieta', t:0}, jonrones: 0, aguiFiestaT: -9999, estadioDicho: -99999, aeropuertoDicho: -99999, lugaresDichos: {}, gaitas: 0, calor: 0, calorDicho: -99999, frescoHasta: -1, cocadas: 0, bocinaT: -99999, carritos: [0, 1].map(i=>({id:i, s: i*RUTA_MCBO.N*RUTA_MCBO.paso/2, vel: 0, x: 0, z: 0, ang: 0})), vecinos: VECINOS.map(n=>Object.assign({}, n)), vecinoDichoT: -99999,
+    cepillados: 0, empanadas: 0, comidasEmpanadas: new Set(), pelota: {x:BEISBOL.home.x, y:0, z:BEISBOL.home.z, vx:0, vy:0, vz:0, estado:'quieta', t:0}, jonrones: 0, aguiFiestaT: -9999, estadioDicho: -99999, aeropuertoDicho: -99999, lugaresDichos: {}, gaitas: 0, dialogo: [], calor: 0, calorDicho: -99999, frescoHasta: -1, cocadas: 0, bocinaT: -99999, carritos: [0, 1].map(i=>({id:i, s: i*RUTA_MCBO.N*RUTA_MCBO.paso/2, vel: 0, x: 0, z: 0, ang: 0})), vecinos: VECINOS.map(n=>Object.assign({}, n)), vecinoDichoT: -99999,
     lancha: {i: 0, x: LANCHA.ruta[0].x, z: LANCHA.ruta[0].z, ang: 0, vel: 0, parado: true, parada: 0, espera: LANCHA.espera},
     beis: {estado:'libre', t:0, strikes:0, outs:0, carreras:0, visitante:2, corredores:[false,false,false], base:0, fildeador:-1, jugado:false}, tranvia: {s: TRANVIA.paradas[0].s, vel: 0, parada: 0, espera: TRANVIA.espera, x: 0, z: 0, ang: 0, parado: true}, paseo: null, peces: 0, canonazos: 0,
     aviones: AVIONES_DEF.map(d=>({id:d.id, x:d.x, y:0, z:LA_CHINITA.z + 16, ang:Math.PI/2, vel:0, cabeceo:0, estado:'parado', t: 60*60 - d.espera, ang2:0})), vampiros: VAMPIROS.map(n=>Object.assign({}, n)), renos: RENOS.map(n=>Object.assign({}, n)), santa: Object.assign({}, SANTA), circo: CIRCO_NPCS.map(n=>Object.assign({}, n)), cantante: Object.assign({}, CANTANTE), canto: null, cantoT: -99999, conciertoDicho: -99999, ovacionT: -99999,
@@ -2270,7 +2298,7 @@ function comerHamburguesa(P, h){
   P.popo = Math.min(1, P.popo + 0.34);
   engordar(P);
   evento(P, 'hamburguesa', {id:h.id, x:h.x, y:h.y, z:h.z, total:P.hamburguesas});
-  if (P.t - P.ultimaHamb > 60) decir(P, 'hamburguesa');
+  if (!(enMaracaibo(h.x, h.z) && dialogoComida(P, 'hamburguesa')) && P.t - P.ultimaHamb > 60) decir(P, 'hamburguesa');
   P.ultimaHamb = P.t;
   /* el peo de la hamburguesa, y las ganas */
   P.pedoT = 14;
@@ -2299,7 +2327,7 @@ function revisarRecogibles(P){
   for (const e of EMPANADAS){
     if (P.comidasEmpanadas.has(e.id)) continue;
     const dx = e.x-J.x, dz = e.z-J.z, dy = e.y-(J.y+1);
-    if (dx*dx+dz*dz+dy*dy < alcance*alcance){ P.comidasEmpanadas.add(e.id); P.empanadas++; P.puntos += 150; P.monedas += 3; P.popo = Math.min(1, P.popo + 0.3); engordar(P); evento(P, 'empanada', {id:e.id, comida:e.tipo, x:e.x, y:e.y, z:e.z, total:P.empanadas}); if (P.t - P.ultimaHamb > 60) decir(P, e.tipo); P.ultimaHamb = P.t; P.pedoT = 14; if (P.popo >= 0.99 && !P.ganas){ P.ganas = true; evento(P, 'ganas'); } }
+    if (dx*dx+dz*dz+dy*dy < alcance*alcance){ P.comidasEmpanadas.add(e.id); P.empanadas++; P.puntos += 150; P.monedas += 3; P.popo = Math.min(1, P.popo + 0.3); engordar(P); evento(P, 'empanada', {id:e.id, comida:e.tipo, x:e.x, y:e.y, z:e.z, total:P.empanadas}); if (!dialogoComida(P, e.tipo) && P.t - P.ultimaHamb > 60) decir(P, e.tipo); P.ultimaHamb = P.t; P.pedoT = 14; if (P.popo >= 0.99 && !P.ganas){ P.ganas = true; evento(P, 'ganas'); } }
   }
   for (const a of AREPAS){
     if (P.comidasArepas.has(a.id)) continue;
@@ -2471,8 +2499,8 @@ function revisarSaludosNPC(P){
     P.monedas += monedas; P.puntos += 100;
     evento(P, 'saludoNPC', {bicho:n.tipo, nombre:n.nombre, texto:n.frase, monedas, x:n.x, y: y === null ? altura(n.x, n.z) : y, z:n.z, alien:n.alien});
     if (n.canta) empezarCanto(P, 'npc'); else evento(P, 'hablar', {texto:n.frase, quien:n.nombre, pj:'npc_'+n.tipo});
-    if (n.cepillado){ const sabor = SABORES[Math.floor(azar()*SABORES.length)]; P.cepillados++; P.puntos += 100; P.popo = Math.min(1, P.popo + 0.1); P.calor = 0; P.frescoHasta = P.t + 60*30; evento(P, 'cepillado', {sabor, favorito: sabor==='colita', total:P.cepillados, x:n.x, y:altura(n.x, n.z), z:n.z}); decir(P, sabor==='colita' ? 'cepilladoColita' : 'cepillado'); }
-    if (n.cocada){ P.cocadas++; P.puntos += 100; const fresco = P.calor > 0.4; P.calor = 0; P.frescoHasta = P.t + 60*30; evento(P, 'cocada', {x:n.x, y:altura(n.x, n.z), z:n.z, fresco, total:P.cocadas}); decir(P, fresco ? 'cocadaFresca' : 'cocada'); }
+    if (n.cepillado){ const sabor = SABORES[Math.floor(azar()*SABORES.length)]; P.cepillados++; P.puntos += 100; P.popo = Math.min(1, P.popo + 0.1); P.calor = 0; P.frescoHasta = P.t + 60*30; evento(P, 'cepillado', {sabor, favorito: sabor==='colita', total:P.cepillados, x:n.x, y:altura(n.x, n.z), z:n.z}); if (!dialogoComida(P, sabor==='colita' ? 'cepilladoColita' : 'cepillado')) decir(P, sabor==='colita' ? 'cepilladoColita' : 'cepillado'); }
+    if (n.cocada){ P.cocadas++; P.puntos += 100; const fresco = P.calor > 0.4; P.calor = 0; P.frescoHasta = P.t + 60*30; evento(P, 'cocada', {x:n.x, y:altura(n.x, n.z), z:n.z, fresco, total:P.cocadas}); if (!dialogoComida(P, 'cocada')) decir(P, fresco ? 'cocadaFresca' : 'cocada'); }
     if (n.gaitero){ P.gaitas++; P.puntos += 50; evento(P, 'gaita', {x:n.x, y:altura(n.x, n.z), z:n.z, total:P.gaitas}); decir(P, 'gaita'); }
     if (n.zona==='saturno' && !P.prog.saturnianos.includes(n.id)){ P.prog.saturnianos.push(n.id); evento(P, 'saturniano', {total:P.prog.saturnianos.length}); if (P.prog.saturnianos.length >= 4) darEstrella(P, 'saturno'); }
   }
@@ -2727,6 +2755,19 @@ function pasoBeisbolJuego(P, ent){
     if (B.t > 60) B.estado = 'libre';
   }
 }
+/* comer en Maracaibo arma un dialoguito en maracucho: el personaje, alguien de la ciudad (el vecino más cerca si lo hay) y el remate */
+function dialogoComida(P, tipo){
+  const D = DIALOGOS_COMIDA[tipo]; if (!D) return false;
+  if (P.dialogo.length) return false;   /* si ya hay uno andando, no se pisan */
+  const J = P.J; let quien = D.quien, pj = D.pj;
+  if (!quien){ let mejor = null, md = 30; for (const v of P.vecinos){ const d = Math.hypot(v.x-J.x, v.z-J.z); if (d < md){ md = d; mejor = v; } } quien = mejor ? mejor.nombre : 'Un maracucho'; if (mejor) mejor.dichoT = P.t; }
+  P.dialogo.push({en: P.t + 1, k: D.k + '1'}, {en: P.t + 150, texto: D.dice, quien, pj}, {en: P.t + 320, k: D.k + '2'});
+  evento(P, 'dialogoMcbo', {tipo, quien, x:J.x, y:J.y, z:J.z});
+  return true;
+}
+function pasoDialogo(P){
+  while (P.dialogo.length && P.dialogo[0].en <= P.t){ const d = P.dialogo.shift(); if (d.k) decir(P, d.k); else evento(P, 'hablar', {texto:d.texto, quien:d.quien, pj:d.pj}); }
+}
 /* el tranvía: recorre la carretera y para en cada parada un ratito; timbra al llegar */
 function pasoTranvia(P){
   const T = P.tranvia, J = P.J, L = RUTA_MCBO.N*RUTA_MCBO.paso;
@@ -2964,7 +3005,7 @@ function comerArepa(P, a){
   P.popo = Math.min(1, P.popo + 0.34);
   engordar(P);
   evento(P, 'arepa', {id:a.id, x:a.x, y:a.y, z:a.z, total:P.arepas});
-  if (P.t - P.ultimaHamb > 60) decir(P, 'arepa');
+  if (!dialogoComida(P, 'arepa') && P.t - P.ultimaHamb > 60) decir(P, 'arepa');
   P.ultimaHamb = P.t;
   P.pedoT = 14;
   evento(P, 'pedo', {x:P.J.x, y:P.J.y, z:P.J.z, grande: P.popo >= 0.99});
@@ -3239,7 +3280,7 @@ function pasoPartida(P, ent){
   pasoPerros(P); pasoPopitos(P); pasoPopo(P); revisarRecogibles(P); revisarFamilia(P); revisarMisiones(P); revisarBanos(P);
   pasoDinos(P); pasoMeteoros(P); pasoGorila(P);
   pasoBichos(P); pasoConcierto(P); pasoBalas(P); pasoBalon(P, e2); pasoBeisbolJuego(P, e2); pasoBeisbol(P); pasoAviones(P); pasoCarritos(P); pasoTranvia(P); pasoVecinos(P); pasoLancha(P); pasoVisita(P); pasoAvionSolo(P); revisarSaludosNPC(P); revisarRecogiblesZona(P);
-  pasoHora(P); pasoCalor(P); pasoMascota(P); pasoProps(P);
+  pasoHora(P); pasoCalor(P); pasoMascota(P); pasoProps(P); pasoDialogo(P);
   pasoNoche(P);
 }
 /* ---- lo que solo pasa de noche: el relámpago del Catatumbo sobre el lago y los chivos de Coro ---- */
@@ -3279,7 +3320,7 @@ if (typeof module !== 'undefined' && module.exports){
     altura, alturaBase, alturaMalla, ola, enAgua, cercaRuta, puntoRuta, distPista, enMuelle, enRampa, crearPartida, pasoPartida, objetivo, exportar, importar,
     posSrPopo, puedeBajar, montar, obstaculosCerca, azar, SOLARES, MAX_POPITOS, MAX_JUGADORES, PERSONAJES_RED, DIALOGOS, CLAVES_DIALOGO, fraseDe, nombreDe, MAPA, NOCHE, CORO, CHIVOS, AROS_NOCHE, OVNI, decir, CLIPS_PJ, MARACAIBO, LUNA, PUENTE, enPuente, alturaPuente, enMaracaibo, CASAS_MCBO, PLAZA_MCBO, HELIPUERTOS, BOYAS, HUEVOS, AREPAS, alturaAgua, ALFABETO_SALA, codigoSala, normalizarCodigo, empaquetarEstado, desempaquetarEstado,
     CASTILLO, CASTILLO_DEF, INTERIORES, INTERIOR_CASTILLO, INTERIOR_CIRCO, entrarCasa, salirCasa, ISLA_BANANA, BANANAS, PLATANOS, DINOS, VALLE_DINOS, VEREDA, cercaVereda, FRASES_NUEVAS, variar, Y_INTERIOR, engordar, comerBanana,
-    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, R_ISLA, RUTA_MCBO, cercaRutaMcbo, ESTADIO, BEISBOL, LA_CHINITA, AVIONES_DEF, EMPANADAS, GUAJIRO, AGUI, PELOTEROS, SABORES, cercaHome, batear, BASILICA, TORRE_RELOJ, PALAFITOS, enPalafitos, LUGARES_MCBO, GAITEROS, TIPOS_COMIDA, TORRES_PETRO, MONUMENTO, GRADAS, gradasAltura, COCADERA, pasoCalor, puntoRutaMcbo, sombraCerca, FERIA, cabinaPos, caballoPos, SANCARLOS, alturaSanCarlos, TRANVIA, AVENIDAS, puntoAvenida, cercaAvenida, VECINOS, FRASES_CALLE, LANCHA, BEIS_LANZA, BEIS_VENTANA, PULGAS, PULGAS_PUESTOS, VENDEDORES, CUIDADOR, PESCA, PECES_LAGO, ZOO, paseoCerca, canonCerca, VALLE_DINOS2, VALLES_DINOS, SABANA, GRANJA, ANIMALES, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
+    MONEDAS, ITEMS_TIENDA, ropaNueva, comprar, ganarMonedas, nocheF, esNoche, DIA_FRAMES, PROPS_DEF, pasoHora, ZONAS, SATURNO, JUPITER, ISLA_ELEFANTES, ISLA_VAMPIROS, ISLA_CIRCO, ISLA_CONCIERTO, MICROFONO, CANTANTE, CANCION_FRAMES, npcsCerca, OLAS, olaGrande, ola, R_ISLA, RUTA_MCBO, cercaRutaMcbo, ESTADIO, BEISBOL, LA_CHINITA, AVIONES_DEF, EMPANADAS, GUAJIRO, AGUI, PELOTEROS, SABORES, cercaHome, batear, BASILICA, TORRE_RELOJ, PALAFITOS, enPalafitos, LUGARES_MCBO, GAITEROS, TIPOS_COMIDA, TORRES_PETRO, MONUMENTO, GRADAS, gradasAltura, COCADERA, pasoCalor, puntoRutaMcbo, sombraCerca, FERIA, cabinaPos, caballoPos, SANCARLOS, alturaSanCarlos, TRANVIA, DIALOGOS_COMIDA, dialogoComida, AVENIDAS, puntoAvenida, cercaAvenida, VECINOS, FRASES_CALLE, LANCHA, BEIS_LANZA, BEIS_VENTANA, PULGAS, PULGAS_PUESTOS, VENDEDORES, CUIDADOR, PESCA, PECES_LAGO, ZOO, paseoCerca, canonCerca, VALLE_DINOS2, VALLES_DINOS, SABANA, GRANJA, ANIMALES, USOS, muebleCerca, usarMueble, COLUMPIOS, ESCALERAS, techoAltura, plataformaEn, CIRCO_DEF, CIRCO_NPCS, ELEFANTES, VAMPIROS, RENOS, SANTA, ALIEN_INFO, irAZona, salirZona, saltarParacaidas, npcsCerca, pasear};
 }
 if (!EN_NAVEGADOR) return;
 

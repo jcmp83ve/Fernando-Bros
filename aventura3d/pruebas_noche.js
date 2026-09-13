@@ -157,9 +157,11 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
     if (!favorito) mal('nunca tocó el cepillado de colita'); else bien('el de colita salió en', n+1, 'visitas; cepillados:', P.cepillados); }
   /* la comida maracucha: se come al pasar */
   dichos.length = 0; const comidas = [];
-  for (const e of N.EMPANADAS.slice(0, 4)){ poner(P, e.x - 4, e.z); correr(P, 60*3, (P)=>({jy: 1, camYaw: Math.atan2(e.x-P.J.x, e.z-P.J.z)}), (P, evs)=>{ oir(P, evs); for (const v of evs) if (v.tipo==='empanada') comidas.push(v); return comidas.length && comidas[comidas.length-1].id===e.id; }); correr(P, 70, {}); }
+  for (const e of N.EMPANADAS.slice(0, 4)){ poner(P, e.x - 4, e.z); correr(P, 60*3, (P)=>({jy: 1, camYaw: Math.atan2(e.x-P.J.x, e.z-P.J.z)}), (P, evs)=>{ oir(P, evs); for (const v of evs) if (v.tipo==='empanada') comidas.push(v); return comidas.length && comidas[comidas.length-1].id===e.id; }); correr(P, 70, {}, (P, evs)=>{ oir(P, evs); return false; }); }
+  correr(P, 60*6, {}, (P, evs)=>{ oir(P, evs); return false; });   /* se espera el remate del diálogo */
+  if (!dichos.some(d=>d.k && /^mcbo/.test(d.k))) mal('al comer en Maracaibo no habló en maracucho'); else if (!dichos.some(d=>d.pj && d.pj.startsWith('npc_') && /vos|mi hermano|pichunguito|os /.test(d.texto))) mal('nadie de la ciudad contestó en voseo'); else bien('diálogo maracucho al comer:', dichos.filter(d=>(d.k && /^mcbo/.test(d.k)) || (d.pj||'').startsWith('npc_')).slice(0, 3).map(d=>d.quien+': '+d.texto).join(' / '));
   if (comidas.length !== 4) mal('no comió las 4 comidas ('+comidas.length+')'); else bien('comió:', comidas.map(c=>c.comida).join(', '), '· dijo:', dichos.filter(d=>['empanada','patacon','tequeno','mandoca'].includes(d.k)).map(d=>d.texto).join(' / '));
-  if (!dichos.some(d=>d.k==='patacon') || !dichos.some(d=>d.k==='mandoca')) mal('no dijo lo del patacón o la mandoca');
+  for (const [t, k] of [['patacon','mcboPatacon1'],['mandoca','mcboMandoca1']]) if (!dichos.some(d=>d.k===t || d.k===k)) mal('no dijo nada del '+t);
   /* los gaiteros */
   dichos.length = 0; let gaita = null;
   const g0 = N.GAITEROS[1]; poner(P, g0.x, g0.z - 7);
