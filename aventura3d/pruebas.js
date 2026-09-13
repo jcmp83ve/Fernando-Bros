@@ -587,6 +587,25 @@ if (N.altura(P.J.x, P.J.z) < 0.5) mal('Fernando empieza en el agua');
   if (N.fraseDe('santi', 'meteorito').length >= N.fraseDe('fernando', 'meteorito').length) mal('Santi no habla cortico');
   bien('frases nuevas: '+Object.keys(N.FRASES_NUEVAS).length+' situaciones con la manera de hablar de cada quien');
 }
+/* 13b) Maracaibo de día: el calor maracucho y el carrito por puesto */
+{
+  const M = N.MARACAIBO; P.veh = null; poner(P, M.x, M.z - 6); P.hora = 0.5; P.calor = 0;
+  const f = correr(P, 60*70, {}, (P)=>P.calor >= 0.999);
+  if (P.calor < 0.999) mal('al sol de Maracaibo no sube el calor ('+P.calor.toFixed(2)+')'); else bien('al sol del mediodía en la plaza el calor llegó al máximo en', (f/60).toFixed(0), 's');
+  if (!tipos.sudor || !tipos.calorMaximo) mal('faltan el sudor o el aviso del calor');
+  correr(P, 60*2, {jy:1, camYaw: 0}); const lento = P.J.mov;
+  P.calor = 0; correr(P, 60*2, {jy:1, camYaw: 0}); const normal = P.J.mov;
+  if (!(lento < normal*0.8)) mal('con calor debería caminar más lento ('+lento.toFixed(1)+' vs '+normal.toFixed(1)+')'); else bien('con calor camina a', lento.toFixed(1), 'm/s y fresco a', normal.toFixed(1));
+  P.calor = 1; const g0 = P.calor; poner(P, N.GUAJIRO.x - 6, N.GUAJIRO.z); correr(P, 60*6, (P)=>({jy:1, camYaw: Math.atan2(N.GUAJIRO.x-P.J.x, N.GUAJIRO.z-P.J.z)}), (P)=>P.calor < 0.05);
+  if (P.calor >= 0.05) mal('el cepillado no quitó el calor ('+P.calor.toFixed(2)+')'); else { correr(P, 60*10, {}); if (P.calor > 0.05) mal('recién tomado el cepillado, el calor no debería volver enseguida ('+P.calor.toFixed(2)+')'); else bien('el cepillado del guajiro quitó el calor de golpe y por un rato'); }
+  P.calor = 1; P.J.nadando = false; poner(P, M.x, M.z + M.r + 30); P.J.y = -0.3; correr(P, 60*4, {});
+  if (P.calor > 0.2) mal('el lago no refresca ('+P.calor.toFixed(2)+')'); else bien('metido en el lago el calor baja a', P.calor.toFixed(2));
+  P.hora = 0.9; P.calor = 1; poner(P, M.x, M.z - 6); correr(P, 60*16, {}); if (P.calor > 0.1) mal('de noche no baja el calor ('+P.calor.toFixed(2)+')'); else bien('de noche el calor se va solo'); P.hora = 0.4;
+  const v = montar(P, 'porpuesto'); const x0 = v.x, z0 = v.z;
+  correr(P, 60*5, {jy:1, b:true}); const d = Math.hypot(v.x-x0, v.z-z0);
+  if (d < 25) mal('el carrito por puesto no anda ('+d.toFixed(0)+' m)'); else bien('el carrito por puesto recorrió', d.toFixed(0), 'm en 5 s con turbo');
+  correr(P, 60*3, {}); correr(P, 1, {salir:true}); if (P.veh) mal('no se bajó del carrito por puesto');
+}
 /* 14) los eventos que la vista necesita salieron todos */
 for (const t of ['hamburguesa','pedo','ganas','banoEntra','banoPuerta','plop','descarga','banoSale','estrella','montar','bajar','noBajar','despegue','aterriza','estelaAire','estela','polvo','burbujas','choque','saludo','perro','popito','bandera','helipuerto','boya','huevo','rugido','fuego','lunaLlega','banderaLuna','lunaLista','arepa','maracaibo','aro','rampa','cofre','final','hablar','salto','chapoteo','casaEntra','casaSale','gorila','banana','meteoros','meteoroCae','vereda','dinosVistos','gordura','flaco','paracaidas','paracaidasSuelo','avionVuelve','zonaEntra','zonaSale','planetaLlega','roca','cristal','saturniano','saludoNPC','canta','cantoFin','conciertoCerca','ovacion','patada','gol','disparo','explosion','surfea','mueble','muebleNada','sentado','levanta','rey','dormir','despierta','comidaCasa','regalo','muebleSalto','columpio','columpioSalta','columpioAlto','techo','turboPie'])
   if (!tipos[t]) mal('nunca salió el evento '+t);

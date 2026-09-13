@@ -182,6 +182,21 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   let batazos = 0, jonron = null, caidas = [];
   for (let i=0;i<14 && !(jonron && caidas.length);i++){ poner(P, N.BEISBOL.home.x, N.BEISBOL.home.z); correr(P, 3, {}); correr(P, 1, {a:true, b:true}, (P, evs)=>{ for (const e of evs) if (e.tipo==='batazo') batazos++; return false; }); correr(P, 60*7, {}, (P, evs)=>{ for (const e of evs){ if (e.tipo==='batazo') batazos++; if (e.tipo==='jonron') jonron = e; if (e.tipo==='pelotaCae') caidas.push(e.d); } return P.pelota.estado==='quieta' && batazos > 0; }); }
   if (!batazos) mal('no bateó desde el home'); else if (!jonron) mal('en 14 batazos no hubo jonrón (caídas: '+caidas.map(d=>d.toFixed(0)).join(', ')+')'); else bien('batazos:', batazos, '· jonrón a la', batazos, 'ª · +monedas', P.monedas, '· caídas:', caidas.map(d=>d.toFixed(0)).join(', '));
+  /* las gradas se suben caminando: desde el jardín hacia afuera, escalón por escalón, hasta arriba */
+  { const E = N.ESTADIO, a = E.entrada + Math.PI, y0 = N.altura(E.x, E.z); poner(P, E.x + Math.cos(a)*(N.GRADAS.r0 - 3), E.z + Math.sin(a)*(N.GRADAS.r0 - 3));
+    let maxY = 0; correr(P, 60*8, (P)=>({jy: 1, camYaw: Math.atan2(Math.cos(a), Math.sin(a))}), (P)=>{ maxY = Math.max(maxY, P.J.y - y0); return P.J.y - y0 > 4.5; });
+    if (P.J.y - y0 < 4.5) mal('no subió a lo alto de las gradas (llegó a '+maxY.toFixed(1)+' m)'); else bien('subió las gradas caminando hasta', (P.J.y - y0).toFixed(1), 'm sobre el jardín');
+    const d = Math.hypot(P.J.x-E.x, P.J.z-E.z); if (d > N.GRADAS.r0 + N.GRADAS.paso*N.GRADAS.niveles + 0.5) mal('se salió de las gradas por atrás'); }
+  /* la señora de las cocadas */
+  { const c = N.COCADERA; poner(P, c.x - 6, c.z); dichos.length = 0; let coc = null;
+    correr(P, 60*6, (P)=>({jy: 1, camYaw: Math.atan2(c.x-P.J.x, c.z-P.J.z)}), (P, evs)=>{ oir(P, evs); for (const e of evs) if (e.tipo==='cocada') coc = e; return !!coc; });
+    if (!coc) mal('la señora no vendió la cocada'); else bien('cocada vendida · dijo:', (dichos.find(d=>d.k==='cocada'||d.k==='cocadaFresca')||{}).texto, '· la señora:', (dichos.find(d=>d.pj==='npc_cocadera')||{}).texto); }
+  /* los carritos por puesto dan vueltas por la carretera y frenan si uno se les para delante */
+  { poner(P, N.MARACAIBO.x, N.MARACAIBO.z); const s0 = P.carritos.map(c=>c.s); correr(P, 60*6, {}); const s1 = P.carritos.map(c=>c.s);
+    if (!s1.every((s, i)=>s - s0[i] > 30)) mal('los carritos por puesto no circulan ('+s1.map((s,i)=>(s-s0[i]).toFixed(0)).join(',')+' m)'); else bien('los carritos por puesto recorrieron', s1.map((s,i)=>(s-s0[i]).toFixed(0)).join(' y '), 'm en 6 s');
+    for (const c of P.carritos) if (N.cercaRutaMcbo(c.x, c.z).d > 4) mal('un carrito se salió de la carretera');
+    const c = P.carritos[0]; const p = N.puntoRutaMcbo(c.s + 6); poner(P, p.x, p.z); let boc = false; correr(P, 60*5, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='bocina') boc = true; return boc && c.vel < 0.5; });
+    if (!boc) mal('el carrito no tocó la bocina con el personaje delante'); else if (c.vel > 0.5) mal('el carrito no frenó (vel '+c.vel.toFixed(1)+')'); else bien('el carrito frenó y tocó la bocina; se aparta uno y sigue'); }
   /* Agui y los peloteros saludan */
   { const ag = P.agui; poner(P, ag.x + 3, ag.z); dichos.length = 0; correr(P, 60*5, (P)=>({jy:1, camYaw: Math.atan2(ag.x-P.J.x, ag.z-P.J.z)}), (P, evs)=>{ oir(P, evs); return dichos.some(d=>d.pj==='npc_agui'); });
     if (!dichos.some(d=>d.pj==='npc_agui')) mal('Agui no saludó'); else bien('Agui dijo:', dichos.find(d=>d.pj==='npc_agui').texto); }
@@ -203,6 +218,6 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   if (P2.estrellas.length !== P.estrellas.length || P2.prog.chivos.length !== 8 || P2.prog.rayos !== P.prog.rayos || !P2.prog.ovni) mal('el guardado del mapa 2 no conserva chivos, rayos o el ovni');
   else bien('la partida de noche se guarda y se recupera con', P2.estrellas.length, 'estrellas');
 }
-for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna','cepillado','empanada','gaita','lugarMcbo','batazo','jonron','pelotaCae','avionNPC','estadioCerca','aeropuertoCerca']) if (!tipos[t]) mal('nunca salió el evento '+t);
+for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna','cepillado','empanada','gaita','lugarMcbo','batazo','jonron','pelotaCae','avionNPC','estadioCerca','aeropuertoCerca','cocada','bocina']) if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ Maracaibo de noche sin fallos');
 process.exit(fallos ? 1 : 0);

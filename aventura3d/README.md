@@ -176,6 +176,37 @@ Al llegar a cada lugar el personaje lo comenta en voz alta (con la voz del
 navegador), y el radar marca el estadio, el aeropuerto, la basílica y los
 palafitos.
 
+### 🛢️ Más Maracaibo (v45.6)
+
+- **Las gradas se suben**: el estadio tiene cuatro escalones de gradas con
+  asientos azules, naranja y amarillos, público sentado, techo en la mitad
+  de atrás y un arco de entrada con banderines. Se entra por el arco, se
+  cruza el jardín y se sube caminando hasta arriba a ver el juego.
+- **El calor maracucho** 🌡️: de día, al sol de Maracaibo, sube una barra de
+  calor debajo de la de popo; el personaje suda, camina arrastrado y al
+  llegar al tope dice «¡Qué molleja de calor!». Se quita de golpe con un
+  cepillado del guajiro o una **cocada** de la señora de la plaza, metiéndose
+  al lago, bajo la sombra de un árbol o cuando cae la noche.
+- **Los carritos por puesto** 🚕: los carrazos americanos de los años 70 que
+  se usan de taxi. Dos dan vueltas por la carretera de la orilla, frenan si
+  te les paras delante y tocan la bocina; hay otro estacionado cerca del
+  helipuerto que se maneja (pesado, largo y con turbo).
+- **Las torres petroleras del lago**: al norte de la ciudad, mar adentro,
+  cinco plataformas sobre pilotes con balancines que suben y bajan y torres
+  con su mechero encendido. Se llega en barco o nadando.
+- **El Monumento a La Chinita**, a la entrada de la ciudad viniendo del
+  puente: escalinata, columna altísima con la Virgen arriba y banderas.
+- **Voseo zuliano**: el guajiro, Agui, los peloteros, los gaiteros y la
+  señora de las cocadas hablan como en Maracaibo («¿de qué sabor lo queréis
+  vos?», «bateá duro, mi hermano», «qué molleja»).
+- **Comida nueva**: tumbarrancho, pastelitos y huevos chimbos, además de la
+  cocada que refresca.
+- **Pulido**: la carretera de la orilla tiene rayas discontinuas, aceras,
+  farolas del lado de la ciudad y guardarraíl del lado del lago; la vereda,
+  jardineras con flores y papeleras; la plaza, bancos, canteros y la bandera
+  del Zulia; el aeropuerto, su letrero rojo grande de verdad y un tótem en
+  la calle, y los aviones avisan con campanitas al despegar y aterrizar.
+
 ## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
 
 - **Se entra a las casas**: frente a la puerta de cualquier casa (las doce del
