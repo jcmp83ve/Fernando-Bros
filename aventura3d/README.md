@@ -234,6 +234,39 @@ palafitos.
   reja (un león, una jirafa y dos cebras que pasean adentro) y el cuidador
   en la entrada.
 
+### 🏟️ Maracaibo un 30% más grande, con vida (v46)
+
+- **La ciudad creció un 30% de área** (radio 200 → 228): la carretera de
+  la orilla, la vereda, los palafitos y las torres petroleras se corrieron
+  con ella, y en la orilla del oeste apareció el **barrio Santa Lucía**
+  (ocho casitas de colores en fila curva, se entra en todas).
+- **El estadio Luis Aparicio, nuevo**: más grande (radio 60), con fachada
+  de arcos azul y naranja, **seis niveles de gradas** con asientos y público,
+  techo con viga sobre toda la vuelta, seis torres de luz, muro del jardín
+  con anuncios, postes de foul, dugouts con banca, caminos de tierra entre
+  las bases, montículo y cajas de bateo, y un **marcador que cambia** con el
+  juego.
+- **Béisbol de verdad**: parado en el home, el pícher lanza; hay que darle
+  a **A cuando la bola llega** (con B más fuerte). Abanicar a destiempo o
+  dejarla pasar es strike, tres strikes es out, tres outs cambian la
+  entrada. Si es hit, hay que **correr las bases** mientras el pelotero más
+  cercano busca la bola: en base es safe (y queda un corredor marcado que
+  avanza con el siguiente hit), fuera de base es out, y llegar al home es
+  carrera. El jonrón anota a todos. Arriba en el medio sale el marcador
+  (Águilas, visitante, strikes, outs y corredores).
+- **Siete avenidas** salen de la plaza hacia la basílica, el estadio, el
+  puente, el aeropuerto, la feria, el mercado y el zoológico: asfalto con
+  rayas, aceras, farolas de un lado y palmeras del otro. La plaza quedó
+  embaldosada y toda la orilla tiene un malecón de piedra.
+- **Catorce vecinos caminan** por las avenidas (a veces bajan a la plaza y
+  cambian de calle) y al pasar sueltan frases en maracucho («¡Épale, mi
+  hermano! ¿Cómo estáis vos?», «¡Qué molleja de sol!»). Se les puede
+  saludar.
+- **La lancha, taxi del lago** ⛵: da la vuelta por fuera de la ciudad y
+  para en la vereda (con muelle), los palafitos, las torres petroleras
+  (cuyas plataformas ahora se caminan) y el castillo de San Carlos. Se sube
+  y se baja con A cuando está parada, y se baja en la tarima o el muelle.
+
 ## 🏰 Casas por dentro, castillo, ovni, dinosaurios, meteoritos, bananas y gordura
 
 - **Se entra a las casas**: frente a la puerta de cualquier casa (las doce del

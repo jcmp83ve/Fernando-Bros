@@ -140,7 +140,7 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
 /* 5b) Maracaibo grande: el guajiro con cepillados, la comida maracucha, los gaiteros, los lugares de verdad, el estadio y el aeropuerto */
 {
   const M = N.MARACAIBO, cerca = (x, z, r)=>Math.hypot(P.J.x-x, P.J.z-z) < r;
-  if (M.r < 180) mal('Maracaibo debería ser grande (r '+M.r+')');
+  if (M.r < 225) mal('Maracaibo debería ser un 30% más grande (r '+M.r+')');
   if (N.RUTA_MCBO.M.some(m=>m.h < 1.2)) mal('la carretera de la orilla se mete en el agua');
   if (N.altura(N.ESTADIO.x, N.ESTADIO.z) < 1 || N.altura(N.LA_CHINITA.terminal.x, N.LA_CHINITA.terminal.z) < 1 || N.altura(N.BASILICA.x, N.BASILICA.z) < 1 || N.altura(N.TORRE_RELOJ.x, N.TORRE_RELOJ.z) < 1) mal('el estadio, la terminal, la basílica o la torre nacen en el agua');
   for (const e of N.EMPANADAS) if (N.altura(e.x, e.z) < 1) mal('una comida nació en el agua');
@@ -179,9 +179,20 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   dichos.length = 0; poner(P, N.ESTADIO.x + N.ESTADIO.r + 30, N.ESTADIO.z);
   correr(P, 60*8, (P)=>({jy: 1, camYaw: Math.atan2(N.ESTADIO.x-P.J.x, N.ESTADIO.z-P.J.z)}), (P, evs)=>{ oir(P, evs); return evs.some(e=>e.tipo==='estadioCerca'); });
   if (!dichos.some(d=>d.k==='estadio')) mal('no comentó el estadio'); else bien('en el estadio dijo:', dichos.find(d=>d.k==='estadio').texto);
-  let batazos = 0, jonron = null, caidas = [];
-  for (let i=0;i<14 && !(jonron && caidas.length);i++){ poner(P, N.BEISBOL.home.x, N.BEISBOL.home.z); correr(P, 3, {}); correr(P, 1, {a:true, b:true}, (P, evs)=>{ for (const e of evs) if (e.tipo==='batazo') batazos++; return false; }); correr(P, 60*7, {}, (P, evs)=>{ for (const e of evs){ if (e.tipo==='batazo') batazos++; if (e.tipo==='jonron') jonron = e; if (e.tipo==='pelotaCae') caidas.push(e.d); } return P.pelota.estado==='quieta' && batazos > 0; }); }
-  if (!batazos) mal('no bateó desde el home'); else if (!jonron) mal('en 14 batazos no hubo jonrón (caídas: '+caidas.map(d=>d.toFixed(0)).join(', ')+')'); else bien('batazos:', batazos, '· jonrón a la', batazos, 'ª · +monedas', P.monedas, '· caídas:', caidas.map(d=>d.toFixed(0)).join(', '));
+  /* el juego de béisbol: parado en el home el pícher lanza; abanicar a destiempo es strike, a tiempo es hit y se corre a primera */
+  { const H = N.BEISBOL.home; poner(P, H.x, H.z); dichos.length = 0;
+    let lanz = false; correr(P, 60*4, {}, (P, evs)=>{ oir(P, evs); for (const e of evs) if (e.tipo==='lanzamiento') lanz = true; return lanz; });
+    if (!lanz) mal('el pícher no lanzó'); else bien('el pícher lanzó · dijo:', (dichos.find(d=>d.k==='alBate')||{}).texto);
+    let strike = null; correr(P, 3, {}); correr(P, 1, {a:true}, (P, evs)=>{ for (const e of evs) if (e.tipo==='strike') strike = e; return false; });
+    if (!strike || strike.porque!=='abanico') mal('abanicar antes de tiempo debía ser strike'); else bien('abanicó antes de tiempo: strike', strike.strikes);
+    lanz = false; correr(P, 60*6, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='lanzamiento') lanz = true; return lanz; });
+    correr(P, N.BEIS_VENTANA[0] + 6, {}); let hit = null; correr(P, 1, {a:true, b:true}, (P, evs)=>{ for (const e of evs) if (e.tipo==='hit') hit = e; return false; });
+    if (!hit) mal('batear a tiempo no fue hit (estado '+P.beis.estado+')'); else bien('bateó a tiempo: ¡hit!');
+    const b1 = N.BEISBOL.bases[0]; let fin = null, base1 = false; const res = [];
+    correr(P, 60*30, (P)=>({jy: Math.hypot(P.J.x-b1.x, P.J.z-b1.z) > 0.8 ? 1 : 0, b:true, camYaw: Math.atan2(b1.x-P.J.x, b1.z-P.J.z)}), (P, evs)=>{ for (const e of evs){ if (e.tipo==='base') base1 = true; if (['safe','out','carrera','jonron'].includes(e.tipo)) res.push(e.tipo); if (e.tipo==='jugadaFin') fin = e; } return !!fin; });
+    if (!base1) mal('no llegó a primera base'); if (!fin) mal('la jugada no terminó'); else bien('jugada:', res.join('+') || fin.porque, '· marcador Águilas', P.beis.carreras, 'visitante', P.beis.visitante, '· outs', P.beis.outs, '· corredores', P.beis.corredores.map(c=>c?'●':'○').join(''));
+    if (!tipos.jonron){ poner(P, H.x, H.z); correr(P, 60*3, {}, (P, evs)=>evs.some(e=>e.tipo==='lanzamiento')); correr(P, N.BEIS_VENTANA[0] + 6, {}); correr(P, 1, {a:true, b:true}); const B = P.pelota; if (B.estado==='aire'){ B.vy = 30; B.vx *= 2; B.vz *= 2; } let jon = false; correr(P, 60*10, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='jonron') jon = true; return jon; }); if (!jon) mal('no salió el jonrón forzado'); else bien('jonrón: carreras', P.beis.carreras); }
+    correr(P, 60*2, {}); poner(P, H.x + 30, H.z); correr(P, 60*3, {}); if (P.beis.estado!=='libre') mal('lejos del home el juego no vuelve a libre ('+P.beis.estado+')'); }
   /* las gradas se suben caminando: desde el jardín hacia afuera, escalón por escalón, hasta arriba */
   { const E = N.ESTADIO, a = E.entrada + Math.PI, y0 = N.altura(E.x, E.z); poner(P, E.x + Math.cos(a)*(N.GRADAS.r0 - 3), E.z + Math.sin(a)*(N.GRADAS.r0 - 3));
     let maxY = 0; correr(P, 60*8, (P)=>({jy: 1, camYaw: Math.atan2(Math.cos(a), Math.sin(a))}), (P)=>{ maxY = Math.max(maxY, P.J.y - y0); return P.J.y - y0 > 4.5; });
@@ -209,6 +220,19 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
     if (!paro) mal('el tranvía nunca paró en la plaza'); else { poner(P, P.tranvia.x, P.tranvia.z + 2); correr(P, 3, {}); correr(P, 1, {a:true});
       if (!P.paseo || P.paseo.tipo!=='tranvia') mal('no se subió al tranvía'); else { const x0 = P.J.x, z0 = P.J.z; correr(P, 60*25, {}); const d = Math.hypot(P.J.x-x0, P.J.z-z0); correr(P, 1, {a:true});
         if (P.paseo) mal('no se bajó del tranvía'); else if (d < 40) mal('el tranvía no lo llevó ('+d.toFixed(0)+' m)'); else if (N.altura(P.J.x, P.J.z) < 1) mal('se bajó del tranvía en el agua'); else bien('tranvía: paró en la plaza, lo llevó', d.toFixed(0), 'm y se bajó en la acera'); } } }
+  /* la lancha: se espera en la parada de la vereda, se sube, navega hasta los palafitos y se baja en la tarima */
+  { const pd = N.LANCHA.paradas[0]; poner(P, pd.bajaX, pd.bajaZ); let paro = false;
+    correr(P, 60*400, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='lanchaPara' && e.nombre===pd.nombre) paro = true; return paro; });
+    if (!paro) mal('la lancha nunca paró en la vereda'); else { poner(P, pd.bajaX, pd.bajaZ); correr(P, 60*8, (P)=>({jy:1, camYaw: Math.atan2(P.lancha.x-P.J.x, P.lancha.z-P.J.z)}), (P)=>Math.hypot(P.J.x-P.lancha.x, P.J.z-P.lancha.z) < 6); if (P.J.nadando) mal('se cayó al agua caminando por el muelle de la lancha'); correr(P, 2, {}); correr(P, 1, {a:true});
+      if (!P.paseo || P.paseo.tipo!=='lancha') mal('no se subió a la lancha (d '+Math.hypot(P.J.x-P.lancha.x, P.J.z-P.lancha.z).toFixed(1)+')'); else { let llego = false; correr(P, 60*200, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='lanchaPara' && e.nombre==='los palafitos') llego = true; return llego; });
+        if (!llego) mal('la lancha no llegó a los palafitos con el personaje a bordo'); else { correr(P, 1, {a:true}); if (P.paseo) mal('no se bajó de la lancha'); else if (!N.enPalafitos(P.J.x, P.J.z)) mal('se bajó de la lancha fuera de la tarima'); else bien('lancha: paró en la vereda, lo llevó a los palafitos y se bajó en la tarima (y', P.J.y.toFixed(1)+')'); } } } }
+  /* los vecinos caminan y hablan al pasar */
+  { const x0 = P.vecinos.map(v=>[v.x, v.z]); const q = N.puntoAvenida(N.AVENIDAS[0], 0.3, 0); poner(P, q.x, q.z); dichos.length = 0;
+    correr(P, 60*60, {}, (P, evs)=>{ oir(P, evs); return false; });
+    const movidos = P.vecinos.filter((v, i)=>Math.hypot(v.x-x0[i][0], v.z-x0[i][1]) > 3).length;
+    if (movidos < 8) mal('los vecinos no caminan ('+movidos+'/14)'); else bien(movidos, 'de 14 vecinos caminaron por las avenidas');
+    if (P.vecinos.some(v=>N.altura(v.x, v.z) < 1.5)) mal('un vecino se metió al agua');
+    if (!dichos.some(d=>d.pj==='npc_vecino')) mal('ningún vecino habló al pasar'); else bien('un vecino dijo al pasar:', dichos.find(d=>d.pj==='npc_vecino').texto); }
   /* la pesca en el palafito: espera, pica y saca un pez */
   { const p = N.PESCA[0]; poner(P, p.x, p.z); P.J.y = N.PALAFITOS.alto; correr(P, 3, {}); correr(P, 1, {a:true});
     if (!P.paseo || P.paseo.tipo!=='pesca') mal('no empezó a pescar'); else { let pico = false; correr(P, 60*12, {}, (P, evs)=>{ for (const e of evs) if (e.tipo==='pica') pico = true; return pico; });
@@ -248,6 +272,6 @@ const dichos = []; const oir = (P, evs)=>{ for (const e of evs) if (e.tipo==='ha
   if (P2.estrellas.length !== P.estrellas.length || P2.prog.chivos.length !== 8 || P2.prog.rayos !== P.prog.rayos || !P2.prog.ovni) mal('el guardado del mapa 2 no conserva chivos, rayos o el ovni');
   else bien('la partida de noche se guarda y se recupera con', P2.estrellas.length, 'estrellas');
 }
-for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna','cepillado','empanada','gaita','lugarMcbo','batazo','jonron','pelotaCae','avionNPC','estadioCerca','aeropuertoCerca','cocada','bocina','paseo','paseoFin','tranviaPara','pica','pez','canonazo']) if (!tipos[t]) mal('nunca salió el evento '+t);
+for (const t of ['rayo','catatumboCuenta','coro','chivo','aroNoche','polarcita','ovniLlega','ovniLuz','extraterrestres','ovniLista','lunaLlega','banderaLuna','cepillado','empanada','gaita','lugarMcbo','batazo','jonron','avionNPC','estadioCerca','aeropuertoCerca','cocada','bocina','paseo','paseoFin','tranviaPara','pica','pez','canonazo','lanzamiento','strike','hit','base','jugadaFin','lanchaPara']) if (!tipos[t]) mal('nunca salió el evento '+t);
 console.log(fallos ? '\n'+fallos+' FALLO(S)' : '\n✓ Maracaibo de noche sin fallos');
 process.exit(fallos ? 1 : 0);
