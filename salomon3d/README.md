@@ -1,71 +1,103 @@
-# ⚡ Salomón y los Primos del Puente
+# ⚡ Salomón y los Primos: La Gran Aventura del Lago
 
-Un juego **corto en 3D** (10 minutos, más o menos) por Maracaibo, con diálogos en maracucho.
+Un juego de plataformas en 3D con mundo central, inspirado en el estilo de juegos como
+*Super Bear Adventure*, pero con personajes, lugares e historia propios de Maracaibo y
+Venezuela.
 
-Unas nubes negras se robaron **el relámpago del Catatumbo**, y sin relámpago no hay feria.
-**Salomón**, **el Primo Verde** y **el Mollejúo** cruzan la ciudad para devolvérselo a
-**la Chinita del Catatumbo**.
+Unas nubes negras se robaron el relámpago del Catatumbo y regaron sus **chispas** por todo el
+Zulia. **Salomón**, **el Primo Verde** y **el Mollejúo** salen desde **la Vereda del Lago** a
+buscarlas y devolvérselas a **la Chinita del Catatumbo**.
 
 👉 **[Jugar](https://jcmp83ve.github.io/Fernando-Bros/salomon3d/)**
 
-## Los personajes
+## Cómo se juega
+
+- **La Vereda del Lago** es el mundo central. Tiene 12 portales, la tienda de la señora Carmen,
+  el álbum de barajitas y la antena para jugar con amigos.
+- Los portales se abren juntando **chispas ⚡**. Hay 48 en total, 4 por nivel:
+  - 2 por rescatar a los animalitos de las jaulas (se rompen a golpes).
+  - 1 por juntar las **8 cocadas** del nivel.
+  - 1 por la chispa grande del final o por vencer al jefe.
+- **Barajitas 🃏:** hay 3 escondidas en cada nivel, 36 en el álbum.
+- **Monedas 🪙:** sirven para comprar gorras, sombreros, lentes y una capa en el kiosko.
+- **Corazones ❤️:** tienes 3. Si los pierdes, vuelves a la última bandera con 10 monedas menos.
+  Nunca se pierde el juego.
+
+## Los primos (se cambia con 👥 en cualquier momento)
 
 | | Personaje | Salto | Poder (B) |
 |---|---|---|---|
-| 🧒 | **Salomón** (el del suéter rojo) | normal (~1,7 m) | 🪨 **Pedrada**: apunta sola a la nube más cercana |
-| 🟢 | **El Primo Verde**: medio cagón, pero salta altísimo | **muy alto** (~3,3 m) | 🏃 **Carrerita**: «¡Patitas pa' qué te tengo!» |
-| 🍔 | **El Mollejúo**: siempre tiene hambre | bajito (~1,2 m) | 💥 **Panzazo**: empuja gandolas y cayucos, y tumba nubes |
-| 👑 | **La Chinita del Catatumbo** | — | Pide ayuda al principio y enciende el relámpago al final |
+| 🧒 | **Salomón** | normal (~2 m) | 🪨 **Pedrada**: apunta sola; es lo único que activa las **dianas** |
+| 🟢 | **El Primo Verde** | muy alto (~3 m) y **doble salto** (~4,5 m) | 🦶 **Patada giratoria** |
+| 🍔 | **El Mollejúo** | bajito (~1,85 m) | 💥 **Panzazo**: lo único que tumba las **paredes rajadas** |
 
-Con **👥** se cambia de personaje cuando uno quiera. Cada obstáculo necesita a uno distinto,
-y el juego avisa a quién hay que usar.
+Todos vencen enemigos pisándolos y rompen cajas con su poder.
 
-## Los tres niveles
+## Los 12 niveles
 
-1. **El Saladillo**: hay que recoger 8 comidas pa' la feria (mandocas, patacones,
-   tequeños, pastelitos, huevos chimbos, cepillados) y encontrar al Primo Verde, que está
-   escondido detrás de unos pipotes. El muro de la plaza (2,6 m) solo lo salta el Primo.
-2. **El Puente sobre el Lago**: hay que cruzar el puente esquivando carros y ventarrones.
-   El Mollejúo tapa el paso hasta que le dan un patacón. Después hay una gandola atravesada
-   que solo se quita con su panzazo.
-3. **Los palafitos del Catatumbo** (de noche): hay tres chispas del relámpago. Una está en
-   un techo alto (le toca al Primo), otra dentro de una nube gorda (le toca a Salomón con
-   pedradas) y otra en una casita tapada por un cayuco (le toca al Mollejúo). Al final
-   aparece **el Nublao**: se le dan pedradas y se esquivan sus rayos. Si se cae al lago,
-   vuelve a la última bandera.
+| # | Nivel | Qué tiene |
+|---|---|---|
+| 1 | El Saladillo | Techos de colores, iguanas, la Basílica |
+| 2 | El Puente sobre el Lago | Carros, ventarrones, ascensores de las torres |
+| 3 | Los Palafitos de Santa Rosa | Tablones que se caen, lanchas. **Jefe:** el Cangrejote |
+| 4 | El Mercado Las Pulgas | Toldos-trampolín, laberinto de puestos |
+| 5 | La Vereda de noche | Faroles, murciélagos, el faro |
+| 6 | Los Médanos de Coro | Dunas, chivos, rocas rodantes. **Jefe:** el Chivo Cabezón |
+| 7 | El Páramo | Hielo, bolas de nieve, el teleférico |
+| 8 | El Tepuy | Subida vertical, corrientes de aire. **Jefe:** el Zancudo Rey |
+| 9 | Las Torres del Lago | Pistones, vapor, robots |
+| 10 | La Feria de La Chinita | Rueda de la fortuna, carrusel, payasos |
+| 11 | El Castillo de San Carlos | Cañones, piratas. **Jefe:** el Capitán Pata de Palo |
+| 12 | El Catatumbo | Tormenta y rayos. **Jefe final:** el Nublao |
 
-Aquí nunca se pierde: no hay vidas y los golpes solo empujan.
+## Jugar con amigos
+
+Hasta 4 jugadores, cada uno en su aparato: uno toca **👥 → Crear una sala** y los demás escriben
+el código de 4 letras (o abren el enlace para invitar). Es el mismo sistema de La Gran Aventura:
+Trystero por Nostr y MQTT, con relé de reserva para datos móviles. Cada quien juega su partida y
+ve a los demás en el mismo nivel. **Las chispas y barajitas que gana uno son de todos.**
 
 ## Controles
 
 | Teclado | Mando | Celular | Acción |
 |---|---|---|---|
-| Flechas / WASD | Palanca o cruceta | Deslizar el dedo a la izquierda | Caminar |
-| ESPACIO / Z | A | **A** | Saltar (si se sostiene, salta más alto) |
+| Flechas / WASD | Palanca izquierda | Deslizar a la izquierda | Caminar |
+| Ratón (arrastrar) / Q E | Palanca derecha | Deslizar a la derecha | Girar la cámara |
+| ESPACIO / Z | A | **A** | Saltar (sostener = más alto) |
 | X / MAYÚS | B / X / gatillo | **B** | Poder |
-| C / TAB | Y / hombros | **👥** | Cambiar de personaje |
-| ESC | — | ✕ | Salir |
+| C / TAB | Y / hombros | **👥** | Cambiar de primo |
+| ENTER | — | botón | Tienda / álbum / antena (cerca de ellos) |
+| ESC | Start | ☰ | Pausa |
 
-Se puede empezar directo en un nivel con `?nivel=2` o `?nivel=3`, o con los botones del título.
+## Gráficos
+
+Todo se dibuja con Three.js sin imágenes externas:
+- **Texturas:** pintadas en el momento.
+- **Formas:** bloques con bordes redondeados, personajes estilo caricatura (sombreado en 3 tonos
+  y contorno).
+- **Escenario:** sombras suaves que siguen al jugador, cielo con degradado, nubes y estrellas.
+- **Agua y pasto:** agua con olas y reflejos, y pasto en instancias que se mueve con el viento.
+- **Efectos:** partículas para polvo, chispitas, confeti, lluvia y luciérnagas, y relámpagos.
+- **Movimiento:** cámara con suavizado, sacudidas y animación de estirar y aplastar.
+
+La calidad se ajusta sola (alta, media o baja) según cómo vaya el aparato, y se puede cambiar en
+la pausa.
 
 ## Voces
 
-Todas las frases tienen mp3, así que no hay voz de robot:
-- **Salomón**: las grabaciones de *La Gran Aventura* («¡Salomón en la casa!», «¡Mira para
-  arriba, primo! ¡Es el relámpago del Catatumbo!», etc.) y 16 frases nuevas hechas con
-  Higgsfield (Seed Audio) **clonando su propia voz**.
-- **El Primo Verde, el Mollejúo, la Chinita y el Nublao**: voces de Higgsfield, cada uno
-  con la suya (el Primo más agudo y rápido, el Mollejúo grave, el Nublao muy grave y lento).
-
-Si un mp3 no carga, habla la voz del navegador con el tono del personaje. Cuando el
-Primo o el Mollejúo comen por primera vez, sus frases de comida van con voz del
-navegador. Las grabaciones están en `CLIPS_PJ`, dentro de `salomon3d.js`.
+Las frases que ya estaban grabadas (Salomón y compañía) suenan con su mp3 (`voces.js`); las
+demás las dice la voz del navegador.
 
 ## Archivos
 
-- `index.html`: la página. Usa el mismo motor 3D de `../kart3d/three.min.js`.
-- `salomon3d.js`: el **núcleo** (niveles, física, personajes, nubes), que se prueba sin
-  navegador, y la **vista** con Three.js.
-- `pruebas.js`: se corre con `node pruebas.js`. Un bot juega los tres niveles completos,
-  revisa que cada obstáculo pida al personaje correcto y que las grabaciones sean las de
-  La Gran Aventura.
+| Archivo | Qué hace |
+|---|---|
+| `nucleo.js` | El motor sin dibujo: física, personajes, enemigos, jefes, peligros, progreso, revisor de niveles |
+| `niveles.js` | Reglas de diseño + la Vereda y el nivel 1 |
+| `niveles_b.js` · `niveles_c.js` · `niveles_d.js` | Niveles 2-5 · 6-8 · 9-12 |
+| `graficos.js` | Texturas, materiales, modelos, cielo, agua, pasto, partículas |
+| `vista.js` | Cámara, controles, marcador, menús, sonido, música y voces |
+| `red.js` | Jugar con amigos |
+| `voces.js` | Las grabaciones mp3 |
+| `pruebas.js` | `node pruebas.js`: arma los 13 mundos, revisa que se llegue a todo con el equipo, prueba poderes, jaulas, dianas, jefes, tienda y red |
+| `pruebas_red.js` | `node pruebas_red.js`: las partes puras de la red |

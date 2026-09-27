@@ -1,228 +1,223 @@
 /* ============================================================
-   PRUEBAS DE SALOMÓN Y LOS PRIMOS DEL PUENTE
-   Se corre con:   node pruebas.js
-   Sin navegador: se carga solo el núcleo y un "bot" juega los tres
-   niveles de punta a punta (con el personaje que haga falta en cada
-   obstáculo). Además revisa que cada obstáculo pida al personaje
-   correcto y que las grabaciones de Salomón sean las de La Gran Aventura.
+   PRUEBAS DE SALOMÓN Y LOS PRIMOS — LA GRAN AVENTURA DEL LAGO
+   Se corre con:   node pruebas.js          (todo)
+                   node pruebas.js 3 4      (solo esos niveles)
+   Sin navegador: carga el núcleo y los niveles y revisa
+   · que cada nivel tenga lo que pide el diseño (jaulas, cocadas…)
+   · que se pueda llegar a todo con el equipo (revisor de saltos)
+   · las mecánicas (poderes, jaulas, dianas, jefes, tienda, red)
+   · botones al azar sin números rotos
    ============================================================ */
 const path = require('path');
-const S = require(path.join(__dirname, 'salomon3d.js'));
-const A = require(path.join(__dirname, '..', 'aventura3d', 'aventura3d.js'));
+const S = require(path.join(__dirname, 'nucleo.js'));
+for (const f of ['niveles.js', 'niveles_b.js', 'niveles_c.js', 'niveles_d.js']) require(path.join(__dirname, f));
+const L = globalThis.SALO_NIVELES;
+S.registrarNiveles(L);
 let fallos = 0;
 const mal = m=>{ console.log('✗', m); fallos++; };
 const bien = m=>console.log('✓', m);
+const soloNiveles = process.argv.slice(2).map(Number).filter(Number.isFinite);
+const niveles = [...Array(L.length).keys()].filter(n=>L[n] && (!soloNiveles.length || soloNiveles.includes(n)));
 
-/* 1) las grabaciones de Salomón son las mismas de La Gran Aventura */
-for (const [frase, url] of Object.entries(S.CLIPS_PJ.salomon))
-  if (/hf_20260906_/.test(url) && A.CLIPS_PJ.salomon[frase] !== url) mal('grabación distinta o inexistente: ' + frase);
-/* cada frase que se dice tiene su mp3 con la voz de quien la dice */
-const porDecir = [...Object.values(S.DIALOGOS).flat()];
-for (const pj of ['salomon', 'primo', 'mollejuo']) porDecir.push([pj, S.SALUDO[pj]], [pj, S.AY[pj]]);
-porDecir.push(['primo', S.PODER_DICE.primo], ['mollejuo', S.PODER_DICE.mollejuo], ['mollejuo', S.MOLLEJUO_COME]);
-for (const t of Object.values(S.COMER)) porDecir.push(['salomon', t]);
-porDecir.push(['salomon', '¡Otra chispa! ¡Ya van 2!'], ['salomon', '¡Las tres chispas! ¡Ahora vamos por el Nublao!']);
-for (const [pj, t] of porDecir) if (!(S.CLIPS_PJ[pj] && S.CLIPS_PJ[pj][t])) mal('sin grabación: ' + pj + ' → ' + t);
-/* y cada grabación se usa */
-const dichas = new Set(porDecir.map(d=>d[0] + '|' + d[1]));
-for (const pj in S.CLIPS_PJ) for (const f of Object.keys(S.CLIPS_PJ[pj]))
-  if (!dichas.has(pj + '|' + f) && !/hamburguesa|agüita|tesoro/i.test(f) && !(pj==='salomon' && f==='¡Hola! ¡Salomón quiere jugar!')) mal('grabación sin usar: ' + pj + ' → ' + f);
-const total = Object.values(S.CLIPS_PJ).reduce((n, c)=>n + Object.keys(c).length, 0);
-for (const [clave, lineas] of Object.entries(S.DIALOGOS)) for (const [pj, t] of lineas){
-  if (!S.NOMBRES[pj]) mal(clave + ': personaje desconocido ' + pj);
-  if (!t || t.length > 140) mal(clave + ': frase vacía o muy larga');
-}
-bien('voces y diálogos · ' + total + ' grabaciones');
-
-/* 2) los saltos: cada uno llega a lo suyo */
-const alto = {salomon: S.alturaSalto('salomon'), primo: S.alturaSalto('primo'), mollejuo: S.alturaSalto('mollejuo')};
-if (!(alto.salomon > 1.25 && alto.salomon < 2.5)) mal('salto de Salomón raro: ' + alto.salomon.toFixed(2));
-if (!(alto.primo > 2.8)) mal('el Primo no llega al muro: ' + alto.primo.toFixed(2));
-if (!(alto.mollejuo > 1.0 && alto.mollejuo < alto.salomon)) mal('salto del Mollejúo raro');
-bien('alturas de salto · Salomón ' + alto.salomon.toFixed(2) + ' m · Primo ' + alto.primo.toFixed(2) + ' m · Mollejúo ' + alto.mollejuo.toFixed(2) + ' m');
-
-/* ---- el bot ---- */
-function nuevo(n, previo, pj){ const G = S.crearPartida(n, previo, {pj}); return G; }
-function paso(G, ent){ S.paso(G, ent); G.eventos.length = 0; revisar(G); }
-function revisar(G){
-  const J = G.J;
-  if (![J.x, J.y, J.z, J.vx, J.vy, J.vz].every(Number.isFinite)) throw new Error('números rotos en el jugador');
-}
-function esperar(G, s){ for (let i = 0; i < s*60; i++) paso(G, {}); }
-function como(G, pj){ for (let i = 0; i < 4 && G.J.pj !== pj; i++){ paso(G, {cambiar: true}); esperar(G, 0.3); } return G.J.pj === pj; }
-/* camina hasta (x, z); si algo lo tranca o el objetivo está más alto, salta con el botón sostenido */
-function ir(G, x, z, o){
-  o = o || {};
-  const J = G.J, lim = (o.seg || 40)*60;
-  let saltando = 0;
-  for (let i = 0; i < lim; i++){
-    const dx = x - J.x, dz = z - J.z, d = Math.hypot(dx, dz);
-    if (d < (o.cerca || 0.5) && (o.y === undefined || Math.abs(J.y - o.y) < 0.3)) return true;
-    const ent = {jx: d > 0.01 ? dx/Math.max(d, 1) : 0, jy: d > 0.01 ? -dz/Math.max(d, 1) : 0};
-    const trancado = J.choco && J.suelo;
-    const masAlto = o.y !== undefined && o.y > J.y + 0.3 && d < 2.2 && J.suelo;
-    if ((trancado || masAlto) && saltando <= 0){ ent.saltoPulsado = true; saltando = 50; }
-    if (saltando > 0){ ent.saltar = true; saltando--; }
-    paso(G, ent);
-    if (G.fase !== 'jugando' && o.hastaFin) return true;
+/* ---------------- 1) cada nivel está bien armado ---------------- */
+for (const n of niveles){
+  let N;
+  try{ N = S.armarNivel(n); }catch(e){ mal('nivel ' + n + ' no se arma: ' + e.message); continue; }
+  const pre = 'nivel ' + n + ' (' + (N.nombre || '?') + '): ';
+  if (!N.nombre || !N.sub) mal(pre + 'falta nombre o sub');
+  if (!N.tema || !S.CIELOS.includes(N.tema.cielo)) mal(pre + 'cielo desconocido: ' + (N.tema && N.tema.cielo));
+  if (N.agua === undefined && N.vacio === undefined) mal(pre + 'falta agua o vacio (el piso de caída)');
+  const finito = (o, campos)=>campos.every(k=>Number.isFinite(o[k]));
+  for (const c of N.cajas){
+    if (!finito(c, ['x0', 'x1', 'y0', 'y1', 'z0', 'z1']) || c.x1 <= c.x0 || c.y1 <= c.y0 || c.z1 <= c.z0){ mal(pre + 'caja rota ' + c.id); break; }
+    if (!S.MATERIALES.includes(c.mat)){ mal(pre + 'material desconocido: ' + c.mat); break; }
   }
-  return false;
-}
-function recorrer(G, puntos, nombre){
-  for (const p of puntos){
-    if (p.pj && !como(G, p.pj)) { mal(nombre + ': no pudo cambiar a ' + p.pj); return false; }
-    if (!ir(G, p.x, p.z, p)) { mal(nombre + ': no llegó a (' + p.x + ', ' + p.z + ') · está en (' + G.J.x.toFixed(1) + ', ' + G.J.y.toFixed(1) + ', ' + G.J.z.toFixed(1) + ') con ' + G.J.pj); return false; }
-    if (p.hacer) p.hacer(G);
+  for (const d of N.deco) if (!S.DECOS.includes(d.tipo)){ mal(pre + 'adorno desconocido: ' + d.tipo); break; }
+  for (const e of N.enemigos) if (!S.ENEMIGOS[e.tipo]){ mal(pre + 'enemigo desconocido: ' + e.tipo); break; }
+  for (const j of N.jaulas) if (!S.AMIGOS[j.amigo]) mal(pre + 'amigo desconocido: ' + j.amigo);
+  if (N.jefe && !S.JEFES[N.jefe.tipo]) mal(pre + 'jefe desconocido: ' + N.jefe.tipo);
+  for (const k of ['monedas', 'cocadas', 'barajitas', 'jaulas', 'enemigos', 'banderas']) for (const o of N[k]) if (!finito(o, ['x', 'y', 'z'])){ mal(pre + k + ' con números rotos'); break; }
+  if (n === 0){
+    if (N.portales.length !== 12) mal(pre + 'la Vereda debe tener 12 portales');
+    bien(pre + N.cajas.length + ' plataformas · ' + N.portales.length + ' portales');
+    continue;
   }
-  return true;
+  if (N.jaulas.length !== 2) mal(pre + 'debe tener 2 jaulas (tiene ' + N.jaulas.length + ')');
+  if (N.cocadas.length !== 8) mal(pre + 'debe tener 8 cocadas (tiene ' + N.cocadas.length + ')');
+  if (N.barajitas.length !== 3) mal(pre + 'debe tener 3 barajitas (tiene ' + N.barajitas.length + ')');
+  if (!N.meta && !N.jefe) mal(pre + 'no tiene meta ni jefe');
+  if (N.banderas.length < 3) mal(pre + 'debe tener 3 banderas o más');
+  if (N.monedas.length < 40) mal(pre + 'muy pocas monedas (' + N.monedas.length + ', mínimo 40)');
+  if (N.enemigos.length < 5 && !N.jefe) mal(pre + 'muy pocos enemigos (' + N.enemigos.length + ')');
+  /* ¿se llega a todo con el equipo? */
+  const A = S.alcanzables(N, 'equipo');
+  const faltan = [];
+  N.jaulas.forEach((j, i)=>{ if (!A.llegaA(j.x, j.y, j.z)) faltan.push('jaula ' + i); });
+  N.cocadas.forEach((c, i)=>{ if (!A.llegaA(c.x, c.y - 0.7, c.z)) faltan.push('cocada ' + i + ' (' + c.x + ', ' + (c.y - 0.7).toFixed(1) + ', ' + c.z + ')'); });
+  N.barajitas.forEach((b, i)=>{ if (!A.llegaA(b.x, b.y - 0.9, b.z)) faltan.push('barajita ' + i + ' (' + b.x + ', ' + (b.y - 0.9).toFixed(1) + ', ' + b.z + ')'); });
+  N.banderas.forEach((b, i)=>{ if (!A.llegaA(b.x, b.y, b.z, 2)) faltan.push('bandera ' + i); });
+  if (N.meta && !A.llegaA(N.meta.x, N.meta.y - 1.1, N.meta.z)) faltan.push('meta');
+  if (N.jefe && !A.llegaA(N.jefe.x, N.jefe.y, N.jefe.z, 4)) faltan.push('arena del jefe');
+  for (const d of N.dianas) if (!A.abiertas.has(d.abre)) faltan.push('diana ' + d.abre);
+  if (faltan.length) mal(pre + 'no se llega a: ' + faltan.join(', '));
+  /* y que no todo sea para el Primo: la mitad de las monedas las alcanza Salomón solo */
+  const AS = S.alcanzables(N, 'salomon');
+  const deSalomon = N.monedas.filter(m=>AS.llegaA(m.x, m.y - 0.7, m.z)).length;
+  if (deSalomon < N.monedas.length*0.4) mal(pre + 'Salomón solo llega a ' + deSalomon + ' de ' + N.monedas.length + ' monedas: el nivel es muy del Primo');
+  if (!faltan.length) bien(pre + N.cajas.length + ' plataformas · ' + N.monedas.length + ' monedas · ' + N.enemigos.length + ' enemigos' + (N.jefe ? ' · jefe ' + S.JEFES[N.jefe.tipo].nombre : '') + ' · Salomón solo: ' + deSalomon + ' monedas');
 }
 
-/* 3) nivel 1: sin el Primo no se sube el muro; con él sí, y la meta pide 8 comidas */
-{
-  const G = nuevo(0);
-  G.equipo = ['salomon'];
-  if (ir(G, 0, -135, {seg: 20})) mal('Salomón subió el muro de 2,6 m solito');
-  else if (G.J.z > -123 && G.J.z < -110) bien('el muro frena a Salomón (z ' + G.J.z.toFixed(1) + ')');
-  else mal('Salomón quedó en un sitio raro frente al muro: z ' + G.J.z.toFixed(1));
-}
-{
-  const G = nuevo(0);
-  /* las comidas de abajo en orden, el Primo, y arriba del muro */
-  const abajo = G.N.comidas.filter(c=>c.z > -124).sort((a, b)=>b.z - a.z);
-  const pts = [];
-  for (const c of abajo){ if (c.y - 0.6 > 1.7) pts.push({x: c.x, z: c.z + 2, y: 1.1, cerca: 0.4}); pts.push({x: c.x, z: c.z, y: c.y - 0.6, cerca: 0.4}); if (c.z < -60 && !pts.some(p=>p.primo)) pts.push({x: 5, z: -73.5 + 2.2, primo: true, cerca: 1.5}); }
-  pts.push({x: 0, z: -135, pj: 'primo', y: 2.6});
-  for (const c of G.N.comidas.filter(c=>c.z <= -124).sort((a, b)=>b.z - a.z)) pts.push({x: c.x, z: c.z, y: c.y - 0.6, cerca: 0.4});
-  pts.push({x: 0, z: -195, hastaFin: true, seg: 20});
-  const antes = G.comida;
-  if (recorrer(G, pts, 'nivel 1')){
-    if (!G.equipo.includes('primo')) mal('nivel 1: el Primo no se unió');
-    if (G.fase !== 'nivelListo') mal('nivel 1: no terminó (fase ' + G.fase + ', comida ' + G.comida + ')');
-    else bien('nivel 1 completo · comida ' + G.comida + ' · equipo ' + G.equipo.join(', ') + ' · ' + G.t.toFixed(0) + ' s');
-  }
-  if (G.comida - antes < 8) mal('nivel 1: comió muy poquito');
-  var PREVIO1 = G;
-}
-{
-  /* la meta no abre con menos de 8 */
-  const G = nuevo(0);
-  G.equipo = ['salomon', 'primo']; G.N.aliados[0].unido = true; G.comida = 3;
-  G.J.pj = 'primo'; G.J.x = 0; G.J.y = 2.6; G.J.z = -185;
-  ir(G, 0, -196, {seg: 5});
-  if (G.fase === 'nivelListo') mal('la meta abrió con 3 comidas');
-  else bien('la meta pide 8 comidas (se queda en z ' + G.J.z.toFixed(1) + ')');
-}
-
-/* 4) nivel 2: el Mollejúo tapa el paso hasta que come; la gandola solo se mueve con el panzazo */
-{
-  const G = nuevo(1, {equipo: ['salomon', 'primo'], comida: 0, puntos: 0, comidoTotal: 0, nubesVencidas: 0});
-  G.N.comidas.forEach(c=>{ c.vivo = false; });
-  G.J.x = 0; G.J.z = -112;
-  ir(G, 0, -130, {seg: 6});
-  if (G.J.z < -122.5) mal('se pasó al Mollejúo sin darle comida');
-  else if (G.equipo.includes('mollejuo')) mal('el Mollejúo se unió sin comer');
-  else bien('el Mollejúo tapa el paso sin comida');
-  G.comida = 1;
-  ir(G, 0, -130, {seg: 6});
-  if (!G.equipo.includes('mollejuo') || G.comida !== 0) mal('el Mollejúo no se unió al darle un patacón');
-  else bien('el Mollejúo se unió y se comió el patacón');
-  como(G, 'salomon');
-  G.J.x = 0; G.J.z = -246;
-  for (let i = 0; i < 20; i++) paso(G, {poder: true});
-  ir(G, 0, -262, {seg: 4});
-  if (G.J.z < -253.5) mal('Salomón pasó la gandola');
-  const gandola = G.N.cajas.find(b=>b.id==='gandola');
-  if (gandola.empujado) mal('una pedrada movió la gandola');
-  como(G, 'mollejuo'); paso(G, {poder: true}); esperar(G, 2);
-  if (!gandola.movido) mal('el panzazo no movió la gandola');
-  else bien('la gandola solo se mueve con el panzazo');
-}
-{
-  const G = nuevo(1, PREVIO1);
-  const pts = [];
-  const zs = [-8, -55, -57.5, -62.5, -66, -110, -125, -135, -137.5, -142.5, -146, -195, -197.5, -202.5, -206, -244];
-  for (const z of zs){
-    const cercaPilon = [-60, -140, -200].some(p=>Math.abs(z - p) < 3);
-    pts.push({x: cercaPilon ? 1.35 : 0, z, seg: 30, cerca: 0.6});
-  }
-  pts.push({x: 0, z: -252.3, pj: 'mollejuo', cerca: 0.5, hacer: g=>{ paso(g, {poder: true}); esperar(g, 2); }});
-  pts.push({x: 0, z: -284, hastaFin: true, seg: 20});
-  if (recorrer(G, pts, 'nivel 2')){
-    if (G.fase !== 'nivelListo') mal('nivel 2: no terminó (fase ' + G.fase + ')');
-    else bien('nivel 2 completo · equipo ' + G.equipo.join(', ') + ' · ' + G.t.toFixed(0) + ' s');
-  }
-  var PREVIO2 = G;
-}
-{
-  /* los carros sí golpean */
-  const G = nuevo(1, PREVIO1);
-  let golpes = 0;
-  G.J.x = -6.8; G.J.z = -60;
-  for (let i = 0; i < 600; i++){ S.paso(G, {}); golpes += G.eventos.filter(e=>e.tipo==='golpe').length; G.eventos.length = 0; }
-  if (!golpes) mal('los carros no golpean');
-  else bien('los carros golpean (' + golpes + ' en 10 s parado en el carril)');
-}
-
-/* 5) nivel 3: tres chispas, cada una con su primo, y el Nublao */
-{
-  const G = nuevo(2, PREVIO2);
-  G.J.pj = 'salomon';
-  ir(G, -3.5, -26, {seg: 6, y: 3.2});
-  if (G.chispas) mal('Salomón llegó al techo alto');
-  else bien('el techo alto no lo alcanza Salomón');
-  G.J.pj = 'mollejuo'; G.J.x = 0; G.J.y = 0.5; G.J.z = -80;
-  for (let i = 0; i < 10; i++) paso(G, {poder: true});
-  if (G.N.nubes[0].hp < 3) mal('el panzazo le llegó a la nube grande');
-  G.J.pj = 'salomon'; G.J.x = 0; G.J.z = -99; G.chispas = 0;
-  ir(G, 0, -110, {seg: 4});
-  if (G.J.z < -98) mal('se pasó a la plaza del Nublao sin chispas');
-  else bien('la plaza del Nublao pide las tres chispas');
-}
-{
-  const G = nuevo(2, PREVIO2);
-  const dispara = (g, n)=>{ for (let i = 0; i < n*60 && g.fase === 'jugando'; i++){ const ent = {poder: i % 25 === 0, jx: Math.sin(i/40)*0.6}; paso(g, ent); } };
-  const pts = [
-    {x: 0, z: -19},
-    {x: -3.5, z: -26, y: 3.2, pj: 'primo', cerca: 0.8},
-    {x: 0, z: -20}, {x: 0, z: -43},
-    {x: 0, z: -46, pj: 'salomon', hacer: g=>{ for (let i = 0; i < 12*60 && g.N.nubes[0].vivo; i++) paso(g, {poder: i % 25 === 0}); if (g.N.nubes[0].vivo) mal('nivel 3: la nube grande no cayó'); esperar(g, 1.5); }},
-  ];
-  if (recorrer(G, pts, 'nivel 3 (a)')){
-    const ch = G.N.chispas[1];
-    const pts2 = [
-      {x: ch.x, z: ch.z, cerca: 0.8},
-      {x: 0, z: -63}, {x: 0, z: -75},
-      {x: 0, z: -81.8, pj: 'mollejuo', cerca: 0.8, hacer: g=>{ paso(g, {poder: true}); esperar(g, 2); }},
-      {x: 0, z: -87.5, cerca: 0.8},
-      {x: 0, z: -83}, {x: -7, z: -83}, {x: -7, z: -94.5}, {x: 0, z: -94.5}, {x: 0, z: -97}, {x: 0, z: -107},
-      {x: 0, z: -112, pj: 'salomon', hacer: g=>dispara(g, 30)},
-    ];
-    if (recorrer(G, pts2, 'nivel 3 (b)')){
-      if (G.chispas !== 3) mal('nivel 3: chispas ' + G.chispas);
-      if (G.fase !== 'final') mal('nivel 3: el Nublao no cayó (fase ' + G.fase + ', hp ' + G.N.nubes[4].hp + ')');
-      else {
-        esperar(G, 12);
-        if (G.fase !== 'fin') mal('nivel 3: el final no terminó');
-        else bien('nivel 3 completo · chispas 3 · Nublao vencido · puntos ' + G.puntos + ' · ' + G.t.toFixed(0) + ' s');
-      }
-    }
-  }
-}
-
-/* 6) a lo loco: entradas al azar en los tres niveles, sin números rotos ni caídas eternas */
-for (let n = 0; n < 3; n++){
-  const G = nuevo(n);
-  let s = 7 + n;
-  const azar = ()=>{ s = (Math.imul(s, 1103515245) + 12345) & 0x7fffffff; return s/0x7fffffff; };
+/* ---------------- 2) botones al azar ---------------- */
+for (const n of niveles){
+  const G = S.crearPartida(n, S.progresoNuevo());
+  const azar = S.azarCon(7 + n);
   let ent = {};
   try{
-    for (let i = 0; i < 60*120; i++){
-      if (i % 20 === 0) ent = {jx: azar()*2 - 1, jy: azar()*2 - 1, saltar: azar() < 0.5, saltoPulsado: azar() < 0.3, poder: azar() < 0.2, cambiar: azar() < 0.03};
-      paso(G, ent); ent.saltoPulsado = ent.poder = ent.cambiar = false;
-      if (G.J.y < -40) throw new Error('cayó sin fin');
+    for (let i = 0; i < 60*60; i++){
+      if (i % 20 === 0) ent = {jx: azar()*2 - 1, jy: azar()*2 - 1, saltar: azar() < 0.5, saltoPulsado: azar() < 0.3, poder: azar() < 0.2, cambiar: azar() < 0.03, camYaw: azar()*6};
+      S.paso(G, ent); ent.saltoPulsado = ent.poder = ent.cambiar = false;
+      G.eventos.length = 0;
+      const J = G.J;
+      if (![J.x, J.y, J.z, J.vx, J.vy, J.vz].every(Number.isFinite)) throw new Error('números rotos en el jugador');
+      if (J.y < -60) throw new Error('cayó sin fin');
+      for (const e of G.N.enemigos) if (e.vivo && ![e.x, e.y, e.z].every(Number.isFinite)) throw new Error('enemigo con números rotos');
+      if (G.fase === 'portal' || G.fase === 'fin') break;
     }
-    bien('nivel ' + (n+1) + ' aguanta 2 minutos de botones al azar');
-  }catch(e){ mal('nivel ' + (n+1) + ' al azar: ' + e.message); }
+  }catch(e){ mal('nivel ' + n + ' al azar: ' + e.message); }
+}
+bien('botones al azar en ' + niveles.length + ' niveles');
+
+/* ---------------- 3) mecánicas ---------------- */
+if (!soloNiveles.length){
+  const N1 = 1;
+  const mover = (G, x, y, z)=>{ G.J.x = x; G.J.y = y; G.J.z = z; G.J.vx = G.J.vy = G.J.vz = 0; G.J.suelo = false; S.paso(G, {}); };
+  const esperar = (G, s, ent)=>{ for (let i = 0; i < s*60; i++) S.paso(G, ent || {}); };
+  /* pedrada a un enemigo */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo(), {pj: 'salomon'});
+    const e = G.N.enemigos[0];
+    mover(G, e.x, e.y, e.z + 5); G.J.ang = Math.PI;   /* mirando hacia −z */
+    for (let i = 0; i < 10 && e.vivo; i++){ S.paso(G, {poder: true}); esperar(G, 0.5); G.J.x = e.x; G.J.z = e.z + 5; G.J.invul = 9; }
+    if (e.vivo) mal('la pedrada no vence a la iguana'); else bien('la pedrada vence enemigos');
+  }
+  /* pisotón */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo());
+    const e = G.N.enemigos[0];
+    G.J.x = e.x; G.J.z = e.z; G.J.y = e.y + 3; G.J.vy = -2; G.J.suelo = false;
+    for (let i = 0; i < 60 && e.vivo; i++){ G.J.x = e.x; G.J.z = e.z; S.paso(G, {}); }
+    if (e.vivo) mal('pisar no vence a la iguana'); else if (G.J.vidas < 3) mal('pisar lastimó'); else bien('pisar vence enemigos sin lastimar');
+  }
+  /* panzazo tumba la pared rajada y rompe cajas; la patada del Primo no tumba paredes */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo(), {pj: 'primo'});
+    const raj = G.N.cajas.find(c=>c.rajada);
+    const cx = raj.x1 + 1, cz = (raj.z0 + raj.z1)/2;
+    mover(G, cx, 0, cz); S.paso(G, {poder: true}); esperar(G, 1);
+    if (!raj.solido) mal('la patada tumbó la pared rajada');
+    G.J.pj = 'mollejuo'; mover(G, cx, 0, cz); S.paso(G, {poder: true});
+    if (raj.solido) mal('el panzazo no tumbó la pared rajada'); else bien('solo el panzazo tumba paredes rajadas');
+  }
+  /* jaula: tres golpes y da chispa */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo(), {pj: 'primo'});
+    const j = G.N.jaulas[0];
+    for (let i = 0; i < 5 && !j.abierta; i++){ mover(G, j.x + 1, j.y, j.z); G.J.cd = 0; S.paso(G, {poder: true}); esperar(G, 0.8); }
+    if (!j.abierta || !G.P.chispas.includes(j.chispa)) mal('la jaula no se abrió o no dio chispa'); else bien('la jaula se abre a golpes y da chispa ' + j.chispa);
+    const G2 = S.crearPartida(N1, G.P);
+    if (!G2.N.jaulas[0].abierta) mal('la jaula ya abierta volvió a cerrarse al entrar otra vez'); else bien('lo ganado queda ganado');
+  }
+  /* diana abre la puerta */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo(), {pj: 'salomon'});
+    const d = G.N.dianas[0], pu = G.N.cajas.find(c=>c.puerta === d.abre);
+    mover(G, d.x, 1.8, d.z + 8); G.J.ang = Math.PI;
+    for (let i = 0; i < 6 && !d.activa; i++){ G.J.cd = 0; S.paso(G, {poder: true}); esperar(G, 0.6); }
+    if (!d.activa || pu.solido) mal('la diana no abrió la puerta'); else bien('la diana abre la puerta');
+  }
+  /* 8 cocadas = chispa */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo());
+    for (const c of G.N.cocadas){ mover(G, c.x, c.y - 0.7, c.z); }
+    if (!G.P.chispas.includes(G.N.chispaCocadas)) mal('las 8 cocadas no dieron chispa (' + G.cocadas + ')'); else bien('las 8 cocadas dan chispa');
+  }
+  /* meta termina el nivel */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo());
+    const M = G.N.meta; mover(G, M.x, M.y - 1.1, M.z);
+    if (G.fase !== 'fin' || !G.P.chispas.includes(G.N.chispaMeta)) mal('la meta no terminó el nivel'); else bien('la meta da chispa y termina el nivel');
+    esperar(G, 5);
+  }
+  /* corazones: tres golpes = desmayo y vuelve a la bandera con los corazones llenos */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo()); G.P.monedas = 25;
+    for (let i = 0; i < 3; i++){ G.J.invul = 0; S.lastimar(G, G.J.x + 1, G.J.z, 5); }
+    if (G.J.vidas !== 3 || G.P.monedas !== 15) mal('el desmayo no funcionó (vidas ' + G.J.vidas + ', monedas ' + G.P.monedas + ')'); else bien('al desmayarse pierde 10 monedas y vuelve con 3 corazones');
+  }
+  /* portales: cerrados sin chispas, abiertos con chispas */
+  {
+    const P = S.progresoNuevo();
+    const G = S.crearPartida(0, P);
+    const p5 = G.N.portales.find(p=>p.nivel === 5);
+    mover(G, p5.x, p5.y, p5.z); esperar(G, 0.2);
+    if (G.fase === 'portal') mal('el portal 5 abrió sin chispas');
+    P.chispas = Array.from({length: 12}, (_, i)=>(1 + (i % 3)) + '-j' + i);
+    const G2 = S.crearPartida(0, P); mover(G2, p5.x, p5.y, p5.z); esperar(G2, 0.2);
+    if (G2.fase !== 'portal' || G2.destino !== 5) mal('el portal 5 no abrió con 12 chispas'); else bien('los portales piden chispas');
+  }
+  /* jefes: cada tipo se puede vencer */
+  for (const tipo of Object.keys(S.JEFES)){
+    const G = S.crearPartida(N1, S.progresoNuevo(), {pj: 'salomon'});
+    G.N.jefe = {tipo, x: 0, y: 0, z: -32, arena: 10};
+    G.jefe = Object.assign({}, G.N.jefe, S.JEFES[tipo], {hp: S.JEFES[tipo].hp, hpMax: S.JEFES[tipo].hp, vivo: true, activo: false, x0: 0, z0: -32, y0: 0, estado: 'espera', t: 0, vx: 0, vz: 0, vy: 0, golpeT: -9, ang: 0});
+    G.N.meta = null; G.metaViva = false;
+    let t = 0;
+    for (; t < 60*120 && G.jefe.vivo; t++){
+      G.J.invul = 9; G.J.vidas = 3;
+      const B = G.jefe;
+      /* se queda cerca mirando al jefe y le tira pedradas; si está mareado o cansado, le salta encima */
+      if ((B.estado === 'mareado' || B.estado === 'cansado') && B.activo){ G.J.x = B.x; G.J.z = B.z; G.J.y = B.y + B.alto + 0.6; G.J.vy = -3; G.J.suelo = false; }
+      else { G.J.x = B.x0; G.J.z = B.z0 + 8; G.J.y = 0; G.J.ang = Math.atan2(B.x - G.J.x, B.z - G.J.z); G.J.cd = t % 20 ? G.J.cd : 0; }
+      S.paso(G, {poder: t % 20 === 0});
+      G.eventos.length = 0;
+    }
+    if (G.jefe.vivo) mal('no se pudo vencer al jefe ' + tipo + ' (hp ' + G.jefe.hp + ', estado ' + G.jefe.estado + ')'); else bien('jefe ' + S.JEFES[tipo].nombre + ' vencido en ' + (t/60).toFixed(0) + ' s');
+  }
+  /* tienda */
+  {
+    const P = S.progresoNuevo(); P.monedas = 50;
+    if (S.comprar(P, 'corona') !== 'faltan') mal('compró sin plata');
+    if (S.comprar(P, 'aguilas') !== 'comprado' || P.monedas !== 10 || P.puesto.cabeza !== 'aguilas') mal('no compró la gorra');
+    if (S.comprar(P, 'aguilas') !== 'puesto' || P.puesto.cabeza) mal('no se quitó la gorra');
+    const Q = S.progresoLimpio(JSON.parse(JSON.stringify(Object.assign(P, {chispas: ['1-j0', 'malo', '12-m'], monedas: -5, compras: ['aguilas', 'x']}))));
+    if (Q.chispas.length !== 2 || Q.monedas !== 0 || Q.compras.length !== 1) mal('progresoLimpio no limpia'); else bien('tienda y guardado');
+  }
+  /* red */
+  {
+    const G = S.crearPartida(N1, S.progresoNuevo()); G.P.puesto.cabeza = 'corona';
+    const e = S.desempaquetar(JSON.parse(JSON.stringify(S.empaquetar(G, 'Salomón'))));
+    if (!e || e.nv !== N1 || e.puesto.cabeza !== 'corona' || Math.abs(e.x - G.J.x) > 0.01) mal('el paquete de red no va y vuelve');
+    if (S.desempaquetar({t: 'e', x: 'a'}) || S.desempaquetar(null)) mal('acepta paquetes malos');
+    const P = S.progresoNuevo();
+    if (!S.recibirPremio(P, 'chispa', '3-j1') || S.recibirPremio(P, 'chispa', '3-j1') || S.recibirPremio(P, 'chispa', 'hack')) mal('recibirPremio');
+    else bien('paquetes de red');
+  }
+  /* los jefes de los niveles despiertan cuando uno se acerca */
+  for (const n of niveles){
+    if (!L[n]) continue;
+    const G = S.crearPartida(n, S.progresoNuevo());
+    if (!G.jefe) continue;
+    const B = G.jefe;
+    if (!Number.isFinite(B.y0)) { mal('nivel ' + n + ': el jefe no tiene altura'); continue; }
+    G.J.x = B.x0; G.J.z = B.z0 + 6; G.J.y = B.y0; G.J.invul = 99;
+    for (let i = 0; i < 30; i++) S.paso(G, {});
+    if (!B.activo) mal('nivel ' + n + ': el jefe ' + B.nombre + ' no despierta'); else bien('nivel ' + n + ': el jefe despierta');
+  }
+  /* total de chispas: 12 niveles × 4 = 48 y el último portal pide 36 */
+  if (L.length === 13 && L.every(Boolean)){
+    let total = 0; for (let n = 1; n <= 12; n++) total += S.chispasDeNivel(n).length;
+    if (total !== 48) mal('hay ' + total + ' chispas, deberían ser 48'); else bien('48 chispas en total; el último portal pide ' + S.PIDE_PORTAL[12]);
+  } else mal('faltan niveles: hay ' + (L.filter(Boolean).length - 1) + ' de 12');
 }
 
 console.log(fallos ? '\n' + fallos + ' fallo(s)' : '\nTodo bien ✔');
