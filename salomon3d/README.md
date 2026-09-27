@@ -50,11 +50,16 @@ Se puede empezar directo en un nivel con `?nivel=2` o `?nivel=3`, o con los boto
 
 ## Voces
 
-Las frases de Salomón que ya estaban grabadas en *La Gran Aventura* suenan con su mp3:
-«¡Salomón en la casa!», «¡Maracaibo, aquí estoy!», «¡Mira para arriba, primo! ¡Es el
-relámpago del Catatumbo!», etc. Las frases nuevas y las de los primos las dice la voz del
-navegador, con un tono distinto para cada personaje. Todos los diálogos están en
-`DIALOGOS`, dentro de `salomon3d.js`, para grabarlos después.
+Todas las frases tienen mp3, así que no hay voz de robot:
+- **Salomón**: las grabaciones de *La Gran Aventura* («¡Salomón en la casa!», «¡Mira para
+  arriba, primo! ¡Es el relámpago del Catatumbo!», etc.) y 16 frases nuevas hechas con
+  Higgsfield (Seed Audio) **clonando su propia voz**.
+- **El Primo Verde, el Mollejúo, la Chinita y el Nublao**: voces de Higgsfield, cada uno
+  con la suya (el Primo más agudo y rápido, el Mollejúo grave, el Nublao muy grave y lento).
+
+Si un mp3 no carga, habla la voz del navegador con el tono del personaje. Cuando el
+Primo o el Mollejúo comen por primera vez, sus frases de comida van con voz del
+navegador. Las grabaciones están en `CLIPS_PJ`, dentro de `salomon3d.js`.
 
 ## Archivos
 

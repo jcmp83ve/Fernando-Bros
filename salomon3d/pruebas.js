@@ -15,15 +15,24 @@ const bien = m=>console.log('✓', m);
 
 /* 1) las grabaciones de Salomón son las mismas de La Gran Aventura */
 for (const [frase, url] of Object.entries(S.CLIPS_PJ.salomon))
-  if (A.CLIPS_PJ.salomon[frase] !== url) mal('grabación distinta o inexistente: ' + frase);
-/* y todas las frases de Salomón con mp3 se usan tal cual en algún diálogo */
-const dichas = new Set([...Object.values(S.DIALOGOS).flat().map(d=>d[1]), ...Object.values(S.SALUDO)]);
-for (const f of Object.keys(S.CLIPS_PJ.salomon)) if (!dichas.has(f) && !/hamburguesa|agüita/.test(f)) mal('grabación sin usar: ' + f);
+  if (/hf_20260906_/.test(url) && A.CLIPS_PJ.salomon[frase] !== url) mal('grabación distinta o inexistente: ' + frase);
+/* cada frase que se dice tiene su mp3 con la voz de quien la dice */
+const porDecir = [...Object.values(S.DIALOGOS).flat()];
+for (const pj of ['salomon', 'primo', 'mollejuo']) porDecir.push([pj, S.SALUDO[pj]], [pj, S.AY[pj]]);
+porDecir.push(['primo', S.PODER_DICE.primo], ['mollejuo', S.PODER_DICE.mollejuo], ['mollejuo', S.MOLLEJUO_COME]);
+for (const t of Object.values(S.COMER)) porDecir.push(['salomon', t]);
+porDecir.push(['salomon', '¡Otra chispa! ¡Ya van 2!'], ['salomon', '¡Las tres chispas! ¡Ahora vamos por el Nublao!']);
+for (const [pj, t] of porDecir) if (!(S.CLIPS_PJ[pj] && S.CLIPS_PJ[pj][t])) mal('sin grabación: ' + pj + ' → ' + t);
+/* y cada grabación se usa */
+const dichas = new Set(porDecir.map(d=>d[0] + '|' + d[1]));
+for (const pj in S.CLIPS_PJ) for (const f of Object.keys(S.CLIPS_PJ[pj]))
+  if (!dichas.has(pj + '|' + f) && !/hamburguesa|agüita|tesoro/i.test(f) && !(pj==='salomon' && f==='¡Hola! ¡Salomón quiere jugar!')) mal('grabación sin usar: ' + pj + ' → ' + f);
+const total = Object.values(S.CLIPS_PJ).reduce((n, c)=>n + Object.keys(c).length, 0);
 for (const [clave, lineas] of Object.entries(S.DIALOGOS)) for (const [pj, t] of lineas){
   if (!S.NOMBRES[pj]) mal(clave + ': personaje desconocido ' + pj);
   if (!t || t.length > 140) mal(clave + ': frase vacía o muy larga');
 }
-bien('voces y diálogos');
+bien('voces y diálogos · ' + total + ' grabaciones');
 
 /* 2) los saltos: cada uno llega a lo suyo */
 const alto = {salomon: S.alturaSalto('salomon'), primo: S.alturaSalto('primo'), mollejuo: S.alturaSalto('mollejuo')};
