@@ -54,13 +54,15 @@ Los botones de la pantalla son **zonas de toque grandes** (bastante mayores que 
 - Tarjeta giratoria de fin de nivel (★ ♥ 🍄) y pantalla de victoria
 - Todos los diálogos con voz de niño en español (Web Speech API) y efectos de sonido retro (Web Audio)
 
-## ⚡ Salomón y los Primos del Puente
+## ⚡ Salomón y los Primos: La Gran Aventura del Lago
 
-En la carpeta [`salomon3d/`](salomon3d/) vive un **juego corto en 3D** por Maracaibo:
-**Salomón**, **el Primo Verde** y **el Mollejúo** cruzan el Saladillo, el Puente sobre el
-Lago y los palafitos del Catatumbo para devolverle el relámpago a **la Chinita del
-Catatumbo**. Tiene diálogos en maracucho y comida zuliana, y cada obstáculo necesita al
-primo que es. Se abre desde el botón ⚡ SALOMÓN 3D del menú de mundos (o con la tecla S).
+En la carpeta [`salomon3d/`](salomon3d/) vive un **juego de plataformas en 3D** con mundo
+central (la Vereda del Lago) y **12 niveles** por el Zulia y Venezuela: el Saladillo, el Puente,
+los palafitos, Las Pulgas, Coro, el Páramo, el Tepuy, las torres petroleras, la Feria de La
+Chinita, el Castillo de San Carlos y el Catatumbo. Salomón, el Primo Verde y el Mollejúo juntan
+chispas del relámpago, rescatan animalitos, coleccionan barajitas, compran gorras y vencen a
+5 jefes. Se juega **con hasta 4 amigos en línea**. Se abre desde el botón ⚡ SALOMÓN 3D del menú
+de mundos (o con la tecla S).
 
 👉 **[Jugar a Salomón 3D](https://jcmp83ve.github.io/Fernando-Bros/salomon3d/)** ·
 [cómo funciona](salomon3d/README.md)

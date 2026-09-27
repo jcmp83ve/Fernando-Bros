@@ -4,44 +4,44 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Salomón y los Primos del Puente</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Salomón y los Primos: La Gran Aventura del Lago</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Luckiest+Guy&display=swap">
 <style>
-  html,body{margin:0;padding:0;background:#1d1b3a;height:100%;overflow:hidden;
+  html,body{margin:0;padding:0;background:#0b1640;height:100%;overflow:hidden;
     font-family:'Fredoka','Trebuchet MS',sans-serif;-webkit-user-select:none;user-select:none;touch-action:none;
     -webkit-touch-callout:none}
   *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
   canvas{position:fixed;left:0;top:0;touch-action:none}
   #gl{z-index:1;background:#7cc8ff}
   #hud{z-index:2}
-  #cargando{position:fixed;z-index:3;left:0;right:0;top:44%;text-align:center;color:#fff;font-size:22px;
+  #cargando{position:fixed;z-index:3;left:0;right:0;top:42%;text-align:center;color:#ffd43b;font-size:26px;
     text-shadow:0 2px 8px rgba(0,0,0,.6);pointer-events:none}
-  #cargando small{display:block;font-size:14px;opacity:.8;margin-top:8px}
+  #cargando small{display:block;font-size:14px;color:#fff;opacity:.85;margin-top:8px}
 </style>
 </head>
 <body>
 <canvas id="gl"></canvas>
 <canvas id="hud"></canvas>
-<div id="cargando">⚡ Cruzando el puente…<small>Salomón · el Primo Verde · el Mollejúo · la Chinita del Catatumbo</small></div>
+<div id="cargando">⚡ Salomón y los Primos<small>Armando la Vereda del Lago…</small></div>
 <script>
-/* El motor 3D (Three.js, licencia MIT) es el mismo de Pichungito Kart, que
-   vive en la carpeta kart3d/; el juego se carga con una marca de tiempo
-   para que nunca sirva una versión vieja guardada en caché. */
+/* El motor 3D (Three.js, MIT) es el de Pichungito Kart y la red (Trystero, MIT) la de La Gran Aventura.
+   Todo se carga en orden y con una marca de tiempo para no usar versiones viejas guardadas. */
 (function(){
   var t = Date.now();
-  var s = document.createElement('script');
-  s.src = '../kart3d/three.min.js';
-  s.onload = function(){
-    var g = document.createElement('script');
-    g.src = 'salomon3d.js?t=' + t;
-    g.onload = function(){ var c = document.getElementById('cargando'); if (c) c.remove(); };
-    g.onerror = function(){ aviso('No se pudo cargar el juego. Revisa tu conexión y recarga.'); };
-    document.body.appendChild(g);
-  };
-  s.onerror = function(){ aviso('No se pudo cargar el motor 3D. Revisa tu conexión y recarga.'); };
-  function aviso(m){ var c = document.getElementById('cargando'); if (c) c.textContent = m; }
-  document.body.appendChild(s);
+  var lista = ['../kart3d/three.min.js', '../aventura3d/trystero.min.js', 'nucleo.js', 'niveles.js', 'niveles_b.js', 'niveles_c.js', 'niveles_d.js', 'voces.js', 'graficos.js', 'red.js', 'vista.js'];
+  var opcionales = {'../aventura3d/trystero.min.js': 1, 'red.js': 1};
+  function aviso(m){ var c = document.getElementById('cargando'); if (c) c.innerHTML = m; }
+  function siguiente(i){
+    if (i >= lista.length) return;
+    var s = document.createElement('script');
+    s.src = lista[i] + (lista[i].indexOf('three.min') >= 0 ? '' : '?t=' + t);
+    s.onload = function(){ siguiente(i + 1); };
+    s.onerror = function(){ if (opcionales[lista[i]]) siguiente(i + 1); else aviso('No se pudo cargar el juego (' + lista[i] + ').<small>Revisa tu conexión y recarga.</small>'); };
+    document.body.appendChild(s);
+  }
+  siguiente(0);
 })();
 </script>
 </body>
