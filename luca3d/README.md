@@ -1,6 +1,6 @@
-# ✈️ Luca Piloto: ¡De avión a nave galáctica!
+# ✈️ Lucca Piloto: ¡De avión a nave galáctica!
 
-Un juego de vuelo en 3D para un niño de cinco años. **Luca** despega en su avioncito
+Un juego de vuelo en 3D para un niño de cinco años. **Lucca** despega en su avioncito
 amarillo y verde, vuela sobre el mar con **Tío Juan** (el superhéroe de la capa roja) a su
 lado, y cuando aparece **Tía Gaby** en su nave rosada le entrega un **cristal mágico** que
 convierte el avión en una **nave galáctica estilo Star Wars**, con alas en X. Juntos van al
@@ -12,14 +12,14 @@ espacio a vencer a las naves malas y a la **Bola Gris del Malvado**.
 
 | Parte | Qué pasa |
 |---|---|
-| ☁️ **El cielo** | Luca vuela sobre islas y nubes juntando ⭐ estrellas y pasando por aros (+5). Hay que esquivar los nubarrones gruñones. Tío Juan llega volando y le tira 🍔 hamburguesas: **turbo** e invencible por 6 segundos. |
+| ☁️ **El cielo** | Lucca vuela sobre islas y nubes juntando ⭐ estrellas y pasando por aros (+5). Hay que esquivar los nubarrones gruñones. Tío Juan llega volando y le tira 🍔 hamburguesas: **turbo** e invencible por 6 segundos. |
 | 👩‍🚀 **Tía Gaby** | Baja en su nave rosada: *«¡Te necesito en el espacio!»* y le da el cristal mágico. |
 | ✨ **Transformación** | El avión da vueltas, brilla y se convierte en la nave galáctica. El cielo se vuelve espacio. |
-| 🚀 **El espacio** | Asteroides, oleadas de naves malas y planetas. La nave **dispara sola** y apunta sola; Tío Juan (con casco de astronauta) dispara también. *«¡Que la fuerza te acompañe, Luca!»* |
+| 🚀 **El espacio** | Asteroides, oleadas de naves malas y planetas. La nave **dispara sola** y apunta sola; Tío Juan (con casco de astronauta) dispara también. *«¡Que la fuerza te acompañe, Lucca!»* |
 | 🌑 **La Bola Gris** | Hay que darle al **punto verde que brilla**. Tía Gaby y Tío Juan ayudan disparando. |
 | 🎉 **¡Ganaste!** | Fuegos artificiales y los tres celebran juntos. |
 
-**Aquí nunca se pierde:** si algo choca a Luca solo se le caen 3 estrellas y sigue volando.
+**Aquí nunca se pierde:** si algo choca a Lucca solo se le caen 3 estrellas y sigue volando.
 Aunque el niño no toque nada, la partida llega al final.
 
 ## Controles

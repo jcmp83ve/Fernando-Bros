@@ -1,6 +1,6 @@
 'use strict';
 /* ============================================================
-   LUCA PILOTO — la VISTA
+   LUCCA PILOTO — la VISTA
    Dibuja con Three.js (el mismo motor de Pichungito Kart) lo que
    el núcleo (nucleo.js) dice que pasa, y pone encima el marcador,
    los globitos de diálogo y los botones táctiles en 2D.
@@ -68,7 +68,7 @@ function letrero(texto, color){
   return s;
 }
 
-/* ---------------- Luca ---------------- */
+/* ---------------- Lucca ---------------- */
 function crearLucaPiloto(padre, y){
   const g = new THREE.Group(); g.position.y = y; padre.add(g);
   caja(0.75, 0.6, 0.5, '#ffe36e', 0, 0, 0, g);                     // franela amarilla
@@ -89,7 +89,7 @@ function crearAvion(){
   bola(0.22, '#e63946', 0, 0, -3.25, g);
   const helice = new THREE.Group(); helice.position.set(0, 0, -3.35); g.add(helice);
   caja(0.22, 2.6, 0.06, '#333', 0, 0, 0, helice); caja(2.6, 0.22, 0.06, '#333', 0, 0, 0, helice);
-  caja(8.6, 0.16, 1.5, '#2a9c3a', 0, -0.15, -0.6, g);              // alas verdes de Luca
+  caja(8.6, 0.16, 1.5, '#2a9c3a', 0, -0.15, -0.6, g);              // alas verdes de Lucca
   caja(1.4, 0.18, 1.52, '#ffe36e', -3.4, -0.14, -0.6, g); caja(1.4, 0.18, 1.52, '#ffe36e', 3.4, -0.14, -0.6, g);
   caja(3.2, 0.12, 0.9, '#2a9c3a', 0, 0.15, 4.4, g);                // timón de cola
   caja(0.12, 1.2, 1.0, '#2a9c3a', 0, 0.75, 4.4, g);
@@ -101,7 +101,7 @@ function crearAvion(){
 }
 
 function crearNave(){
-  /* la nave galáctica de Luca: blanca, alas en X con rayas verdes y amarillas */
+  /* la nave galáctica de Lucca: blanca, alas en X con rayas verdes y amarillas */
   const g = new THREE.Group();
   const cuerpo = cil(0.45, 0.85, 7, '#eef0f4', 0, 0, 0.3, g, false, 6); cuerpo.rotation.x = Math.PI/2;
   const punta = cil(0.12, 0.45, 2.2, '#eef0f4', 0, 0, -4.1, g, false, 6); punta.rotation.x = Math.PI/2;
@@ -272,7 +272,7 @@ let bolaGris = null, puntoDebil = null;
 function crearBolaGris(){
   const g = new THREE.Group();
   malla(new THREE.SphereGeometry(CFG.JEFE_RADIO, 40, 28), new THREE.MeshLambertMaterial({map: texturaBola()}), 0,0,0, g);
-  /* el plato gigante, mirando hacia Luca (que viene por +z) */
+  /* el plato gigante, mirando hacia Lucca (que viene por +z) */
   const dir = new THREE.Vector3(-0.4, 0.45, 0.8).normalize();
   const disco = cil(8, 6, 3, '#5a5d66', 0, 0, 0, g, false, 28);
   disco.position.copy(dir).multiplyScalar(CFG.JEFE_RADIO*0.93);
@@ -744,7 +744,7 @@ function dibujarHud(){
 
   if (J.fase === 'titulo'){
     const t = J.t;
-    texto('LUCA PILOTO', W/2, H*0.2, Math.min(72, W*0.12), '#ffd23f');
+    texto('LUCCA PILOTO', W/2, H*0.2, Math.min(72, W*0.12), '#ffd23f');
     texto('✈️  ¡De avión a nave galáctica!  🚀', W/2, H*0.2 + Math.min(60, W*0.1), Math.min(30, W*0.055), '#ffffff');
     texto('con 🦸 Tío Juan y 👩‍🚀 Tía Gaby', W/2, H*0.2 + Math.min(100, W*0.17), Math.min(24, W*0.045), '#bfe4ff');
     hx.globalAlpha = 0.6 + Math.sin(t*4)*0.4;
@@ -816,7 +816,7 @@ function dibujarHud(){
   /* final */
   if (J.fase === 'fin' && J.fin > 3){
     hx.fillStyle = 'rgba(5,3,20,0.55)'; hx.fillRect(0, 0, W, H);
-    texto('¡GANASTE, LUCA!', W/2, H*0.2, Math.min(64, W*0.1), '#ffd23f');
+    texto('¡GANASTE, LUCCA!', W/2, H*0.2, Math.min(64, W*0.1), '#ffd23f');
     texto('Salvaste la galaxia con Tío Juan y Tía Gaby', W/2, H*0.2 + Math.min(56, W*0.09), Math.min(24, W*0.045), '#ffffff');
     texto('⭐ ' + J.estrellas + ' estrellas   💥 ' + J.derribadas + ' naves malas', W/2, H*0.44, Math.min(30, W*0.055), '#ffe36e');
     const b = botonesFin();

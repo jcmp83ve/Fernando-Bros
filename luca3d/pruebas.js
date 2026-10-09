@@ -1,5 +1,5 @@
 /* ============================================================
-   PRUEBAS DE LUCA PILOTO
+   PRUEBAS DE LUCCA PILOTO
    Se corre con:   node pruebas.js
    Sin navegador: se carga solo el núcleo y se juegan partidas
    enteras de mentira — con un piloto que esquiva y recoge, y con
@@ -51,7 +51,7 @@ function partida(nombre, control, semilla){
     tFase[J.fase] = (tFase[J.fase]||0) + 1/60;
     const p = J.p;
     if (![p.x, p.y, p.z, p.vel, J.estrellas].every(Number.isFinite)){ mal(nombre+': número roto en el cuadro '+f); return; }
-    if (p.x < -L.CFG.XMAX - 0.01 || p.x > L.CFG.XMAX + 0.01 || p.y < L.CFG.YMIN - 0.01 || p.y > L.CFG.YMAX + 0.01){ mal(nombre+': Luca se salió del cielo'); return; }
+    if (p.x < -L.CFG.XMAX - 0.01 || p.x > L.CFG.XMAX + 0.01 || p.y < L.CFG.YMIN - 0.01 || p.y > L.CFG.YMAX + 0.01){ mal(nombre+': Lucca se salió del cielo'); return; }
     if (J.objs.length > 400) { mal(nombre+': demasiados objetos ('+J.objs.length+')'); return; }
   }
   const esperado = ['cielo','transformacion','espacio','jefe','fin'];

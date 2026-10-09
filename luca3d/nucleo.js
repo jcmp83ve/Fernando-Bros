@@ -1,6 +1,6 @@
 'use strict';
 /* ============================================================
-   LUCA PILOTO: ¡DE AVIÓN A NAVE GALÁCTICA! — el NÚCLEO
+   LUCCA PILOTO: ¡DE AVIÓN A NAVE GALÁCTICA! — el NÚCLEO
    Aquí vive todo lo que pasa en el juego (vuelo, guion, estrellas,
    naves malas, la Bola Gris) sin tocar la pantalla, para poder
    probarlo con node. La vista (vista.js) solo lo dibuja.
@@ -27,7 +27,7 @@ const CFG = {
 
 /* Quién habla: nombre en pantalla, color del globito y tono de voz */
 const QUIEN = {
-  luca:    {nombre:'Luca',      color:'#ffe36e', emoji:'🧒', pitch:1.75, rate:1.05},
+  luca:    {nombre:'Lucca',      color:'#ffe36e', emoji:'🧒', pitch:1.75, rate:1.05},
   tio:     {nombre:'Tío Juan',  color:'#6ab0ff', emoji:'🦸', pitch:0.7,  rate:0.95},
   gaby:    {nombre:'Tía Gaby',  color:'#ff9ed6', emoji:'👩‍🚀', pitch:1.3,  rate:1.0},
   malvado: {nombre:'El Malvado',color:'#b0b0c0', emoji:'😈', pitch:0.2,  rate:0.8},
@@ -35,27 +35,27 @@ const QUIEN = {
 
 /* Todas las frases del juego (las pruebas revisan que no falte ninguna) */
 const FRASES = {
-  inicio:     ['luca', '¡Soy Luca, el piloto más valiente! ¡A volar!'],
-  tioLlega:   ['tio',  '¡Aquí está Tío Juan! ¡Vamos, Luca, yo vuelo contigo!'],
+  inicio:     ['luca', '¡Soy Lucca, el piloto más valiente! ¡A volar!'],
+  tioLlega:   ['tio',  '¡Aquí está Tío Juan! ¡Vamos, Lucca, yo vuelo contigo!'],
   tioHola:    ['luca', '¡Tío Juan! ¡Qué chévere volar juntos!'],
-  hamb:       ['tio',  '¡Toma una hamburguesa, Luca! ¡Turbo!'],
+  hamb:       ['tio',  '¡Toma una hamburguesa, Lucca! ¡Turbo!'],
   hambRica:   ['luca', '¡Qué rica hamburguesa! ¡Fiuuuu!'],
-  gabyLlega:  ['gaby', '¡Hola, Luca! ¡Soy tía Gaby! ¡Te necesito en el espacio!'],
+  gabyLlega:  ['gaby', '¡Hola, Lucca! ¡Soy tía Gaby! ¡Te necesito en el espacio!'],
   gabyHola:   ['luca', '¡Hola, tía Gaby! ¡Allá voy!'],
   cristal:    ['gaby', '¡Agarra este cristal mágico y tu avión se convertirá en una nave galáctica!'],
   transforma: ['luca', '¡Wooow! ¡Mi avión se está transformando!'],
   nave:       ['luca', '¡Mi avión ahora es una nave espacial! ¡Rumbo a las estrellas!'],
-  naveMala:   ['gaby', '¡Cuidado, Luca! ¡Ahí vienen las naves malas del Malvado!'],
-  fuerza:     ['tio',  '¡Que la fuerza te acompañe, Luca!'],
-  golpe:      ['tio',  '¡Tranquilo, Luca! ¡Sigue volando!'],
+  naveMala:   ['gaby', '¡Cuidado, Lucca! ¡Ahí vienen las naves malas del Malvado!'],
+  fuerza:     ['tio',  '¡Que la fuerza te acompañe, Lucca!'],
+  golpe:      ['tio',  '¡Tranquilo, Lucca! ¡Sigue volando!'],
   jefe:       ['malvado', '¡Ja, ja, ja! ¡Nadie pasa por mi galaxia!'],
-  jefePista:  ['gaby', '¡Luca, dispárale al punto verde que brilla!'],
-  jefeAyuda:  ['tio',  '¡Yo te ayudo, Luca!'],
-  jefeMitad:  ['gaby', '¡Ya casi, Luca! ¡Sigue así!'],
+  jefePista:  ['gaby', '¡Lucca, dispárale al punto verde que brilla!'],
+  jefeAyuda:  ['tio',  '¡Yo te ayudo, Lucca!'],
+  jefeMitad:  ['gaby', '¡Ya casi, Lucca! ¡Sigue así!'],
   jefeCae:    ['malvado', '¡Noooo! ¡Mi Bola Gris!'],
   gana:       ['luca', '¡Ganamos! ¡Somos los héroes de la galaxia!'],
-  ganaGaby:   ['gaby', '¡Lo lograste, Luca! ¡Eres un héroe!'],
-  ganaTio:    ['tio',  '¡Muy bien, Luca! ¡Eres un campeón!'],
+  ganaGaby:   ['gaby', '¡Lo lograste, Lucca! ¡Eres un héroe!'],
+  ganaTio:    ['tio',  '¡Muy bien, Lucca! ¡Eres un campeón!'],
   toma1:      ['luca', '¡Toma, nave mala!'],
   toma2:      ['luca', '¡Le di! ¡Le di!'],
   toma3:      ['luca', '¡Pum! ¡Una menos!'],
@@ -119,7 +119,7 @@ function nuevo(J, tipo, x, y, z, extra){
 }
 const RADIO = {estrella:1.0, aro:4.2, nubarron:3.2, hamb:1.4, cristal:1.6, asteroide:3, navemala:1.8};
 
-/* Va sembrando el camino por delante de Luca, en tramos de 50 m */
+/* Va sembrando el camino por delante de Lucca, en tramos de 50 m */
 function generar(J){
   const R = J.R, p = J.p;
   const enCielo = J.fase === 'cielo';
@@ -296,7 +296,7 @@ function romper(J, o){
     J.derribadas++;
     if (J.derribadas % 3 === 1) decir(J, ['toma1','toma2','toma3'][Math.floor(J.derribadas/3) % 3]);
   }
-  /* cada cosa rota suelta una estrella que vuela sola hacia Luca */
+  /* cada cosa rota suelta una estrella que vuela sola hacia Lucca */
   nuevo(J, 'estrella', o.x, o.y, o.z, {iman: true});
 }
 
@@ -390,7 +390,7 @@ function moverAmigos(J, dt){
   const p = J.p, t = J.tio, g = J.gaby;
   const k = Math.min(1, dt*2.5);
   if (t.activo){
-    /* vuela a la derecha de Luca; oz es cuántos metros va detrás (llega desde atrás) */
+    /* vuela a la derecha de Lucca; oz es cuántos metros va detrás (llega desde atrás) */
     const lejos = J.fase === 'transformacion' || J.fase === 'fin';   // se apartan para que la cámara dé la vuelta
     const tx = p.x + (lejos ? 11 : J.angosto ? 4.2 : 6) + Math.sin(J.t*0.9)*1.2, ty = p.y + (lejos ? 9 : 2) + Math.sin(J.t*1.7)*0.8;
     t.x += (tx - t.x)*k; t.y += (ty - t.y)*k;
@@ -421,7 +421,7 @@ function moverObjetos(J, dt, vel){
     o.t += dt;
     const x0 = o.x, y0 = o.y, z0 = o.z;
     if (o.iman){
-      /* hamburguesas, cristal y estrellas premio buscan solitas a Luca */
+      /* hamburguesas, cristal y estrellas premio buscan solitas a Lucca */
       const fuerza = o.tipo === 'estrella' ? 30 : 9;
       const ddx = p.x - o.x, ddy = p.y - o.y;
       const L = Math.hypot(ddx, ddy) || 1;
@@ -439,7 +439,7 @@ function moverObjetos(J, dt, vel){
     }
     if (dt > 0){ o.wvx = (o.x-x0)/dt; o.wvy = (o.y-y0)/dt; o.wvz = (o.z-z0)/dt; }
 
-    /* choques con Luca */
+    /* choques con Lucca */
     const dz = Math.abs(o.z - p.z);
     if (o.tipo === 'aro'){
       if (!o.pasado && o.z >= p.z){
@@ -462,7 +462,7 @@ function moverObjetos(J, dt, vel){
     }
     else if (o.tipo === 'nubarron' || o.tipo === 'asteroide' || o.tipo === 'navemala'){
       if (golpear(J) && o.tipo !== 'nubarron') romper(J, o);
-      else if (p.turbo > 0 && o.tipo !== 'nubarron') romper(J, o);   // con turbo, Luca los atraviesa y los rompe
+      else if (p.turbo > 0 && o.tipo !== 'nubarron') romper(J, o);   // con turbo, Lucca los atraviesa y los rompe
     }
   }
 }

@@ -3334,7 +3334,7 @@ function cajasMapa(){
     cajas.push({x:30+col*184, y:130+row*126, w:168, h:106, idx:i});
   }
   /* los siete botones de abajo, en dos filas: la carrera, la sala arcade, el dominó y el kart en 3D;
-     y debajo la gran aventura, Salomón en Maracaibo y Luca Piloto */
+     y debajo la gran aventura, Salomón en Maracaibo y Lucca Piloto */
   const anc = 210, hueco = 10, alto = 54;
   for(let i=0;i<7;i++){
     const fila = i<4 ? 0 : 1, n = fila ? 3 : 4, col = fila ? i-4 : i;
@@ -3373,7 +3373,7 @@ function abrirSalomon3D(){
     else location.href = destino;
   }catch(e){ try{ location.href = destino; }catch(e2){} }
 }
-/* Luca Piloto, el avión que se vuelve nave galáctica, vive en la carpeta luca3d/ */
+/* Lucca Piloto, el avión que se vuelve nave galáctica, vive en la carpeta luca3d/ */
 function abrirLuca3D(){
   const destino = (typeof window !== 'undefined' && window.URL_LUCA3D) || 'luca3d/';
   try{
@@ -3416,7 +3416,7 @@ function dibMapa(){
     else if (c.idx===13) rotuloConEmoji('🏎️', 'PICHUNGITO KART', c, '#ffb06e');
     else if (c.idx===14) rotuloConEmoji('🌴', 'AVENTURA 3D', c, '#7de0ff');
     else if (c.idx===15) rotuloConEmoji('⚡', 'SALOMÓN 3D', c, '#ffd23f');
-    else if (c.idx===16) rotuloConEmoji('✈️', 'LUCA PILOTO', c, '#7de0ff');
+    else if (c.idx===16) rotuloConEmoji('✈️', 'LUCCA PILOTO', c, '#7de0ff');
     else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
