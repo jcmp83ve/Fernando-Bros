@@ -513,7 +513,7 @@ function cargarMundo(J, n, desde){
          invul:0, poder:null, tPoder:0, escala:1, giro:0, cdGiro:0, cdFuego:0, baile:0, seguro:{x, y:y0, z}, tSeguro:0,
          antSalto:false, antPoder:false, antAyuda:false, anim:0, vuela:false, golpeT:0, tAire:0};
   J.camA = ang;
-  J.tio = {x: x + 2, y: y0 + 2.4, z: z + 2, ang, estado:'sigue', lista:[], obj:null, cd:0, puno:0, t:0};
+  J.tio = {x: x + 2, y: y0 + 2.4, z: z + 2, vx: 0, vy: 0, vz: 0, ang, estado:'sigue', lista:[], obj:null, cd:0, puno:0, t:0};
   J.perros = [{quien:'penny', x: x - 1.5, y:y0, z: z + 1.5, ang, anim:0}, {quien:'sheldon', x: x + 1.5, y:y0, z: z + 1.8, ang, anim:0}];
   ev(J, 'mundo', x, y0, z, {n});
 }
@@ -653,10 +653,16 @@ function jugador(J, dt, inp){
 
   /* gravedad (y el vuelo de la gorra alada) */
   let g = CFG.GRAV;
-  p.vuela = false;
-  if (p.poder === 'alas' && !p.enSuelo){
-    if (inp.salto && p.y < def.techo){ p.vy = Math.min(p.vy + 70*dt, 7); g = 0; p.vuela = true; }
-    else if (p.vy < -3.5){ p.vy = -3.5; g = 0; p.vuela = true; }
+  /* con la gorra alada todo el rato en el aire es "volar" (antes cambiaba de pose en cada cuadro
+     al llegar al techo y Fernando parpadeaba); cerca del techo frena suave y se queda flotando */
+  p.vuela = p.poder === 'alas' && !p.enSuelo;
+  if (p.vuela){
+    if (inp.salto){
+      const falta = def.techo - p.y;
+      const meta = falta > 2 ? 7 : Math.max(0, falta*3);
+      p.vy += (meta - p.vy)*Math.min(1, dt*6);
+      g = 0;
+    } else if (p.vy < -3.5){ p.vy = -3.5; g = 0; }
   }
   p.vy -= g*dt;
   if (p.vy < -32) p.vy = -32;
@@ -733,7 +739,7 @@ function rescatar(J){
   ev(J, 'rescate', p.x, p.y, p.z, {a:{x:s.x, y:s.y, z:s.z}});
   p.x = s.x; p.y = s.y + 1.5; p.z = s.z; p.vx = p.vz = 0; p.vy = 2; p.enSuelo = false; p.sobre = null;
   p.invul = Math.max(p.invul, 1.5);
-  J.tio.x = s.x + 1.2; J.tio.y = s.y + 3; J.tio.z = s.z + 1;
+  J.tio.x = s.x + 1.2; J.tio.y = s.y + 3; J.tio.z = s.z + 1; J.tio.vx = J.tio.vy = J.tio.vz = 0;
   J.tio.estado = 'sigue'; J.tio.lista = [];
   if (J.cdRescateDicho <= 0){ decir(J, 'rescate'); J.cdRescateDicho = 14; }
 }
@@ -1036,13 +1042,25 @@ function buscarGuia(J){
 function tioSigue(J, dt){
   const t = J.tio, p = J.p;
   t.t += dt;
-  /* vuela al lado de Fernando, un poquito adelante, para que la cámara vea a los dos */
-  const a = p.ang - 1.15;
-  const ox = p.x + Math.sin(a)*2.1, oz = p.z + Math.cos(a)*2.1, oy = p.y + 1.6*Math.max(1, p.escala*0.9) + Math.sin(t.t*2)*0.25;
-  const k = Math.min(1, dt*3.5);
-  t.x += (ox - t.x)*k; t.y += (oy - t.y)*k; t.z += (oz - t.z)*k;
-  t.ang += angDif(t.ang, p.ang)*Math.min(1, dt*4);
-  if (Math.hypot(t.x - p.x, t.z - p.z) > 30){ t.x = ox; t.y = oy; t.z = oz; }
+  /* vuela al lado de Fernando, un poquito adelante, para que la cámara vea a los dos. El lado
+     depende hacia dónde va Fernando, pero girado con calma para que Tío Juan no dé vueltas locas */
+  t.rumbo = t.rumbo == null ? p.ang : t.rumbo + angDif(t.rumbo, p.ang)*Math.min(1, dt*1.5);
+  const a = t.rumbo - 1.15;
+  const ox = p.x + Math.sin(a)*2.1, oz = p.z + Math.cos(a)*2.1, oy = p.y + 1.6*Math.max(1, p.escala*0.9) + Math.sin(t.t*1.6)*0.2;
+  /* resorte con amortiguación: acelera y frena como si tuviera peso (antes saltaba hacia el punto) */
+  const w = 3.2;
+  if (!isFinite(t.vx + t.vy + t.vz)) t.vx = t.vy = t.vz = 0;
+  t.vx += ((ox - t.x)*w*w - t.vx*2*w)*dt;
+  t.vy += ((oy - t.y)*w*w - t.vy*2*w)*dt;
+  t.vz += ((oz - t.z)*w*w - t.vz*2*w)*dt;
+  const v = Math.hypot(t.vx, t.vy, t.vz), tope = 24;
+  if (v > tope){ t.vx *= tope/v; t.vy *= tope/v; t.vz *= tope/v; }
+  t.x += t.vx*dt; t.y += t.vy*dt; t.z += t.vz*dt;
+  /* mira hacia donde vuela; si casi no se mueve, hacia donde mira Fernando */
+  const vh = Math.hypot(t.vx, t.vz);
+  const meta = vh > 1.5 ? Math.atan2(t.vx, t.vz) : p.ang;
+  t.ang += angDif(t.ang, meta)*Math.min(1, dt*(vh > 1.5 ? 5 : 2));
+  if (Math.hypot(t.x - p.x, t.z - p.z) > 30){ t.x = ox; t.y = oy; t.z = oz; t.vx = t.vy = t.vz = 0; }
 }
 function tio(J, dt, inp){
   const t = J.tio, p = J.p, M = J.M;
@@ -1080,8 +1098,10 @@ function tio(J, dt, inp){
         if (e.tipo === 'jefe'){ matar(J, e, 'tio'); t.lista.shift(); }
         else matar(J, e, 'tio');
       } else {
-        t.x += dx/d*Math.min(v, d); t.y += dy/d*Math.min(v, d); t.z += dz/d*Math.min(v, d);
-        t.ang = Math.atan2(dx, dz);
+        const paso = Math.min(v, d);
+        t.x += dx/d*paso; t.y += dy/d*paso; t.z += dz/d*paso;
+        t.vx = dx/d*paso/dt; t.vy = dy/d*paso/dt; t.vz = dz/d*paso/dt;
+        t.ang += angDif(t.ang, Math.atan2(dx, dz))*Math.min(1, dt*10);
       }
     }
   } else tioSigue(J, dt);
@@ -1147,7 +1167,7 @@ function irConAmigo(J, nv, x, y, z){
     p.invul = Math.max(p.invul, 1.5);
     const g = suelo(J.M, x, z, y + 1, 0.3);
     if (g.s && !g.s.mov) p.seguro = {x, y: g.y, z};
-    J.tio.x = p.x + 1; J.tio.y = p.y + 2; J.tio.z = p.z;
+    J.tio.x = p.x + 1; J.tio.y = p.y + 2; J.tio.z = p.z; J.tio.vx = J.tio.vy = J.tio.vz = 0;
     ev(J, 'llevar', p.x, p.y, p.z);
   };
   if (nv === J.mundo){ poner(); return true; }

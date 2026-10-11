@@ -429,7 +429,9 @@ function animarHQ(h, est, dt, t){
     else if (pod === 'tenis'){ mt.emissive.set('#3aff8a'); mt.emissiveIntensity = 0.1; }
     else mt.emissiveIntensity = 0;
   }
-  h.cont.rotation.set(est.vuela ? 0.9 : 0, est.giro ? est.giroA : 0, 0);
+  /* la inclinación de volar se va poniendo de a poco (nada de cambios de golpe) */
+  h.incl = (h.incl || 0) + ((est.vuela ? 0.9 : 0) - (h.incl || 0))*Math.min(1, dt*6);
+  h.cont.rotation.set(h.incl, est.giro ? est.giroA : 0, 0);
 }
 /* Tío Juan volando: el modelo ya viene en pose de superhéroe */
 function vestirTioHQ(){
@@ -876,14 +878,24 @@ function animarTio(dt, t){
   const T = J.tio, m = tio;
   const vel = IP.tVel;
   m.g.position.set(IP.t.x, IP.t.y - 1.1, IP.t.z);
-  m.g.rotation.y = T.ang;
+  anim.tioYaw = anim.tioYaw == null ? T.ang : anim.tioYaw + F.angDif(anim.tioYaw, T.ang)*Math.min(1, dt*10);
+  m.g.rotation.y = anim.tioYaw;
   const rapido = clamp(vel/12, 0, 1);
   if (m.hq){
-    /* despacio: casi parado flotando; rápido: acostado como superhéroe */
-    const meta = J.fase === 'final' || J.p.baile > 0 ? -1.2 : -1.25 + rapido*1.25;
-    m.hq.cont.rotation.x += (meta - m.hq.cont.rotation.x)*Math.min(1, dt*4);
-    m.hq.cont.rotation.z = Math.sin(t*1.7)*0.08;
-    m.hq.cont.position.y = 1.1 + Math.sin(t*2.3)*0.08;
+    /* Vuelo natural: despacio flota casi parado; rápido se acuesta como superhéroe. Si sube,
+       levanta la cabeza; si baja, la agacha. En las curvas se ladea hacia adentro, como un avión. */
+    const T2 = J.tio, vh = Math.hypot(T2.vx || 0, T2.vz || 0);
+    const r = clamp(vh/10, 0, 1);
+    let cab = -1.3 + r*1.25 - clamp((T2.vy || 0)*0.06, -0.35, 0.35);
+    if (J.fase === 'final' || J.p.baile > 0) cab = -1.25;
+    const giroV = anim.tioAngAnt == null ? 0 : F.angDif(anim.tioAngAnt, T2.ang)/Math.max(dt, 1e-3);
+    anim.tioAngAnt = T2.ang;
+    const ladeo = clamp(-giroV*0.12*(0.4 + r), -0.6, 0.6) + Math.sin(t*1.3)*0.05;
+    const hq = m.hq;
+    hq.cab = (hq.cab == null ? cab : hq.cab + (cab - hq.cab)*Math.min(1, dt*3));
+    hq.lad = (hq.lad == null ? 0 : hq.lad + (ladeo - hq.lad)*Math.min(1, dt*4));
+    hq.cont.rotation.set(hq.cab, 0, hq.lad, 'YXZ');
+    hq.cont.position.y = 1.1 + Math.sin(t*1.9)*0.06*(1 - r);
   }
   m.cuerpo.rotation.x = rapido*1.1;
   m.piernaI.rotation.x = 0.2 + rapido*0.4 + Math.sin(t*3)*0.1; m.piernaD.rotation.x = 0.1 + rapido*0.4 - Math.sin(t*3)*0.1;
