@@ -67,6 +67,23 @@ de mundos (o con la tecla S).
 👉 **[Jugar a Salomón 3D](https://jcmp83ve.github.io/Fernando-Bros/salomon3d/)** ·
 [cómo funciona](salomon3d/README.md)
 
+## ⭐ Fernando 3D — con Fernando y Tío Juan
+
+En la carpeta [`fernando3d/`](fernando3d/) vive un **juego de plataformas en 3D al estilo
+Super Mario 64**: el Rey Gruñón se robó las estrellas del castillo de Tío Juan y Fernando entra
+en los cuadros mágicos para recuperarlas, con **Tío Juan** volando a su lado y **Penny** y
+**Sheldon** detrás. Son 5 mundos (pradera, playa, montaña nevada, nubes y el castillo del Rey
+Gruñón), 14 estrellas, 5 jefes y **6 poderes** (gorra alada, flor de fuego, súper hamburguesa,
+hongo gigante, imán de monedas y tenis saltarines). El botón 🦸 llama a Tío Juan para que venza
+a los enemigos o traiga un regalo, una flecha amarilla guía siempre a la próxima estrella y, como
+en todo Fernando Bros, **nunca se pierde**: si Fernando se cae, Tío Juan lo atrapa. Se abre
+desde el botón **⭐ FERNANDO 3D** del menú de mundos (o con la tecla **F**). Se juega **con hasta
+4 amigos en línea** (👥 → crear sala → código de 4 letras): cada uno elige a Fernando, Lucca,
+Salomón o Cucú, se ven en el mismo mundo, las estrellas son de todos y el botón 🚀 lleva con un amigo.
+
+👉 **[Jugar a Fernando 3D](https://jcmp83ve.github.io/Fernando-Bros/fernando3d/)** ·
+[cómo funciona](fernando3d/README.md)
+
 ## ✈️ Lucca Piloto: ¡De avión a nave galáctica!
 
 En la carpeta [`luca3d/`](luca3d/) vive un **juego de vuelo en 3D**: **Lucca** pilotea su
