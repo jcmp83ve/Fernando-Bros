@@ -408,6 +408,7 @@ function vestirHQ(m, pj){
 function animarHQ(h, est, dt, t){
   let q = 'quieto';
   if (est.baile) q = 'baile';
+  else if (est.nada) q = est.vel > 0.6 ? 'correr' : 'quieto';
   else if (!est.suelo) q = 'salto';
   else if (est.vel > 0.6) q = 'correr';
   if (!h.acc[q]) q = h.acc.quieto ? 'quieto' : 'correr';
@@ -419,7 +420,7 @@ function animarHQ(h, est, dt, t){
     if (h.actual && h.acc[h.actual]) h.acc[h.actual].fadeOut(0.12);
     h.actual = q;
   }
-  if (h.acc.correr) h.acc.correr.timeScale = clamp(est.vel/6, 0.7, 1.8);
+  if (h.acc.correr) h.acc.correr.timeScale = est.nada ? 0.8 : clamp(est.vel/6, 0.7, 1.8);
   h.mixer.update(dt);
   /* poderes: fuego → brillo naranja; hamburguesa → arcoíris */
   const pod = est.poder;
@@ -430,8 +431,12 @@ function animarHQ(h, est, dt, t){
     else mt.emissiveIntensity = 0;
   }
   /* la inclinación de volar se va poniendo de a poco (nada de cambios de golpe) */
-  h.incl = (h.incl || 0) + ((est.vuela ? 0.9 : 0) - (h.incl || 0))*Math.min(1, dt*6);
+  const inclMeta = est.vuela ? 0.9 : est.nada && est.vel > 0.6 ? 1.2 : 0;
+  h.incl = (h.incl || 0) + (inclMeta - (h.incl || 0))*Math.min(1, dt*(est.nada ? 4 : 6));
   h.cont.rotation.set(h.incl, est.giro ? est.giroA : 0, 0);
+  /* acostado nadando gira desde los pies: se sube para que el cuerpo quede en la superficie */
+  if (h.y0 == null) h.y0 = h.cont.position.y;
+  h.cont.position.y = h.y0 + (est.nada ? h.incl/1.2*0.8 : 0);
 }
 /* Tío Juan volando: el modelo ya viene en pose de superhéroe */
 function vestirTioHQ(){
@@ -828,7 +833,15 @@ function animarFernando(dt, t){
   f.brazoI.rotation.x = -s*0.8*pasoK; f.brazoD.rotation.x = s*0.8*pasoK;
   f.brazoI.rotation.z = 0.25; f.brazoD.rotation.z = -0.25;
   f.cabeza.rotation.set(0, 0, 0);
-  if (!p.enSuelo){
+  if (p.nada){
+    /* nadar: estilo libre si avanza, pataleando parado si no */
+    const k = Math.min(1, vel/3), fn = t*(k > 0.2 ? 7 : 4);
+    f.cuerpo.rotation.x = 1.2*k; f.cuerpo.position.y = 0.75*k;
+    f.brazoI.rotation.x = -1.6 + Math.sin(fn)*1.5*k - (1 - k)*0.4; f.brazoD.rotation.x = -1.6 - Math.sin(fn)*1.5*k - (1 - k)*0.4;
+    f.brazoI.rotation.z = 0.25 + (1 - k)*0.8*(0.6 + Math.sin(fn)*0.4); f.brazoD.rotation.z = -0.25 - (1 - k)*0.8*(0.6 + Math.sin(fn)*0.4);
+    f.piernaI.rotation.x = Math.sin(fn*2)*0.45; f.piernaD.rotation.x = -Math.sin(fn*2)*0.45;
+    f.cabeza.rotation.x = -0.9*k;
+  } else if (!p.enSuelo){
     if (p.vuela){
       f.cuerpo.rotation.x = 0.9; f.brazoI.rotation.x = f.brazoD.rotation.x = -2.9; f.piernaI.rotation.x = f.piernaD.rotation.x = 0.3; f.cabeza.rotation.x = -0.7;
     } else {
@@ -847,7 +860,7 @@ function animarFernando(dt, t){
   }
   if (f.hq){
     if (p.giro > 0) anim.giroA = (1 - p.giro/0.45)*TAU*2;
-    animarHQ(f.hq, {suelo: p.enSuelo, vel, baile: p.baile > 0 || J.fase === 'final', vuela: p.vuela, giro: p.giro > 0, giroA: anim.giroA || 0, poder: p.tPoder < 3 && Math.floor(t*8) % 2 === 0 ? '' : p.poder}, dt, t);
+    animarHQ(f.hq, {suelo: p.enSuelo, vel, baile: p.baile > 0 || J.fase === 'final', vuela: p.vuela, nada: p.nada, giro: p.giro > 0, giroA: anim.giroA || 0, poder: p.tPoder < 3 && Math.floor(t*8) % 2 === 0 ? '' : p.poder}, dt, t);
     if (anim.voltereta > 0) f.hq.cont.rotation.x = (1 - anim.voltereta/0.42)*TAU;
   }
   /* parpadea si lo golpearon */
@@ -869,6 +882,13 @@ function animarFernando(dt, t){
   if (pod === 'tenis' && !p.enSuelo) emitir(p.x, p.y + 0.1, p.z, 1, {color:'#5aff9a', vel:0.4, grav:0, vida:0.4, tam:0.3});
   if (pod === 'gigante' && p.enSuelo && vel > 2 && Math.random() < 0.3) emitir(p.x, p.y + 0.1, p.z, 2, {color:'#e8d8c0', vel:1.5, grav:1, vida:0.5, tam:0.6, plano:true});
   if (p.vuela) emitir(p.x, p.y + 1.5, p.z, 1, {color:'#ffffff', vel:0.5, grav:-0.5, vida:0.6, tam:0.25});
+  /* nadando: espuma alrededor y salpicones al bracear */
+  if (p.nada && J.M.def.agua){
+    const ay = J.M.def.agua.y + 0.05;
+    if (Math.random() < (vel > 1 ? 0.6 : 0.15)) emitir(p.x - Math.sin(p.ang)*0.5, ay, p.z - Math.cos(p.ang)*0.5, 1, {color:'#ffffff', vel:0.6, grav:0, vida:0.9, tam:0.45, plano:true});
+    anim.brazada = (anim.brazada || 0) + dt*(vel > 1 ? 2.2 : 0);
+    if (anim.brazada > 1){ anim.brazada = 0; sonar('brazada'); emitir(p.x + Math.sin(p.ang)*0.6, ay, p.z + Math.cos(p.ang)*0.6, 5, {colores:['#ffffff', '#bfeaff'], vel:2, vy:2.5, grav:8, vida:0.5, tam:0.22}); }
+  }
   /* sombra suave */
   const g = F.suelo(J.M, p.x, p.z, p.y + 0.1, 0.2);
   sombraFer.visible = isFinite(g.y) && p.y - g.y < 12;
@@ -1051,6 +1071,8 @@ const SON = {
   temblor(){ ruido(0.5, 0.2, 120); tono(70, 40, 0.5, 'sine', 0.2); },
   puno(){ ruido(0.15, 0.2, 700); tono(220, 60, 0.18, 'square', 0.1); },
   tioVuela(){ ruido(0.5, 0.12, 1800); },
+  chapuzon(){ ruido(0.45, 0.16, 900); tono(500, 140, 0.25, 'sine', 0.08); },
+  brazada(){ ruido(0.18, 0.05, 1400); },
   caja(){ const t = AC.currentTime; tono(nota(72), 0, 0.1, 'triangle', 0.08, t); tono(nota(79), 0, 0.2, 'triangle', 0.08, t + 0.08); },
   rescate(){ const t = AC.currentTime; [79, 76, 72, 79, 84].forEach((n, i)=>tono(nota(n), 0, 0.12, 'triangle', 0.08, t + i*0.07)); },
   bloqueado(){ tono(200, 150, 0.25, 'square', 0.06); },
@@ -1157,6 +1179,7 @@ function procesarEventos(){
       case 'habla': hablar(e.texto, e.quien); break;
       case 'salto': sonar('salto'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#ffffff', vel:1.5, grav:2, vida:0.4, tam:0.3, plano:true}); break;
       case 'salto2': sonar('salto2'); anim.voltereta = 0.42; emitir(e.x, e.y + 0.4, e.z, 10, {colores:['#ffffff', '#ffe36e'], vel:2.5, grav:1, vida:0.5, tam:0.25}); break;
+      case 'chapuzon': sonar('chapuzon'); emitir(e.x, e.y + 0.1, e.z, e.fuerte ? 34 : 20, {colores:['#ffffff', '#bfeaff', '#7ad0ff'], vel: e.fuerte ? 6 : 4, vy: e.fuerte ? 6 : 4, grav:9, vida:0.8, tam:0.35}); break;
       case 'aterriza': emitir(e.x, e.y + 0.1, e.z, e.fuerte ? 16 : 8, {color:'#f0e8d8', vel:2.5, grav:2, vida:0.5, tam:0.4, plano:true}); if (e.fuerte) cam.temblor = 0.4; break;
       case 'moneda': sonar('moneda'); emitir(e.x, e.y, e.z, 10, {colores:['#ffe36e', '#fff6c0'], vel:3, grav:3, vida:0.5, tam:0.25}); break;
       case 'roja': sonar('roja'); emitir(e.x, e.y, e.z, 24, {colores:['#ff3a4a', '#ffd0d0'], vel:4, grav:2, vida:0.8, tam:0.35}); break;
@@ -1620,14 +1643,18 @@ function animarRemotos(dt, t){
     if (!ver) continue;
     const e = r.obj, a = r.act, f = o.m;
     if (r.pj === 'fernando' && !f.hq && HQ.fer) vestirHQ(f, 'fernando');
-    if (f.hq) animarHQ(f.hq, {suelo: e.suelo, vel: e.mov, baile: e.baile, vuela: e.vuela, giro: e.giro, giroA: t*25, poder: e.poder}, dt, t);
+    if (f.hq) animarHQ(f.hq, {suelo: e.suelo, vel: e.mov, baile: e.baile, vuela: e.vuela, nada: e.nada, giro: e.giro, giroA: t*25, poder: e.poder}, dt, t);
     f.g.position.set(a.x, a.y, a.z); f.g.rotation.y = a.ang; f.g.scale.setScalar(e.escala);
     o.fase += dt*(4 + e.mov*1.6);
     const k = e.suelo ? Math.min(1, e.mov/4) : 0, s = Math.sin(o.fase);
     f.cuerpo.rotation.set(0, 0, 0); f.cuerpo.position.y = e.suelo ? Math.abs(s)*0.06*k : 0;
     f.piernaI.rotation.x = s*0.9*k; f.piernaD.rotation.x = -s*0.9*k;
     f.brazoI.rotation.x = -s*0.8*k; f.brazoD.rotation.x = s*0.8*k; f.brazoI.rotation.z = 0.25; f.brazoD.rotation.z = -0.25;
-    if (!e.suelo){
+    if (e.nada){
+      const kk = Math.min(1, e.mov/3), fn = t*7;
+      f.cuerpo.rotation.x = 1.2*kk; f.cuerpo.position.y = 0.75*kk; f.brazoI.rotation.x = -1.6 + Math.sin(fn)*1.5*kk; f.brazoD.rotation.x = -1.6 - Math.sin(fn)*1.5*kk;
+      f.piernaI.rotation.x = Math.sin(fn*2)*0.45; f.piernaD.rotation.x = -Math.sin(fn*2)*0.45;
+    } else if (!e.suelo){
       if (e.vuela){ f.cuerpo.rotation.x = 0.9; f.brazoI.rotation.x = f.brazoD.rotation.x = -2.9; }
       else { f.brazoI.rotation.x = f.brazoD.rotation.x = -2.6; f.brazoI.rotation.z = 0.6; f.brazoD.rotation.z = -0.6; f.piernaI.rotation.x = -0.7; f.piernaD.rotation.x = 0.35; }
     }

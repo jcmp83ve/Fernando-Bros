@@ -76,6 +76,7 @@ const FRASES = {
   jefeGolpe:  ['fer', '¡Toma, pichungazo!'],
   jefeCae:    ['tio', '¡Muy bien, mi pichunguito! ¡Eres un campeón!'],
   alas:       ['fer', '¡A volar, pichunguitos!'],
+  nadar:      ['fer', ['¡Estoy nadando! ¡Mírame!', '¡Al agua, pichunguitos!']],
   fuego:      ['fer', '¡Fuego pichunguito!'],
   hamburguesa:['tio', '¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!'],
   hamb2:      ['fer', '¡Qué rica hamburguesa!'],
@@ -484,6 +485,14 @@ function cargarMundo(J, n, desde){
     M.tuboY = g + 1.2;
     M.solidos.push({t:'cil', x:def.tubo.x, z:def.tubo.z, r:1.0, y0:g - 1, y1:g + 1.2, mat:'tubo', tubo:true, bx:def.tubo.x, bz:def.tubo.z, dx:0, dy:0, dz:0});
   }
+  /* hasta dónde se puede nadar: la caja de las islas y un poquito más */
+  M.caja = {x0: Infinity, x1: -Infinity, z0: Infinity, z1: -Infinity};
+  for (const s of M.solidos){
+    const ex = s.t === 'cil' ? s.r : s.sx, ez = s.t === 'cil' ? s.r : s.sz;
+    if (!(ex < 150 && ez < 150)) continue;
+    M.caja.x0 = Math.min(M.caja.x0, s.x - ex); M.caja.x1 = Math.max(M.caja.x1, s.x + ex);
+    M.caja.z0 = Math.min(M.caja.z0, s.z - ez); M.caja.z1 = Math.max(M.caja.z1, s.z + ez);
+  }
   J.M = M; J.mundo = n; J.cargas++;
   J.bolas = []; J.monedasMundo = 0; J.rojasMundo = 0; J.tTodas = -1; J.guia = null;
   for (const e of def.enemigos) M.enemigos.push(nuevoEnemigo(J, e.tipo, e.x, e.z, e));
@@ -511,7 +520,7 @@ function cargarMundo(J, n, desde){
   const y0 = suelo(M, x, z, 100, 0).y;
   J.p = {x, y:y0, z, vx:0, vy:0, vz:0, ang, enSuelo:true, sobre:null, coyote:0, buffer:0, saltos:0, cortado:true,
          invul:0, poder:null, tPoder:0, escala:1, giro:0, cdGiro:0, cdFuego:0, baile:0, seguro:{x, y:y0, z}, tSeguro:0,
-         antSalto:false, antPoder:false, antAyuda:false, anim:0, vuela:false, golpeT:0, tAire:0};
+         antSalto:false, antPoder:false, antAyuda:false, anim:0, vuela:false, nada:false, golpeT:0, tAire:0};
   J.camA = ang;
   J.tio = {x: x + 2, y: y0 + 2.4, z: z + 2, vx: 0, vy: 0, vz: 0, ang, estado:'sigue', lista:[], obj:null, cd:0, puno:0, t:0};
   J.perros = [{quien:'penny', x: x - 1.5, y:y0, z: z + 1.5, ang, anim:0}, {quien:'sheldon', x: x + 1.5, y:y0, z: z + 1.8, ang, anim:0}];
@@ -622,11 +631,14 @@ function jugador(J, dt, inp){
     dx = fx*iy + rx*ix; dz = fz*iy + rz*ix;
     const l = Math.hypot(dx, dz) || 1; dx /= l; dz /= l;
   } else mag = 0;
-  let vmax = CFG.VEL*(p.poder === 'hamburguesa' ? 1.8 : p.poder === 'gigante' ? 1.25 : 1);
+  /* el agua (no la lava): se nada en la superficie */
+  const agua = def.agua && def.agua.tipo !== 'lava' ? def.agua : null;
+  const flota = agua ? agua.y - 0.95*p.escala : -1e9;
+  let vmax = CFG.VEL*(p.poder === 'hamburguesa' ? 1.8 : p.poder === 'gigante' ? 1.25 : 1)*(p.nada ? 0.7 : 1);
   if (p.golpeT > 0) mag *= 0.3;
   const tvx = dx*vmax*mag, tvz = dz*vmax*mag;
   const hielo = p.enSuelo && p.sobre && p.sobre.hielo;
-  const acel = (p.enSuelo ? (hielo ? 9 : 48) : 22)*dt;
+  const acel = (p.enSuelo ? (hielo ? 9 : 48) : p.nada ? 18 : 22)*dt;
   if (p.golpeT <= 0){
     p.vx += clamp(tvx - p.vx, -acel, acel);
     p.vz += clamp(tvz - p.vz, -acel, acel);
@@ -639,10 +651,10 @@ function jugador(J, dt, inp){
   /* saltar */
   const saltoNuevo = inp.salto && !p.antSalto;
   if (saltoNuevo) p.buffer = CFG.BUFFER; else p.buffer = Math.max(0, p.buffer - dt);
-  p.coyote = p.enSuelo ? CFG.COYOTE : Math.max(0, p.coyote - dt);
+  p.coyote = p.enSuelo || p.nada ? CFG.COYOTE : Math.max(0, p.coyote - dt);
   const mSalto = p.poder === 'tenis' ? 1.4 : p.poder === 'gigante' ? 1.15 : 1;
   if (p.buffer > 0 && p.coyote > 0){
-    p.vy = CFG.SALTO*mSalto; p.enSuelo = false; p.coyote = 0; p.buffer = 0; p.saltos = 1; p.cortado = false; p.sobre = null;
+    p.vy = CFG.SALTO*mSalto; p.enSuelo = false; p.coyote = 0; p.buffer = 0; p.saltos = 1; p.cortado = false; p.sobre = null; p.nada = false;
     ev(J, 'salto', p.x, p.y, p.z);
   } else if (saltoNuevo && !p.enSuelo && p.saltos < 2 && p.poder !== 'alas'){
     p.vy = CFG.SALTO2*mSalto; p.saltos = 2; p.cortado = false; p.buffer = 0;
@@ -655,7 +667,7 @@ function jugador(J, dt, inp){
   let g = CFG.GRAV;
   /* con la gorra alada todo el rato en el aire es "volar" (antes cambiaba de pose en cada cuadro
      al llegar al techo y Fernando parpadeaba); cerca del techo frena suave y se queda flotando */
-  p.vuela = p.poder === 'alas' && !p.enSuelo;
+  p.vuela = p.poder === 'alas' && !p.enSuelo && !p.nada;
   if (p.vuela){
     if (inp.salto){
       const falta = def.techo - p.y;
@@ -663,6 +675,29 @@ function jugador(J, dt, inp){
       p.vy += (meta - p.vy)*Math.min(1, dt*6);
       g = 0;
     } else if (p.vy < -3.5){ p.vy = -3.5; g = 0; }
+  }
+  /* nadar: entra con un chapuzón, flota meciéndose y en la orilla sale solito */
+  if (agua && !p.enSuelo && !p.nada && p.vy <= 0 && p.y <= flota + 0.3){
+    p.nada = true; p.saltos = 0; p.giro = 0;
+    ev(J, 'chapuzon', p.x, agua.y, p.z, {fuerte: p.vy < -12});
+    p.vy = Math.max(p.vy, -6);
+    if (!J.dijoNadar){ J.dijoNadar = true; decir(J, 'nadar'); }
+  }
+  if (p.nada){
+    if (p.enSuelo || p.y > flota + 0.6) p.nada = false;
+    else {
+      g = 0;
+      p.vy += ((flota + Math.sin(p.anim*2.2)*0.06 - p.y)*14 - p.vy*5)*dt;
+      if (mag > 0){
+        const ox = p.x + dx*0.75, oz = p.z + dz*0.75, o = suelo(M, ox, oz, p.y + 2.4, 0.1);
+        if (o.s && o.y > p.y + CFG.PASO){ p.vy = Math.sqrt(2*CFG.GRAV*(o.y - p.y + 0.6)); p.nada = false; p.saltos = 1; p.cortado = true; ev(J, 'chapuzon', p.x, agua.y, p.z, {}); }
+      }
+      const c = M.caja, mg = 10;
+      if (p.x < c.x0 - mg){ p.x = c.x0 - mg; p.vx = Math.max(0, p.vx); }
+      if (p.x > c.x1 + mg){ p.x = c.x1 + mg; p.vx = Math.min(0, p.vx); }
+      if (p.z < c.z0 - mg){ p.z = c.z0 - mg; p.vz = Math.max(0, p.vz); }
+      if (p.z > c.z1 + mg){ p.z = c.z1 + mg; p.vz = Math.min(0, p.vz); }
+    }
   }
   p.vy -= g*dt;
   if (p.vy < -32) p.vy = -32;
@@ -718,7 +753,7 @@ function jugador(J, dt, inp){
     }
   }
   /* se cayó: Tío Juan lo atrapa */
-  const aguaY = def.agua ? def.agua.y - 0.6 : -1e9;
+  const aguaY = def.agua ? def.agua.y - (agua ? 4 : 0.6) : -1e9;
   if (p.y < def.yMuerte || p.y < aguaY) rescatar(J);
 }
 
@@ -737,7 +772,7 @@ function aterrizar(J, gr){
 function rescatar(J){
   const p = J.p, s = p.seguro;
   ev(J, 'rescate', p.x, p.y, p.z, {a:{x:s.x, y:s.y, z:s.z}});
-  p.x = s.x; p.y = s.y + 1.5; p.z = s.z; p.vx = p.vz = 0; p.vy = 2; p.enSuelo = false; p.sobre = null;
+  p.x = s.x; p.y = s.y + 1.5; p.z = s.z; p.vx = p.vz = 0; p.vy = 2; p.enSuelo = false; p.sobre = null; p.nada = false;
   p.invul = Math.max(p.invul, 1.5);
   J.tio.x = s.x + 1.2; J.tio.y = s.y + 3; J.tio.z = s.z + 1; J.tio.vx = J.tio.vy = J.tio.vz = 0;
   J.tio.estado = 'sigue'; J.tio.lista = [];
@@ -1109,7 +1144,7 @@ function tio(J, dt, inp){
 
 /* ---------------- Penny y Sheldon, los perritos ---------------- */
 function perros(J, dt){
-  const p = J.p, M = J.M;
+  const p = J.p, M = J.M, agua = M.def.agua && M.def.agua.tipo !== 'lava' ? M.def.agua : null;
   J.perros.forEach((g, i)=>{
     const a = p.ang + Math.PI + (i ? 0.7 : -0.7);
     const tx = p.x + Math.sin(a)*2.2, tz = p.z + Math.cos(a)*2.2;
@@ -1117,22 +1152,23 @@ function perros(J, dt){
     /* lejos (o Fernando parado en otro piso): aparecen a su lado, sobre el suelo.
        Mientras Fernando vuela se quedan abajo siguiéndolo (no suben al aire). */
     if (d > 14 || (p.enSuelo && Math.abs(g.y - p.y) > 6)){
-      if (!p.enSuelo && d <= 14) return;
       const nx = p.x + Math.sin(a)*1.2, nz = p.z + Math.cos(a)*1.2, gs = suelo(M, nx, nz, p.y + 1, 0.2);
-      if (gs.s && Math.abs(gs.y - p.y) < 1){ g.x = nx; g.z = nz; g.y = gs.y; }
-      else if (p.enSuelo){ g.x = p.x; g.z = p.z; g.y = p.y; }
-      return;
+      if (gs.s && Math.abs(gs.y - p.y) < 1){ g.x = nx; g.z = nz; g.y = gs.y; g.nada = false; return; }
+      if (p.enSuelo){ g.x = p.x; g.z = p.z; g.y = p.y; g.nada = false; return; }
+      if (!p.nada) return;   /* vuela lejos: esperan; nada lejos: nadan hacia él */
     }
     const v = Math.min(d, (d > 3 ? 11 : 6)*dt);
     let corre = false;
     if (d > 0.4){
-      const nx = g.x + dx/d*v, nz = g.z + dz/d*v, gs = suelo(M, nx, nz, g.y + 3, 0.2);
-      if (gs.s){ g.x = nx; g.z = nz; corre = true; }   /* sin suelo (agua, vacío) esperan en la orilla */
+      const nx = g.x + dx/d*v*(g.nada ? 0.7 : 1), nz = g.z + dz/d*v*(g.nada ? 0.7 : 1), gs = suelo(M, nx, nz, g.y + 3, 0.2);
+      if (gs.s || agua){ g.x = nx; g.z = nz; corre = true; }   /* en el agua nadan; en el vacío esperan en la orilla */
       g.ang += angDif(g.ang, Math.atan2(dx, dz))*Math.min(1, dt*8);
     }
     g.anim += corre ? dt*12 : dt*2;
     const gr = suelo(M, g.x, g.z, g.y + 3, 0.2);
-    if (gr.s) g.y += (gr.y - g.y)*Math.min(1, dt*10);
+    const ty = agua && (!gr.s || gr.y < agua.y - 0.4) ? agua.y - 0.4 : gr.s ? gr.y : g.y;
+    g.nada = ty > (gr.s ? gr.y : -Infinity) + 0.01;
+    g.y += (ty - g.y)*Math.min(1, dt*(g.nada ? 4 : 10));
   });
 }
 
@@ -1144,7 +1180,7 @@ function empaquetar(J, pj, nombre){
   const p = J.p;
   return {t:'e', pj: PJS[pj] ? pj : 'fernando', n: String(nombre || '').slice(0, 14), nv: J.mundo,
           x: r2(p.x), y: r2(p.y), z: r2(p.z), a: r2(p.ang), v: r2(Math.hypot(p.vx, p.vz)),
-          s: p.enSuelo ? 1 : 0, vu: p.vuela ? 1 : 0, p: p.poder || '', g: p.giro > 0 ? 1 : 0, b: (p.baile > 0 || J.fase === 'final') ? 1 : 0, e: r2(p.escala)};
+          s: p.enSuelo ? 1 : 0, vu: p.vuela ? 1 : 0, na: p.nada ? 1 : 0, p: p.poder || '', g: p.giro > 0 ? 1 : 0, b: (p.baile > 0 || J.fase === 'final') ? 1 : 0, e: r2(p.escala)};
 }
 /* lo que llega se revisa: números finitos y dentro de rango, textos conocidos; si no, se tira */
 function desempaquetar(m){
@@ -1155,7 +1191,7 @@ function desempaquetar(m){
   if (nv < 0 || [x, y, z, ang].some(Number.isNaN)) return null;
   const pj = PJS[m.pj] ? m.pj : 'fernando';
   const nombre = String(typeof m.n === 'string' ? m.n : '').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PJS[pj].nombre;
-  return {pj, nombre, nv, x, y, z, ang, mov: n(m.v, 0, 40) || 0, suelo: !!m.s, vuela: !!m.vu,
+  return {pj, nombre, nv, x, y, z, ang, mov: n(m.v, 0, 40) || 0, suelo: !!m.s, vuela: !!m.vu, nada: !!m.na,
           poder: PODERES[m.p] ? m.p : '', giro: !!m.g, baile: !!m.b, escala: n(m.e, 1, 3) || 1};
 }
 /* una estrella que ganó un amigo: «mundo:estrella» tiene que existir; devuelve true si es nueva */
