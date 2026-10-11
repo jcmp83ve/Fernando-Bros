@@ -1114,14 +1114,25 @@ function perros(J, dt){
     const a = p.ang + Math.PI + (i ? 0.7 : -0.7);
     const tx = p.x + Math.sin(a)*2.2, tz = p.z + Math.cos(a)*2.2;
     const dx = tx - g.x, dz = tz - g.z, d = Math.hypot(dx, dz);
+    /* lejos (o Fernando parado en otro piso): aparecen a su lado, sobre el suelo.
+       Mientras Fernando vuela se quedan abajo siguiéndolo (no suben al aire). */
+    if (d > 14 || (p.enSuelo && Math.abs(g.y - p.y) > 6)){
+      if (!p.enSuelo && d <= 14) return;
+      const nx = p.x + Math.sin(a)*1.2, nz = p.z + Math.cos(a)*1.2, gs = suelo(M, nx, nz, p.y + 1, 0.2);
+      if (gs.s && Math.abs(gs.y - p.y) < 1){ g.x = nx; g.z = nz; g.y = gs.y; }
+      else if (p.enSuelo){ g.x = p.x; g.z = p.z; g.y = p.y; }
+      return;
+    }
     const v = Math.min(d, (d > 3 ? 11 : 6)*dt);
     let corre = false;
-    if (d > 0.4){ g.x += dx/d*v; g.z += dz/d*v; g.ang += angDif(g.ang, Math.atan2(dx, dz))*Math.min(1, dt*8); corre = true; }
+    if (d > 0.4){
+      const nx = g.x + dx/d*v, nz = g.z + dz/d*v, gs = suelo(M, nx, nz, g.y + 3, 0.2);
+      if (gs.s){ g.x = nx; g.z = nz; corre = true; }   /* sin suelo (agua, vacío) esperan en la orilla */
+      g.ang += angDif(g.ang, Math.atan2(dx, dz))*Math.min(1, dt*8);
+    }
     g.anim += corre ? dt*12 : dt*2;
     const gr = suelo(M, g.x, g.z, g.y + 3, 0.2);
-    const ty = gr.s ? gr.y : p.y;
-    g.y += (ty - g.y)*Math.min(1, dt*10);
-    if (d > 14 || Math.abs(g.y - p.y) > 6){ g.x = p.x + Math.sin(a)*1.2; g.z = p.z + Math.cos(a)*1.2; g.y = p.y; }
+    if (gr.s) g.y += (gr.y - g.y)*Math.min(1, dt*10);
   });
 }
 
