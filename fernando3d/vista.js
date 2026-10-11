@@ -1043,7 +1043,7 @@ function primerToque(){
   if (!tocado){ tocado = true; }
   if (J.fase === 'titulo'){ F.empezar(J); musica.tema(TEMAS[J.M.def.tema].musica); }
 }
-function salir(){ guardar(); try{ speechSynthesis.cancel(); }catch(e){} location.href = window.URL_MENU || '../'; }
+function salir(){ if (window.SIN_SALIR) return; guardar(); try{ speechSynthesis.cancel(); }catch(e){} location.href = window.URL_MENU || '../'; }
 
 /* táctil: palanca a la izquierda, botones a la derecha, arrastrar para girar la cámara */
 const TACTIL = {usado: MOVIL, joy: null, botones: {}, pulsos: {}, cam: null};
@@ -1053,7 +1053,7 @@ function botonesTactiles(){
     salto: {x: W - r(78), y: H - r(84), r: r(54), etiqueta: '⤒', color: '#4ae060'},
     poder: {x: W - r(190), y: H - r(58), r: r(42), etiqueta: '', color: '#ff7a3a'},
     ayuda: {x: W - r(150), y: H - r(178), r: r(40), etiqueta: '🦸', color: '#5aa8ff'},
-    salir: {x: 30, y: 30, r: 22, etiqueta: '✕', color: '#ffffff'},
+    salir: window.SIN_SALIR ? {x: -999, y: -999, r: 0} : {x: 30, y: 30, r: 22, etiqueta: '✕', color: '#ffffff'},
     sonido: {x: 82, y: 30, r: 22, etiqueta: '🔊', color: '#ffffff'},
   };
 }
@@ -1186,6 +1186,7 @@ function dibujarHud(dt){
   /* botones de arriba */
   for (const k of ['salir', 'sonido']){
     const b = B[k];
+    if (!b.r) continue;
     ctx.fillStyle = 'rgba(20,14,50,0.55)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
     if (k === 'salir') texto('✕', b.x, b.y + 1, 22, '#ffffff', 'center', false);
     else emoji(OPC.sonido ? '🔊' : '🔇', b.x, b.y + 1, 20);
