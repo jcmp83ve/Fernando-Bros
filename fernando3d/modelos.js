@@ -186,6 +186,21 @@ function tex(nombre){
   return TEX[nombre];
 }
 
+/* cambia una textura pintada por una foto de alta calidad (Higgsfield) cuando termina de bajar;
+   se repite en espejo para que no se noten las uniones */
+const REPETIR = {pasto: 0.42, tierra: 0.5, arena: 0.42, nieve: 0.4, ladrillo: 0.55, piedraOscura: 0.4};
+function mejorarTextura(nombre, imagen){
+  const t = tex(nombre);
+  t.image = imagen;
+  t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping;
+  t.repeat.set(REPETIR[nombre] || 0.5, REPETIR[nombre] || 0.5);
+  t.anisotropy = MOD.anisotropia;
+  t.needsUpdate = true;
+  /* la arena de la foto ya es dorada: se le quita el tinte */
+  if (nombre === 'arena' && MATS.arena) MATS.arena.top.color.set('#ffffff');
+  if (nombre === 'nieve' && MATS.nieve) MATS.nieve.top.color.set('#ffffff');
+}
+
 /* ---------------- materiales ---------------- */
 const MATS = {};
 /* los colores se escriben como se ven (sRGB) y se pasan a lineal para que no salgan lavados */
@@ -452,8 +467,11 @@ function crearTio(){
   const brazoI = brazo(1), brazoD = brazo(-1);
   const cabeza = new THREE.Group(); cabeza.position.y = 1.92; cuerpo.add(cabeza);
   cabeza.add(bola(mats.piel, 0.3, 0, 0, 0, 1, 1.08, 1));
-  const pelo = new THREE.Mesh(new THREE.SphereGeometry(0.315, 24, 12, 0, TAU, 0, Math.PI*0.42), mats.pelo); pelo.rotation.x = -0.25; cabeza.add(pelo);
-  cabeza.add(bola(mats.pelo, 0.14, 0, 0.2, 0.18, 1.6, 0.6, 0.8));
+  /* Tío Juan NO es calvo: pelo negro abundante, con copete adelante y patillas */
+  const pelo = new THREE.Mesh(new THREE.SphereGeometry(0.33, 24, 14, 0, TAU, 0, Math.PI*0.52), mats.pelo); pelo.rotation.x = 0.12; pelo.position.y = 0.02; cabeza.add(pelo);
+  cabeza.add(bola(mats.pelo, 0.17, 0.02, 0.24, 0.17, 1.5, 0.75, 0.9));
+  cabeza.add(bola(mats.pelo, 0.12, -0.1, 0.27, 0.1, 1.2, 0.8, 1));
+  for (const lado of [1, -1]) cabeza.add(bola(mats.pelo, 0.07, 0.29*lado, -0.02, 0.06, 0.5, 1.3, 0.8));
   for (const lado of [1, -1]){
     const o = ojo(0.065); o.position.set(0.1*lado, 0.04, 0.26); cabeza.add(o);
     const ceja = new THREE.Mesh(GEO.cubo, mats.pelo); ceja.scale.set(0.1, 0.025, 0.02); ceja.position.set(0.1*lado, 0.14, 0.28); cabeza.add(ceja);
@@ -1011,7 +1029,7 @@ function faroDeco(x, z){
   return g;
 }
 
-Object.assign(MOD, {rng, tex, lienzo, std, matSuelo, piezaSuelo, GEO, bola, palo, halo, columnaLuz,
+Object.assign(MOD, {mejorarTextura, rng, tex, lienzo, std, matSuelo, piezaSuelo, GEO, bola, palo, halo, columnaLuz,
   crearFernando, crearTio, ondearCapa, crearPerro, crearEnemigo, crearMoneda, crearEstrella, crearRegalo, crearPortal,
   crearResorte, crearTubo, crearAbu, crearSanti, COLOR_PODER, EMOJI_PODER, TEX_HALO,
   arbol, pino, palmera, roca, hongo, cerca, sombrilla, concha, estrellaMar, munecoDeco, regaloDeco, nubeDeco, globo, antorcha, columna,
