@@ -67,6 +67,18 @@ de mundos (o con la tecla S).
 👉 **[Jugar a Salomón 3D](https://jcmp83ve.github.io/Fernando-Bros/salomon3d/)** ·
 [cómo funciona](salomon3d/README.md)
 
+## ✈️ Lucca Piloto: ¡De avión a nave galáctica!
+
+En la carpeta [`luca3d/`](luca3d/) vive un **juego de vuelo en 3D**: **Lucca** pilotea su
+avioncito sobre el mar con **Tío Juan** volando a su lado, y **Tía Gaby** le da un cristal
+mágico que **convierte el avión en una nave galáctica estilo Star Wars**. Juntos van al espacio
+a vencer a las naves malas y a la **Bola Gris del Malvado**. La nave dispara y apunta sola, y
+aquí tampoco se pierde nunca. Desde el selector de mundos hay un botón **✈️ LUCCA PILOTO**
+(o la tecla **L**).
+
+👉 **[Jugar a Lucca Piloto](https://jcmp83ve.github.io/Fernando-Bros/luca3d/)** ·
+[cómo funciona](luca3d/README.md)
+
 ## 🁫 El Dominó de Tía Yany
 
 En la carpeta [`domino/`](domino/) vive un juego aparte: **dominó doble seis
@@ -146,7 +158,7 @@ Fernando tiene cinco años, así que hay un rincón entero hecho a su medida: en
 
 ## 🗺️ Selector de mundos
 
-Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart**, a la **Sala Arcade**, al **🁫 Dominó de tía Yany**, a **🏎️ Pichungito Kart** (la carrera en 3D) y a **🌴 La Gran Aventura** (el mundo abierto en 3D) sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
+Al tocar la pantalla en el menú se abre **ELIGE TU MUNDO**: puedes jugar cualquiera de los 10 mundos directamente, o saltar de una vez a **Fernando Kart**, a la **Sala Arcade**, al **🁫 Dominó de tía Yany**, a **🏎️ Pichungito Kart** (la carrera en 3D) a **🌴 La Gran Aventura** (el mundo abierto en 3D), a **⚡ Salomón 3D** y a **✈️ Lucca Piloto** (el avión que se vuelve nave galáctica) sin esperar al final. Todas las pantallas de selección tienen un botón **✕** arriba a la izquierda para volver atrás sin teclado.
 
 ## 🕹️ Sala Arcade
 
