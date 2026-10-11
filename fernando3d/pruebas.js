@@ -334,7 +334,7 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); L.cargarMundo(J, 1, null);
   for (let i = 0; i < 30; i++) L.paso(J, 1/60, {});
   L.dar(J, 'alas');
-  let cambios = 0, ant = null, saltoTio = 0, malo = false, prev = null;
+  let cambios = 0, ant = null, saltoTio = 0, malo = false, prev = null, saltoPerro = 0, prevP = null;
   for (let f = 0; f < 60*10; f++){
     /* sube hasta el techo, se queda arriba, y corre en círculos para que Tío Juan lo siga */
     L.paso(J, 1/60, {salto: f < 60*7, camA: 0, x: Math.sin(f/40), y: Math.cos(f/40)});
@@ -344,9 +344,16 @@ for (let n = 0; n < L.MUNDOS.length; n++){
     if (!isFinite(t.x + t.y + t.z + t.vx + t.vy + t.vz)) malo = true;
     if (prev) saltoTio = Math.max(saltoTio, Math.hypot(t.x - prev.x, t.y - prev.y, t.z - prev.z));
     prev = {x: t.x, y: t.y, z: t.z};
+    if (prevP) J.perros.forEach((g, i)=>{ saltoPerro = Math.max(saltoPerro, Math.hypot(g.x - prevP[i].x, g.y - prevP[i].y, g.z - prevP[i].z)); });
+    prevP = J.perros.map(g=>({x: g.x, y: g.y, z: g.z}));
   }
   if (cambios) mal('Fernando cambió de pose ' + cambios + ' veces volando (parpadeo)'); else bien('volar con la gorra alada no parpadea');
   if (malo || saltoTio > 0.5) mal('Tío Juan se movió a saltos (' + saltoTio.toFixed(2) + ' m en un cuadro)'); else bien('Tío Juan vuela suave (máximo ' + saltoTio.toFixed(2) + ' m por cuadro)');
+  if (saltoPerro > 0.5) mal('Penny y Sheldon saltaron ' + saltoPerro.toFixed(2) + ' m en un cuadro mientras Fernando volaba (parpadeo)'); else bien('Penny y Sheldon lo siguen por el suelo sin parpadear (máximo ' + saltoPerro.toFixed(2) + ' m por cuadro)');
+  /* al aterrizar lejos, los perritos llegan a su lado */
+  for (let f = 0; f < 60*6; f++) L.paso(J, 1/60, {});
+  const lejos = Math.max(...J.perros.map(g=>Math.hypot(g.x - J.p.x, g.z - J.p.z) + Math.abs(g.y - J.p.y)));
+  if (lejos > 5) mal('después de aterrizar los perritos quedaron lejos (' + lejos.toFixed(1) + ' m)'); else bien('después de aterrizar, Penny y Sheldon están con Fernando');
 }
 
 /* 5) el castillo: los cuadros se abren con estrellas y el final llega */
