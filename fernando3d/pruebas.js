@@ -329,6 +329,26 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   if (Jr.M.cajas.length !== antes + 1) mal('sin enemigos cerca, Tío Juan no trajo un regalo'); else bien('sin enemigos, Tío Juan trae un regalo con un poder');
 }
 
+/* 4b) volar no parpadea y Tío Juan se mueve suave */
+{
+  const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); L.cargarMundo(J, 1, null);
+  for (let i = 0; i < 30; i++) L.paso(J, 1/60, {});
+  L.dar(J, 'alas');
+  let cambios = 0, ant = null, saltoTio = 0, malo = false, prev = null;
+  for (let f = 0; f < 60*10; f++){
+    /* sube hasta el techo, se queda arriba, y corre en círculos para que Tío Juan lo siga */
+    L.paso(J, 1/60, {salto: f < 60*7, camA: 0, x: Math.sin(f/40), y: Math.cos(f/40)});
+    if (ant !== null && J.p.vuela !== ant && !J.p.enSuelo) cambios++;
+    ant = J.p.vuela;
+    const t = J.tio;
+    if (!isFinite(t.x + t.y + t.z + t.vx + t.vy + t.vz)) malo = true;
+    if (prev) saltoTio = Math.max(saltoTio, Math.hypot(t.x - prev.x, t.y - prev.y, t.z - prev.z));
+    prev = {x: t.x, y: t.y, z: t.z};
+  }
+  if (cambios) mal('Fernando cambió de pose ' + cambios + ' veces volando (parpadeo)'); else bien('volar con la gorra alada no parpadea');
+  if (malo || saltoTio > 0.5) mal('Tío Juan se movió a saltos (' + saltoTio.toFixed(2) + ' m en un cuadro)'); else bien('Tío Juan vuela suave (máximo ' + saltoTio.toFixed(2) + ' m por cuadro)');
+}
+
 /* 5) el castillo: los cuadros se abren con estrellas y el final llega */
 {
   const J = L.crearJuego({prog:{intro:true}});
