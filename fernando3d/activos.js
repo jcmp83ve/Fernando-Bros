@@ -23,7 +23,7 @@ raiz.F3D_ACTIVOS = {
     quieto: B + 'fdd6b4ba-60b3-422f-acaf-724762baaed8.glb',
     salto:  B + 'bdb1811d-7d83-42ba-844d-229c7460d3d7.glb',
     baile:  B + '3c15dbda-c477-4e17-8534-b4dd63bb6c67.glb',
-    alto: 1.55,
+    alto: 1.75,
   },
   tio: {
     modelo: B + 'acfcc71b-3aa8-4742-8d85-0b2d652d1c6d.glb',

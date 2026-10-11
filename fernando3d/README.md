@@ -81,6 +81,18 @@ Sin cuentas ni pagos. Si la parte de red no carga, el juego se juega solo igual.
 | M | — | 🔊 | Música / sonido |
 | ESC | — | ✕ | Volver al menú |
 
+## Personajes 3D, texturas y voces (v2)
+
+- **Fernando en 3D** (gorra roja de la F, overol azul) con esqueleto y animaciones de **correr,
+  quieto, salto y baile**, y **Tío Juan** volando como superhéroe, con su **pelo negro**, capa roja y
+  emblema TJ. Se hicieron con Higgsfield (imagen → modelo 3D con esqueleto) y se cargan de internet
+  (`activos.js`); si no llegan, se ven los personajes hechos con piezas.
+- **Texturas** nuevas de pasto, tierra, arena, nieve, ladrillo del castillo y roca de lava.
+- **Voces grabadas:** los diálogos usan las mismas grabaciones de la Aventura 3D (`voces.js`):
+  Fernando, Tío Juan, Santi, Abu, Penny, Sheldon, Lucca, Salomón y Cucú. Las frases propias de
+  este juego que no tienen grabación las dice la voz del navegador.
+- En pantallas de 90/120 Hz los personajes se dibujan entre paso y paso (antes Tío Juan titilaba).
+
 ## Gráficos
 
 Todo con Three.js (el mismo motor de Pichungito Kart, `../kart3d/three.min.js`), sin archivos
