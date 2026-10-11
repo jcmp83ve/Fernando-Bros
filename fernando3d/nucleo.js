@@ -31,6 +31,15 @@ const PODERES = {
 };
 const LISTA_PODERES = Object.keys(PODERES);
 
+/* Con quién se juega: cada amigo de la sala elige uno (todos tienen gorra con su letra) */
+const PJS = {
+  fernando: {nombre:'Fernando', letra:'F', gorra:'#e8262a', overol:'#2f52e6', color:'#ff6a5a'},
+  lucca:    {nombre:'Lucca',    letra:'L', gorra:'#2ab84a', overol:'#1a3a8a', color:'#5aff8a'},
+  salomon:  {nombre:'Salomón',  letra:'S', gorra:'#ffc81a', overol:'#7a3ad8', color:'#ffe23a'},
+  cucu:     {nombre:'Cucú',     letra:'C', gorra:'#ff5ab0', overol:'#ffffff', color:'#ff9ad8', nina:true},
+};
+const MAX_JUGADORES = 4;
+
 /* Quién habla: nombre en pantalla, color del globito y tono de voz */
 const QUIEN = {
   fer:   {nombre:'Fernando',  color:'#ff6a5a', emoji:'🧒', pitch:1.8, rate:1.05},
@@ -953,7 +962,7 @@ function tomarEstrella(J, s){
   const nueva = !J.prog.estrellas[clave];
   J.prog.estrellas[clave] = true;
   p.baile = 2.2; p.vx = p.vz = 0;
-  ev(J, 'estrella', s.x, s.y, s.z, {nueva, total: cuentaEstrellas(J.prog), grande: !!s.grande});
+  ev(J, 'estrella', s.x, s.y, s.z, {nueva, total: cuentaEstrellas(J.prog), grande: !!s.grande, clave});
   if (s.grande){
     J.fase = 'final'; J.tFinal = 0; J.prog.ganado = true;
     J.dialogos = [];
@@ -1067,7 +1076,57 @@ function perros(J, dt){
   });
 }
 
-const API = {CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
+/* ============================================================
+   JUGAR CON AMIGOS (lo que viaja por la red; red.js lo manda)
+   ============================================================ */
+const r2 = v=>Math.round(v*100)/100;
+function empaquetar(J, pj, nombre){
+  const p = J.p;
+  return {t:'e', pj: PJS[pj] ? pj : 'fernando', n: String(nombre || '').slice(0, 14), nv: J.mundo,
+          x: r2(p.x), y: r2(p.y), z: r2(p.z), a: r2(p.ang), v: r2(Math.hypot(p.vx, p.vz)),
+          s: p.enSuelo ? 1 : 0, vu: p.vuela ? 1 : 0, p: p.poder || '', g: p.giro > 0 ? 1 : 0, b: (p.baile > 0 || J.fase === 'final') ? 1 : 0, e: r2(p.escala)};
+}
+/* lo que llega se revisa: números finitos y dentro de rango, textos conocidos; si no, se tira */
+function desempaquetar(m){
+  if (!m || typeof m !== 'object' || m.t !== 'e') return null;
+  const n = (v, a, b)=>Number.isFinite(v) ? Math.min(b, Math.max(a, v)) : NaN;
+  const nv = Number.isInteger(m.nv) && m.nv >= 0 && m.nv < MUNDOS.length ? m.nv : -1;
+  const x = n(m.x, -500, 500), y = n(m.y, -60, 300), z = n(m.z, -500, 500), ang = n(m.a, -50, 50);
+  if (nv < 0 || [x, y, z, ang].some(Number.isNaN)) return null;
+  const pj = PJS[m.pj] ? m.pj : 'fernando';
+  const nombre = String(typeof m.n === 'string' ? m.n : '').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PJS[pj].nombre;
+  return {pj, nombre, nv, x, y, z, ang, mov: n(m.v, 0, 40) || 0, suelo: !!m.s, vuela: !!m.vu,
+          poder: PODERES[m.p] ? m.p : '', giro: !!m.g, baile: !!m.b, escala: n(m.e, 1, 3) || 1};
+}
+/* una estrella que ganó un amigo: «mundo:estrella» tiene que existir; devuelve true si es nueva */
+function recibirEstrella(J, clave){
+  if (typeof clave !== 'string') return false;
+  const [m, e] = clave.split(':');
+  const def = MUNDOS.find(d=>d.id === m);
+  if (!def || !def.estrellas.some(x=>x.id === e) || J.prog.estrellas[clave]) return false;
+  J.prog.estrellas[clave] = true;
+  /* si es del mundo donde estoy, la estrella se vuelve transparente (ya es de todos) */
+  if (J.M && J.M.def.id === m){ const s = J.M.estrellas.find(x=>x.id === e); if (s) s.ya = true; }
+  return true;
+}
+/* Tío Juan lleva a Fernando de un salto al lado de un amigo (aunque esté en otro mundo) */
+function irConAmigo(J, nv, x, y, z){
+  if (J.trans || J.fase !== 'juego' || !Number.isInteger(nv) || nv < 0 || nv >= MUNDOS.length) return false;
+  const poner = ()=>{
+    const p = J.p;
+    p.x = x + 1.2; p.z = z + 0.6; p.y = y + 1.5; p.vx = p.vz = 0; p.vy = 2; p.enSuelo = false; p.sobre = null;
+    p.invul = Math.max(p.invul, 1.5);
+    const g = suelo(J.M, x, z, y + 1, 0.3);
+    if (g.s && !g.s.mov) p.seguro = {x, y: g.y, z};
+    J.tio.x = p.x + 1; J.tio.y = p.y + 2; J.tio.z = p.z;
+    ev(J, 'llevar', p.x, p.y, p.z);
+  };
+  if (nv === J.mundo){ poner(); return true; }
+  irA(J, nv, null, poner);
+  return true;
+}
+
+const API = {PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
              topDe, dentro, suelo, empujar, rng, clamp, lerp, angDif, progresoNuevo, progresoLimpio, cuentaEstrellas, estrellasDe, dar};
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 else raiz.F3D = API;

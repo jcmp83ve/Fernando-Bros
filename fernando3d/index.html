@@ -30,15 +30,17 @@
    y con una marca de tiempo para no usar versiones viejas guardadas. */
 (function(){
   var t = Date.now();
-  var lista = ['../kart3d/three.min.js', 'nucleo.js', 'modelos.js', 'vista.js'];
+  /* la red para jugar con amigos (Trystero, el mismo de la Aventura 3D) es opcional: si no carga, se juega solo */
+  var lista = ['../kart3d/three.min.js', '../aventura3d/trystero.min.js', 'nucleo.js', 'modelos.js', 'red.js', 'vista.js'];
+  var opcionales = {'../aventura3d/trystero.min.js': true, 'red.js': true};
   function aviso(m){ var c = document.getElementById('cargando'); if (c){ c.style.display = 'block'; c.innerHTML = m; } }
   window.addEventListener('error', function(e){ aviso('¡Uy! Algo falló al cargar.<small>' + (e.message || '') + '</small>'); });
   function siguiente(i){
     if (i >= lista.length) return;
     var s = document.createElement('script');
-    s.src = lista[i] + (lista[i].indexOf('three.min') >= 0 ? '' : '?t=' + t);
+    s.src = lista[i] + (lista[i].indexOf('.min.') >= 0 ? '' : '?t=' + t);
     s.onload = function(){ siguiente(i + 1); };
-    s.onerror = function(){ aviso('No se pudo cargar el juego (' + lista[i] + ').<small>Revisa tu conexión y recarga.</small>'); };
+    s.onerror = function(){ if (opcionales[lista[i]]) siguiente(i + 1); else aviso('No se pudo cargar el juego (' + lista[i] + ').<small>Revisa tu conexión y recarga.</small>'); };
     document.body.appendChild(s);
   }
   siguiente(0);

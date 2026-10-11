@@ -17,8 +17,9 @@ const clamp = F.clamp, lerp = F.lerp;
 const CLAVE = 'fernando3d.v1';
 let progGuardado = null;
 try{ progGuardado = JSON.parse(localStorage.getItem(CLAVE) || 'null'); }catch(e){}
-const OPC = {sonido: true, musica: true};
+const OPC = {sonido: true, musica: true, pj: 'fernando'};
 try{ Object.assign(OPC, JSON.parse(localStorage.getItem('fernando3d.opciones') || '{}')); }catch(e){}
+if (!F.PJS[OPC.pj]) OPC.pj = 'fernando';
 let J = F.crearJuego({semilla: Math.floor(Math.random()*1e6), prog: progGuardado});
 function guardar(){ try{ localStorage.setItem(CLAVE, JSON.stringify(J.prog)); localStorage.setItem('fernando3d.opciones', JSON.stringify(OPC)); }catch(e){} }
 setInterval(guardar, 5000);
@@ -304,7 +305,14 @@ function moverAmbiente(dt, t){
 }
 
 /* ---------------- los personajes que siempre están ---------------- */
-const fer = MOD.crearFernando(); escena.add(fer.g);
+/* el personaje que uno eligió (Fernando, Lucca, Salomón o Cucú) */
+function modeloPj(pj){ const P = F.PJS[pj] || F.PJS.fernando; return MOD.crearFernando({gorra: P.gorra, overol: P.overol, letra: P.letra, nina: P.nina}); }
+let fer = modeloPj(OPC.pj); escena.add(fer.g);
+function cambiarPj(pj){
+  if (!F.PJS[pj] || pj === OPC.pj) return;
+  OPC.pj = pj; escena.remove(fer.g); fer = modeloPj(pj); escena.add(fer.g); guardar();
+  emitir(J.p.x, J.p.y + 1, J.p.z, 40, {colores:['#ffffff', F.PJS[pj].gorra], vel:5, grav:1, vida:0.8, tam:0.4});
+}
 const tio = MOD.crearTio(); escena.add(tio.g);
 const perros = [MOD.crearPerro('#1e1e22', 'penny'), MOD.crearPerro('#9a6230', 'sheldon')];
 perros.forEach(p=>escena.add(p.g));
@@ -994,7 +1002,10 @@ function procesarEventos(){
         emitir(e.x, e.y, e.z, 80, {colores:['#ffd23f', '#ffffff', '#ff9ad8', '#7ad0ff'], vel:8, grav:3, vida:1.4, tam:0.45});
         cartelEstrella = {t: 0, nueva: e.nueva, total: e.total, grande: e.grande};
         guardar();
+        if (e.nueva) redEvento({tipo: 'premio', que: 'estrella', id: e.clave});
+        redEvento({tipo: 'fx', fx: 'estrella', x: e.x, y: e.y, z: e.z});
         break;
+      case 'llevar': sonar('rescate'); cam.listo = false; emitir(e.x, e.y + 1, e.z, 40, {colores:['#5aa8ff', '#ffffff', '#ffd23f'], vel:5, grav:1, vida:0.9, tam:0.45}); break;
       case 'aparece': sonar('aparece'); emitir(e.x, e.y, e.z, 50, {colores:['#ffd23f', '#ffffff'], vel:5, grav:0, vida:1.2, tam:0.4}); break;
       case 'pisa': sonar('pisa'); emitir(e.x, e.y, e.z, 14, {colores:['#ffffff', '#ffe36e'], vel:4, grav:4, vida:0.5, tam:0.3}); break;
       case 'muere': if (e.como !== 'pisa') sonar('pisa'); emitir(e.x, e.y, e.z, 18, {colores:['#ffffff', '#c8c8c8', '#ffe36e'], vel:4, grav:3, vida:0.6, tam:0.4}); break;
@@ -1030,10 +1041,12 @@ const teclas = new Set();
 let tocado = false;
 const pulsos = new Set();      // lo que se apretó entre dos cuadros cuenta aunque se suelte rapidito
 addEventListener('keydown', e=>{
+  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab', 'Backspace'].includes(e.code)) e.preventDefault();
+  if (UI.abierto){ teclaAmigos(e); return; }
   teclas.add(e.code); pulsos.add(e.code);
-  if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
   primerToque();
   if (e.code === 'Escape') salir();
+  if (e.code === 'KeyT') irConSiguiente();
   if (e.code === 'KeyM'){ OPC.musica = !OPC.musica; if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0; guardar(); }
 });
 addEventListener('keyup', e=>teclas.delete(e.code));
@@ -1055,16 +1068,22 @@ function botonesTactiles(){
     ayuda: {x: W - r(150), y: H - r(178), r: r(40), etiqueta: '🦸', color: '#5aa8ff'},
     salir: window.SIN_SALIR ? {x: -999, y: -999, r: 0} : {x: 30, y: 30, r: 22, etiqueta: '✕', color: '#ffffff'},
     sonido: {x: 82, y: 30, r: 22, etiqueta: '🔊', color: '#ffffff'},
+    amigos: RED && RED.hay && RED.hay() ? {x: 134, y: 30, r: 22, etiqueta: '👥', color: '#ffffff'} : {x: -999, y: -999, r: 0},
+    ircon: hayAmigosListos() && J.fase === 'juego' ? {x: W - 52, y: 152, r: 30, etiqueta: '🚀', color: '#ffd23f'} : {x: -999, y: -999, r: 0},
   };
 }
 const toques = new Map();
 hud.addEventListener('pointerdown', e=>{
   e.preventDefault();
-  primerToque();
   if (e.pointerType === 'touch') TACTIL.usado = true;
+  if (UI.abierto){ audio(); clicAmigos(e.clientX, e.clientY); return; }
   const B = botonesTactiles();
+  if (Math.hypot(e.clientX - B.amigos.x, e.clientY - B.amigos.y) < B.amigos.r*1.35){ audio(); abrirAmigos(); return; }
+  primerToque();
+  if (Math.hypot(e.clientX - B.ircon.x, e.clientY - B.ircon.y) < B.ircon.r*1.3){ irConSiguiente(); return; }
   for (const k in B){
     const b = B[k];
+    if (k === 'amigos' || k === 'ircon') continue;
     if (Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r*1.35){
       if (k === 'salir'){ salir(); return; }
       if (k === 'sonido'){ OPC.sonido = !OPC.sonido; OPC.musica = OPC.sonido; if (maestro) maestro.gain.value = OPC.sonido ? 0.55 : 0; if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0; if (!OPC.sonido) try{ speechSynthesis.cancel(); }catch(er){} guardar(); return; }
@@ -1144,6 +1163,7 @@ function leerControles(dt){
   if (TACTIL.cam){ c.camX += clamp(TACTIL.cam.dx*0.9/Math.max(dt, 0.001)/W, -3, 3); c.camY += clamp(-TACTIL.cam.dy*0.6/Math.max(dt, 0.001)/H, -3, 3); TACTIL.cam.dx = 0; TACTIL.cam.dy = 0; }
   /* ratón: arrastrar con botón derecho o izquierdo fuera de los botones ya cuenta como cámara */
   const m = Math.hypot(c.x, c.y); if (m > 1){ c.x /= m; c.y /= m; }
+  if (UI.abierto) return {x: 0, y: 0, salto: false, poder: false, ayuda: false, camX: 0, camY: 0};
   return c;
 }
 
@@ -1184,16 +1204,23 @@ function dibujarHud(dt){
   const chico = Math.min(W, H) < 500;
   const B = botonesTactiles();
   /* botones de arriba */
-  for (const k of ['salir', 'sonido']){
+  for (const k of ['salir', 'sonido', 'amigos', 'ircon']){
     const b = B[k];
     if (!b.r) continue;
-    ctx.fillStyle = 'rgba(20,14,50,0.55)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
+    ctx.fillStyle = k === 'ircon' ? 'rgba(90,60,10,0.7)' : 'rgba(20,14,50,0.55)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
+    if (k === 'ircon'){ ctx.lineWidth = 3; ctx.strokeStyle = '#ffd23f'; ctx.stroke(); }
     if (k === 'salir') texto('✕', b.x, b.y + 1, 22, '#ffffff', 'center', false);
-    else emoji(OPC.sonido ? '🔊' : '🔇', b.x, b.y + 1, 20);
+    else if (k === 'sonido') emoji(OPC.sonido ? '🔊' : '🔇', b.x, b.y + 1, 20);
+    else emoji(b.etiqueta, b.x, b.y + 1, b.r*0.95);
   }
-  if (J.fase === 'titulo'){ dibujarTitulo(); return; }
+  if (B.ircon.r && !chico) texto('Ir con ' + (siguienteAmigo() || {}).nombre + ' (T)', W - 90, 152, 15, '#ffe36e', 'right');
+  if (RED && RED.activa && RED.activa()){
+    const n = [...RED.remotos.values()].filter(r=>r.listo).length;
+    texto('👥 Sala ' + RED.sala + (n ? ' · ' + n + (n === 1 ? ' amigo' : ' amigos') : ' · esperando…'), W - 16, p.poder ? 108 : 30, chico ? 13 : 15, '#a5d8ff', 'right');
+  }
+  if (J.fase === 'titulo'){ dibujarTitulo(); dibujarBrindis(dt); dibujarAmigos(); return; }
   /* estrellas y monedas */
-  const x0 = 116;
+  const x0 = B.amigos.r ? 168 : 116;
   pastilla(x0, 12, 118, 38);
   estrellita(x0 + 22, 31, 14, '#ffd23f', Math.sin(tHud*2)*0.2);
   texto('× ' + F.cuentaEstrellas(J.prog), x0 + 42, 32, 24, '#ffe36e');
@@ -1332,6 +1359,8 @@ function dibujarHud(dt){
     ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(W/2, H/2, Math.max(0, r), 0, TAU, true); ctx.fill();
     if (t < 0.6) estrellita(W/2, H/2, Math.max(0, r*0.25), '#ffd23f', t*6);
   }
+  dibujarBrindis(dt);
+  dibujarAmigos();
 }
 function dibujarTitulo(){
   const chico = Math.min(W, H) < 500;
@@ -1359,9 +1388,220 @@ function dibujarTitulo(){
   ctx.globalAlpha = 0.6 + Math.sin(tHud*4)*0.4;
   texto(MOVIL ? '👆 Toca para jugar' : 'Aprieta ESPACIO o toca para jugar', W/2, H*0.78, chico ? 24 : 32, '#ffffff', 'center');
   ctx.globalAlpha = 1;
+  if (RED && RED.hay && RED.hay() && !UI.abierto) texto('👥 arriba: jugar con amigos en línea (hasta 4)', W/2, H*0.78 + (chico ? 36 : 46), chico ? 15 : 19, '#a5d8ff', 'center');
+}
+
+/* ============================================================
+   JUGAR CON AMIGOS (hasta 4, cada uno en su aparato)
+   La red (red.js) es la misma de la Aventura 3D y Salomón 3D.
+   Cada quien juega su partida; se ven los amigos que están en
+   el mismo mundo y las estrellas que gana uno son de todos.
+   ============================================================ */
+const RED = window.F3D_RED || null;
+const UI = {abierto: false, codigo: '', escribiendo: false, msg: '', msgT: 0, botones: [], k: 1, ox: 0, oy: 0, alto: 560, sig: 0};
+const REMOTOS = new Map();
+const brindis = [];
+function brindar(texto, color){ brindis.push({texto, color: color || '#ffffff', t: 0}); if (brindis.length > 4) brindis.shift(); }
+function redEvento(d){ if (RED && RED.activa && RED.activa()) try{ RED.enviarEvento(d); }catch(e){} }
+function amigosListos(){ return RED ? [...RED.remotos.values()].filter(r=>r.listo && r.obj && r.obj.nv >= 0) : []; }
+function hayAmigosListos(){ return !!(RED && RED.activa && RED.activa() && amigosListos().length); }
+function siguienteAmigo(){ const l = amigosListos(); return l.length ? l[UI.sig % l.length] : null; }
+function irCon(r){
+  if (!r || !r.listo) return;
+  if (F.irConAmigo(J, r.obj.nv, r.act.x, r.act.y, r.act.z)){ brindar('🚀 ¡Tío Juan te lleva con ' + r.nombre + '!', '#ffe36e'); UI.abierto = false; }
+}
+function irConSiguiente(){ const r = siguienteAmigo(); if (r){ irCon(r); UI.sig++; } }
+if (RED){
+  RED.saludo = ()=>({pj: OPC.pj, n: F.PJS[OPC.pj].nombre, estrellas: Object.keys(J.prog.estrellas).filter(k=>J.prog.estrellas[k])});
+  RED.alSaludo = (r, s)=>{
+    let k = 0; for (const id of s.estrellas || []) if (F.recibirEstrella(J, id)) k++;
+    if (k){ brindar('🎁 ' + r.nombre + ' te compartió ' + k + (k === 1 ? ' estrella' : ' estrellas') + ' ★', '#ffe36e'); sonar('aparece'); guardar(); }
+  };
+  RED.on.llega = r=>{ brindar('👋 ¡' + r.nombre + ' entró a jugar!', '#8ce99a'); sonar('caja'); };
+  RED.on.seVa = r=>brindar('👋 ' + r.nombre + ' se fue', '#ced4da');
+  RED.on.aviso = t=>brindar(t, '#a5d8ff');
+  RED.on.evento = (r, d)=>{
+    if (d.tipo === 'premio' && d.que === 'estrella' && F.recibirEstrella(J, d.id)){
+      brindar('⭐ ¡' + r.nombre + ' consiguió una estrella! ¡Es de todos!', '#ffe36e'); sonar('estrella'); guardar();
+    } else if (d.tipo === 'fx' && d.fx === 'estrella' && r.obj && r.obj.nv === J.mundo){
+      emitir(d.x, d.y, d.z, 60, {colores:['#ffd23f', '#ffffff', '#ff9ad8'], vel:7, grav:3, vida:1.2, tam:0.45});
+    }
+  };
+}
+/* los muñecos de los amigos */
+function crearMuneco(r){
+  const P = F.PJS[r.pj] || F.PJS.fernando;
+  const m = modeloPj(r.pj);
+  const cartel = cartelito(r.nombre, P.color); cartel.position.y = 2.3; m.g.add(cartel);
+  escena.add(m.g);
+  return {m, pj: r.pj, nombre: r.nombre, sombra: sombraBlob(0.6), fase: 0};
+}
+function quitarMuneco(o){ escena.remove(o.m.g); escena.remove(o.sombra); }
+function animarRemotos(dt, t){
+  if (!RED) return;
+  try{ RED.paso(); }catch(e){}
+  for (const [id, r] of RED.remotos){
+    let o = REMOTOS.get(id);
+    if (!o || o.pj !== r.pj || o.nombre !== r.nombre){ if (o) quitarMuneco(o); o = crearMuneco(r); REMOTOS.set(id, o); }
+    const ver = !!(r.listo && r.obj && r.obj.nv === J.mundo && !J.trans);
+    o.m.g.visible = ver; o.sombra.visible = ver;
+    if (!ver) continue;
+    const e = r.obj, a = r.act, f = o.m;
+    f.g.position.set(a.x, a.y, a.z); f.g.rotation.y = a.ang; f.g.scale.setScalar(e.escala);
+    o.fase += dt*(4 + e.mov*1.6);
+    const k = e.suelo ? Math.min(1, e.mov/4) : 0, s = Math.sin(o.fase);
+    f.cuerpo.rotation.set(0, 0, 0); f.cuerpo.position.y = e.suelo ? Math.abs(s)*0.06*k : 0;
+    f.piernaI.rotation.x = s*0.9*k; f.piernaD.rotation.x = -s*0.9*k;
+    f.brazoI.rotation.x = -s*0.8*k; f.brazoD.rotation.x = s*0.8*k; f.brazoI.rotation.z = 0.25; f.brazoD.rotation.z = -0.25;
+    if (!e.suelo){
+      if (e.vuela){ f.cuerpo.rotation.x = 0.9; f.brazoI.rotation.x = f.brazoD.rotation.x = -2.9; }
+      else { f.brazoI.rotation.x = f.brazoD.rotation.x = -2.6; f.brazoI.rotation.z = 0.6; f.brazoD.rotation.z = -0.6; f.piernaI.rotation.x = -0.7; f.piernaD.rotation.x = 0.35; }
+    }
+    if (e.giro) f.cuerpo.rotation.y = t*25;
+    if (e.baile){ f.cuerpo.position.y = Math.abs(Math.sin(t*7))*0.35; f.brazoI.rotation.x = f.brazoD.rotation.x = -2.8; }
+    f.alas.visible = e.poder === 'alas';
+    if (f.alas.visible) f.alas.children.forEach(w=>{ w.rotation.y = Math.sin(t*(e.vuela ? 22 : 6))*0.5*w.userData.lado; });
+    f.iman.visible = e.poder === 'iman'; f.iman.rotation.y = t*3;
+    const mm = f.mats;
+    if (e.poder === 'fuego'){ mm.rojo.color.set('#ffffff').convertSRGBToLinear(); mm.azul.color.copy(f.base.rojo); }
+    else { mm.rojo.color.copy(f.base.rojo); mm.azul.color.copy(f.base.azul); }
+    if (e.poder === 'hamburguesa'){ mm.rojo.emissive.copy(arcoiris(t)); mm.rojo.emissiveIntensity = 0.7; } else mm.rojo.emissive.set('#000000');
+    const g = F.suelo(J.M, a.x, a.z, a.y + 0.1, 0.2);
+    o.sombra.visible = isFinite(g.y) && a.y - g.y < 12;
+    if (o.sombra.visible){ o.sombra.position.set(a.x, g.y + 0.03, a.z); const kk = clamp(1 - (a.y - g.y)/10, 0.3, 1); o.sombra.scale.setScalar(kk*e.escala); o.sombra.material.opacity = kk; }
+  }
+  for (const [id, o] of REMOTOS) if (!RED.remotos.has(id)){ quitarMuneco(o); REMOTOS.delete(id); }
+}
+function dibujarBrindis(dt){
+  for (let i = brindis.length - 1; i >= 0; i--){ brindis[i].t += dt; if (brindis[i].t > 4.5) brindis.splice(i, 1); }
+  const chico = Math.min(W, H) < 500;
+  brindis.forEach((b, i)=>{
+    const a = Math.min(1, b.t*5, (4.5 - b.t)*2);
+    ctx.globalAlpha = clamp(a, 0, 1);
+    const tam = chico ? 15 : 19, y = (chico ? 104 : 112) + i*(tam + 18);
+    ctx.font = `bold ${tam}px Fredoka, sans-serif`;
+    const w = Math.min(W - 24, ctx.measureText(b.texto).width + 36);
+    pastilla(W/2 - w/2, y - tam*0.85, w, tam*1.7, 'rgba(20,14,50,0.78)');
+    texto(b.texto, W/2, y, tam, b.color, 'center', false);
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* la pantalla de amigos: elegir personaje, crear sala o entrar con código */
+function abrirAmigos(){ UI.abierto = true; UI.escribiendo = false; UI.msg = ''; }
+function boton(x, y, w, h, txt, fn, o){
+  o = o || {};
+  ctx.fillStyle = o.color || 'rgba(110,80,230,0.9)';
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 14) : ctx.rect(x, y, w, h); ctx.fill();
+  ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.stroke();
+  texto(txt, x + w/2, y + h/2 + 1, o.tam || 19, '#ffffff', 'center', false);
+  UI.botones.push({x, y, w, h, fn});
+}
+function envolverEn(t, max, tam){ ctx.font = `bold ${tam}px Fredoka, sans-serif`; return envolver(t, max); }
+function dibujarAmigos(){
+  UI.botones = [];
+  if (!UI.abierto) return;
+  if (UI.msgT > 0) UI.msgT -= 1/60;
+  const PW = 440;
+  UI.k = Math.min(1, (H - 20)/UI.alto, (W - 20)/PW);
+  UI.ox = (W - PW*UI.k)/2; UI.oy = Math.max(10, (H - UI.alto*UI.k)/2);
+  ctx.fillStyle = 'rgba(5,3,20,0.55)'; ctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.translate(UI.ox, UI.oy); ctx.scale(UI.k, UI.k);
+  ctx.fillStyle = 'rgba(24,16,60,0.96)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(0, 0, PW, UI.alto, 26) : ctx.rect(0, 0, PW, UI.alto); ctx.fill();
+  ctx.lineWidth = 4; ctx.strokeStyle = '#ffd23f'; ctx.stroke();
+  boton(PW - 54, 12, 42, 42, '✕', ()=>{ UI.abierto = false; }, {color: 'rgba(224,49,49,0.8)', tam: 22});
+  let y = 38;
+  texto('👥 Jugar con amigos', PW/2 - 10, y, 26, '#ffe36e', 'center'); y += 36;
+  texto('Elige tu personaje', PW/2, y, 16, '#dbe4ff', 'center', false); y += 20;
+  const pjs = Object.keys(F.PJS);
+  pjs.forEach((k, i)=>{
+    const P = F.PJS[k], bx = 16 + i*104, sel = OPC.pj === k;
+    ctx.fillStyle = sel ? 'rgba(255,210,63,0.25)' : 'rgba(255,255,255,0.06)';
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y, 96, 96, 16) : ctx.rect(bx, y, 96, 96); ctx.fill();
+    if (sel){ ctx.lineWidth = 4; ctx.strokeStyle = '#ffd23f'; ctx.stroke(); }
+    ctx.fillStyle = P.gorra; ctx.beginPath(); ctx.arc(bx + 48, y + 38, 26, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(bx + 48, y + 38, 13, 0, TAU); ctx.fill();
+    texto(P.letra, bx + 48, y + 39, 18, P.gorra, 'center', false);
+    texto(P.nombre, bx + 48, y + 80, 17, '#ffffff', 'center', false);
+    UI.botones.push({x: bx, y, w: 96, h: 96, fn: ()=>cambiarPj(k)});
+  });
+  y += 112;
+  const w = PW - 32, x = 16;
+  if (!RED || !RED.hay || !RED.hay()){
+    envolverEn('No se cargó la parte de red. Revisa el internet y recarga la página.', w, 16).forEach((l, i)=>texto(l, PW/2, y + i*22, 16, '#ffc9c9', 'center', false));
+    y += 50;
+  } else if (RED.estado === 'off' || RED.estado === 'error'){
+    if (RED.error){ const ls = envolverEn(RED.error, w, 15); ls.forEach((l, i)=>texto(l, PW/2, y + i*20, 15, '#ffc9c9', 'center', false)); y += ls.length*20 + 10; }
+    if (!UI.escribiendo){
+      boton(x, y, w, 54, '✨ Crear una sala', ()=>{ RED.crear(); if (J.fase === 'titulo') primerToque(); }, {color: 'rgba(64,192,87,0.92)', tam: 22}); y += 66;
+      boton(x, y, w, 54, '🔢 Entrar con el código de un amigo', ()=>{ UI.escribiendo = true; UI.codigo = ''; }, {tam: 19}); y += 66;
+      envolverEn('Uno crea la sala y les manda el código (o el enlace) a los demás. Hasta 4 jugadores, cada uno en su aparato. Las estrellas que gana uno son de todos.', w, 14)
+        .forEach((l, i)=>texto(l, PW/2, y + i*19, 14, 'rgba(220,228,255,0.8)', 'center', false));
+      y += 64;
+    } else {
+      texto('Escribe el código de 4 letras', PW/2, y, 17, '#dbe4ff', 'center', false); y += 18;
+      for (let i = 0; i < 4; i++){
+        const bx = PW/2 - 128 + i*66;
+        ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(bx, y, 58, 64, 12) : ctx.rect(bx, y, 58, 64); ctx.fill();
+        ctx.lineWidth = 3; ctx.strokeStyle = i === UI.codigo.length ? '#ffd23f' : 'rgba(255,255,255,0.3)'; ctx.stroke();
+        if (UI.codigo[i]) texto(UI.codigo[i], bx + 29, y + 34, 40, '#ffd23f', 'center', false);
+      }
+      y += 78;
+      const AL = RED.normalizarCodigo ? 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' : '';
+      for (let i = 0; i < AL.length; i++){
+        const c = AL[i], col = i % 8, fila = Math.floor(i/8);
+        boton(x + col*52, y + fila*46, 48, 40, c, ()=>{ if (UI.codigo.length < 4) UI.codigo += c; }, {color: 'rgba(70,60,140,0.95)', tam: 20});
+      }
+      y += 4*46 + 6;
+      boton(x, y, w/3 - 6, 46, '⌫', ()=>{ UI.codigo = UI.codigo.slice(0, -1); }, {color: 'rgba(120,120,140,0.9)', tam: 22});
+      boton(x + w/3, y, w*2/3, 46, '▶ Entrar', ()=>{ if (UI.codigo.length === 4){ RED.unirse(UI.codigo); UI.escribiendo = false; if (J.fase === 'titulo') primerToque(); } },
+        {color: UI.codigo.length === 4 ? 'rgba(64,192,87,0.95)' : 'rgba(90,90,110,0.7)', tam: 21});
+      y += 56;
+      boton(x, y, w, 38, '↩ Volver', ()=>{ UI.escribiendo = false; }, {color: 'rgba(90,90,110,0.7)', tam: 16}); y += 48;
+    }
+  } else {
+    texto(RED.estado === 'creando' ? 'Abriendo la sala…' : RED.estado === 'uniendo' ? (RED.aviso || 'Entrando a la sala…') : 'Sala abierta · código para tus amigos:', PW/2, y, 15, '#dbe4ff', 'center', false);
+    y += 44;
+    texto(RED.sala.split('').join(' '), PW/2, y, 54, '#ffd23f', 'center'); y += 50;
+    const lista = [...RED.remotos.values()].filter(r=>r.listo || r.saludo);
+    if (!lista.length){ texto(RED.anfitrion ? 'Esperando a que entren tus amigos…' : 'Buscando a tus amigos…', PW/2, y, 16, 'rgba(220,228,255,0.85)', 'center', false); y += 30; }
+    for (const r of lista){
+      const P = F.PJS[r.pj] || F.PJS.fernando;
+      ctx.fillStyle = P.gorra; ctx.beginPath(); ctx.arc(x + 18, y + 20, 14, 0, TAU); ctx.fill();
+      texto(r.nombre, x + 42, y + 12, 18, '#ffffff', 'left', false);
+      const d = r.listo && r.obj ? F.MUNDOS[r.obj.nv] : null;
+      texto(d ? 'en ' + d.nombre : 'llegando…', x + 42, y + 32, 13, 'rgba(220,228,255,0.8)', 'left', false);
+      if (r.listo) boton(PW - 16 - 120, y + 2, 120, 38, '🚀 Ir con…', ()=>irCon(r), {color: 'rgba(230,150,20,0.92)', tam: 16});
+      y += 50;
+    }
+    y += 6;
+    boton(x, y, w, 46, '🔗 Copiar enlace para invitar', ()=>{
+      const t = RED.enlace();
+      try{ navigator.clipboard.writeText(t).then(()=>{ UI.msg = '¡Enlace copiado! Pégalo en WhatsApp'; UI.msgT = 3; }, ()=>{ UI.msg = t; UI.msgT = 8; }); }catch(e){ UI.msg = t; UI.msgT = 8; }
+    }, {tam: 18}); y += 56;
+    boton(x, y, w, 44, '🚪 Salir de la sala', ()=>RED.salir(), {color: 'rgba(224,49,49,0.78)', tam: 17}); y += 52;
+    if (RED.diagnostico) texto(RED.diagnostico(), PW/2, y, 11, 'rgba(255,255,255,0.5)', 'center', false);
+    y += 16;
+  }
+  if (UI.msg && UI.msgT > 0){ envolverEn(UI.msg, w, 14).forEach((l, i)=>texto(l, PW/2, y + i*18, 14, '#8ce99a', 'center', false)); y += 40; }
+  boton(x, y, w, 46, '🎮 ¡A jugar!', ()=>{ UI.abierto = false; if (J.fase === 'titulo') primerToque(); }, {color: 'rgba(64,140,230,0.92)', tam: 20}); y += 60;
+  UI.alto = y;
+  ctx.restore();
+}
+function clicAmigos(cx, cy){
+  const vx = (cx - UI.ox)/UI.k, vy = (cy - UI.oy)/UI.k;
+  for (const b of UI.botones) if (vx >= b.x && vx <= b.x + b.w && vy >= b.y && vy <= b.y + b.h){ try{ b.fn(); }catch(e){ console.warn(e); } return; }
+}
+function teclaAmigos(e){
+  if (e.code === 'Escape'){ if (UI.escribiendo) UI.escribiendo = false; else UI.abierto = false; return; }
+  if (!UI.escribiendo || !RED) return;
+  if (e.code === 'Backspace'){ UI.codigo = UI.codigo.slice(0, -1); return; }
+  if (e.code === 'Enter'){ if (UI.codigo.length === 4){ RED.unirse(UI.codigo); UI.escribiendo = false; } return; }
+  if (e.key && e.key.length === 1) UI.codigo = RED.normalizarCodigo(UI.codigo + e.key);
 }
 
 /* ---------------- el bucle ---------------- */
+let envio = 0;
 const reloj = {ant: performance.now(), acc: 0};
 const PASO = 1/60;
 const cargando = document.getElementById('cargando');
@@ -1381,6 +1621,7 @@ function bucle(ahora){
     if (cargaVista !== J.cargas) break;
   }
   if (pasos >= 4) reloj.acc = 0;
+  if (RED && RED.activa && RED.activa() && J.fase !== 'titulo' && (++envio % 4 === 0)) try{ RED.enviarEstado(F.empaquetar(J, OPC.pj, F.PJS[OPC.pj].nombre)); }catch(e){}
   if (cargaVista !== J.cargas) construirMundo();
   const t = J.t;
   uViento.value = t;
@@ -1390,6 +1631,7 @@ function bucle(ahora){
   animarFernando(dt, t);
   animarTio(dt, t);
   animarPerros(dt, t);
+  animarRemotos(dt, t);
   animarEnemigos(dt, t);
   animarCosas(dt, t);
   aclarar(dt);
@@ -1409,6 +1651,11 @@ function bucle(ahora){
 aplicarCalidad();
 construirMundo();
 if (cargando) cargando.style.display = 'none';
-window.FER3D = {J: ()=>J, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam};
+window.FER3D = {J: ()=>J, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
+  RED, UI, REMOTOS, cambiarPj, irCon, abrirAmigos, opc: OPC};
+if (RED && RED.pendiente){
+  /* vino con ?sala=ABCD (el enlace que mandó un amigo): se entra solo */
+  setTimeout(()=>{ if (J.fase === 'titulo'){ F.empezar(J); musica.tema(TEMAS[J.M.def.tema].musica); } abrirAmigos(); RED.unirse(RED.pendiente); }, 400);
+}
 requestAnimationFrame(bucle);
 })();

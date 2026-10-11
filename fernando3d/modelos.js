@@ -336,10 +336,12 @@ function etiqueta(texto, color, fondo, w, h, fuente){
 /* ============================================================
    FERNANDO (gorra roja, camisa roja, overol azul)
    ============================================================ */
-function crearFernando(){
+/* o = {gorra, overol, letra, nina}: así se arman también Lucca, Salomón y Cucú para jugar con amigos */
+function crearFernando(o){
+  o = o || {};
   const g = new THREE.Group();
   const mats = {
-    piel: std('#ffcfa6', {roughness:0.55}), rojo: std('#e8262a', {roughness:0.45}), azul: std('#2f52e6', {roughness:0.5}),
+    piel: std('#ffcfa6', {roughness:0.55}), rojo: std(o.gorra || '#e8262a', {roughness:0.45}), azul: std(o.overol || '#2f52e6', {roughness:0.5}),
     cafe: std('#6b3a18', {roughness:0.65}), pelo: std('#4a2a12', {roughness:0.8}), oro: std('#ffd23f', {metalness:0.8, roughness:0.25}),
     boca: std('#a8283a', {roughness:0.4}), mejilla: std('#ff9a9a', {roughness:0.7, transparent:true, opacity:0.55}),
   };
@@ -388,8 +390,16 @@ function crearFernando(){
   const domo = new THREE.Mesh(new THREE.SphereGeometry(0.385, 28, 12, 0, TAU, 0, Math.PI*0.5), mats.rojo); domo.castShadow = true; gorra.add(domo);
   const visera = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.04, 24, 1, false, -Math.PI/2, Math.PI), mats.rojo);
   visera.position.set(0, 0.02, 0.2); visera.scale.set(1, 1, 0.85); visera.rotation.x = 0.12; gorra.add(visera);
-  const emb = new THREE.Mesh(new THREE.CircleGeometry(0.11, 24), new THREE.MeshStandardMaterial({map: etiqueta('F', '#e8262a', '#ffffff'), roughness:0.4}));
+  const emb = new THREE.Mesh(new THREE.CircleGeometry(0.11, 24), new THREE.MeshStandardMaterial({map: etiqueta(o.letra || 'F', o.gorra || '#e8262a', '#ffffff'), roughness:0.4}));
   emb.position.set(0, 0.2, 0.33); emb.rotation.x = -0.5; gorra.add(emb);
+  /* Cucú lleva colitas con lazos */
+  if (o.nina){
+    const lazo = std(o.gorra || '#ff5ab0', {roughness:0.4});
+    for (const lado of [1, -1]){
+      cabeza.add(bola(mats.pelo, 0.13, 0.38*lado, -0.12, -0.12, 0.8, 1.3, 0.8));
+      cabeza.add(bola(lazo, 0.07, 0.36*lado, 0.02, -0.1, 1.4, 0.8, 0.8));
+    }
+  }
   /* alas de la gorra (poder) */
   const alas = new THREE.Group(); alas.visible = false; gorra.add(alas);
   const mPluma = std('#ffffff', {roughness:0.4, emissive:'#cfe8ff', emissiveIntensity:0.3});
