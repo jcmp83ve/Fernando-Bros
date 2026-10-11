@@ -393,10 +393,11 @@ function vestirHQ(m, pj){
     o.material = o.material.clone(); o.material.metalness = 0; o.material.roughness = 0.62;
     mats.push(o.material);
   });
-  raiz.updateMatrixWorld(true);
-  const caja = new THREE.Box3().setFromObject(raiz), alto = Math.max(0.1, caja.max.y - caja.min.y);
+  /* en un modelo con esqueleto el tamaño real es el de la malla tal cual (los huesos ya traen su escala) */
+  let alto = 1.2, piso = 0;
+  raiz.traverse(o=>{ if (o.isSkinnedMesh && o.geometry){ o.geometry.computeBoundingBox(); const bb = o.geometry.boundingBox; alto = Math.max(0.1, bb.max.y - bb.min.y); piso = bb.min.y; } });
   const k = (ACT.fernando.alto || 1.55)/alto;
-  const cont = new THREE.Group(); cont.add(raiz); raiz.scale.multiplyScalar(k); raiz.position.y = -caja.min.y*k;
+  const cont = new THREE.Group(); cont.add(raiz); cont.scale.setScalar(k); cont.position.y = -piso*k;
   const mixer = new THREE.AnimationMixer(raiz), acc = {};
   for (const n in HQ.fer.clips) if (HQ.fer.clips[n]) acc[n] = mixer.clipAction(HQ.fer.clips[n]);
   m.cuerpo.visible = false;
