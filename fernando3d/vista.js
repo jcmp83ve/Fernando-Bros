@@ -308,9 +308,10 @@ function moverAmbiente(dt, t){
 /* el personaje que uno eligió (Fernando, Lucca, Salomón o Cucú) */
 function modeloPj(pj){ const P = F.PJS[pj] || F.PJS.fernando; return MOD.crearFernando({gorra: P.gorra, overol: P.overol, letra: P.letra, nina: P.nina}); }
 let fer = modeloPj(OPC.pj); escena.add(fer.g);
+J.pj = OPC.pj;
 function cambiarPj(pj){
   if (!F.PJS[pj] || pj === OPC.pj) return;
-  OPC.pj = pj; escena.remove(fer.g); fer = modeloPj(pj); escena.add(fer.g); guardar();
+  OPC.pj = pj; J.pj = pj; escena.remove(fer.g); fer = modeloPj(pj); escena.add(fer.g); vestirHQ(fer); guardar();
   emitir(J.p.x, J.p.y + 1, J.p.z, 40, {colores:['#ffffff', F.PJS[pj].gorra], vel:5, grav:1, vida:0.8, tam:0.4});
 }
 const tio = MOD.crearTio(); escena.add(tio.g);
@@ -342,6 +343,108 @@ function bolaMesh(i){
     escena.add(g); bolasM[i] = g;
   }
   return bolasM[i];
+}
+
+/* ============================================================
+   PERSONAJES 3D DE ALTA CALIDAD (activos.js, hechos con Higgsfield)
+   Fernando con esqueleto y animaciones, y Tío Juan volando. Se
+   cargan mientras se juega; hasta que lleguen (o si no llegan) se
+   ven los personajes hechos con piezas.
+   ============================================================ */
+const ACT = window.F3D_ACTIVOS || null;
+const HQ = {fer: null, tio: null};
+/* la animación no debe mover al personaje de lugar (eso lo hace el juego): se fija la cadera en x y z */
+function clipQuieto(clip, sinAltura){
+  if (!clip) return null;
+  const c = clip.clone();
+  c.tracks = c.tracks.filter(t=>!/\.position$/.test(t.name) || /Hips/.test(t.name));
+  for (const t of c.tracks){
+    if (!/Hips\.position$/.test(t.name)) continue;
+    const v = t.values, x0 = v[0], y0 = v[1], z0 = v[2];
+    for (let i = 0; i < v.length; i += 3){ v[i] = x0; v[i + 2] = z0; if (sinAltura) v[i + 1] = y0 + (v[i + 1] - y0)*0.25; }
+  }
+  return c;
+}
+function cargarActivos(){
+  if (!ACT) return;
+  try{
+    const tl = new THREE.TextureLoader(); tl.setCrossOrigin('anonymous');
+    for (const k in ACT.texturas) tl.load(ACT.texturas[k], t=>{ try{ MOD.mejorarTextura(k, t.image); }catch(e){} }, undefined, ()=>{});
+  }catch(e){}
+  if (!THREE.GLTFLoader || !THREE.SkeletonUtils) return;
+  const gl = new THREE.GLTFLoader(); gl.setCrossOrigin('anonymous');
+  const cargar = url=>new Promise((ok, mal)=>gl.load(url, ok, undefined, mal));
+  cargar(ACT.fernando.modelo).then(async g=>{
+    const clips = {correr: clipQuieto(g.animations[0], false)};
+    await Promise.all(['quieto', 'salto', 'baile'].map(k=>cargar(ACT.fernando[k]).then(a=>{ clips[k] = clipQuieto(a.animations[0], k === 'salto'); }).catch(()=>{})));
+    HQ.fer = {escena: g.scene, clips};
+    vestirHQ(fer);
+  }).catch(e=>console.warn('No llegó el modelo 3D de Fernando: ' + (e && e.message)));
+  cargar(ACT.tio.modelo).then(g=>{ HQ.tio = g.scene; vestirTioHQ(); }).catch(e=>console.warn('No llegó el modelo 3D de Tío Juan: ' + (e && e.message)));
+}
+/* le pone el Fernando de alta calidad a un muñeco (el propio o el de un amigo que juega con Fernando) */
+function vestirHQ(m, pj){
+  if (!HQ.fer || !m || m.hq || (pj || OPC.pj) !== 'fernando') return;
+  const raiz = THREE.SkeletonUtils.clone(HQ.fer.escena);
+  const mats = [];
+  raiz.traverse(o=>{
+    if (!o.isMesh) return;
+    o.castShadow = true; o.frustumCulled = false;
+    o.material = o.material.clone(); o.material.metalness = 0; o.material.roughness = 0.62;
+    mats.push(o.material);
+  });
+  raiz.updateMatrixWorld(true);
+  const caja = new THREE.Box3().setFromObject(raiz), alto = Math.max(0.1, caja.max.y - caja.min.y);
+  const k = (ACT.fernando.alto || 1.55)/alto;
+  const cont = new THREE.Group(); cont.add(raiz); raiz.scale.multiplyScalar(k); raiz.position.y = -caja.min.y*k;
+  const mixer = new THREE.AnimationMixer(raiz), acc = {};
+  for (const n in HQ.fer.clips) if (HQ.fer.clips[n]) acc[n] = mixer.clipAction(HQ.fer.clips[n]);
+  m.cuerpo.visible = false;
+  m.g.add(cont);
+  m.g.add(m.alas); m.alas.position.set(0, 1.42, -0.05);
+  m.hq = {cont, raiz, mixer, acc, actual: '', mats};
+}
+function animarHQ(h, est, dt, t){
+  let q = 'quieto';
+  if (est.baile) q = 'baile';
+  else if (!est.suelo) q = 'salto';
+  else if (est.vel > 0.6) q = 'correr';
+  if (!h.acc[q]) q = h.acc.quieto ? 'quieto' : 'correr';
+  if (h.actual !== q){
+    const a = h.acc[q];
+    a.reset();
+    if (q === 'salto'){ a.setLoop(THREE.LoopOnce, 1); a.clampWhenFinished = true; a.time = a.getClip().duration*0.28; }
+    a.fadeIn(0.12).play();
+    if (h.actual && h.acc[h.actual]) h.acc[h.actual].fadeOut(0.12);
+    h.actual = q;
+  }
+  if (h.acc.correr) h.acc.correr.timeScale = clamp(est.vel/6, 0.7, 1.8);
+  h.mixer.update(dt);
+  /* poderes: fuego → brillo naranja; hamburguesa → arcoíris */
+  const pod = est.poder;
+  for (const mt of h.mats){
+    if (pod === 'hamburguesa'){ mt.emissive.copy(arcoiris(t)); mt.emissiveIntensity = 0.45; }
+    else if (pod === 'fuego'){ mt.emissive.set('#ff6a1a'); mt.emissiveIntensity = 0.18 + Math.sin(t*8)*0.08; }
+    else if (pod === 'tenis'){ mt.emissive.set('#3aff8a'); mt.emissiveIntensity = 0.1; }
+    else mt.emissiveIntensity = 0;
+  }
+  h.cont.rotation.set(est.vuela ? 0.9 : 0, est.giro ? est.giroA : 0, 0);
+}
+/* Tío Juan volando: el modelo ya viene en pose de superhéroe */
+function vestirTioHQ(){
+  if (!HQ.tio || tio.hq) return;
+  const raiz = HQ.tio.clone(true);
+  raiz.traverse(o=>{ if (o.isMesh){ o.castShadow = true; o.material = o.material.clone(); o.material.metalness = 0; o.material.roughness = 0.6; } });
+  raiz.updateMatrixWorld(true);
+  const caja = new THREE.Box3().setFromObject(raiz), tam = new THREE.Vector3(); caja.getSize(tam);
+  const centro = new THREE.Vector3(); caja.getCenter(centro);
+  const k = (ACT.tio.largo || 2.3)/Math.max(tam.x, tam.z, 0.1);
+  raiz.position.sub(centro).multiplyScalar(k); raiz.scale.multiplyScalar(k);
+  const giro = new THREE.Group(); giro.rotation.y = ACT.tio.giro || 0; giro.add(raiz);
+  const cont = new THREE.Group(); cont.add(giro); cont.position.y = 1.1;
+  tio.cuerpo.visible = false;
+  tio.g.add(cont);
+  tio.hq = {cont};
 }
 
 /* ---------------- construir el mundo ---------------- */
@@ -666,7 +769,7 @@ function moverCamara(dt, ctl){
   if (ctl.camY){ cam.alt = clamp(cam.alt + ctl.camY*dt*1.2, 0.08, 1.05); }
   cam.manual = Math.max(0, cam.manual - dt);
   let dist = cam.dist*Math.max(1, p.escala*0.75), alt = cam.alt;
-  let objetivo = new THREE.Vector3(p.x, p.y + 1.3*p.escala, p.z);
+  let objetivo = new THREE.Vector3(IP.p.x, IP.p.y + 1.3*p.escala, IP.p.z);
   if (J.fase === 'titulo'){
     cam.ang += dt*0.12; dist = 30; alt = 0.32;
     objetivo.set(0, 5, -10);
@@ -709,7 +812,7 @@ const anim = {fase: 0, voltereta: 0, tioFase: 0, tioAnt: new THREE.Vector3(), tP
 function arcoiris(t){ return new THREE.Color().setHSL((t*0.8) % 1, 0.9, 0.55); }
 function animarFernando(dt, t){
   const p = J.p, f = fer;
-  f.g.position.set(p.x, p.y, p.z);
+  f.g.position.set(IP.p.x, IP.p.y, IP.p.z);
   f.g.rotation.y = p.ang;
   f.g.scale.setScalar(p.escala);
   const vel = Math.hypot(p.vx, p.vz);
@@ -739,6 +842,11 @@ function animarFernando(dt, t){
     f.brazoI.rotation.z = 0.5; f.brazoD.rotation.z = -0.5;
     f.cuerpo.rotation.y = Math.sin(t*4)*0.3;
   }
+  if (f.hq){
+    if (p.giro > 0) anim.giroA = (1 - p.giro/0.45)*TAU*2;
+    animarHQ(f.hq, {suelo: p.enSuelo, vel, baile: p.baile > 0 || J.fase === 'final', vuela: p.vuela, giro: p.giro > 0, giroA: anim.giroA || 0, poder: p.tPoder < 3 && Math.floor(t*8) % 2 === 0 ? '' : p.poder}, dt, t);
+    if (anim.voltereta > 0) f.hq.cont.rotation.x = (1 - anim.voltereta/0.42)*TAU;
+  }
   /* parpadea si lo golpearon */
   f.g.visible = !(p.invul > 0 && p.golpeT <= 0 && J.fase === 'juego' && Math.floor(t*14) % 2 === 0 && p.invul < CFG.INVUL - 0.05);
   /* poderes */
@@ -765,11 +873,17 @@ function animarFernando(dt, t){
 }
 function animarTio(dt, t){
   const T = J.tio, m = tio;
-  const vel = anim.tioAnt.distanceTo(new THREE.Vector3(T.x, T.y, T.z))/Math.max(dt, 1e-3);
-  anim.tioAnt.set(T.x, T.y, T.z);
-  m.g.position.set(T.x, T.y - 1.1, T.z);
+  const vel = IP.tVel;
+  m.g.position.set(IP.t.x, IP.t.y - 1.1, IP.t.z);
   m.g.rotation.y = T.ang;
   const rapido = clamp(vel/12, 0, 1);
+  if (m.hq){
+    /* despacio: casi parado flotando; rápido: acostado como superhéroe */
+    const meta = J.fase === 'final' || J.p.baile > 0 ? -1.2 : -1.25 + rapido*1.25;
+    m.hq.cont.rotation.x += (meta - m.hq.cont.rotation.x)*Math.min(1, dt*4);
+    m.hq.cont.rotation.z = Math.sin(t*1.7)*0.08;
+    m.hq.cont.position.y = 1.1 + Math.sin(t*2.3)*0.08;
+  }
   m.cuerpo.rotation.x = rapido*1.1;
   m.piernaI.rotation.x = 0.2 + rapido*0.4 + Math.sin(t*3)*0.1; m.piernaD.rotation.x = 0.1 + rapido*0.4 - Math.sin(t*3)*0.1;
   if (T.estado === 'ataca' || T.puno > 0){ m.brazoD.rotation.x = -3; m.brazoD.rotation.z = -0.1; m.brazoI.rotation.x = 0.3; }
@@ -973,8 +1087,27 @@ function vozEspanola(){
   const es = voces.filter(v=>v.lang && v.lang.toLowerCase().startsWith('es'));
   return es.find(v=>/es[-_](419|MX|US|CO|VE|AR|CL)/i.test(v.lang)) || es[0] || null;
 }
+/* primero la voz grabada (voces.js, las mismas de la Aventura 3D); si no hay, la del navegador */
+const VOCES = window.F3D_VOCES || {};
+let vozSonando = null;
 function hablar(texto, quien){
+  if (!OPC.sonido) return;
+  const quienVoz = quien === 'fer' ? OPC.pj : quien;
+  const url = VOCES[quienVoz] && VOCES[quienVoz][texto];
+  if (url){
+    try{
+      if (vozSonando){ vozSonando.pause(); vozSonando = null; }
+      try{ speechSynthesis.cancel(); }catch(e){}
+      const a = new Audio(url); a.volume = 1; vozSonando = a;
+      a.play().catch(()=>{ if (vozSonando === a) hablarTTS(texto, quien); });
+      return;
+    }catch(e){}
+  }
+  hablarTTS(texto, quien);
+}
+function hablarTTS(texto, quien){
   if (typeof speechSynthesis === 'undefined' || !OPC.sonido) return;
+  if (quien === 'fer' && F.QUIEN[OPC.pj]) quien = OPC.pj;
   try{
     const q = F.QUIEN[quien] || {};
     const u = new SpeechSynthesisUtterance(texto.replace(/[¡¿]/g, ''));
@@ -1403,6 +1536,7 @@ const RED = window.F3D_RED || null;
 const UI = {abierto: false, codigo: '', escribiendo: false, msg: '', msgT: 0, botones: [], k: 1, ox: 0, oy: 0, alto: 560, sig: 0};
 const REMOTOS = new Map();
 const brindis = [];
+function F_decir(clave, texto, quien){ if (J.fase !== 'titulo' && J.dialogos.length < 5) J.dialogos.push({clave, quien, texto, nombre: null, t: 0, dur: Math.max(1.8, 1 + texto.length*0.062)}); }
 function brindar(texto, color){ brindis.push({texto, color: color || '#ffffff', t: 0}); if (brindis.length > 4) brindis.shift(); }
 function redEvento(d){ if (RED && RED.activa && RED.activa()) try{ RED.enviarEvento(d); }catch(e){} }
 function amigosListos(){ return RED ? [...RED.remotos.values()].filter(r=>r.listo && r.obj && r.obj.nv >= 0) : []; }
@@ -1419,7 +1553,13 @@ if (RED){
     let k = 0; for (const id of s.estrellas || []) if (F.recibirEstrella(J, id)) k++;
     if (k){ brindar('🎁 ' + r.nombre + ' te compartió ' + k + (k === 1 ? ' estrella' : ' estrellas') + ' ★', '#ffe36e'); sonar('aparece'); guardar(); }
   };
-  RED.on.llega = r=>{ brindar('👋 ¡' + r.nombre + ' entró a jugar!', '#8ce99a'); sonar('caja'); };
+  RED.on.llega = r=>{
+    brindar('👋 ¡' + r.nombre + ' entró a jugar!', '#8ce99a'); sonar('caja');
+    /* Fernando saluda al amigo con su frase grabada, o el amigo se presenta con la suya */
+    const S = F.SALUDOS[r.pj];
+    if (OPC.pj === 'fernando' && S && r.pj !== 'fernando') F_decir('saludo' + r.pj, S[1], 'fer');
+    else { const g = {fernando: ['fernando', '¡Fernando Bros! ¡Vamos Penny y Sheldon!'], lucca: ['lucca', '¡Hola! ¡Soy Lucca, el amigo de Fernando!'], salomon: ['salomon', '¡Hola! ¡Salomón quiere jugar!'], cucu: ['cucu', '¡Hola! ¡Soy Cucú! ¿Jugamos?']}[r.pj]; if (g) F_decir('saludo' + r.pj, g[1], g[0]); }
+  };
   RED.on.seVa = r=>brindar('👋 ' + r.nombre + ' se fue', '#ced4da');
   RED.on.aviso = t=>brindar(t, '#a5d8ff');
   RED.on.evento = (r, d)=>{
@@ -1449,6 +1589,8 @@ function animarRemotos(dt, t){
     o.m.g.visible = ver; o.sombra.visible = ver;
     if (!ver) continue;
     const e = r.obj, a = r.act, f = o.m;
+    if (r.pj === 'fernando' && !f.hq && HQ.fer) vestirHQ(f, 'fernando');
+    if (f.hq) animarHQ(f.hq, {suelo: e.suelo, vel: e.mov, baile: e.baile, vuela: e.vuela, giro: e.giro, giroA: t*25, poder: e.poder}, dt, t);
     f.g.position.set(a.x, a.y, a.z); f.g.rotation.y = a.ang; f.g.scale.setScalar(e.escala);
     o.fase += dt*(4 + e.mov*1.6);
     const k = e.suelo ? Math.min(1, e.mov/4) : 0, s = Math.sin(o.fase);
@@ -1604,6 +1746,20 @@ function teclaAmigos(e){
 
 /* ---------------- el bucle ---------------- */
 let envio = 0;
+/* El juego avanza a 60 pasos por segundo; en pantallas de 90 o 120 Hz se dibuja entre paso y paso,
+   así Fernando y Tío Juan se mueven suaves (antes Tío Juan titilaba en esas pantallas). */
+const IP = {p: {x: 0, y: 0, z: 0}, pAnt: {x: 0, y: 0, z: 0}, t: {x: 0, y: 0, z: 0}, tAnt: {x: 0, y: 0, z: 0}, tVel: 0, listo: false};
+function interpolar(dt){
+  const a = clamp(reloj.acc/PASO, 0, 1);
+  const mezcla = (o, ant, cur)=>{
+    if (!IP.listo || Math.hypot(cur.x - ant.x, cur.y - ant.y, cur.z - ant.z) > 3){ o.x = cur.x; o.y = cur.y; o.z = cur.z; return; }
+    o.x = ant.x + (cur.x - ant.x)*a; o.y = ant.y + (cur.y - ant.y)*a; o.z = ant.z + (cur.z - ant.z)*a;
+  };
+  mezcla(IP.p, IP.pAnt, J.p); mezcla(IP.t, IP.tAnt, J.tio);
+  const v = Math.hypot(J.tio.x - IP.tAnt.x, J.tio.y - IP.tAnt.y, J.tio.z - IP.tAnt.z)/PASO;
+  IP.tVel += ((v < 60 ? v : 0) - IP.tVel)*Math.min(1, dt*6);
+  IP.listo = true;
+}
 const reloj = {ant: performance.now(), acc: 0};
 const PASO = 1/60;
 const cargando = document.getElementById('cargando');
@@ -1617,12 +1773,15 @@ function bucle(ahora){
   reloj.acc += dt;
   let pasos = 0;
   while (reloj.acc >= PASO && pasos < 4){
+    IP.pAnt.x = J.p.x; IP.pAnt.y = J.p.y; IP.pAnt.z = J.p.z;
+    IP.tAnt.x = J.tio.x; IP.tAnt.y = J.tio.y; IP.tAnt.z = J.tio.z;
     F.paso(J, PASO, {x: ctl.x, y: ctl.y, camA: cam.ang, salto: ctl.salto, poder: ctl.poder, ayuda: ctl.ayuda});
     reloj.acc -= PASO; pasos++;
     if (J.eventos.length) procesarEventos();
     if (cargaVista !== J.cargas) break;
   }
   if (pasos >= 4) reloj.acc = 0;
+  interpolar(dt);
   if (RED && RED.activa && RED.activa() && J.fase !== 'titulo' && (++envio % 4 === 0)) try{ RED.enviarEstado(F.empaquetar(J, OPC.pj, F.PJS[OPC.pj].nombre)); }catch(e){}
   if (cargaVista !== J.cargas) construirMundo();
   const t = J.t;
@@ -1652,6 +1811,7 @@ function bucle(ahora){
 }
 aplicarCalidad();
 construirMundo();
+cargarActivos();
 if (cargando) cargando.style.display = 'none';
 window.FER3D = {J: ()=>J, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
   RED, UI, REMOTOS, cambiarPj, irCon, abrirAmigos, opc: OPC};

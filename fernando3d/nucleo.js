@@ -42,51 +42,78 @@ const MAX_JUGADORES = 4;
 
 /* Quién habla: nombre en pantalla, color del globito y tono de voz */
 const QUIEN = {
-  fer:   {nombre:'Fernando',  color:'#ff6a5a', emoji:'🧒', pitch:1.8, rate:1.05},
-  tio:   {nombre:'Tío Juan',  color:'#5aa8ff', emoji:'🦸', pitch:0.7, rate:0.95},
-  malo:  {nombre:'El Malo',   color:'#9ad040', emoji:'👹', pitch:0.2, rate:0.8},
-  santi: {nombre:'Santi',     color:'#8ecbff', emoji:'👶', pitch:2,   rate:1.1},
-  abu:   {nombre:'Abu',       color:'#d8a0ff', emoji:'👵', pitch:1.2, rate:0.9},
+  fer:     {nombre:'Fernando', color:'#ff6a5a', emoji:'🧒', pitch:1.8, rate:1.05},
+  fernando:{nombre:'Fernando', color:'#ff6a5a', emoji:'🧒', pitch:1.8, rate:1.05},
+  tio:     {nombre:'Tío Juan', color:'#5aa8ff', emoji:'🦸', pitch:0.7, rate:0.95},
+  malo:    {nombre:'El Malo',  color:'#9ad040', emoji:'👹', pitch:0.2, rate:0.8},
+  santi:   {nombre:'Santi',    color:'#8ecbff', emoji:'👶', pitch:2,   rate:1.1},
+  abu:     {nombre:'Abu',      color:'#d8a0ff', emoji:'👵', pitch:1.2, rate:0.9},
+  penny:   {nombre:'Penny',    color:'#ff9ad8', emoji:'🐶', pitch:1.9, rate:1.1},
+  sheldon: {nombre:'Sheldon',  color:'#e8b070', emoji:'🐕', pitch:1.5, rate:1.1},
+  lucca:   {nombre:'Lucca',    color:'#5aff8a', emoji:'🧒', pitch:1.7, rate:1.1},
+  salomon: {nombre:'Salomón',  color:'#ffe23a', emoji:'🧒', pitch:1.5, rate:1.1},
+  cucu:    {nombre:'Cucú',     color:'#ff9ad8', emoji:'👧', pitch:1.9, rate:1.0},
 };
 
 /* Todas las frases (las pruebas revisan que ninguna quede sin dueño).
-   Si hay varias, se elige una al azar. */
+   Si hay varias, se elige una al azar. Casi todas son las mismas de la
+   Aventura 3D y tienen voz grabada (voces.js); las demás las dice el
+   navegador. */
 const FRASES = {
-  intro1:     ['tio', '¡Fernando! ¡El Rey Gruñón se robó las estrellas del castillo!'],
-  intro2:     ['fer', '¡No te preocupes, tío Juan! ¡Soy el pichunguito de tío Juan!'],
-  intro3:     ['tio', '¡Entra en los cuadros mágicos y busca las estrellas! ¡Yo te ayudo!'],
-  entra:      ['fer', ['¡Pichunguito al ataque!', '¡Vamos, tío Juan!', '¡A buscar estrellas!']],
-  estrella:   ['fer', ['¡Tengo una estrella! ¡Te amo, tío Juan!', '¡Una estrella para el castillo!', '¡Estrellita, estrellita!']],
-  estrellaTio:['tio', ['¡Muy bien, pichunguito!', '¡Eres un campeón, Fernando!', '¡Qué bien lo haces!']],
+  intro1:     ['tio', '¡Tío Juan al rescate!'],
+  intro2:     ['tio', '¡Fernando! ¡El Rey Gruñón se robó las estrellas del castillo! ¡Entra en los cuadros mágicos y búscalas!'],
+  intro3:     ['fer', '¡Soy el pichunguito de tío Juan!'],
+  intro4:     ['fer', '¡Fernando Bros! ¡Vamos Penny y Sheldon!'],
+  entra:      ['fer', ['¡Pichunguito al ataque!', '¡Qué divertido! ¡Otra vez, otra vez!']],
+  perro:      ['penny', '¡Guau! ¡Penny al ataque!'],
+  perro2:     ['sheldon', '¡Guau! ¡Sheldon al ataque!'],
+  estrella:   ['fer', ['¡Gané! ¡Soy el pichunguito campeón!', '¡Qué divertido! ¡Otra vez, otra vez!', '¡Tesoro! ¡Encontré el tesoro!']],
+  estrellaTio:['tio', ['¡Muy bien, mi pichunguito! ¡Eres un campeón!', 'Eres mi pichunguito']],
   estrellaYa: ['tio', '¡Esa estrella ya la tenías! ¡Igual brilla bonito!'],
   rojas:      ['tio', '¡Juntaste todas las monedas rojas! ¡Apareció una estrella!'],
   roja:       ['fer', ['¡Una moneda roja!', '¡Otra roja!']],
-  toma:       ['fer', ['¡Toma, pichungazo!', '¡Pum!', '¡Le di!']],
-  jefeGolpe:  ['fer', ['¡Toma, pichungazo!', '¡Le di al grandote!']],
-  jefeCae:    ['tio', '¡Lo venciste! ¡Agarra la estrella!'],
-  alas:       ['tio', '¡Gorra alada! ¡Deja apretado saltar y vuelas!'],
-  fuego:      ['tio', '¡Flor de fuego! ¡Aprieta el botón de poder para lanzar fuego!'],
-  hamburguesa:['tio', '¡Toma mi hamburguesa! ¡Súper velocidad!'],
+  toma:       ['fer', ['¡Toma, pichungazo!', '¡Pichunguito al ataque!']],
+  jefeGolpe:  ['fer', '¡Toma, pichungazo!'],
+  jefeCae:    ['tio', '¡Muy bien, mi pichunguito! ¡Eres un campeón!'],
+  alas:       ['fer', '¡A volar, pichunguitos!'],
+  fuego:      ['fer', '¡Fuego pichunguito!'],
+  hamburguesa:['tio', '¡Tío Juan al rescate! ¡Toma una hamburguesa, pichunguito, corre!'],
+  hamb2:      ['fer', '¡Qué rica hamburguesa!'],
   gigante:    ['fer', '¡Soy gigante! ¡El pichunguito más grande del mundo!'],
   iman:       ['tio', '¡Imán de monedas! ¡Todas vienen a ti!'],
-  tenis:      ['tio', '¡Tenis saltarines! ¡Salta súper alto!'],
-  ayuda:      ['fer', ['¡Tío Juan, ayúdame!', '¡Tío Juan!', '¡Ayuda, tío Juan!']],
-  ayudaVoy:   ['tio', ['¡Aquí voy, pichunguito!', '¡Puño de superhéroe!', '¡Yo me encargo!']],
-  regalo:     ['tio', ['¡Toma un regalo, pichunguito!', '¡Un poder para ti!']],
-  rescate:    ['tio', ['¡Te tengo, pichunguito!', '¡Upa! ¡Aquí estoy!', '¡No pasa nada, sigue jugando!']],
+  tenis:      ['tio', ['¡Tenis saltarines! ¡Salta súper alto!', '¡Arriba, arriba! ¡Tío Juan vuela!']],
+  ayuda:      ['fer', ['¡Tío Juan, ayúdame!', '¡Ayuda, tío Juan!']],
+  ayudaVoy:   ['tio', ['¡Tío Juan al rescate!', '¡Arriba, arriba! ¡Tío Juan vuela!']],
+  regalo:     ['tio', ['¡Toma un regalo, pichunguito!', 'Eres mi pichunguito']],
+  gracias:    ['fer', '¡Gracias tío Juan!'],
+  rescate:    ['tio', ['¡Tío Juan al rescate!', 'Eres mi pichunguito']],
   ay:         ['fer', ['¡Ay!', '¡Uy!']],
   bloqueado:  ['tio', '¡Para este cuadro necesitas más estrellas!'],
-  todas:      ['fer', '¡Ya tengo todas las estrellas de aquí! ¡Al castillo!'],
-  monedas50:  ['tio', '¡Cincuenta monedas! ¡Toma un poder de premio!'],
-  santi:      ['fer', '¡Te amo Santi, mi hermanito!'],
-  santi2:     ['santi', '¡Gu gu, Fer!'],
-  abu:        ['fer', '¡Te amo, Abu!'],
-  abu2:       ['abu', '¡Mi pichunguito lindo! ¡Busca la estrella de la torre!'],
+  todas:      ['fer', '¡Gané! ¡Soy el pichunguito campeón!'],
+  monedas50:  ['tio', '¡Muy bien, mi pichunguito! ¡Eres un campeón!'],
+  santi:      ['fer', 'Te amo Santi, mi hermanito'],
+  santi2:     ['santi', '¡Hola! ¡Soy Santi!'],
+  abu:        ['fer', 'Te amo Abu'],
+  abu2:       ['abu', '¡Hola, mi cielo! ¡Abu te quiere!'],
+  abu3:       ['abu', '¡Busca la estrella de arriba del molino, mi pichunguito!'],
   tejado:     ['tio', '¡Fernando! ¡Allá arriba en el techo del castillo brilla una estrella!'],
   final1:     ['malo', '¡Noooo! ¡Me ganó un niño de seis años!'],
-  final2:     ['fer', '¡Te amo tío Juan, yo soy tu pichunguito!'],
-  final3:     ['tio', '¡Recuperamos todas las estrellas! ¡Eres un héroe, Fernando!'],
+  final2:     ['fer', 'Te amo tío Juan, yo soy tu pichunguito'],
+  final3:     ['tio', '¡Hola, familia! ¡Un abrazo de tío Juan!'],
   pista:      ['tio', ['¡Sigue la flecha amarilla que va encima de ti!', '¡La flecha amarilla te lleva a las estrellas!']],
+};
+/* Cuando se juega con Lucca, Salomón o Cucú, algunas frases cambian por las suyas (también grabadas) */
+const FRASES_PJ = {
+  lucca:   {entra:'¡Lucca al ataque!', toma:'¡Lucca al ataque!', alas:'¡Estoy volando! ¡Mírame!', hamb2:'¡Ñam! ¡Qué rica hamburguesa!', estrella:'¡Encontré el tesoro!', todas:'¡Encontré el tesoro!', intro3:'¡Hola! ¡Soy Lucca, el amigo de Fernando!'},
+  salomon: {entra:'¡Salomón en la casa!', toma:'¡Salomón en la casa!', alas:'¡Volando con estilo!', hamb2:'¡Esta hamburguesa está brutal!', estrella:'¡El tesoro! ¡Somos ricos!', todas:'¡El tesoro! ¡Somos ricos!', intro3:'¡Hola! ¡Salomón quiere jugar!'},
+  cucu:    {entra:'¡Cucú! ¡Aquí estoy!', toma:'¡Cucú! ¡Aquí estoy!', alas:'¡Estoy volando como un pajarito!', hamb2:'¡Qué rica hamburguesa!', estrella:'¡Encontré el tesoro!', todas:'¡Encontré el tesoro!', intro3:'¡Hola! ¡Soy Cucú! ¿Jugamos?'},
+};
+/* Lo que dice Fernando cuando llega un amigo a la sala */
+const SALUDOS = {
+  fernando: ['fer', '¡Fernando Bros! ¡Vamos Penny y Sheldon!'],
+  lucca:    ['fer', '¡Luca! ¡Mi amigo pichunguito!'],
+  salomon:  ['fer', '¡Salomón! ¡Juega conmigo, pichunguito!'],
+  cucu:     ['fer', 'Hola Cucú, acompáñame'],
 };
 
 /* ============================================================
@@ -172,7 +199,7 @@ MUNDOS.push({
         hola:'¡Grrr! ¡Soy el Gran Gruñón! ¡Esta estrella es mía!', cae:'¡Ay, ay, ay! ¡Me aplastaron!'},
   cajas:[{x:-4, z:16, poder:'fuego'}, {x:8, z:14, poder:'tenis'}, {x:44, z:3, poder:'alas'},
          {x:-20, z:-14, poder:'hamburguesa'}, {x:12, z:-2, poder:'iman'}, {x:0, z:-27, poder:'gigante'}],
-  amigos:[{quien:'abu', x:-4, z:4, frases:['abu', 'abu2']}],
+  amigos:[{quien:'abu', x:-4, z:4, frases:['abu', 'abu2', 'abu3']}],
   deco:{arboles:40, flores:160, rocas:12, cercas:true, hongos:14},
 });
 
@@ -404,7 +431,7 @@ function crearJuego(op){
     bolas: [], eventos: [], dialogos: [], dichos: [],
     trans: null, guia: null, tGuia: 0,
     monedasMundo: 0, rojasMundo: 0, cdBloqueo: 0, cdRescateDicho: 0, tTodas: -1, tFinal: 0,
-    sigId: 1,
+    sigId: 1, pj: 'fernando',
   };
   cargarMundo(J, 0, null);
   return J;
@@ -413,7 +440,7 @@ function crearJuego(op){
 function empezar(J){
   if (J.fase !== 'titulo') return;
   J.fase = 'juego';
-  if (!J.prog.intro){ decir(J, 'intro1'); decir(J, 'intro2'); decir(J, 'intro3'); J.prog.intro = true; }
+  if (!J.prog.intro){ decir(J, 'intro1'); decir(J, 'intro2'); decir(J, 'intro3'); decir(J, 'intro4'); J.prog.intro = true; }
   else decir(J, 'entra');
 }
 
@@ -423,10 +450,11 @@ function decir(J, clave, texto, quien, nombre){
   const f = FRASES[clave];
   if (!f && !texto) return;
   if (J.dialogos.some(d=>d.clave === clave)) return;
-  if (J.dialogos.length >= 4) return;
+  if (J.dialogos.length >= 5) return;
   let t = texto;
   if (!t){ const op = f[1]; t = Array.isArray(op) ? op[Math.floor(J.R()*op.length)] : op; }
   const q = quien || f[0];
+  if (!texto && q === 'fer' && J.pj && FRASES_PJ[J.pj] && FRASES_PJ[J.pj][clave]) t = FRASES_PJ[J.pj][clave];
   J.dialogos.push({clave, quien:q, texto:t, nombre: nombre || null, t:0, dur: Math.max(1.8, 1.0 + t.length*0.062)});
   J.dichos.push(clave); if (J.dichos.length > 300) J.dichos.shift();
 }
@@ -715,6 +743,7 @@ function dar(J, poder){
   p.poder = poder; p.tPoder = PODERES[poder].dur;
   ev(J, 'poder', p.x, p.y, p.z, {poder});
   decir(J, poder);
+  if (poder === 'hamburguesa') decir(J, 'hamb2');
 }
 
 function lastimar(J, e){
@@ -936,7 +965,7 @@ function cosas(J, dt){
       const tengo = cuentaEstrellas(J.prog);
       if (tengo >= po.necesita){
         const id = MUNDOS[po.mundo].id;
-        irA(J, po.mundo, null, ()=>{ decir(J, 'entra'); if (estrellasDe(J.prog, id) === 0) decir(J, 'pista'); });
+        irA(J, po.mundo, null, ()=>{ decir(J, 'entra'); if (estrellasDe(J.prog, id) === 0){ decir(J, J.R() < 0.5 ? 'perro' : 'perro2'); decir(J, 'pista'); } });
       }
       else {
         const dx = p.x - po.x, dz = p.z - po.z, d = Math.hypot(dx, dz) || 1;
@@ -1034,7 +1063,7 @@ function tio(J, dt, inp){
       const y = (g.s ? g.y : p.y) + 1.3;
       M.cajas.push({x: g.s ? x : p.x, y, z: g.s ? z : p.z, poder, abierta:0, temporal:true, vida:25, nueva:true});
       ev(J, 'regalo', x, y, z, {poder});
-      decir(J, 'regalo');
+      decir(J, 'regalo'); decir(J, 'gracias');
     }
   }
   if (t.estado === 'ataca'){
@@ -1126,7 +1155,7 @@ function irConAmigo(J, nv, x, y, z){
   return true;
 }
 
-const API = {PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
+const API = {FRASES_PJ, SALUDOS, PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
              topDe, dentro, suelo, empujar, rng, clamp, lerp, angDif, progresoNuevo, progresoLimpio, cuentaEstrellas, estrellasDe, dar};
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 else raiz.F3D = API;
