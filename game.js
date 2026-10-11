@@ -247,13 +247,13 @@ function procesarTecla(k){
   if (estado==='menu' && (e.key==='k'||e.key==='K')) iniciarKart();
   else if (estado==='menu' && (e.key==='Enter'||e.key===' ')) estado='mapa';
   else if (estado==='mapa'){
-    if (e.key==='ArrowLeft') selMapa=(selMapa+16)%17;
-    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%17;
-    /* arriba y abajo saltan entre las dos filas de mundos y las dos filas de botones (4 arriba, 3 abajo) */
-    else if (e.key==='ArrowUp') selMapa = selMapa>=14 ? [10,12,13][selMapa-14]
+    if (e.key==='ArrowLeft') selMapa=(selMapa+17)%18;
+    else if (e.key==='ArrowRight') selMapa=(selMapa+1)%18;
+    /* arriba y abajo saltan entre las dos filas de mundos y las dos filas de botones (4 y 4) */
+    else if (e.key==='ArrowUp') selMapa = selMapa>=14 ? selMapa-4
                                         : selMapa>=10 ? [5,6,8,9][selMapa-10] : Math.max(selMapa-5, 0);
     else if (e.key==='ArrowDown') selMapa = selMapa>=14 ? selMapa
-                                          : selMapa>=10 ? [14,15,15,16][selMapa-10]
+                                          : selMapa>=10 ? selMapa+4
                                           : selMapa>=5 ? [10,11,11,12,13][selMapa-5]
                                           : selMapa+5;
     else if (e.key>='1'&&e.key<='9') { empezarJuego(+e.key-1); }
@@ -265,6 +265,7 @@ function procesarTecla(k){
     else if (e.key==='g'||e.key==='G') abrirAventura3D();
     else if (e.key==='s'||e.key==='S') abrirSalomon3D();
     else if (e.key==='l'||e.key==='L') abrirLuca3D();
+    else if (e.key==='f'||e.key==='F') abrirFernando3D();
     else if (e.key==='Enter'||e.key===' '){
       if(selMapa===10) iniciarKart();
       else if(selMapa===11){ if (typeof MJ!=='undefined') MJ.abrirArcade(); }
@@ -273,6 +274,7 @@ function procesarTecla(k){
       else if(selMapa===14) abrirAventura3D();
       else if(selMapa===15) abrirSalomon3D();
       else if(selMapa===16) abrirLuca3D();
+      else if(selMapa===17) abrirFernando3D();
       else empezarJuego(selMapa);
     }
     else if (e.key==='Escape') estado='menu';
@@ -472,6 +474,7 @@ cv.addEventListener('pointerdown', (e)=>{
         else if (c.idx===14) abrirAventura3D();
         else if (c.idx===15) abrirSalomon3D();
         else if (c.idx===16) abrirLuca3D();
+        else if (c.idx===17) abrirFernando3D();
         else empezarJuego(c.idx);
         break;
       }
@@ -3333,11 +3336,11 @@ function cajasMapa(){
     const col=i%5, row=(i/5)|0;
     cajas.push({x:30+col*184, y:130+row*126, w:168, h:106, idx:i});
   }
-  /* los siete botones de abajo, en dos filas: la carrera, la sala arcade, el dominó y el kart en 3D;
-     y debajo la gran aventura, Salomón en Maracaibo y Lucca Piloto */
+  /* los ocho botones de abajo, en dos filas: la carrera, la sala arcade, el dominó y el kart en 3D;
+     y debajo la gran aventura, Salomón en Maracaibo, Lucca Piloto y Fernando 3D */
   const anc = 210, hueco = 10, alto = 54;
-  for(let i=0;i<7;i++){
-    const fila = i<4 ? 0 : 1, n = fila ? 3 : 4, col = fila ? i-4 : i;
+  for(let i=0;i<8;i++){
+    const fila = i<4 ? 0 : 1, n = 4, col = fila ? i-4 : i;
     const x0 = (W - (anc*n + hueco*(n-1)))/2;
     cajas.push({x: x0 + col*(anc+hueco), y: 376 + fila*(alto+8), w:anc, h:alto, idx:10+i});
   }
@@ -3373,6 +3376,14 @@ function abrirSalomon3D(){
     else location.href = destino;
   }catch(e){ try{ location.href = destino; }catch(e2){} }
 }
+/* Fernando 3D, la aventura en 3D con Tío Juan, vive en la carpeta fernando3d/ */
+function abrirFernando3D(){
+  const destino = (typeof window !== 'undefined' && window.URL_FERNANDO3D) || 'fernando3d/';
+  try{
+    if (typeof window !== 'undefined' && window.URL_FERNANDO3D) window.open(destino, '_blank');
+    else location.href = destino;
+  }catch(e){ try{ location.href = destino; }catch(e2){} }
+}
 /* Lucca Piloto, el avión que se vuelve nave galáctica, vive en la carpeta luca3d/ */
 function abrirLuca3D(){
   const destino = (typeof window !== 'undefined' && window.URL_LUCA3D) || 'luca3d/';
@@ -3400,7 +3411,7 @@ function dibMapa(){
   for(const c of cajasMapa()){
     const sel = selMapa===c.idx;
     ctx.fillStyle = c.idx===10 ? '#0a3a12' : c.idx===11 ? '#3a0a3a'
-                  : c.idx===12 ? '#0d4a2a' : c.idx===13 ? '#4a1a0a' : c.idx===14 ? '#0a2a4a' : c.idx===15 ? '#4a0a2a' : c.idx===16 ? '#1a1a5a' : COLORES_MAPA[c.idx];
+                  : c.idx===12 ? '#0d4a2a' : c.idx===13 ? '#4a1a0a' : c.idx===14 ? '#0a2a4a' : c.idx===15 ? '#4a0a2a' : c.idx===16 ? '#1a1a5a' : c.idx===17 ? '#5a1010' : COLORES_MAPA[c.idx];
     ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,c.h,12); ctx.fill();
     ctx.lineWidth = sel?6:3;
     ctx.strokeStyle = sel ? '#ffe36e' : 'rgba(255,255,255,0.5)';
@@ -3417,6 +3428,7 @@ function dibMapa(){
     else if (c.idx===14) rotuloConEmoji('🌴', 'AVENTURA 3D', c, '#7de0ff');
     else if (c.idx===15) rotuloConEmoji('⚡', 'SALOMÓN 3D', c, '#ffd23f');
     else if (c.idx===16) rotuloConEmoji('✈️', 'LUCCA PILOTO', c, '#7de0ff');
+    else if (c.idx===17) rotuloConEmoji('⭐', 'FERNANDO 3D', c, '#ffd23f');
     else {
       ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.roundRect(c.x,c.y,c.w,30,[12,12,0,0]); ctx.fill();
