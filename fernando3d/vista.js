@@ -1058,13 +1058,30 @@ const TEMAS_MUS = {
   jefe:     {bpm: 168, mel:[69,72,76,72, 69,72,77,72, 69,72,76,72, 68,71,76,71, 69,72,76,79, 77,76,74,72, 71,72,74,71, 69,0,69,0], baj:[45,45,52,45, 45,45,53,45, 45,45,52,45, 44,44,52,44]},
   final:    {bpm: 150, mel:[72,0,76,79, 84,0,79,84, 88,86,84,79, 81,0,0,0, 77,81,84,81, 79,84,88,84, 86,84,83,86, 84,0,0,0], baj:[48,55,52,55, 53,57,48,55, 53,57,48,52, 55,55,48,48]},
 };
+const CANCIONES = {castillo: 'musica_castillo.mp3'};
+const cancion = {el: null, src: '', fallo: false};
 const musica = (function(){
   let actual = null, paso = 0, prox = 0;
   return {
     tema(n){ if (actual !== n){ actual = n; paso = 0; prox = AC ? AC.currentTime + 0.1 : 0; } },
     nombre(){ return actual; },
     tick(){
+      /* en el castillo suena la canción de Fernando (mp3); en los demás mundos, la música 8 bits */
+      const archivo = CANCIONES[actual];
+      const usarArchivo = !!(archivo && !cancion.fallo);
+      if (cancion.el && (!usarArchivo || cancion.src !== archivo || !OPC.musica || !OPC.sonido || document.hidden)){ try{ cancion.el.pause(); }catch(e){} }
       if (!AC || !actual || !OPC.musica) return;
+      if (usarArchivo){
+        if (!OPC.sonido || document.hidden) return;
+        if (!cancion.el){
+          cancion.el = new Audio(); cancion.el.loop = true; cancion.el.preload = 'auto';
+          cancion.el.addEventListener('error', ()=>{ cancion.fallo = true; });
+        }
+        if (cancion.src !== archivo){ cancion.src = archivo; cancion.el.src = archivo; }
+        cancion.el.volume = 0.5;
+        if (cancion.el.paused) cancion.el.play().catch(()=>{});
+        return;
+      }
       const T = TEMAS_MUS[actual]; if (!T) return;
       const dur = 60/T.bpm/2;
       if (prox < AC.currentTime) prox = AC.currentTime + 0.05;
@@ -1815,7 +1832,7 @@ construirMundo();
 cargarActivos();
 if (cargando) cargando.style.display = 'none';
 window.FER3D = {J: ()=>J, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
-  RED, UI, REMOTOS, cambiarPj, irCon, abrirAmigos, opc: OPC};
+  RED, UI, REMOTOS, cambiarPj, irCon, abrirAmigos, opc: OPC, cancion};
 if (RED && RED.pendiente){
   /* vino con ?sala=ABCD (el enlace que mandó un amigo): se entra solo */
   setTimeout(()=>{ if (J.fase === 'titulo'){ F.empezar(J); musica.tema(TEMAS[J.M.def.tema].musica); } abrirAmigos(); RED.unirse(RED.pendiente); }, 400);

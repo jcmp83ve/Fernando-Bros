@@ -91,6 +91,8 @@ Sin cuentas ni pagos. Si la parte de red no carga, el juego se juega solo igual.
 - **Voces grabadas:** los diálogos usan las mismas grabaciones de la Aventura 3D (`voces.js`):
   Fernando, Tío Juan, Santi, Abu, Penny, Sheldon, Lucca, Salomón y Cucú. Las frases propias de
   este juego que no tienen grabación las dice la voz del navegador.
+- **Música del castillo:** en el jardín del castillo (donde están los cuadros mágicos) suena la canción de
+  Fernando (`musica_castillo.mp3`); en los demás mundos sigue la música 8 bits.
 - En pantallas de 90/120 Hz los personajes se dibujan entre paso y paso (antes Tío Juan titilaba).
 
 ## Gráficos
