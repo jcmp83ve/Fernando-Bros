@@ -1216,7 +1216,9 @@ function dibujarHud(dt){
   if (B.ircon.r && !chico) texto('Ir con ' + (siguienteAmigo() || {}).nombre + ' (T)', W - 90, 152, 15, '#ffe36e', 'right');
   if (RED && RED.activa && RED.activa()){
     const n = [...RED.remotos.values()].filter(r=>r.listo).length;
-    texto('👥 Sala ' + RED.sala + (n ? ' · ' + n + (n === 1 ? ' amigo' : ' amigos') : ' · esperando…'), W - 16, p.poder ? 108 : 30, chico ? 13 : 15, '#a5d8ff', 'right');
+    const et = '👥 Sala ' + RED.sala + (n ? ' · ' + n + (n === 1 ? ' amigo' : ' amigos') : ' · esperando…');
+    if (W < 820) texto(et, 16, 104, 13, '#a5d8ff', 'left');
+    else texto(et, W - 16, p.poder ? 108 : 30, 15, '#a5d8ff', 'right');
   }
   if (J.fase === 'titulo'){ dibujarTitulo(); dibujarBrindis(dt); dibujarAmigos(); return; }
   /* estrellas y monedas */
