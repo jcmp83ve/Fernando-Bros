@@ -35,7 +35,7 @@ const LISTA_PODERES = Object.keys(PODERES);
 const PJS = {
   fernando: {nombre:'Fernando', letra:'F', gorra:'#e8262a', overol:'#2f52e6', color:'#ff6a5a'},
   lucca:    {nombre:'Lucca',    letra:'L', gorra:'#2ab84a', overol:'#1a3a8a', color:'#5aff8a'},
-  salomon:  {nombre:'Salomón',  letra:'S', gorra:'#ffc81a', overol:'#7a3ad8', color:'#ffe23a'},
+  salomon:  {nombre:'Salomón',  letra:'S', gorra:'#7ad83a', overol:'#1e8c3a', color:'#ffe23a'},
   cucu:     {nombre:'Cucú',     letra:'C', gorra:'#ff5ab0', overol:'#ffffff', color:'#ff9ad8', nina:true},
 };
 const MAX_JUGADORES = 4;
