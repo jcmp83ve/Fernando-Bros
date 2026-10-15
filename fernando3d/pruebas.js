@@ -274,17 +274,34 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   }
   if (J.p.y < J.M.def.yMuerte) mal('Fernando quedó en el vacío');
   else bien('el niño que aprieta todo sigue jugando (' + rescates + ' rescates)');
-  /* y saltar al agua a propósito */
+  /* y saltar al agua a propósito: nada (no se hunde) */
   const J2 = L.crearJuego({prog:{intro:true}});
   L.empezar(J2); L.cargarMundo(J2, 1, null);
-  let rescate = false;
+  let rescate = false, nado = 0, minY = Infinity;
   for (let f = 0; f < 60*12; f++){
     J2.eventos.length = 0;
-    L.paso(J2, 1/60, {x:0, y:-1, camA:Math.PI, salto: f % 30 < 5});
-    if (J2.eventos.some(e=>e.tipo === 'rescate')){ rescate = true; break; }
+    L.paso(J2, 1/60, {x:0, y:-1, camA:Math.PI, salto: f % 30 < 5 && !J2.p.nada});
+    if (J2.eventos.some(e=>e.tipo === 'rescate')) rescate = true;
+    if (J2.p.nada){ nado++; minY = Math.min(minY, J2.p.y); }
   }
-  if (!rescate) mal('Tío Juan no rescató a Fernando al caerse al agua');
-  else bien('Tío Juan rescata a Fernando cuando se cae');
+  const aguaY = J2.M.def.agua.y;
+  if (rescate || nado < 60) mal('al caer al agua no nadó (nadando ' + nado + ' cuadros, rescate: ' + rescate + ')');
+  else bien('en el agua Fernando nada (' + (nado/60).toFixed(1) + ' s) sin hundirse (más hondo: ' + (minY - aguaY).toFixed(2) + ' m)');
+  if (J2.p.nada && Math.hypot(J2.p.x, J2.p.z) > 400) mal('nadó hasta el infinito');
+  /* nadando de vuelta, sale solito a la orilla */
+  let fuera = false;
+  for (let f = 0; f < 60*20 && !fuera; f++){
+    const p = J2.p, s = p.seguro, dx = s.x - p.x, dz = s.z - p.z, l = Math.hypot(dx, dz) || 1;
+    L.paso(J2, 1/60, {x: -dx/l, y: -dz/l, camA: Math.PI});
+    if (J2.p.enSuelo && !J2.p.nada) fuera = true;
+  }
+  if (fuera) bien('nadando hacia la orilla, sale del agua solito'); else mal('no pudo salir del agua');
+  /* la lava sí: Tío Juan lo rescata */
+  const J3 = L.crearJuego({prog:{intro:true}}); L.empezar(J3); L.cargarMundo(J3, 5, null);
+  for (let i = 0; i < 30; i++) L.paso(J3, 1/60, {});
+  J3.p.y = J3.M.def.agua.y - 0.8; J3.p.enSuelo = false; J3.p.vy = -1; J3.eventos.length = 0;
+  L.paso(J3, 1/60, {});
+  if (J3.eventos.some(e=>e.tipo === 'rescate') && !J3.p.nada) bien('en la lava no se nada: Tío Juan lo rescata'); else mal('en la lava no lo rescató');
 }
 
 /* 4) cada poder hace lo suyo */
