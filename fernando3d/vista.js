@@ -124,6 +124,11 @@ const TEMAS = {
   playa:    {top:'#1a8cff', hor:'#bff4ff', bot:'#7ad0e8', sol:'#fff6e0', nubes:0.4, niebla:['#bff4ff', 80, 340], hemi:['#e0f4ff', '#c8a860', 0.6], solI:2.1, musica:'playa', montes:'#3aa880'},
   nieve:    {top:'#5a8ad8', hor:'#eaf2ff', bot:'#b8cce8', sol:'#fff8f0', nubes:0.75, niebla:['#e4eeff', 50, 240], hemi:['#eef4ff', '#8aa0c0', 0.85], solI:2.0, musica:'nieve', montes:'#c8d8f0'},
   nubes:    {top:'#4a88ff', hor:'#ffc8e8', bot:'#c8a8f0', sol:'#fff0f8', nubes:0.7, niebla:['#f8c8e8', 70, 260], hemi:['#fff0fa', '#a888d8', 0.75], solI:2.1, musica:'nubes', montes:null},
+  maracaibo:{top:'#2a8cff', hor:'#ffe8b0', bot:'#f0c890', sol:'#fff0c0', nubes:0.45, niebla:['#ffe8c0', 80, 330], hemi:['#fff0d8', '#6a8a3a', 0.75], solI:2.6, musica:'maracaibo', montes:'#6a9a5a'},
+  usa:      {top:'#3a7ae8', hor:'#d8e8ff', bot:'#a8c0e0', sol:'#fff4e0', nubes:0.5, niebla:['#d8e8ff', 90, 360], hemi:['#e0ecff', '#5a7a4a', 0.7], solI:2.3, musica:'usa', montes:'#6a8a9a'},
+  italia:   {top:'#3a8cff', hor:'#ffe0c0', bot:'#e8c8a0', sol:'#fff0d0', nubes:0.35, niebla:['#ffe8d0', 80, 330], hemi:['#fff0e0', '#7a8a4a', 0.72], solI:2.4, musica:'italia', montes:'#8aa060'},
+  china:    {top:'#5a9ad8', hor:'#f0e0e8', bot:'#c8c0d0', sol:'#fff0e8', nubes:0.6, niebla:['#ecdde6', 60, 280], hemi:['#f8eef4', '#6a8a5a', 0.75], solI:2.1, musica:'china', montes:'#7aa08a'},
+  argentina:{top:'#3a9aff', hor:'#d8f0ff', bot:'#9ad0f0', sol:'#fff6d8', nubes:0.5, niebla:['#d8f0ff', 80, 330], hemi:['#e8f4ff', '#4a8a3a', 0.72], solI:2.4, musica:'argentina', montes:'#5a9a6a'},
   lava:     {top:'#12040a', hor:'#a03010', bot:'#3a0a04', sol:'#ff9a5a', nubes:0.35, niebla:['#6a1c0c', 35, 170], hemi:['#ff9a6a', '#3a0a04', 0.55], solI:1.6, musica:'lava', montes:'#2a1418'},
 };
 function colorV(hex){ const c = new THREE.Color(hex); return new THREE.Vector3(c.r, c.g, c.b); }
@@ -286,7 +291,9 @@ const AMB = (function(){
 })();
 function prepararAmbiente(tema){
   const t = {nieve:['nieve', '#ffffff', 0.22, 0.9], lava:['brasa', '#ff7a2a', 0.2, 1], playa:['brillo', '#fff6c0', 0.12, 0.5], nubes:['brillo', '#ffd0f0', 0.16, 0.7],
-             pradera:['polen', '#fff6a0', 0.1, 0.6], castillo:['polen', '#fff6a0', 0.1, 0.6]}[tema];
+             pradera:['polen', '#fff6a0', 0.1, 0.6], castillo:['polen', '#fff6a0', 0.1, 0.6],
+             maracaibo:['polen', '#fff6a0', 0.1, 0.6], usa:['brillo', '#ffffff', 0.1, 0.4], italia:['polen', '#fff6c0', 0.1, 0.5],
+             china:['nieve', '#ffb0d0', 0.2, 0.9], argentina:['nieve', '#cfeeff', 0.16, 0.8]}[tema] || ['polen', '#fff6a0', 0.1, 0.6];
   AMB.tipo = t[0]; AMB.mat.color.set(t[1]); AMB.mat.size = t[2]; AMB.mat.opacity = t[3];
 }
 function moverAmbiente(dt, t){
@@ -468,7 +475,7 @@ function construirMundo(){
   if (MUNDO){ escena.remove(MUNDO.grupo); limpiar(MUNDO.grupo); }
   const M = J.M, def = M.def, T = TEMAS[def.tema];
   const grupo = new THREE.Group();
-  const W0 = {grupo, solidos: [], monedas: [], rojas: [], estrellas: [], cajas: new Map(), enemigos: new Map(), portales: [], amigos: [], resortes: [], giran: [], antorchas: [], globos: [], ocluyen: [], tubo: null};
+  const W0 = {grupo, solidos: [], monedas: [], rojas: [], estrellas: [], pelotas: [], animPais: [], rayo: null, cajas: new Map(), enemigos: new Map(), portales: [], amigos: [], resortes: [], giran: [], antorchas: [], globos: [], ocluyen: [], tubo: null};
   MUNDO = W0;
   prepararCielo(def.tema);
   prepararAmbiente(def.tema);
@@ -494,16 +501,22 @@ function construirMundo(){
     }
     if (s.tubo){ const t = MOD.crearTubo(); t.position.set(s.x, s.y1, s.z); grupo.add(t); W0.tubo = t; continue; }
     const g = MOD.piezaSuelo(s, fondo);
+    if (MOD.vestirPieza) MOD.vestirPieza(s, g);
     grupo.add(g);
     W0.solidos.push({s, g, by: g.position.y - s.y1});
   }
+  /* los pisos pintados: calles, plazas y la cancha */
+  if (MOD.piso) for (const p of (def.pisos || [])) grupo.add(MOD.piso(p));
+  /* la pelota de fútbol */
+  W0.pelotas = (M.pelotas || []).map(b=>{ const g = MOD.pelota(); grupo.add(g); return {b, g, giro: b.giro}; });
   /* pasto que se mueve con el viento */
   pasto(grupo, M);
   /* adornos */
   adornos(grupo, M, T);
   /* monedas */
   for (const m of M.monedas){ const me = MOD.crearMoneda(false); me.position.set(m.x, m.y, m.z); grupo.add(me); W0.monedas.push({m, me}); }
-  for (const m of M.rojas){ const me = MOD.crearMoneda(true); me.position.set(m.x, m.y, m.z); me.add(MOD.halo('#ff3a4a', 1.6, 0.6)); grupo.add(me); W0.rojas.push({m, me}); }
+  const balones = def.fraseRoja === 'balon' && MOD.balonOro;   /* en Argentina las rojas son Balones de Oro */
+  for (const m of M.rojas){ const me = balones ? MOD.balonOro() : MOD.crearMoneda(true); me.position.set(m.x, m.y, m.z); me.add(MOD.halo(balones ? '#ffd23f' : '#ff3a4a', 1.6, 0.6)); grupo.add(me); W0.rojas.push({m, me}); }
   /* estrellas */
   for (const s of M.estrellas){
     const g = MOD.crearEstrella(s.ya && !s.grande, s.grande);
@@ -516,8 +529,8 @@ function construirMundo(){
   /* cuadros mágicos del castillo */
   for (const po of M.portales){
     const d = F.MUNDOS[po.mundo];
-    const color = {pradera:'#4ae060', playa:'#3ad0ff', nieve:'#bfe8ff', nubes:'#ff9ae0', lava:'#ff5a2a'}[d.id];
-    const g = MOD.crearPortal(po.mundo, d.nombre, d.emoji, color, po.necesita);
+    const color = d.color || {pradera:'#4ae060', playa:'#3ad0ff', nieve:'#bfe8ff', nubes:'#ff9ae0', lava:'#ff5a2a'}[d.id];
+    const g = MOD.crearPortal(po.mundo, d.nombre, d.emoji, color, po.necesita, d.corto);
     g.position.set(po.x, po.y, po.z); g.rotation.y = po.ang; grupo.add(g);
     W0.portales.push({po, g});
   }
@@ -547,6 +560,7 @@ function cartelito(texto, color){
   return s;
 }
 
+function enPiso(M, x, z, m){ for (const p of (M.def.pisos || [])) if (Math.abs(x - p.x) < p.sx + (m || 0) && Math.abs(z - p.z) < p.sz + (m || 0)) return true; return false; }
 /* el pasto: miles de hojitas instanciadas que se mueven con el viento */
 const uViento = {value: 0};
 function pasto(grupo, M){
@@ -582,7 +596,7 @@ function pasto(grupo, M){
     let x, z;
     if (s.t === 'cil'){ const a = R()*TAU, r = Math.sqrt(R())*(s.r - 0.15); x = s.x + Math.sin(a)*r; z = s.z + Math.cos(a)*r; }
     else { x = s.x + (R()*2 - 1)*s.sx; z = s.z + (R()*2 - 1)*s.sz; }
-    if (F.suelo(M, x, z, 300, 0).s !== s) continue;
+    if (F.suelo(M, x, z, 300, 0).s !== s || enPiso(M, x, z)) continue;
     const h = 0.25 + R()*0.35;
     e.set(0, R()*TAU, 0); q.setFromEuler(e); v.set(x, s.y1, z); sc.set(1 + R(), h, 1);
     m4.compose(v, q, sc); inst.setMatrixAt(n, m4);
@@ -602,7 +616,7 @@ function pasto(grupo, M){
     let x, z;
     if (s.t === 'cil'){ const a = R()*TAU, r = Math.sqrt(R())*(s.r - 0.3); x = s.x + Math.sin(a)*r; z = s.z + Math.cos(a)*r; }
     else { x = s.x + (R()*2 - 1)*s.sx; z = s.z + (R()*2 - 1)*s.sz; }
-    if (F.suelo(M, x, z, 300, 0).s !== s) continue;
+    if (F.suelo(M, x, z, 300, 0).s !== s || enPiso(M, x, z)) continue;
     v.set(x, s.y1 + 0.28, z); sc.set(1, 0.6, 1); q.identity(); m4.compose(v, q, sc); flor.setMatrixAt(k, m4);
     color.set(cols[Math.floor(R()*cols.length)]).convertSRGBToLinear(); flor.setColorAt(k, color); k++;
   }
@@ -626,7 +640,7 @@ function adornos(grupo, M, T){
   if (def.jefe) evitar.push([def.jefe.x, def.jefe.z, def.jefe.r]);
   for (const s of M.solidos) if (s !== base) evitar.push([s.x, s.z, (s.r || Math.hypot(s.sx, s.sz)) + 1.6]);
   const libre = (x, z, m)=>{
-    if (F.suelo(M, x, z, 300, 0).s !== base) return false;
+    if (F.suelo(M, x, z, 300, 0).s !== base || enPiso(M, x, z, 1)) return false;
     for (const [ex, ez, er] of evitar) if (Math.hypot(x - ex, z - ez) < er + (m || 0)) return false;
     return true;
   };
@@ -644,6 +658,7 @@ function adornos(grupo, M, T){
   if (D.arboles) poner(D.arboles, ()=>ocultable(MOD.arbol(R, 0.8 + R()*0.6)), 6, 1.2);
   if (D.pinos) poner(D.pinos, ()=>ocultable(MOD.pino(R, 0.9 + R()*0.7, true)), 6, 1.2);
   if (D.palmeras) poner(D.palmeras, ()=>ocultable(MOD.palmera(R, 0.9 + R()*0.5)), 8, 1.2);
+  for (const k of ['cipreses', 'bambu', 'cerezos']) if (D[k] && MOD.decoPais && MOD.decoPais[k]) poner(D[k], ()=>ocultable(MOD.decoPais[k](R)), 6, 1.4);
   if (D.rocas) poner(D.rocas, ()=>MOD.roca(R, 0.5 + R()*0.7, def.tema === 'nieve' ? '#aabbd0' : def.tema === 'playa' ? '#c8b090' : null), 4, 1);
   if (D.hongos) poner(D.hongos, ()=>MOD.hongo(R, 0.8 + R()*0.9), 4, 0.8);
   if (D.sombrillas) poner(D.sombrillas, ()=>MOD.sombrilla(R), 6, 2);
@@ -678,6 +693,11 @@ function adornos(grupo, M, T){
     const a = MOD.molinoAspas(); a.position.set(-12, 5.6, -6 + 2.15); grupo.add(a); MUNDO.giran.push({o:a, eje:'z', v:0.8});
   }
   if (def.id === 'playa') grupo.add(MOD.faroDeco(12, -10));
+  MUNDO.animPais = []; MUNDO.rayo = null;
+  if (MOD.decorarPais){
+    const r = MOD.decorarPais(def.id, grupo, M, R);
+    if (r){ MUNDO.animPais = r.anim || []; if (r.relampago) MUNDO.rayo = crearRayo(grupo, T); }
+  }
   if (D.nubesDeco) for (let i = 0; i < D.nubesDeco; i++){
     const n = MOD.nubeDeco(R, 1 + R()*1.8); const a = R()*TAU, r = 30 + R()*60;
     n.position.set(Math.sin(a)*r, -8 + R()*40, Math.cos(a)*r - 20); grupo.add(n);
@@ -710,6 +730,33 @@ function adornos(grupo, M, T){
     for (let i = 0; i < 12; i++){ const n = MOD.nubeDeco(R, 3 + R()*3); const a = R()*TAU, r = 110 + R()*90; n.position.set(Math.sin(a)*r, 45 + R()*40, Math.cos(a)*r); cielo.add(n); }
     grupo.add(cielo); MUNDO.giran.push({o: cielo, eje:'y', v: 0.004});
   }
+}
+
+/* el Relámpago del Catatumbo: a lo lejos, sobre el Lago, cada tanto (un destello suave, sin parpadeos) */
+const _eje = new THREE.Vector3(), _q = new THREE.Quaternion();
+function crearRayo(grupo, T){
+  const g = new THREE.Group();
+  const mat = new THREE.MeshBasicMaterial({color:'#e8dcff', transparent:true, opacity:0, fog:false, depthWrite:false});
+  let x = 0, y = 60;
+  for (let i = 0; i < 7; i++){
+    const nx = x + (Math.random() - 0.5)*10, ny = y - 8 - Math.random()*4;
+    const len = Math.hypot(nx - x, ny - y), c = new THREE.Mesh(GEO_RAYO, mat);
+    c.scale.set(1, len, 1); c.position.set((x + nx)/2, (y + ny)/2, 0); c.rotation.z = Math.atan2(-(nx - x), ny - y) + Math.PI;
+    g.add(c); x = nx; y = ny;
+  }
+  g.visible = false; grupo.add(g);
+  return {g, mat, prox: 3, f: 0, base: T.hemi[2]*0.62};
+}
+const GEO_RAYO = new THREE.BoxGeometry(0.9, 1, 0.9); GEO_RAYO.userData.compartida = true;
+function moverRayo(r, dt, t){
+  if (t > r.prox){
+    r.prox = t + 4 + Math.random()*6; r.f = 1;
+    const a = -2.2 + Math.random()*1.4; r.g.position.set(Math.sin(a)*170, -4, Math.cos(a)*170); r.g.rotation.y = a;
+    if (Math.random() < 0.5) setTimeout(()=>sonar('trueno'), 700);
+  }
+  r.f = Math.max(0, r.f - dt*1.6);
+  r.g.visible = r.f > 0; r.mat.opacity = r.f;
+  hemi.intensity = r.base + r.f*0.3;
 }
 
 /* los árboles que se ponen entre la cámara y Fernando se vuelven transparentes */
@@ -1006,6 +1053,13 @@ function animarCosas(dt, t){
   for (const r of MUNDO.resortes){ r.apretado = Math.max(0, r.apretado - dt*3); const k = 1 - Math.sin(r.apretado*Math.PI)*0.4; r.g.userData.muelle.scale.y = k; r.g.userData.tapa.position.y = 0.37 - (1 - k)*0.3; }
   for (const o of MUNDO.giran){ if (o.eje === 'z') o.o.rotation.z += dt*o.v; else o.o.rotation.y += dt*o.v; }
   for (const b of MUNDO.globos) b.g.position.y = b.y0 + Math.sin(t*0.8 + b.f)*0.6;
+  for (const f of MUNDO.animPais) f(t, dt);
+  for (const o of MUNDO.pelotas){
+    const b = o.b; o.g.position.set(b.x, b.y + b.r, b.z);
+    const v = Math.hypot(b.vx, b.vz), d = b.giro - o.giro; o.giro = b.giro;
+    if (v > 0.05 && d > 0){ _eje.set(b.vz/v, 0, -b.vx/v); _q.setFromAxisAngle(_eje, d); o.g.quaternion.premultiply(_q); }
+  }
+  if (MUNDO.rayo) moverRayo(MUNDO.rayo, dt, t);
   for (const a of MUNDO.antorchas){ a.userData.fuego.scale.set(0.2, 0.32 + Math.sin(t*15 + a.position.x)*0.06, 0.2); if (Math.random() < 0.2) emitir(a.position.x, a.position.y + 2.2*a.scale.y, a.position.z, 1, {colores:['#ffb030', '#ff6a1a'], vel:0.5, grav:-2, vida:0.6, tam:0.3}); }
   if (MUNDO.fuente && Math.random() < 0.7) emitir(MUNDO.fuente.x, MUNDO.fuente.y, MUNDO.fuente.z, 2, {color:'#9ae0ff', vel:1.2, vy:5, grav:9, vida:0.9, tam:0.25});
   /* bolas de fuego */
@@ -1071,6 +1125,9 @@ const SON = {
   temblor(){ ruido(0.5, 0.2, 120); tono(70, 40, 0.5, 'sine', 0.2); },
   puno(){ ruido(0.15, 0.2, 700); tono(220, 60, 0.18, 'square', 0.1); },
   tioVuela(){ ruido(0.5, 0.12, 1800); },
+  patada(){ tono(170, 60, 0.12, 'square', 0.1); ruido(0.08, 0.15, 700); },
+  gol(){ const t = AC.currentTime; ruido(1.6, 0.1, 1400); [72, 76, 79, 84, 79, 84].forEach((n, i)=>{ tono(nota(n), 0, 0.22, 'square', 0.07, t + i*0.12); tono(nota(n - 12), 0, 0.22, 'triangle', 0.08, t + i*0.12); }); },
+  trueno(){ ruido(1.6, 0.05, 90); },
   chapuzon(){ ruido(0.45, 0.16, 900); tono(500, 140, 0.25, 'sine', 0.08); },
   brazada(){ ruido(0.18, 0.05, 1400); },
   caja(){ const t = AC.currentTime; tono(nota(72), 0, 0.1, 'triangle', 0.08, t); tono(nota(79), 0, 0.2, 'triangle', 0.08, t + 0.08); },
@@ -1089,6 +1146,11 @@ const TEMAS_MUS = {
   nieve:    {bpm: 104, mel:[76,0,79,0, 84,0,79,0, 77,0,81,0, 84,0,0,0, 74,0,77,0, 81,0,77,0, 76,0,72,0, 74,0,0,0], baj:[48,55,52,55, 53,57,53,57, 50,57,53,57, 55,55,48,48], onda:'triangle'},
   nubes:    {bpm: 112, mel:[79,81,83,86, 83,81,79,0, 76,79,81,83, 81,0,0,0, 79,81,83,86, 88,86,83,81, 79,76,74,76, 79,0,0,0], baj:[43,50,47,50, 40,47,43,47, 45,52,48,52, 50,50,43,43], onda:'triangle'},
   lava:     {bpm: 150, mel:[57,0,57,60, 0,57,63,62, 57,0,57,60, 0,64,63,0, 57,0,57,60, 0,57,63,62, 65,64,63,62, 60,0,0,0], baj:[33,33,40,33, 36,36,39,38, 33,33,40,33, 41,40,39,38]},
+  maracaibo:{bpm: 120, mel:[69,0,73,76, 0,76,74,73, 71,0,74,78, 0,76,74,0, 73,0,76,81, 0,81,79,78, 76,74,73,71, 69,0,0,0], baj:[45,52,45,52, 50,57,50,57, 52,59,52,59, 45,52,45,45]},
+  usa:      {bpm: 132, mel:[67,67,69,71, 67,71,69,62, 67,67,69,71, 67,0,66,0, 67,67,69,71, 72,71,69,67, 66,62,64,66, 67,0,67,0], baj:[43,50,43,50, 43,50,38,45, 43,50,43,50, 43,38,43,43]},
+  italia:   {bpm: 150, mel:[69,0,69,71, 72,0,71,69, 68,0,68,69, 71,0,0,0, 72,0,72,74, 76,0,74,72, 71,0,72,71, 69,0,0,0], baj:[45,52,45,52, 44,52,44,52, 45,52,45,52, 40,47,45,45]},
+  china:    {bpm: 104, mel:[74,0,76,79, 81,0,79,76, 74,0,72,69, 72,0,0,0, 74,0,76,79, 84,0,81,79, 76,0,74,72, 74,0,0,0], baj:[50,57,50,57, 48,55,48,55, 45,52,45,52, 50,57,50,50], onda:'triangle'},
+  argentina:{bpm: 140, mel:[72,74,76,0, 72,74,76,0, 76,77,79,0, 79,77,76,74, 72,74,76,0, 72,74,76,0, 79,77,76,74, 72,0,0,0], baj:[48,55,48,55, 48,55,48,55, 53,60,53,60, 55,55,48,48]},
   jefe:     {bpm: 168, mel:[69,72,76,72, 69,72,77,72, 69,72,76,72, 68,71,76,71, 69,72,76,79, 77,76,74,72, 71,72,74,71, 69,0,69,0], baj:[45,45,52,45, 45,45,53,45, 45,45,52,45, 44,44,52,44]},
   final:    {bpm: 150, mel:[72,0,76,79, 84,0,79,84, 88,86,84,79, 81,0,0,0, 77,81,84,81, 79,84,88,84, 86,84,83,86, 84,0,0,0], baj:[48,55,52,55, 53,57,48,55, 53,57,48,52, 55,55,48,48]},
 };
@@ -1179,6 +1241,9 @@ function procesarEventos(){
       case 'habla': hablar(e.texto, e.quien); break;
       case 'salto': sonar('salto'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#ffffff', vel:1.5, grav:2, vida:0.4, tam:0.3, plano:true}); break;
       case 'salto2': sonar('salto2'); anim.voltereta = 0.42; emitir(e.x, e.y + 0.4, e.z, 10, {colores:['#ffffff', '#ffe36e'], vel:2.5, grav:1, vida:0.5, tam:0.25}); break;
+      case 'patada': sonar('patada'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#d8f0c0', vel:2, grav:3, vida:0.4, tam:0.3, plano:true}); break;
+      case 'gol': sonar('gol'); cam.temblor = 0.3; emitir(e.x, e.y + 1, e.z, 120, {colores:['#6ac8ff', '#ffffff', '#ffd23f'], vel:7, vy:5, grav:4, vida:1.6, tam:0.35}); banner = {texto: '¡GOOOL!', emoji: '⚽', t: 0}; break;
+      case 'pelotaVuelve': emitir(e.x, e.y, e.z, 10, {color:'#ffffff', vel:2, grav:0, vida:0.5, tam:0.4}); break;
       case 'chapuzon': sonar('chapuzon'); emitir(e.x, e.y + 0.1, e.z, e.fuerte ? 34 : 20, {colores:['#ffffff', '#bfeaff', '#7ad0ff'], vel: e.fuerte ? 6 : 4, vy: e.fuerte ? 6 : 4, grav:9, vida:0.8, tam:0.35}); break;
       case 'aterriza': emitir(e.x, e.y + 0.1, e.z, e.fuerte ? 16 : 8, {color:'#f0e8d8', vel:2.5, grav:2, vida:0.5, tam:0.4, plano:true}); if (e.fuerte) cam.temblor = 0.4; break;
       case 'moneda': sonar('moneda'); emitir(e.x, e.y, e.z, 10, {colores:['#ffe36e', '#fff6c0'], vel:3, grav:3, vida:0.5, tam:0.25}); break;
@@ -1418,9 +1483,10 @@ function dibujarHud(dt){
   /* monedas rojas */
   const estR = M.estrellas.find(s=>s.tipo === 'rojas');
   if (M.rojas.length && estR && !estR.visible){
-    pastilla(x0, 56, 140, 34);
+    pastilla(x0, 56, Math.max(140, 20 + M.rojas.length*24), 34);
+    const oroR = M.def.fraseRoja === 'balon';
     for (let i = 0; i < M.rojas.length; i++){
-      ctx.fillStyle = i < J.rojasMundo ? '#ff3a4a' : 'rgba(255,255,255,0.25)';
+      ctx.fillStyle = i < J.rojasMundo ? (oroR ? '#ffd23f' : '#ff3a4a') : 'rgba(255,255,255,0.25)';
       ctx.beginPath(); ctx.arc(x0 + 20 + i*24, 73, 9, 0, TAU); ctx.fill();
       if (i < J.rojasMundo){ ctx.strokeStyle = '#ffd0d0'; ctx.lineWidth = 2; ctx.stroke(); }
     }

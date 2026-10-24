@@ -32,8 +32,8 @@
   var t = Date.now();
   /* la red para jugar con amigos (Trystero, el mismo de la Aventura 3D) es opcional: si no carga, se juega solo */
   /* lib/: el cargador de modelos 3D de Three.js (MIT); activos.js y voces.js: los modelos, texturas y voces de Higgsfield */
-  var lista = ['../kart3d/three.min.js', 'lib/GLTFLoader.js', 'lib/SkeletonUtils.js', '../aventura3d/trystero.min.js', 'nucleo.js', 'voces.js', 'activos.js', 'modelos.js', 'red.js', 'vista.js'];
-  var opcionales = {'lib/GLTFLoader.js': true, 'lib/SkeletonUtils.js': true, '../aventura3d/trystero.min.js': true, 'voces.js': true, 'activos.js': true, 'red.js': true};
+  var lista = ['../kart3d/three.min.js', 'lib/GLTFLoader.js', 'lib/SkeletonUtils.js', '../aventura3d/trystero.min.js', 'nucleo.js', 'voces.js', 'activos.js', 'modelos.js', 'paises.js', 'red.js', 'vista.js'];
+  var opcionales = {'paises.js': true, 'lib/GLTFLoader.js': true, 'lib/SkeletonUtils.js': true, '../aventura3d/trystero.min.js': true, 'voces.js': true, 'activos.js': true, 'red.js': true};
   function aviso(m){ var c = document.getElementById('cargando'); if (c){ c.style.display = 'block'; c.innerHTML = m; } }
   window.addEventListener('error', function(e){ aviso('¡Uy! Algo falló al cargar.<small>' + (e.message || '') + '</small>'); });
   function siguiente(i){

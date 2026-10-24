@@ -103,6 +103,7 @@ const FRASES = {
   final3:     ['tio', '¡Hola, familia! ¡Un abrazo de tío Juan!'],
   pista:      ['tio', ['¡Sigue la flecha amarilla que va encima de ti!', '¡La flecha amarilla te lleva a las estrellas!']],
   /* los países */
+  paises:     ['tio', '¡Pichunguito, mira atrás! ¡Hay cuadros nuevos: Maracaibo, Estados Unidos, Italia, China y Argentina!'],
   maracaibo1: ['tio', '¡Bienvenido a Maracaibo, la tierra del sol amada! ¡Sube al campanario de la Chinita!'],
   maracaibo2: ['fer', '¡Qué molleja! ¡Mira el puente sobre el Lago!'],
   usa1:       ['tio', '¡Bienvenido a Estados Unidos! ¡Sube hasta la antorcha de la Estatua de la Libertad!'],
@@ -660,7 +661,7 @@ function progresoLimpio(p){
   if (!p || typeof p !== 'object') return n;
   if (p.estrellas && typeof p.estrellas === 'object') for (const k in p.estrellas) if (p.estrellas[k] === true) n.estrellas[k] = true;
   n.monedas = Math.max(0, Math.floor(+p.monedas || 0));
-  n.intro = !!p.intro; n.ganado = !!p.ganado; n.tejadoDicho = !!p.tejadoDicho;
+  n.intro = !!p.intro; n.ganado = !!p.ganado; n.tejadoDicho = !!p.tejadoDicho; n.paisesDicho = !!p.paisesDicho;
   return n;
 }
 function cuentaEstrellas(prog){ let n = 0; for (const k in prog.estrellas) if (prog.estrellas[k]) n++; return n; }
@@ -1329,6 +1330,8 @@ function cosas(J, dt){
   if (def.tubo && !J.trans){
     if (Math.hypot(def.tubo.x - p.x, def.tubo.z - p.z) < 1.1 && p.enSuelo && Math.abs(p.y - M.tuboY) < 0.1) irA(J, 0, J.mundo);
   }
+  /* los cuadros de los países están detrás: Tío Juan avisa una vez */
+  if (def.id === 'castillo' && !J.prog.paisesDicho && J.fase === 'juego' && M.t > 4){ J.prog.paisesDicho = true; decir(J, 'paises'); }
   /* la pista del techo en el castillo */
   if (def.id === 'castillo' && !J.prog.tejadoDicho && cuentaEstrellas(J.prog) >= 2 && !J.prog.estrellas['castillo:tejado']){
     J.prog.tejadoDicho = true; decir(J, 'tejado');
