@@ -102,6 +102,22 @@ const FRASES = {
   final2:     ['fer', 'Te amo tío Juan, yo soy tu pichunguito'],
   final3:     ['tio', '¡Hola, familia! ¡Un abrazo de tío Juan!'],
   pista:      ['tio', ['¡Sigue la flecha amarilla que va encima de ti!', '¡La flecha amarilla te lleva a las estrellas!']],
+  /* los países */
+  maracaibo1: ['tio', '¡Bienvenido a Maracaibo, la tierra del sol amada! ¡Sube al campanario de la Chinita!'],
+  maracaibo2: ['fer', '¡Qué molleja! ¡Mira el puente sobre el Lago!'],
+  usa1:       ['tio', '¡Bienvenido a Estados Unidos! ¡Sube hasta la antorcha de la Estatua de la Libertad!'],
+  usa2:       ['fer', '¡Wow! ¡Qué edificios tan altos!'],
+  italia1:    ['tio', '¡Bienvenido a Italia! ¡Sube a la Torre de Pisa, la que está chueca!'],
+  italia2:    ['fer', '¡Mamma mia! ¡Pizzas gigantes!'],
+  china1:     ['tio', '¡Bienvenido a China! ¡Sube por la Gran Muralla hasta la torre más alta!'],
+  china2:     ['fer', '¡Mira, pandas! ¡Ni hao!'],
+  argentina1: ['tio', '¡Bienvenido a Argentina, la tierra de Messi! ¡Busca los ocho Balones de Oro y mete un gol!'],
+  argentina2: ['fer', '¡Vamos Messi! ¡Vamos Argentina!'],
+  balon:      ['fer', ['¡Un Balón de Oro!', '¡Otro Balón de Oro, como Messi!']],
+  balones:    ['tio', '¡Juntaste los ocho Balones de Oro, como Messi! ¡Apareció una estrella!'],
+  pelota:     ['tio', '¡Patea la pelota hasta el arco y mete un gol!'],
+  gol:        ['fer', ['¡Gooool! ¡Golazo como Messi!', '¡Gol, gol, gol!']],
+  golTio:     ['tio', '¡Qué golazo, pichunguito! ¡Eres como Messi!'],
 };
 /* Cuando se juega con Lucca, Salomón o Cucú, algunas frases cambian por las suyas (también grabadas) */
 const FRASES_PJ = {
@@ -162,6 +178,12 @@ MUNDOS.push({
     {mundo:3, x:16,  z:-12, necesita:3},
     {mundo:4, x:24,  z:2,   necesita:5},
     {mundo:5, x:0,   z:-24.6, necesita:8},
+    /* los países (abiertos desde el principio) */
+    {mundo:6,  x:-30, z:28, necesita:0},
+    {mundo:7,  x:-15, z:36, necesita:0},
+    {mundo:8,  x:0,   z:39, necesita:0},
+    {mundo:9,  x:15,  z:36, necesita:0},
+    {mundo:10, x:30,  z:28, necesita:0},
   ],
   amigos:[],
   deco:{arboles:46, flores:120, rocas:10},
@@ -341,6 +363,229 @@ MUNDOS.push({
 });
 
 /* ============================================================
+   LOS PAÍSES: cinco cuadros nuevos en el jardín del castillo
+   (Maracaibo, Estados Unidos, Italia, China y Argentina).
+   Mismas reglas de saltos que los demás mundos.
+   ============================================================ */
+
+/* ---------- 6) Maracaibo, la Tierra del Sol Amada ---------- */
+MUNDOS.push({
+  id:'maracaibo', nombre:'Maracaibo, la Tierra del Sol', corto:'MARACAIBO', emoji:'🌉', tema:'maracaibo', color:'#ffb21a',
+  inicio:{x:0, z:16, ang:Math.PI}, yMuerte:-8, agua:{y:-0.6, tipo:'agua'}, techo:30,
+  tubo:{x:5, z:15},
+  saludo:['maracaibo1', 'maracaibo2'],
+  solidos:[
+    C(0, 0, 22, 0, 'pasto'),
+    /* las casitas de colores de Santa Lucía: una escalera de techos */
+    B(-10, 4, 2, 2, 2.2, 'casa1'), B(-14, 4, 2, 2, 4.2, 'casa2'), B(-18, 4, 2, 2, 6.2, 'casa3'),
+    B(8, 10, 1.8, 1.8, 2.2, 'casa4'), B(11.6, 10, 1.6, 1.8, 3.2, 'casa2'),
+    /* la Basílica de la Chinita con sus dos campanarios */
+    B(-6, -7, 1.6, 1.4, 2.2, 'colonial'), B(-6, -12, 4, 3, 4.4, 'colonial'),
+    C(-8.6, -13.4, 1.3, 6.6, 'campanario'), C(-3.4, -13.4, 1.3, 6.6, 'campanario'),
+    /* el Puente General Rafael Urdaneta sobre el Lago */
+    R(19, -6, 2.2, 1.8, 'x', 0, 1.4, 'puente'), B(32.6, -6, 11.4, 1.8, 1.4, 'puente'), R(46, -6, 2, 1.8, 'x', 1.4, 0.8, 'puente'),
+    C(53, -6, 8, 0.8, 'pasto'),
+    /* las plataformas petroleras del Lago */
+    B(-17, 17, 1.8, 1.8, 0.6, 'petroleo'), B(-21.5, 18, 1.8, 1.8, 1.4, 'petroleo'), B(-26.5, 19.5, 2.5, 2.5, 2.2, 'petroleo'),
+    resorte(6, 4),
+  ],
+  monedas:[...anillo(0, 0.9, 6, 3.6, 8), ...fila(22, 2.3, -6, 43, 2.3, -6, 8), [-10, 3.4, 4], [-14, 5.4, 4], [8, 3.4, 10], [11.6, 4.4, 10],
+           ...fila(-9, 5.6, -10, -4.5, 5.6, -10, 3), ...fila(-17, 1.8, 17, -21.5, 2.6, 18, 2), ...anillo(53, 1.8, -6, 5, 8), ...anillo(6, 3.5, 4, 1.6, 6),
+           ...fila(-2, 0.9, -3, -14, 0.9, -1, 5)],
+  rojas:[[-18, 7.4, 4], [-25.5, 3.4, 18.5], [32.6, 2.6, -6], [-2.6, 5.6, -10], [6, 5, 4]],
+  estrellas:[
+    {id:'chinita', tipo:'libre', x:-8.6, y:7.9, z:-13.4, nombre:'El campanario de la Chinita'},
+    {id:'rojas',   tipo:'rojas', x:0, y:1.4, z:0, nombre:'Las monedas rojas del Lago'},
+    {id:'jefe',    tipo:'jefe',  x:53, y:2.7, z:-6, nombre:'La Iguana Gigante'},
+  ],
+  enemigos:[
+    {tipo:'grunon', piel:'iguana', x:6, z:-6}, {tipo:'grunon', piel:'iguana', x:-6, z:4}, {tipo:'grunon', piel:'iguana', x:10, z:-12},
+    {tipo:'grunon', piel:'iguana', x:-14, z:-6}, {tipo:'grunon', piel:'iguana', x:13, z:2},
+    {tipo:'abeja', piel:'zancudo', x:2, z:-14, y:2.6}, {tipo:'abeja', piel:'zancudo', x:16, z:8, y:2.8},
+  ],
+  jefe:{x:53, z:-6, r:6.5, piel:'iguana', nombre:'Iguana Gigante', vida:3, vel:2.6,
+        hola:'¡Sssí! ¡Soy la Iguana Gigante del Lago! ¡Esta estrella es mía!', cae:'¡Ay, qué molleja! ¡Me voy al Lago!'},
+  cajas:[{x:-4, z:12, poder:'hamburguesa'}, {x:4, z:-3, poder:'alas'}, {x:14, z:-9, poder:'fuego'}, {x:-15, z:10, poder:'tenis'}, {x:16, z:4, poder:'iman'}],
+  amigos:[],
+  deco:{palmeras:22, rocas:6},
+});
+
+/* ---------- 7) Estados Unidos ---------- */
+const lib = {x:-30, z:-14};
+const espiralLib = [];
+for (let k = 1; k <= 5; k++){ const a = k*60*Math.PI/180; espiralLib.push(P(lib.x + Math.sin(a)*3, 3.2 + 1.7*k, lib.z + Math.cos(a)*3, 1.4, 'piedra')); }
+MUNDOS.push({
+  id:'usa', nombre:'Estados Unidos', corto:'USA', emoji:'🗽', tema:'usa', color:'#3a6aff',
+  inicio:{x:0, z:18, ang:Math.PI}, yMuerte:-8, agua:{y:-0.5, tipo:'mar'}, techo:32,
+  tubo:{x:5, z:18},
+  saludo:['usa1', 'usa2'],
+  pisos:[{x:0, z:6, sx:22, sz:2, mat:'asfalto'}],
+  solidos:[
+    C(0, 0, 24, 0, 'pasto'),
+    /* los rascacielos: de techo en techo hasta el más alto */
+    B(8, -8, 2.5, 2.5, 2.2, 'rasca1'), B(13, -8, 2, 2, 4.4, 'rasca2'), B(13, -13.5, 2, 2, 6.6, 'rasca3'), B(8, -15, 2.2, 2, 8.8, 'empire'),
+    B(-14, -12, 1.5, 1, 1.2, 'hotdog'),
+    /* la Estatua de la Libertad en su islita */
+    C(lib.x, lib.z, 6, 1, 'piedra'), P(-24.6, 0.5, -11.5, 1.4, 'madera'),
+    B(lib.x, lib.z, 2.5, 2.5, 3.2, 'pedestal'), C(lib.x, lib.z, 1.3, 12, 'estatua'), ...espiralLib,
+    P(0, 0.5, -27, 1.6, 'madera'), C(0, -36, 9, 0.6, 'pasto'),
+    resorte(-10, 12),
+  ],
+  monedas:[...anillo(0, 0.9, 0, 5, 8), ...fila(-18, 0.9, 6, 18, 0.9, 6, 9), [8, 3.4, -8], [13, 5.6, -8], [13, 7.8, -13.5],
+           ...espiralLib.filter((s, i)=>i !== 2).map(s=>[s.x, s.y1 + 1, s.z]), ...anillo(0, 1.8, -36, 5, 8), ...anillo(-10, 3.5, 12, 1.6, 6),
+           ...fila(-16, 0.9, -2, -24, 0.9, -8, 4)],
+  rojas:[[8, 10, -15], [espiralLib[2].x, espiralLib[2].y1 + 1.2, espiralLib[2].z], [-24.6, 1.7, -11.5], [-10, 5, 12], [-14, 2.4, -12]],
+  estrellas:[
+    {id:'antorcha', tipo:'libre', x:lib.x, y:13.3, z:lib.z, nombre:'La antorcha de la Estatua de la Libertad'},
+    {id:'rojas',    tipo:'rojas', x:0, y:1.4, z:0, nombre:'Las monedas rojas de Nueva York'},
+    {id:'jefe',     tipo:'jefe',  x:0, y:2.5, z:-36, nombre:'El Vaquero Gruñón'},
+  ],
+  enemigos:[
+    {tipo:'grunon', piel:'vaquero', x:6, z:2}, {tipo:'grunon', piel:'vaquero', x:-6, z:-2}, {tipo:'grunon', piel:'vaquero', x:16, z:0},
+    {tipo:'grunon', piel:'vaquero', x:-14, z:2}, {tipo:'grunon', piel:'vaquero', x:2, z:-12},
+    {tipo:'abeja', piel:'pajaro', x:-6, z:10, y:3}, {tipo:'abeja', piel:'pajaro', x:12, z:14, y:3},
+  ],
+  jefe:{x:0, z:-36, r:7.5, piel:'vaquero', nombre:'Vaquero Gruñón', vida:3, vel:2.8,
+        hola:'¡Yiijaa! ¡Soy el Vaquero Gruñón! ¡Esta estrella es mía, compañero!', cae:'¡Yiijaa... ay! ¡Me ganaste, compañero!'},
+  cajas:[{x:-4, z:14, poder:'alas'}, {x:4, z:14, poder:'tenis'}, {x:-16, z:-3, poder:'fuego'}, {x:16, z:-3, poder:'hamburguesa'},
+         {x:-6, z:-10, poder:'gigante'}, {x:12, z:12, poder:'iman'}],
+  amigos:[],
+  deco:{arboles:24, rocas:4},
+});
+
+/* ---------- 8) Italia ---------- */
+const pisa = {x:-10, z:-10};
+const espiralPisa = [];
+for (let k = 0; k < 7; k++){ const a = k*55*Math.PI/180; espiralPisa.push(P(pisa.x + Math.sin(a)*4.6, 1.7*(k + 1), pisa.z + Math.cos(a)*4.6, 1.5, 'marmol')); }
+MUNDOS.push({
+  id:'italia', nombre:'Italia', corto:'ITALIA', emoji:'🍕', tema:'italia', color:'#3ad86a',
+  inicio:{x:0, z:15, ang:Math.PI}, yMuerte:-8, agua:{y:-0.6, tipo:'agua'}, techo:30,
+  tubo:{x:5, z:15},
+  saludo:['italia1', 'italia2'],
+  pisos:[{x:2, z:2, sx:7, sz:7, mat:'adoquin'}],
+  solidos:[
+    C(0, 0, 22, 0, 'pasto'),
+    /* la Torre de Pisa (la escalera da vueltas por fuera) */
+    C(pisa.x, pisa.z, 2.4, 13, 'pisa'), ...espiralPisa,
+    /* pizzas gigantes para saltar */
+    P(10, 2, 6, 2.2, 'pizza'), P(14, 3.8, 9.5, 2, 'pizza'),
+    B(-16, 4, 1.2, 1.2, 1.4, 'gelato'),
+    /* el Coliseo, donde espera el jefe */
+    C(31, -8, 9, 0.6, 'adoquin'),
+    /* Venecia: se llega en góndola */
+    P(0, 0.3, 25, 2, 'gondola', {mov:{eje:'z', amp:1.6, vel:0.5}, gondola:true}), C(0, 36, 8, 0.6, 'adoquin'),
+    resorte(-14, 10),
+  ],
+  monedas:[...anillo(2, 0.9, 2, 4, 8), ...espiralPisa.filter((s, i)=>i !== 3).map(s=>[s.x, s.y1 + 1, s.z]), [10, 3.2, 6],
+           ...anillo(31, 1.5, -8, 5, 8), ...anillo(0, 1.5, 36, 4.5, 8), ...anillo(-14, 3.5, 10, 1.6, 6), ...fila(14, 0.9, -2, 20, 0.9, -6, 3)],
+  rojas:[[espiralPisa[3].x, espiralPisa[3].y1 + 1.2, espiralPisa[3].z], [14, 5, 9.5], [-14, 5, 10], [0, 1.8, 40], [-16, 2.6, 4]],
+  estrellas:[
+    {id:'pisa',  tipo:'libre', x:pisa.x + 0.5, y:14.3, z:pisa.z, nombre:'Arriba de la Torre de Pisa'},
+    {id:'rojas', tipo:'rojas', x:2, y:1.4, z:2, nombre:'Las monedas rojas de la piazza'},
+    {id:'jefe',  tipo:'jefe',  x:31, y:2.5, z:-8, nombre:'El Chef Gruñón'},
+  ],
+  enemigos:[
+    {tipo:'grunon', piel:'chef', x:6, z:-4}, {tipo:'grunon', piel:'chef', x:-4, z:8}, {tipo:'grunon', piel:'chef', x:-17, z:-2},
+    {tipo:'grunon', piel:'chef', x:12, z:-12}, {tipo:'grunon', piel:'chef', x:0, z:-16},
+    {tipo:'abeja', piel:'paloma', x:-4, z:-4, y:3}, {tipo:'abeja', piel:'paloma', x:8, z:12, y:3.5},
+  ],
+  jefe:{x:31, z:-8, r:7.5, piel:'chef', nombre:'Chef Gruñón', vida:3, vel:2.8,
+        hola:'¡Mamma mia! ¡Soy el Chef Gruñón! ¡Esta estrella va en mi pizza!', cae:'¡Mamma mia! ¡Se me quemó la pizza!'},
+  cajas:[{x:-5, z:12, poder:'hamburguesa'}, {x:6, z:13, poder:'tenis'}, {x:14, z:-2, poder:'fuego'}, {x:-6, z:-18, poder:'alas'},
+         {x:-19, z:-6, poder:'iman'}, {x:4, z:38, poder:'gigante'}],
+  amigos:[],
+  deco:{cipreses:20, rocas:4},
+});
+
+/* ---------- 9) China ---------- */
+MUNDOS.push({
+  id:'china', nombre:'China', corto:'CHINA', emoji:'🐉', tema:'china', color:'#ff3a3a',
+  inicio:{x:0, z:18, ang:Math.PI}, yMuerte:-8, agua:{y:-0.7, tipo:'agua'}, techo:32,
+  tubo:{x:5, z:18},
+  saludo:['china1', 'china2'],
+  solidos:[
+    C(0, 0, 24, 0, 'pasto'),
+    /* la Gran Muralla: sube de torre en torre */
+    R(9, 8, 1.5, 2.5, 'x', 0, 1.1, 'muralla'), B(14, 8, 3.5, 2.5, 1.1, 'muralla'), B(20, 8, 2.5, 2.5, 3.3, 'torreMuralla'),
+    B(20, 1.5, 2.5, 4, 3.3, 'muralla'), B(20, -5, 2.5, 2.5, 5.5, 'torreMuralla'), B(14, -5, 3.5, 2.5, 5.5, 'muralla'), B(8, -5, 2.5, 2.5, 7.7, 'torreMuralla'),
+    /* la pagoda de cuatro pisos */
+    C(-12, -10, 6, 2.2, 'pagoda'), C(-12, -10, 4.2, 4.4, 'pagoda'), C(-12, -10, 2.7, 6.6, 'pagoda'), C(-12, -10, 1.6, 8.8, 'pagoda'),
+    /* bambú para saltar */
+    P(-6, 1.8, 14, 1.8, 'bambu'), P(-10.5, 3.4, 16, 1.6, 'bambu'),
+    P(0, 0.5, -28.5, 1.6, 'madera'), C(0, -38, 9, 0.6, 'pasto'),
+    resorte(4, -14),
+  ],
+  monedas:[...anillo(0, 0.9, 4, 4, 8), ...fila(11, 2.3, 8, 17, 2.3, 8, 4), ...fila(20, 4.5, 4, 20, 4.5, -1, 3), ...fila(17, 6.7, -5, 11, 6.7, -5, 4),
+           ...anillo(-12, 3.4, -10, 5.1, 10), ...anillo(-12, 5.6, -10, 3.45, 8), ...anillo(-12, 7.8, -10, 2.15, 6),
+           ...anillo(0, 1.8, -38, 5, 8), [-6, 3, 14], ...anillo(4, 3.5, -14, 1.6, 6)],
+  rojas:[[-12, 10, -10], [20, 6.7, -5], [-10.5, 4.6, 16], [4, 5, -14], [20, 4.5, 8]],
+  estrellas:[
+    {id:'muralla', tipo:'libre', x:8, y:9, z:-5, nombre:'La torre más alta de la Gran Muralla'},
+    {id:'rojas',   tipo:'rojas', x:0, y:1.4, z:4, nombre:'Las monedas rojas de la pagoda'},
+    {id:'jefe',    tipo:'jefe',  x:0, y:2.5, z:-38, nombre:'El Dragón Gruñón'},
+  ],
+  enemigos:[
+    {tipo:'grunon', piel:'dragoncito', x:4, z:10}, {tipo:'grunon', piel:'dragoncito', x:-6, z:2}, {tipo:'grunon', piel:'dragoncito', x:3, z:-8},
+    {tipo:'grunon', piel:'dragoncito', x:-18, z:4}, {tipo:'grunon', piel:'dragoncito', x:12, z:14},
+    {tipo:'abeja', piel:'pajaro', x:-4, z:-16, y:3}, {tipo:'abeja', x:-16, z:10, y:3},
+  ],
+  jefe:{x:0, z:-38, r:7.5, piel:'dragon', nombre:'Dragón Gruñón', vida:3, vel:2.8,
+        hola:'¡Grooar! ¡Soy el Dragón Gruñón! ¡Esta estrella es mía!', cae:'¡Grooar! ¡Me apagaste el fuego!'},
+  cajas:[{x:-4, z:20, poder:'tenis'}, {x:4, z:13, poder:'alas'}, {x:-18, z:-2, poder:'fuego'}, {x:14, z:14, poder:'hamburguesa'},
+         {x:-2, z:-12, poder:'gigante'}, {x:2, z:8, poder:'iman'}],
+  amigos:[],
+  deco:{bambu:22, cerezos:10, rocas:6},
+});
+
+/* ---------- 10) Argentina: el mundo de Messi ---------- */
+MUNDOS.push({
+  id:'argentina', nombre:'Argentina, la tierra de Messi', corto:'ARGENTINA', emoji:'⚽', tema:'argentina', color:'#6ac8ff',
+  inicio:{x:0, z:22, ang:Math.PI}, yMuerte:-8, agua:{y:-0.6, tipo:'agua'}, techo:32,
+  tubo:{x:5, z:23},
+  saludo:['argentina1', 'argentina2'],
+  fraseRoja:'balon', fraseRojas:'balones',
+  pisos:[{x:0, z:-2, sx:16, sz:10, mat:'cancha'}],
+  solidos:[
+    C(0, 0, 30, 0, 'pasto'),
+    /* la cancha, con sus tribunas */
+    B(0, -15, 16, 1.5, 1.1, 'tribuna'), B(0, -18, 16, 1.5, 2.2, 'tribuna'), B(0, -21, 16, 1.5, 3.3, 'tribuna'),
+    /* la estatua de Messi levantando la Copa, y la Copa del Mundo gigante */
+    B(-14, 16, 2, 2, 1.1, 'pedestal'), C(-14, 16, 0.9, 5.6, 'messi'),
+    B(14, 16, 2, 2, 1.1, 'pedestal'), C(14, 16, 0.9, 4.4, 'copa'),
+    C(-24, -8, 1.3, 22, 'obelisco'),
+    /* pelotas gigantes para saltar */
+    P(22, 2, -4, 1.8, 'balon'), P(25, 3.8, 0, 1.6, 'balon'),
+    C(40, 0, 8, 0.6, 'pasto'),
+    resorte(20, 14),
+  ],
+  pelotas:[{x:0, z:-2}],
+  arcos:[{x:16, z:-2, dir:1, ancho:2.6, alto:2.2}, {x:-16, z:-2, dir:-1, ancho:2.6, alto:2.2}],
+  monedas:[...anillo(0, 0.9, 12, 3, 8), ...fila(-12, 2.3, -15, 12, 2.3, -15, 7), ...fila(-8, 3.4, -18, 8, 3.4, -18, 5),
+           ...anillo(40, 1.8, 0, 5, 8), [22, 3.2, -4], ...anillo(20, 3.5, 14, 1.6, 6), [-15.4, 2.3, 14.6], [15.4, 2.3, 14.6],
+           ...fila(-22, 0.9, 4, -22, 0.9, 16, 4)],
+  rojas:[[0, 4.5, -21], [-12, 3.4, -18], [12, 3.4, -18], [25, 5, 0], [-12.6, 2.3, 17.4], [20, 5, 14], [12.6, 2.3, 17.4], [-15, 4.5, -21]],
+  estrellas:[
+    {id:'gol',     tipo:'gol',   x:0, y:2.2, z:4, nombre:'¡Mete un golazo!'},
+    {id:'balones', tipo:'rojas', x:0, y:1.4, z:12, nombre:'Los 8 Balones de Oro'},
+    {id:'jefe',    tipo:'jefe',  x:40, y:2.5, z:0, nombre:'El Arquero Gruñón'},
+  ],
+  enemigos:[
+    {tipo:'grunon', piel:'futbolista', x:-8, z:4}, {tipo:'grunon', piel:'futbolista', x:8, z:-8}, {tipo:'grunon', piel:'futbolista', x:-6, z:-8},
+    {tipo:'grunon', piel:'futbolista', x:20, z:8}, {tipo:'grunon', piel:'futbolista', x:-20, z:6},
+    {tipo:'abeja', piel:'pajaro', x:-10, z:12, y:3}, {tipo:'abeja', piel:'pajaro', x:6, z:14, y:3},
+  ],
+  jefe:{x:40, z:0, r:6.5, piel:'arquero', nombre:'Arquero Gruñón', vida:3, vel:2.8,
+        hola:'¡Soy el Arquero Gruñón! ¡Nadie me hace un gol!', cae:'¡Golazo! ¡Me ganaste como Messi!'},
+  cajas:[{x:-4, z:24, poder:'hamburguesa'}, {x:4, z:20, poder:'tenis'}, {x:-22, z:10, poder:'fuego'}, {x:22, z:-12, poder:'alas'},
+         {x:-20, z:-20, poder:'iman'}, {x:18, z:6, poder:'gigante'}],
+  amigos:[],
+  deco:{arboles:16, rocas:4},
+});
+
+/* el total de estrellas sale de los mundos */
+CFG.ESTRELLAS_FIN = MUNDOS.reduce((n, m)=>n + m.estrellas.length, 0);
+
+/* ============================================================
    UTILIDADES
    ============================================================ */
 function rng(seed){
@@ -507,6 +752,7 @@ function cargarMundo(J, n, desde){
     M.cajas.push({x:c.x, y:g.y + 1.3, z:c.z, poder:c.poder, abierta:0, temporal:false});
   }
   for (const a of M.amigos) a.y = suelo(M, a.x, a.z, 100, 0).y;
+  M.pelotas = (def.pelotas || []).map(b=>{ const o = {x0:b.x, z0:b.z, r:0.45, giro:0}; reponerPelota(M, o); return o; });
   for (const p of M.portales){
     p.y = suelo(M, p.x, p.z, 100, 0).y;
     p.ang = Math.atan2(-p.x, 8 - p.z);           // miran hacia el centro del jardín
@@ -565,6 +811,7 @@ function paso(J, dt, inp){
   jugador(J, dt, bloqueado ? {camA: inp.camA} : inp);
   enemigos(J, dt);
   bolas(J, dt);
+  pelotas(J, dt);
   cosas(J, dt);
   tio(J, dt, bloqueado ? {} : inp);
   perros(J, dt);
@@ -936,6 +1183,62 @@ function bolas(J, dt){
   if (J.bolas.length > 20) J.bolas = J.bolas.filter(b=>b.vivo);
 }
 
+/* ---------------- la pelota de fútbol (Argentina) ----------------
+   Fernando la patea solo con tocarla (hacia donde va él); rueda, rebota
+   en las paredes y si entra al arco: ¡gol! La primera vez aparece la estrella. */
+function reponerPelota(M, b){
+  b.x = b.x0; b.z = b.z0; b.y = suelo(M, b.x0, b.z0, 100, 0).y; b.vx = b.vy = b.vz = 0; b.cd = 0; b.golT = 0;
+}
+function pelotas(J, dt){
+  const M = J.M, p = J.p, def = M.def;
+  for (const b of M.pelotas){
+    b.cd = Math.max(0, b.cd - dt);
+    /* la patada */
+    const dx = b.x - p.x, dz = b.z - p.z, d = Math.hypot(dx, dz), alcance = CFG.RADIO*p.escala + b.r + 0.15;
+    if (b.cd <= 0 && d < alcance && b.y < p.y + CFG.ALTO*p.escala && b.y + b.r*2 > p.y - 0.2){
+      const ux = d > 0.01 ? dx/d : Math.sin(p.ang), uz = d > 0.01 ? dz/d : Math.cos(p.ang);
+      let kx = ux + Math.sin(p.ang), kz = uz + Math.cos(p.ang); const kl = Math.hypot(kx, kz) || 1; kx /= kl; kz /= kl;
+      const fuerza = 9 + Math.hypot(p.vx, p.vz)*1.1 + (p.giro > 0 ? 6 : 0) + (p.escala > 1.2 ? 5 : 0);
+      b.vx = kx*fuerza; b.vz = kz*fuerza; b.vy = p.enSuelo ? 3 : 5;
+      b.x = p.x + kx*(alcance + 0.05); b.z = p.z + kz*(alcance + 0.05);
+      b.cd = 0.25;
+      ev(J, 'patada', b.x, b.y, b.z);
+      if (!M.dijoPelota){ M.dijoPelota = true; decir(J, 'pelota'); }
+    }
+    /* rodar y rebotar */
+    b.vy -= CFG.GRAV*0.8*dt;
+    b.x += b.vx*dt; b.z += b.vz*dt;
+    const o = {x:b.x, y:b.y, z:b.z};
+    if (empujar(M, o, b.r, b.r*2)){
+      const nx = o.x - b.x, nz = o.z - b.z, nl = Math.hypot(nx, nz) || 1, vn = (b.vx*nx + b.vz*nz)/nl;
+      if (vn < 0){ b.vx -= 1.6*vn*nx/nl; b.vz -= 1.6*vn*nz/nl; }
+      b.x = o.x; b.z = o.z;
+    }
+    b.y += b.vy*dt;
+    const g = suelo(M, b.x, b.z, b.y + 0.3, 0);
+    if (b.y <= g.y){
+      b.y = g.y; b.vy = b.vy < -2.5 ? -b.vy*0.45 : 0;
+      const f = Math.max(0, 1 - dt*1.1); b.vx *= f; b.vz *= f;
+    }
+    b.giro += Math.hypot(b.vx, b.vz)*dt/b.r;
+    /* ¿gol? */
+    if (b.golT > 0){ b.golT -= dt; if (b.golT <= 0) reponerPelota(M, b); continue; }
+    for (const a of def.arcos || []){
+      const adentro = (b.x - a.x)*a.dir;
+      if (adentro > 0 && adentro < 3 && Math.abs(b.z - a.z) < a.ancho && b.y < a.alto){
+        b.golT = 1.6; b.vx *= 0.3; b.vz *= 0.3;
+        ev(J, 'gol', a.x, 1.2, a.z);
+        decir(J, 'gol');
+        const est = M.estrellas.find(s=>s.tipo === 'gol');
+        if (est && !est.visible && !est.tomada){ est.visible = true; ev(J, 'aparece', est.x, est.y, est.z); decir(J, 'golTio'); }
+        break;
+      }
+    }
+    /* se fue al agua o al vacío: vuelve al centro de la cancha */
+    if (b.y < (def.agua ? def.agua.y - 0.3 : def.yMuerte)){ reponerPelota(M, b); ev(J, 'pelotaVuelve', b.x, b.y, b.z); }
+  }
+}
+
 /* ---------------- monedas, estrellas, cajas, portales ---------------- */
 function monedaGanada(J, n, x, y, z){
   const antes = J.prog.monedas;
@@ -969,8 +1272,8 @@ function cosas(J, dt){
         ev(J, 'roja', m.x, m.y, m.z, {n:J.rojasMundo});
         const est = M.estrellas.find(s=>s.tipo === 'rojas');
         if (J.rojasMundo >= M.rojas.length && est && !est.visible){
-          est.visible = true; ev(J, 'aparece', est.x, est.y, est.z); decir(J, 'rojas');
-        } else decir(J, 'roja');
+          est.visible = true; ev(J, 'aparece', est.x, est.y, est.z); decir(J, def.fraseRojas || 'rojas');
+        } else decir(J, def.fraseRoja || 'roja');
       } else monedaGanada(J, 1, m.x, m.y, m.z);
     }
   }
@@ -1006,7 +1309,14 @@ function cosas(J, dt){
       const tengo = cuentaEstrellas(J.prog);
       if (tengo >= po.necesita){
         const id = MUNDOS[po.mundo].id;
-        irA(J, po.mundo, null, ()=>{ decir(J, 'entra'); if (estrellasDe(J.prog, id) === 0){ decir(J, J.R() < 0.5 ? 'perro' : 'perro2'); decir(J, 'pista'); } });
+        const saludo = MUNDOS[po.mundo].saludo;
+        irA(J, po.mundo, null, ()=>{
+          decir(J, 'entra');
+          if (estrellasDe(J.prog, id) === 0){
+            if (saludo) for (const f of saludo) decir(J, f);
+            else { decir(J, J.R() < 0.5 ? 'perro' : 'perro2'); decir(J, 'pista'); }
+          }
+        });
       }
       else {
         const dx = p.x - po.x, dz = p.z - po.z, d = Math.hypot(dx, dz) || 1;
@@ -1064,6 +1374,9 @@ function buscarGuia(J){
   if (mejor) return mejor;
   const rojasEst = M.estrellas.find(s=>s.tipo === 'rojas');
   if (rojasEst && !rojasEst.ya) for (const m of M.rojas) if (m.vivo) prueba(m.x, m.y, m.z, 'roja');
+  if (mejor) return mejor;
+  const golEst = M.estrellas.find(s=>s.tipo === 'gol');
+  if (golEst && !golEst.visible && !golEst.ya) for (const b of M.pelotas) prueba(b.x, b.y + 1.2, b.z, 'pelota');
   if (mejor) return mejor;
   const jefeEst = M.estrellas.find(s=>s.tipo === 'jefe');
   if (M.jefe && M.jefe.vivo && jefeEst && (!jefeEst.ya || jefeEst.grande)) prueba(M.jefe.x, M.jefe.y + 2, M.jefe.z, 'jefe');
