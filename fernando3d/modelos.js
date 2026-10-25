@@ -228,7 +228,10 @@ function matSuelo(clave){
     case 'molino':       top = m('piedra'); lado = m('molino'); break;
     case 'hielo':        top = std('#ffffff', {map: tex('hielo'), roughness:0.08, metalness:0.1, transparent:true, opacity:0.88}); lado = top; break;
     case 'arcoiris':     top = std('#ffffff', {map: tex('arcoiris'), roughness:0.3, emissive:'#ffffff', emissiveMap: tex('arcoiris'), emissiveIntensity:0.35}); lado = std('#ffffff', {roughness:0.6}); break;
-    default:             top = m('piedra'); lado = top;
+    default:
+      /* los materiales de los países (paises.js) */
+      if (MOD.matPais && MOD.matPais[clave]){ const r = MOD.matPais[clave](m, std, tex); top = r.top; lado = r.lado || r.top; }
+      else { top = m('piedra'); lado = top; }
   }
   return (MATS[clave] = {top, lado});
 }
@@ -267,7 +270,7 @@ function piezaSuelo(s, fondo){
       g.add(borde);
     }
     /* las islas flotantes tienen una piedra puntiaguda debajo */
-    if (s.flota && s.mat !== 'nube' && s.mat !== 'arcoiris' && s.mat !== 'hielo'){
+    if (s.flota && s.mat !== 'nube' && s.mat !== 'arcoiris' && s.mat !== 'hielo' && !(MOD.sinCono && MOD.sinCono[s.mat])){
       const cono = new THREE.Mesh(new THREE.ConeGeometry(s.r*0.85, s.r*1.1, seg, 1), matSuelo(s.mat === 'madera' ? 'madera' : 'pasto').lado);
       cono.rotation.x = Math.PI; cono.position.y = -alto - s.r*0.55;
       g.add(cono);
@@ -548,8 +551,9 @@ function crearEnemigo(piel){
   const g = new THREE.Group(), cuerpo = new THREE.Group(); g.add(cuerpo);
   const pies = [], alas = [];
   const negro = std('#2a1a12', {roughness:0.6});
-  if (piel === 'grunon' || piel === 'rey'){
-    const cafe = std('#a0582a', {roughness:0.55}), crema = std('#f6dcae', {roughness:0.6});
+  const DISFRAZ = {vaquero:'#a0582a', chef:'#b8703a', futbolista:'#a0582a', arquero:'#8a4a22'};
+  if (piel === 'grunon' || piel === 'rey' || DISFRAZ[piel]){
+    const cafe = std(DISFRAZ[piel] || '#a0582a', {roughness:0.55}), crema = std('#f6dcae', {roughness:0.6});
     cuerpo.add(bola(crema, 0.32, 0, 0.42, 0, 1, 0.9, 1));
     const cab = bola(cafe, 0.55, 0, 0.78, 0, 1, 0.72, 1); cuerpo.add(cab);
     for (const lado of [1, -1]){
@@ -606,11 +610,38 @@ function crearEnemigo(piel){
     const som = palo(carbon, 0.22, 0.22, 0.3); som.position.y = 1.95; cuerpo.add(som);
     const ala = palo(carbon, 0.33, 0.33, 0.04); ala.position.y = 1.81; cuerpo.add(ala);
     cejasEnojadas(carbon, cuerpo, 1.8, 0.26, 0.1, 0.7);
-  } else if (piel === 'abeja' || piel === 'gaviota' || piel === 'pajaro' || piel === 'murcielago'){
-    const col = {abeja:'#ffd21a', gaviota:'#ffffff', pajaro:'#3a8aff', murcielago:'#6a3aa0'}[piel];
+  } else if (piel === 'iguana' || piel === 'dragoncito' || piel === 'dragon'){
+    /* la iguana del Lago y los dragones chinos: cuerpo largo, cresta y cola */
+    const dr = piel !== 'iguana';
+    const verde = std(dr ? '#e8262a' : '#4ab83a', {roughness:0.45}), panza = std(dr ? '#ffd23f' : '#c8e870', {roughness:0.55});
+    cuerpo.add(bola(verde, 0.42, 0, 0.42, -0.05, 1, 0.75, 1.35));
+    cuerpo.add(bola(panza, 0.3, 0, 0.34, 0.12, 1, 0.6, 1.1));
+    const cab = bola(verde, 0.32, 0, 0.62, 0.48, 1, 0.8, 1.15); cuerpo.add(cab);
+    for (const lado of [1, -1]){
+      const o = ojo(0.1); o.position.set(0.15*lado, 0.78, 0.62); cuerpo.add(o);
+      const p = bola(verde, 0.12, 0.26*lado, 0.12, 0.2, 1, 0.55, 1.4); cuerpo.add(p); pies.push(p);
+      const p2 = bola(verde, 0.12, 0.26*lado, 0.12, -0.35, 1, 0.55, 1.4); cuerpo.add(p2); pies.push(p2);
+    }
+    for (let k = 0; k < 5; k++){ const c = new THREE.Mesh(GEO.cono, dr ? panza : std('#2a8a2a')); c.scale.set(0.07, 0.2, 0.07); c.position.set(0, 0.78 - k*0.03, 0.3 - k*0.2); cuerpo.add(c); }
+    const cola = new THREE.Mesh(GEO.cono, verde); cola.scale.set(0.16, 0.8, 0.16); cola.rotation.x = -Math.PI/2 - 0.25; cola.position.set(0, 0.36, -0.85); cuerpo.add(cola); alas.push(cola);
+    if (dr){
+      const oro = std('#ffd23f', {metalness:0.6, roughness:0.3});
+      for (const lado of [1, -1]){
+        const cu = new THREE.Mesh(GEO.cono, oro); cu.scale.set(0.05, 0.28, 0.05); cu.rotation.z = -0.4*lado; cu.position.set(0.14*lado, 1.0, 0.42); cuerpo.add(cu);
+        const bi = palo(oro, 0.015, 0.008, 0.5); bi.rotation.z = Math.PI/2 + 0.3*lado; bi.position.set(0.32*lado, 0.55, 0.78); cuerpo.add(bi);
+      }
+    } else {
+      const papada = bola(std('#ff9a2a'), 0.1, 0, 0.42, 0.62, 0.6, 1.3, 1); cuerpo.add(papada);
+    }
+    cejasEnojadas(std('#1a3a12'), cuerpo, 0.9, 0.7, 0.15, 0.8);
+  } else if (piel === 'abeja' || piel === 'gaviota' || piel === 'pajaro' || piel === 'murcielago' || piel === 'zancudo' || piel === 'paloma'){
+    const col = {abeja:'#ffd21a', gaviota:'#ffffff', pajaro:'#3a8aff', murcielago:'#6a3aa0', zancudo:'#5a5048', paloma:'#a8acb8'}[piel];
     const mc = std(col, {roughness:0.45});
     cuerpo.add(bola(mc, 0.36, 0, 0, 0, 1, 0.95, 1.15));
-    if (piel === 'abeja'){
+    if (piel === 'zancudo'){
+      const pico = palo(negro, 0.02, 0.005, 0.5); pico.rotation.x = Math.PI/2; pico.position.set(0, -0.02, 0.55); cuerpo.add(pico);
+      for (const lado of [1, -1]) for (let k = 0; k < 3; k++){ const pt = palo(negro, 0.015, 0.01, 0.6); pt.position.set(0.18*lado, -0.35, -0.15 + k*0.15); pt.rotation.z = 0.5*lado; cuerpo.add(pt); }
+    } else if (piel === 'abeja'){
       for (let k = 0; k < 2; k++){ const r = new THREE.Mesh(new THREE.TorusGeometry(0.33 - k*0.04, 0.05, 6, 20), negro); r.position.z = -0.1 - k*0.16; cuerpo.add(r); }
       const agu = new THREE.Mesh(GEO.cono, negro); agu.scale.set(0.06, 0.18, 0.06); agu.rotation.x = -Math.PI/2; agu.position.z = -0.48; cuerpo.add(agu);
     } else {
@@ -619,10 +650,35 @@ function crearEnemigo(piel){
     for (const lado of [1, -1]){
       const o = ojo(0.09); o.position.set(0.13*lado, 0.1, 0.3); cuerpo.add(o);
       const ala = new THREE.Group(); ala.position.set(0.3*lado, 0.18, 0);
-      const mAla = piel === 'abeja' ? std('#e8f6ff', {transparent:true, opacity:0.6, roughness:0.1}) : mc;
+      const mAla = piel === 'abeja' || piel === 'zancudo' ? std('#e8f6ff', {transparent:true, opacity:0.6, roughness:0.1}) : mc;
       ala.add(bola(mAla, 0.28, 0.22*lado, 0.05, 0, 1, 0.12, 0.6)); cuerpo.add(ala); alas.push(ala);
     }
     cejasEnojadas(negro, cuerpo, 0.22, 0.33, 0.13, 0.7);
+  }
+  if (piel === 'vaquero'){
+    const cuero = std('#8a5a2a', {roughness:0.7});
+    const ala = palo(cuero, 0.62, 0.62, 0.05, 24); ala.position.y = 1.12; cuerpo.add(ala);
+    const copa = palo(cuero, 0.3, 0.36, 0.34, 20); copa.position.y = 1.3; cuerpo.add(copa);
+    const cinta = palo(std('#3a2a1a'), 0.365, 0.365, 0.06, 20); cinta.position.y = 1.18; cuerpo.add(cinta);
+    const panu = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.07, 6, 18), std('#e8262a')); panu.rotation.x = Math.PI/2; panu.position.y = 0.5; cuerpo.add(panu);
+  } else if (piel === 'chef'){
+    const blanco = std('#ffffff', {roughness:0.7});
+    const gorro = palo(blanco, 0.3, 0.28, 0.4, 20); gorro.position.y = 1.32; cuerpo.add(gorro);
+    cuerpo.add(bola(blanco, 0.38, 0, 1.6, 0, 1, 0.6, 1));
+    for (const lado of [1, -1]){ const bi = bola(negro, 0.14, 0.12*lado, 0.66, 0.5, 1, 0.4, 0.5); bi.rotation.z = 0.4*lado; cuerpo.add(bi); }
+    const delantal = palo(blanco, 0.34, 0.4, 0.4, 20); delantal.position.y = 0.32; cuerpo.add(delantal);
+  } else if (piel === 'futbolista' || piel === 'arquero'){
+    /* el gruñón con camiseta: rojo el jugador, verde con guantes el arquero */
+    const cam = std(piel === 'arquero' ? '#2ad84a' : '#e8262a', {roughness:0.6});
+    const camiseta = palo(cam, 0.36, 0.42, 0.42, 20); camiseta.position.y = 0.38; cuerpo.add(camiseta);
+    if (piel === 'arquero'){
+      const guante = std('#ffe23a', {roughness:0.5});
+      for (const lado of [1, -1]){ const gu = bola(guante, 0.17, 0.55*lado, 0.55, 0.1); cuerpo.add(gu); alas.push(gu); }
+      const visera = palo(std('#1a1a1a'), 0.36, 0.36, 0.05, 20); visera.position.set(0, 1.12, 0.12); cuerpo.add(visera);
+    } else {
+      const num = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({map: etiqueta('9', '#ffffff', null, 64, 64), transparent:true}));
+      num.position.set(0, 0.4, -0.43); num.rotation.y = Math.PI; cuerpo.add(num);
+    }
   }
   if (piel === 'rey'){
     const oro = std('#ffd23f', {metalness:0.9, roughness:0.2, emissive:'#5a4000', emissiveIntensity:0.3});
@@ -744,7 +800,7 @@ function crearRegalo(poder){
 }
 
 const TEX_PORTAL = {};
-function crearPortal(mundo, nombre, emoji, color, necesita){
+function crearPortal(mundo, nombre, emoji, color, necesita, rotulo){
   const g = new THREE.Group();
   const piedra = matSuelo('castillo').lado;
   const oro = std('#ffd23f', {metalness:0.85, roughness:0.25});
@@ -771,8 +827,9 @@ function crearPortal(mundo, nombre, emoji, color, necesita){
     x.strokeStyle = '#ffd23f'; x.lineWidth = 8; x.stroke();
     x.textAlign = 'center'; x.textBaseline = 'middle';
     x.font = '64px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; x.fillText(emoji, 70, h/2);
-    x.fillStyle = '#ffffff'; x.font = 'bold 40px Fredoka, Arial'; x.fillText('MUNDO ' + mundo, w/2 + 40, 58);
-    x.fillStyle = '#ffd23f'; x.font = 'bold 44px Fredoka, Arial'; x.fillText('★ ' + necesita, w/2 + 40, 128);
+    const r = rotulo || ('MUNDO ' + mundo);
+    x.fillStyle = '#ffffff'; x.font = 'bold ' + (r.length > 8 ? 34 : 40) + 'px Fredoka, Arial'; x.fillText(r, w/2 + 40, necesita ? 58 : h/2);
+    if (necesita){ x.fillStyle = '#ffd23f'; x.font = 'bold 44px Fredoka, Arial'; x.fillText('★ ' + necesita, w/2 + 40, 128); }
   }, false);
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({map: cartel, transparent:true, depthWrite:false}));
   sp.scale.set(3.2, 1.2, 1); sp.position.y = 4.6; g.add(sp);
@@ -1029,7 +1086,7 @@ function faroDeco(x, z){
   return g;
 }
 
-Object.assign(MOD, {mejorarTextura, rng, tex, lienzo, std, matSuelo, piezaSuelo, GEO, bola, palo, halo, columnaLuz,
+Object.assign(MOD, {mejorarTextura, rng, tex, lienzo, std, matSuelo, piezaSuelo, GEO, bola, palo, halo, columnaLuz, PINTAR, manchas, ojo, sonrisa, md,
   crearFernando, crearTio, ondearCapa, crearPerro, crearEnemigo, crearMoneda, crearEstrella, crearRegalo, crearPortal,
   crearResorte, crearTubo, crearAbu, crearSanti, COLOR_PODER, EMOJI_PODER, TEX_HALO,
   arbol, pino, palmera, roca, hongo, cerca, sombrilla, concha, estrellaMar, munecoDeco, regaloDeco, nubeDeco, globo, antorcha, columna,

@@ -218,7 +218,7 @@ function jugarMundo(n, opciones){
   const mem = {px:0, pz:0, quieto:0};
   let f = 0, rescates = 0;
   const LIM = 60*60*8;
-  const quiere = M.def.estrellas.length;
+  const quiere = M.def.estrellas.filter(s=>s.tipo !== 'gol').length;   /* el gol se prueba aparte */
   let tomadas = 0;
   for (; f < LIM; f++){
     if (J.mundo !== n) break;
@@ -371,6 +371,30 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   for (let f = 0; f < 60*6; f++) L.paso(J, 1/60, {});
   const lejos = Math.max(...J.perros.map(g=>Math.hypot(g.x - J.p.x, g.z - J.p.z) + Math.abs(g.y - J.p.y)));
   if (lejos > 5) mal('después de aterrizar los perritos quedaron lejos (' + lejos.toFixed(1) + ' m)'); else bien('después de aterrizar, Penny y Sheldon están con Fernando');
+}
+
+/* 4c) Argentina: patear la pelota hasta el arco es gol y aparece la estrella */
+{
+  const n = L.MUNDOS.findIndex(m=>m.id === 'argentina');
+  const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); L.cargarMundo(J, n, null);
+  for (let i = 0; i < 30; i++) L.paso(J, 1/60, {});
+  const b = J.M.pelotas[0], est = J.M.estrellas.find(s=>s.tipo === 'gol');
+  if (est.visible) mal('la estrella del gol se ve antes del gol');
+  J.p.x = b.x - 3; J.p.z = b.z; J.p.y = b.y; J.p.vx = J.p.vz = 0;
+  let gol = false, patadas = 0;
+  for (let f = 0; f < 60*12 && !gol; f++){
+    J.eventos.length = 0;
+    /* corre detrás de la pelota empujándola hacia el arco de x = +16 (camA = 0: "derecha" va hacia -x) */
+    const dz = b.z - J.p.z, dx = b.x - 0.6 - J.p.x;
+    L.paso(J, 1/60, {camA: 0, x: -Math.sign(dx)*Math.min(1, Math.abs(dx)), y: Math.max(-1, Math.min(1, dz))});
+    for (const e of J.eventos){ if (e.tipo === 'gol') gol = true; if (e.tipo === 'patada') patadas++; }
+  }
+  if (gol && est.visible) bien('¡gol! con ' + patadas + ' patadas la pelota entró al arco y apareció la estrella');
+  else mal('no hubo gol (patadas: ' + patadas + ', pelota en ' + b.x.toFixed(1) + ', ' + b.z.toFixed(1) + ')');
+  /* la pelota que se va al agua vuelve a la cancha */
+  b.x = 40; b.z = 30; b.y = 3; b.vx = b.vz = 0; b.golT = 0;
+  for (let i = 0; i < 120; i++) L.paso(J, 1/60, {});
+  if (Math.hypot(b.x - b.x0, b.z - b.z0) < 0.5) bien('la pelota que cae al agua vuelve al centro de la cancha'); else mal('la pelota se perdió en el agua');
 }
 
 /* 5) el castillo: los cuadros se abren con estrellas y el final llega */

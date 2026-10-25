@@ -73,7 +73,8 @@ En la carpeta [`fernando3d/`](fernando3d/) vive un **juego de plataformas en 3D 
 Super Mario 64**: el Rey Gruñón se robó las estrellas del castillo de Tío Juan y Fernando entra
 en los cuadros mágicos para recuperarlas, con **Tío Juan** volando a su lado y **Penny** y
 **Sheldon** detrás. Son 5 mundos (pradera, playa, montaña nevada, nubes y el castillo del Rey
-Gruñón), 14 estrellas, 5 jefes y **6 poderes** (gorra alada, flor de fuego, súper hamburguesa,
+Gruñón) y **5 países** (Maracaibo, Estados Unidos, Italia, China y Argentina con Messi y los
+Balones de Oro), 29 estrellas, 10 jefes y **6 poderes** (gorra alada, flor de fuego, súper hamburguesa,
 hongo gigante, imán de monedas y tenis saltarines). El botón 🦸 llama a Tío Juan para que venza
 a los enemigos o traiga un regalo, una flecha amarilla guía siempre a la próxima estrella y, como
 en todo Fernando Bros, **nunca se pierde**: si Fernando se cae, Tío Juan lo atrapa. Se abre

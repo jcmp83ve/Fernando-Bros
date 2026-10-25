@@ -8,7 +8,7 @@ con **Tío Juan** volando a su lado y sus perritos **Penny** y **Sheldon** sigui
 👉 **[Jugar](https://jcmp83ve.github.io/Fernando-Bros/fernando3d/)** · también desde el botón
 **⭐ FERNANDO 3D** del menú de mundos (o con la tecla **F**).
 
-## Los mundos (14 estrellas)
+## Los mundos (29 estrellas)
 
 | Mundo | Pide | Estrellas |
 |---|---|---|
@@ -20,6 +20,16 @@ con **Tío Juan** volando a su lado y sus perritos **Penny** y **Sheldon** sigui
 | 🌋 **El Castillo del Rey Gruñón** | ★ 8 | La Gran Estrella: vencer al Rey Gruñón → ¡final feliz! |
 
 En la pradera está **Abu** y en las nubes está **Santi**, el hermanito.
+
+### Los países (cuadros detrás del inicio, abiertos desde el principio)
+
+| País | Estrellas |
+|---|---|
+| 🌉 **Maracaibo, la Tierra del Sol** | El campanario de la Basílica de la Chinita · monedas rojas por el Puente sobre el Lago, las casitas de Santa Lucía y las plataformas petroleras · la Iguana Gigante. A lo lejos se ve el Relámpago del Catatumbo |
+| 🗽 **Estados Unidos** | La antorcha de la Estatua de la Libertad · monedas rojas en los rascacielos · el Vaquero Gruñón. Taxis amarillos, el cohete y el letrero de Hollywood |
+| 🍕 **Italia** | Arriba de la Torre de Pisa (que está chueca) · monedas rojas en pizzas gigantes y en Venecia (se llega en góndola) · el Chef Gruñón en el Coliseo |
+| 🐉 **China** | La torre más alta de la Gran Muralla · monedas rojas en la pagoda y el bambú · el Dragón Gruñón. Pandas, faroles y un dragón que vuela por el cielo |
+| ⚽ **Argentina, la tierra de Messi** | ¡Mete un gol! (se patea la pelota con solo tocarla) · los 8 Balones de Oro · el Arquero Gruñón. Estadio con hinchada, la estatua de Messi con la Copa y el Obelisco |
 
 ## Los poderes (cajas de regalo de Tío Juan)
 
@@ -113,6 +123,8 @@ estorban. Si el aparato no da, la calidad baja sola.
   las texturas pintadas en lienzos.
 - `red.js` — jugar con amigos: la sala, el código, lo que se manda y lo que llega (el mismo
   sistema de Salomón 3D).
+- `paises.js` — lo que se ve en los cinco países: texturas, monumentos, adornos que se mueven,
+  la pelota y los Balones de Oro.
 - `vista.js` — dibuja el mundo, la cámara, el marcador, los controles, el sonido, las voces y la
   pantalla de amigos.
 
@@ -124,7 +136,7 @@ node pruebas.js
 
 Un **niño robot** juega cada mundo con la misma física del juego: planea de plataforma en
 plataforma, salta, pisa a los enemigos, junta las monedas rojas y vence a los jefes. Así se
-comprueba que las **14 estrellas** se pueden alcanzar saltando. También revisa que nunca se
+comprueba que las estrellas se pueden alcanzar saltando (la del gol tiene su propia prueba: patear la pelota hasta el arco). También revisa que nunca se
 pierde, que Tío Juan rescata y ayuda, que cada poder funciona, que los cuadros se abren con las
 estrellas y que vencer al Rey Gruñón lleva al final.
 
