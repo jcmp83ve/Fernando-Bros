@@ -13,13 +13,14 @@
       se juega por el relé.
    ============================================================ */
 const { chromium } = require('playwright');
-const ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'];
+const ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
+              '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--autoplay-policy=no-user-gesture-required'];
 const URL_ = process.env.URL_F3D || 'http://127.0.0.1:8765/fernando3d/';
 let fallos = 0; const mal = m=>{ console.log('✗', m); fallos++; }, bien = (...m)=>console.log('✓', ...m);
 const espera = async (pg, fn, ms, que, arg)=>{ try{ await pg.waitForFunction(fn, arg, {timeout: ms || 30000, polling: 200}); return true; }catch(e){ mal('no pasó: ' + que); return false; } };
 
 async function pagina(browser, pj, romperRTC){
-  const ctx = await browser.newContext({viewport: {width: 480, height: 300}});
+  const ctx = await browser.newContext({viewport: {width: 480, height: 300}, permissions: ['microphone']});
   const pg = await ctx.newPage();
   pg.on('pageerror', e=>console.log('  [' + pj + '] error de página:', e.message));
   await pg.goto(URL_, {waitUntil: 'domcontentloaded', timeout: 90000});
@@ -35,7 +36,8 @@ async function pagina(browser, pj, romperRTC){
   return pg;
 }
 async function sala(browser, romper){
-  const H = await pagina(browser, 'fernando', romper), G = await pagina(browser, 'lucca', romper);
+  /* cada jugador en su propio navegador, como dos teléfonos (así los dos dibujan a toda velocidad) */
+  const H = await pagina(browser, 'fernando', romper), G = await pagina(browser.otro || browser, 'lucca', romper);
   await H.evaluate(()=>F3D_RED.crear());
   await espera(H, ()=>F3D_RED.estado === 'sala', 30000, 'el anfitrión abrió la sala');
   const codigo = await H.evaluate(()=>F3D_RED.sala);
@@ -47,10 +49,32 @@ async function sala(browser, romper){
   await espera(G, ()=>[...F3D_RED.remotos.values()].some(r=>r.listo), 30000, 'el invitado ve al anfitrión');
   return {H, G, codigo};
 }
+/* qué tan parejo se ve moverse al amigo: el anfitrión corre derecho a 6 m/s y el invitado mira cada cuadro */
+async function fluidez(H, G){
+  await H.evaluate(()=>{ const J = FER3D.J(); J.p.vx = J.p.vz = 0; window._corre = setInterval(()=>{ J.p.x += 0.096; }, 16); });
+  const r = await G.evaluate(()=>new Promise(fin=>{
+    const pasos = []; let ant = null, t0 = performance.now(), tAnt = t0;
+    /* aquí se dibuja muy lento (sin tarjeta de video): se hace a mano, 60 veces por segundo, lo que hace cada cuadro de un teléfono */
+    const iv = setInterval(()=>{
+      const t = performance.now();
+      F3D_RED.paso();
+      const r = [...F3D_RED.remotos.values()][0];
+      if (r && r.act){ if (ant != null) pasos.push({d: r.act.x - ant, dt: (t - tAnt)/1000}); ant = r.act.x; tAnt = t; }
+      if (t - t0 > 3500){ clearInterval(iv); fin(pasos); }
+    }, 16);
+  }));
+  await H.evaluate(()=>clearInterval(window._corre));
+  const reales = r.slice(10);
+  if (!reales.length) return {quietos: 1, peor: 99, cuadros: 0};
+  const quietos = reales.filter(p=>Math.abs(p.d) < 0.001).length/reales.length;
+  const saltos = reales.map(p=>Math.abs(p.d - 6*p.dt));
+  return {quietos, peor: Math.max(...saltos), cuadros: reales.length};
+}
 const remoto = pg=>pg.evaluate(()=>{ const r = [...F3D_RED.remotos.values()][0]; return r ? {x: r.obj.x, z: r.obj.z, nv: r.obj.nv, pj: r.pj, nombre: r.nombre} : null; });
 
 (async ()=>{
   const browser = await chromium.launch({args: ARGS});
+  browser.otro = await chromium.launch({args: ARGS});
   /* 1-4) con el enlace directo sano */
   {
     const {H, G} = await sala(browser, false);
@@ -62,6 +86,17 @@ const remoto = pg=>pg.evaluate(()=>{ const r = [...F3D_RED.remotos.values()][0];
     await H.evaluate(()=>{ const J = FER3D.J(); J.p.x += 6; J.p.z -= 4; });
     await espera(G, ()=>{ const r = [...F3D_RED.remotos.values()][0]; return r && Math.abs(r.obj.x - 6) < 0.5; }, 15000, 'el invitado ve moverse al anfitrión');
     bien('el invitado ve moverse al anfitrión:', JSON.stringify(await remoto(G)));
+    const fl = await fluidez(H, G);
+    if (fl.quietos < 0.1 && fl.peor < 0.6) bien('enlace directo: el amigo se mueve parejo (' + (fl.quietos*100).toFixed(0) + '% de cuadros quieto, desvío máximo ' + fl.peor.toFixed(2) + ' m en ' + fl.cuadros + ' cuadros)');
+    else mal('enlace directo: el amigo se mueve a saltos (' + (fl.quietos*100).toFixed(0) + '% de cuadros quieto, desvío máximo ' + fl.peor.toFixed(2) + ' m)');
+    /* el walkie-talkie: el anfitrión habla 1,6 s (micrófono de prueba) y al invitado le llega */
+    if (await H.evaluate(()=>typeof FER3D.hablar === 'function')){
+    await H.evaluate(()=>FER3D.hablar());
+    await H.waitForTimeout(1600);
+    await H.evaluate(()=>FER3D.callar());
+    if (await espera(G, ()=>{ const q = [...FER3D.walkie.rx.values()][0]; return q && q.hasta > 0.8; }, 15000, 'al invitado le llegó la voz del anfitrión'))
+      bien('walkie-talkie: al invitado le llegó la voz de Fernando (' + (await G.evaluate(()=>{ const q = [...FER3D.walkie.rx.values()][0]; return q.hasta.toFixed(1); })) + ' s de audio en fila)');
+    }
     const visible = await G.evaluate(()=>{ const o = [...FER3D.REMOTOS.values()][0]; return !!(o && o.m.g.visible); });
     if (visible) bien('el muñeco del amigo se dibuja en el mismo mundo'); else mal('el muñeco del amigo no se ve');
     /* la estrella del techo: la gana el anfitrión y le llega al invitado */
@@ -99,9 +134,12 @@ const remoto = pg=>pg.evaluate(()=>{ const r = [...F3D_RED.remotos.values()][0];
     await H.evaluate(()=>{ FER3D.J().p.x += 5; });
     await espera(G, ()=>{ const r = [...F3D_RED.remotos.values()][0]; return r && Math.abs(r.obj.x - 5) < 0.5; }, 15000, 'por el relé también se ve moverse al amigo');
     bien('por el relé también se ve moverse al amigo');
+    const fl = await fluidez(H, G);
+    if (fl.quietos < 0.15 && fl.peor < 0.9) bien('por el relé el amigo también se mueve parejo (' + (fl.quietos*100).toFixed(0) + '% de cuadros quieto, desvío máximo ' + fl.peor.toFixed(2) + ' m)');
+    else mal('por el relé el amigo se mueve a saltos (' + (fl.quietos*100).toFixed(0) + '% de cuadros quieto, desvío máximo ' + fl.peor.toFixed(2) + ' m)');
     await H.context().close(); await G.context().close();
   }
-  await browser.close();
+  await browser.otro.close(); await browser.close();
   console.log(fallos ? '\n' + fallos + ' prueba(s) fallaron' : '\nTodo bien ✓');
   process.exit(fallos ? 1 : 0);
 })();

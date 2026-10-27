@@ -86,6 +86,19 @@ Por dentro es la misma red de los otros juegos (WebRTC con Trystero, `../aventur
 con un camino de reserva por MQTT para cuando el enlace directo no abre, como con datos móviles).
 Sin cuentas ni pagos. Si la parte de red no carga, el juego se juega solo igual.
 
+
+### Jugar juntos
+
+- **Se ven moverse parejo**: cada aparato manda dónde está 20 veces por segundo (con su hora y
+  su velocidad) y el amigo se dibuja un poquito en el pasado, siguiendo su recorrido de verdad.
+  Si se cortan los mensajes, sigue un ratito y espera. Por el relé (datos móviles) igual.
+- **Se juega con el otro**: si caes en la cabeza de un amigo rebotas bien alto, no se
+  atraviesan y al encontrarse ¡chocan los cinco! El láser, la onda de la súper fuerza, los
+  clones y los goles del amigo también se ven.
+- **🎙️ Walkie-talkie**: el botón grande de la izquierda (o la tecla **H**). Se deja apretado,
+  se habla y se suelta; la voz llega mientras uno todavía habla, con su pitido de radio. Sobre el
+  amigo que habla aparece un 🔊. La primera vez el navegador pide permiso para el micrófono.
+
 ## Hecho para un niño de seis años
 
 - **Nunca se pierde.** No hay vidas: si Fernando se cae al agua o a la lava, **Tío Juan lo

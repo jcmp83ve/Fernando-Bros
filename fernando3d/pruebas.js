@@ -475,6 +475,32 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   }
 }
 
+/* 4f) jugar con amigos: rebotar en su cabeza, no atravesarse y chocar los cinco */
+{
+  const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); L.cargarMundo(J, 1, null);
+  for (let i = 0; i < 30; i++) L.paso(J, 1/60, {});
+  J.M.enemigos.length = 0;
+  const a = {id: 'lucca', x: J.p.x, y: J.p.y, z: J.p.z};
+  /* caer encima del amigo */
+  J.amigos = [a]; J.p.y = a.y + 1.4; J.p.vy = -3; J.p.enSuelo = false; J.eventos.length = 0;
+  L.paso(J, 1/60, {});
+  const rebote = J.p.vy > 15 && J.eventos.some(e=>e.tipo === 'saltoAmigo');
+  a.x += 30;                                   /* el amigo se va (si no, sigue rebotando en su cabeza como cama elástica) */
+  for (let i = 0; i < 240; i++) L.paso(J, 1/60, {});
+  /* ahora correr contra él */
+  a.x = J.p.x + 2; a.z = J.p.z; a.y = J.p.y;
+  let chocas = 0, minD = 9;
+  for (let i = 0; i < 180; i++){
+    J.eventos.length = 0;
+    L.paso(J, 1/60, {camA: 0, x: -1, y: 0});
+    chocas += J.eventos.filter(e=>e.tipo === 'choca').length;
+    minD = Math.min(minD, Math.hypot(J.p.x - a.x, J.p.z - a.z));
+  }
+  if (rebote) bien('al caer en la cabeza de un amigo rebota bien alto'); else mal('no rebotó en la cabeza del amigo');
+  if (minD > L.CFG.RADIO*0.9) bien('no se atraviesan: se quedan a ' + minD.toFixed(2) + ' m'); else mal('se atravesó con el amigo (' + minD.toFixed(2) + ' m)');
+  if (chocas === 1) bien('al encontrarse se dan los cinco una vez (no cada rato si se quedan juntos)'); else mal('chocaron los cinco ' + chocas + ' veces');
+}
+
 /* 4c) Argentina: patear la pelota hasta el arco es gol y aparece la estrella */
 {
   const n = L.MUNDOS.findIndex(m=>m.id === 'argentina');

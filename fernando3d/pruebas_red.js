@@ -66,5 +66,48 @@ const igual = (a, b)=>JSON.stringify(a) === JSON.stringify(b);
   prueba('Ir con… lleva al mundo del amigo y a su lado (' + J.p.x.toFixed(1) + ', ' + J.p.z.toFixed(1) + ')', J.mundo === 2 && Math.hypot(J.p.x - 10, J.p.z - 5) < 3);
   prueba('Ir con… a un mundo que no existe no hace nada', F.irConAmigo(J, 42, 0, 0, 0) === false);
 }
+/* el movimiento suave de los amigos: aunque los mensajes lleguen a saltos, el muñeco sigue el recorrido */
+{
+  /* el amigo corre en línea recta a 6 m/s y manda su estado cada 50 ms; llegan con atrasos al azar
+     (de 20 a 220 ms, como por el relé) y algunos se pierden */
+  const buf = [];
+  let azar = 7; const R = ()=>((azar = (azar*16807) % 2147483647)/2147483647);
+  const llegadas = [];
+  for (let i = 0; i < 80; i++){ const ts = 1000 + i*50; if (R() < 0.15) continue; llegadas.push({ts, x: ts*0.006, llega: 50000 + ts + 20 + R()*200}); }
+  llegadas.sort((a, b)=>a.llega - b.llega);
+  let peor = 0, saltoMax = 0, ant = null, k = 0;
+  for (let ahora = 50000 + 1400; ahora < 50000 + 4800; ahora += 16){
+    while (k < llegadas.length && llegadas[k].llega <= ahora){ const l = llegadas[k++]; N.guardarMuestra(buf, {ts: l.ts, x: l.x, y: 0, z: 0, ang: 0, vx: 6, vy: 0, vz: 0}, l.llega); }
+    const rel = N.relojRemoto(buf), q = N.muestra(buf, ahora - rel.off - rel.colchon);
+    const verdad = (ahora - 50000 - rel.colchon)*0.006;
+    peor = Math.max(peor, Math.abs(q.x - verdad));
+    if (ant != null) saltoMax = Math.max(saltoMax, Math.abs(q.x - ant));
+    ant = q.x;
+  }
+  prueba('con mensajes a saltos el amigo se mueve parejo: a lo más ' + saltoMax.toFixed(2) + ' m por cuadro (corre a 0,1 m por cuadro) y nunca se sale de su camino más de ' + peor.toFixed(2) + ' m', saltoMax < 0.25 && peor < 0.5);
+  /* si dejan de llegar, sigue un ratito y espera (no se va lejísimos) */
+  const u = buf[buf.length - 1], q = N.muestra(buf, u.ts + 2000);
+  prueba('si se cortan los mensajes sigue solo ' + N.EXTRAPOLA_MS + ' ms y espera', Math.abs(q.x - (u.x + 6*N.EXTRAPOLA_MS/1000)) < 0.01);
+  /* los repetidos o atrasados no lo hacen retroceder */
+  const n0 = buf.length; N.guardarMuestra(buf, {ts: u.ts - 100, x: 0, y: 0, z: 0, ang: 0}, 99999); N.guardarMuestra(buf, {ts: u.ts, x: 0, y: 0, z: 0, ang: 0}, 99999);
+  prueba('los mensajes atrasados o repetidos se ignoran', buf.length === n0);
+}
+/* lo que viaja con el estado: la hora y la velocidad */
+{
+  const J = F.crearJuego({prog: {intro: true}}); F.empezar(J); F.cargarMundo(J, 1, null);
+  J.p.vx = 3.33333; J.p.vy = -9; J.p.vz = 1;
+  const e = F.desempaquetar(JSON.parse(JSON.stringify(F.empaquetar(J, 'lucca', 'Lucca', 123456.7))));
+  prueba('el estado lleva la hora y la velocidad', e.ts === 123457 && Math.abs(e.vx - 3.33) < 0.01 && e.vy === -9);
+  const raro = F.desempaquetar({t: 'e', nv: 0, x: 0, y: 0, z: 0, a: 0, ts: 'ayer', vx: 1e9});
+  prueba('hora y velocidades raras se recortan', raro && raro.ts === undefined && raro.vx === 80);
+}
+/* la voz del walkie-talkie */
+{
+  const b64 = Buffer.from(new Uint8Array(4000).fill(200)).toString('base64');
+  prueba('un pedacito de voz se acepta', !!N.sanearVoz({i: 3, n: 0, d: b64, f: 1}) && N.sanearVoz({i: 3, n: 0, d: b64, f: 1}).fin === true);
+  prueba('voz rara se tira (muy larga, letras raras, números malos)', N.sanearVoz({i: 1, n: 0, d: 'A'.repeat(9000)}) === null && N.sanearVoz({i: 1, n: 0, d: '<script>'}) === null &&
+         N.sanearVoz({i: -1, n: 0, d: ''}) === null && N.sanearVoz({i: 1, n: 999, d: ''}) === null && N.sanearVoz(null) === null);
+  prueba('el fx de un amigo puede traer un segundo punto (el rayo láser)', JSON.stringify(N.sanearEvento({tipo: 'fx', fx: 'laser', x: 1, y: 2, z: 3, x2: 4, y2: 5, z2: 1e9})) === JSON.stringify({tipo: 'fx', fx: 'laser', x: 1, y: 2, z: 3, x2: 4, y2: 5, z2: 500}));
+}
 console.log(fallos ? '\n' + fallos + ' prueba(s) fallaron' : '\nTodo bien ✓');
 process.exit(fallos ? 1 : 0);
