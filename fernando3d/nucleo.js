@@ -28,8 +28,16 @@ const PODERES = {
   gigante:     {nombre:'Hongo Gigante',    emoji:'🍄', dur:14, color:'#ff4a4a'},
   iman:        {nombre:'Imán de Monedas',  emoji:'🧲', dur:20, color:'#ff5a8a'},
   tenis:       {nombre:'Tenis Saltarines', emoji:'👟', dur:20, color:'#5aff9a'},
+  /* los súper poderes */
+  clon:        {nombre:'Caja de Clones',   emoji:'👯', dur:25, color:'#c08aff'},
+  cohete:      {nombre:'Súper Vuelo',      emoji:'🚀', dur:20, color:'#3ad0ff'},
+  fuerza:      {nombre:'Súper Fuerza',     emoji:'💪', dur:20, color:'#ff3a3a'},
+  laser:       {nombre:'Ojos Láser',       emoji:'👀', dur:22, color:'#ff2a6a'},
+  robot:       {nombre:'Fernando Robot',   emoji:'🤖', dur:20, color:'#a8c0d8'},
 };
 const LISTA_PODERES = Object.keys(PODERES);
+const SUPER = ['clon', 'cohete', 'fuerza', 'laser', 'robot'];
+const MAX_CLONES = 4;
 
 /* Con quién se juega: cada amigo de la sala elige uno (todos tienen gorra con su letra) */
 const PJS = {
@@ -83,6 +91,15 @@ const FRASES = {
   gigante:    ['fer', '¡Soy gigante! ¡El pichunguito más grande del mundo!'],
   iman:       ['tio', '¡Imán de monedas! ¡Todas vienen a ti!'],
   tenis:      ['tio', ['¡Tenis saltarines! ¡Salta súper alto!', '¡Arriba, arriba! ¡Tío Juan vuela!']],
+  clon:       ['tio', '¡La caja de clones! ¡Cada vez que saltes aparece otro Fernando!'],
+  clonSale:   ['fer', ['¡Otro Fernando!', '¡Somos un equipo de pichunguitos!']],
+  cohete:     ['fer', '¡Súper vuelo! ¡Más rápido que un cohete!'],
+  fuerza:     ['fer', '¡Súper fuerza! ¡Soy el pichunguito más fuerte!'],
+  laser:      ['fer', '¡Rayos láser con los ojos! ¡Piu, piu!'],
+  robot:      ['fer', '¡Modo robot activado! ¡Bip, bup!'],
+  superPortal:['tio', ['¡Toma un súper poder nuevo para este mundo!', '¡Un súper poder de regalo, pichunguito!']],
+  vuelta:     ['tio', '¡Encontraste todas las estrellas! ¡Ahora se escondieron en otros lugares! ¡A buscarlas otra vez!'],
+  vueltaFer:  ['fer', '¡Otra vez, otra vez!'],
   ayuda:      ['fer', ['¡Tío Juan, ayúdame!', '¡Ayuda, tío Juan!']],
   ayudaVoy:   ['tio', ['¡Tío Juan al rescate!', '¡Arriba, arriba! ¡Tío Juan vuela!']],
   regalo:     ['tio', ['¡Toma un regalo, pichunguito!', 'Eres mi pichunguito']],
@@ -172,7 +189,9 @@ MUNDOS.push({
   rojas:[],
   estrellas:[{id:'tejado', tipo:'libre', x:0, y:10.2, z:-30.5, nombre:'El techo del castillo'}],
   enemigos:[], jefe:null,
-  cajas:[{x:-6, z:4, poder:'alas'}, {x:9, z:-2, poder:'gigante'}, {x:-9, z:-2, poder:'tenis'}],
+  cajas:[{x:-6, z:4, poder:'alas'}, {x:9, z:-2, poder:'gigante'}, {x:-9, z:-2, poder:'tenis'},
+         /* los súper poderes, cerca del inicio */
+         {x:-14, z:8, poder:'clon'}, {x:14, z:8, poder:'cohete'}, {x:-8, z:20, poder:'fuerza'}, {x:8, z:20, poder:'laser'}, {x:0, z:24, poder:'robot'}],
   portales:[
     {mundo:1, x:-16, z:-12, necesita:0},
     {mundo:2, x:-24, z:2,   necesita:1},
@@ -655,13 +674,15 @@ function empujar(M, o, R, alto){
 /* ============================================================
    EL JUEGO
    ============================================================ */
-function progresoNuevo(){ return {estrellas:{}, monedas:0, intro:false, ganado:false, tejadoDicho:false}; }
+function progresoNuevo(){ return {estrellas:{}, monedas:0, intro:false, ganado:false, tejadoDicho:false, vuelta:0, vueltaLista:false, superN:0}; }
 function progresoLimpio(p){
   const n = progresoNuevo();
   if (!p || typeof p !== 'object') return n;
   if (p.estrellas && typeof p.estrellas === 'object') for (const k in p.estrellas) if (p.estrellas[k] === true) n.estrellas[k] = true;
   n.monedas = Math.max(0, Math.floor(+p.monedas || 0));
   n.intro = !!p.intro; n.ganado = !!p.ganado; n.tejadoDicho = !!p.tejadoDicho; n.paisesDicho = !!p.paisesDicho;
+  n.vuelta = Math.max(0, Math.min(99, Math.floor(+p.vuelta || 0))); n.vueltaLista = !!p.vueltaLista;
+  n.superN = Math.max(0, Math.floor(+p.superN || 0)) % SUPER.length;
   return n;
 }
 function cuentaEstrellas(prog){ let n = 0; for (const k in prog.estrellas) if (prog.estrellas[k]) n++; return n; }
@@ -674,7 +695,7 @@ function crearJuego(op){
     prog: progresoLimpio(op.prog),
     fase: 'titulo',      // titulo · juego · final
     mundo: 0, M: null, cargas: 0,
-    p: null, tio: null, perros: [],
+    p: null, tio: null, perros: [], clones: [], rastro: [],
     bolas: [], eventos: [], dialogos: [], dichos: [],
     trans: null, guia: null, tGuia: 0,
     monedasMundo: 0, rojasMundo: 0, cdBloqueo: 0, cdRescateDicho: 0, tTodas: -1, tFinal: 0,
@@ -716,6 +737,9 @@ function dialogos(J, dt){
 /* ---------------- cargar un mundo ---------------- */
 function cargarMundo(J, n, desde){
   const def = MUNDOS[n];
+  /* ¡todas las estrellas!: al volver al castillo empieza otra vuelta con las estrellas escondidas en otros lugares */
+  let nuevaVuelta = false;
+  if (n === 0 && J.prog.vueltaLista){ J.prog.vueltaLista = false; J.prog.vuelta++; J.prog.estrellas = {}; nuevaVuelta = true; }
   const M = {
     def, n, t:0,
     solidos: def.solidos.map(s=>Object.assign({}, s, {bx:s.x, bz:s.z, by0:s.y0, by1:s.y1, ya0:s.ya, yb0:s.yb, dx:0, dy:0, dz:0})),
@@ -739,7 +763,9 @@ function cargarMundo(J, n, desde){
     M.caja.x0 = Math.min(M.caja.x0, s.x - ex); M.caja.x1 = Math.max(M.caja.x1, s.x + ex);
     M.caja.z0 = Math.min(M.caja.z0, s.z - ez); M.caja.z1 = Math.max(M.caja.z1, s.z + ez);
   }
+  if (J.prog.vuelta > 0) mezclarEstrellas(M, n, J.prog.vuelta);
   J.M = M; J.mundo = n; J.cargas++;
+  J.clones = []; J.rastro = [];
   J.bolas = []; J.monedasMundo = 0; J.rojasMundo = 0; J.tTodas = -1; J.guia = null;
   for (const e of def.enemigos) M.enemigos.push(nuevoEnemigo(J, e.tipo, e.x, e.z, e));
   if (def.jefe){
@@ -772,6 +798,23 @@ function cargarMundo(J, n, desde){
   J.tio = {x: x + 2, y: y0 + 2.4, z: z + 2, vx: 0, vy: 0, vz: 0, ang, estado:'sigue', lista:[], obj:null, cd:0, puno:0, t:0};
   J.perros = [{quien:'penny', x: x - 1.5, y:y0, z: z + 1.5, ang, anim:0}, {quien:'sheldon', x: x + 1.5, y:y0, z: z + 1.8, ang, anim:0}];
   ev(J, 'mundo', x, y0, z, {n});
+  if (nuevaVuelta){ J.dialogos = []; decir(J, 'vuelta'); decir(J, 'vueltaFer'); ev(J, 'vuelta', x, y0, z, {vuelta: J.prog.vuelta}); }
+}
+
+/* en cada vuelta nueva la estrella del monumento y las monedas rojas se cambian de lugar entre ellas:
+   la estrella queda donde había una moneda roja y las rojas se reparten en los otros lugares
+   (todos ya se alcanzan saltando) */
+function mezclarEstrellas(M, n, v){
+  const libres = M.estrellas.filter(s=>s.tipo === 'libre');
+  if (!libres.length || !M.rojas.length) return;
+  const R = rng(1000 + n*131 + v*7919);
+  const lugares = libres.map(s=>({x:s.x, y:s.y - 0.1, z:s.z, era:s})).concat(M.rojas.map(r=>({x:r.x, y:r.y, z:r.z, era:r})));
+  const orden = lugares.slice();
+  for (let i = orden.length - 1; i > 0; i--){ const k = Math.floor(R()*(i + 1)); [orden[i], orden[k]] = [orden[k], orden[i]]; }
+  /* la estrella siempre se va a otro lugar */
+  for (let i = 0; i < libres.length; i++) if (orden[i].era === libres[i]){ const k = libres.length + Math.floor(R()*M.rojas.length); [orden[i], orden[k]] = [orden[k], orden[i]]; }
+  libres.forEach((s, i)=>{ s.x = orden[i].x; s.y = orden[i].y + 0.1; s.z = orden[i].z; });
+  M.rojas.forEach((r, i)=>{ const l = orden[libres.length + i]; r.x = l.x; r.y = l.y; r.z = l.z; });
 }
 
 function nuevoEnemigo(J, tipo, x, z, o){
@@ -810,6 +853,7 @@ function paso(J, dt, inp){
   }
   const bloqueado = !!J.trans || J.p.baile > 0;
   jugador(J, dt, bloqueado ? {camA: inp.camA} : inp);
+  clones(J, dt);
   enemigos(J, dt);
   bolas(J, dt);
   pelotas(J, dt);
@@ -860,7 +904,7 @@ function jugador(J, dt, inp){
     p.tPoder -= dt;
     if (p.tPoder <= 0){ ev(J, 'finPoder', p.x, p.y, p.z, {poder:p.poder}); p.poder = null; }
   }
-  const objEsc = p.poder === 'gigante' ? 2.4 : 1;
+  const objEsc = p.poder === 'gigante' ? 2.4 : p.poder === 'robot' ? 1.35 : 1;
   p.escala += (objEsc - p.escala)*Math.min(1, dt*6);
 
   /* lo lleva la plataforma que se mueve */
@@ -882,11 +926,12 @@ function jugador(J, dt, inp){
   /* el agua (no la lava): se nada en la superficie */
   const agua = def.agua && def.agua.tipo !== 'lava' ? def.agua : null;
   const flota = agua ? agua.y - 0.95*p.escala : -1e9;
-  let vmax = CFG.VEL*(p.poder === 'hamburguesa' ? 1.8 : p.poder === 'gigante' ? 1.25 : 1)*(p.nada ? 0.7 : 1);
+  const superVuelo = p.poder === 'cohete' && p.vuela;
+  let vmax = CFG.VEL*(p.poder === 'hamburguesa' ? 1.8 : p.poder === 'gigante' ? 1.25 : p.poder === 'robot' ? 1.15 : p.poder === 'fuerza' ? 1.1 : 1)*(p.nada ? 0.7 : 1)*(superVuelo ? 2.6 : 1);
   if (p.golpeT > 0) mag *= 0.3;
   const tvx = dx*vmax*mag, tvz = dz*vmax*mag;
   const hielo = p.enSuelo && p.sobre && p.sobre.hielo;
-  const acel = (p.enSuelo ? (hielo ? 9 : 48) : p.nada ? 18 : 22)*dt;
+  const acel = (p.enSuelo ? (hielo ? 9 : 48) : p.nada ? 18 : superVuelo ? 36 : 22)*dt;
   if (p.golpeT <= 0){
     p.vx += clamp(tvx - p.vx, -acel, acel);
     p.vz += clamp(tvz - p.vz, -acel, acel);
@@ -900,13 +945,15 @@ function jugador(J, dt, inp){
   const saltoNuevo = inp.salto && !p.antSalto;
   if (saltoNuevo) p.buffer = CFG.BUFFER; else p.buffer = Math.max(0, p.buffer - dt);
   p.coyote = p.enSuelo || p.nada ? CFG.COYOTE : Math.max(0, p.coyote - dt);
-  const mSalto = p.poder === 'tenis' ? 1.4 : p.poder === 'gigante' ? 1.15 : 1;
+  const mSalto = p.poder === 'tenis' ? 1.4 : p.poder === 'gigante' || p.poder === 'fuerza' ? 1.15 : p.poder === 'robot' ? 1.2 : 1;
   if (p.buffer > 0 && p.coyote > 0){
     p.vy = CFG.SALTO*mSalto; p.enSuelo = false; p.coyote = 0; p.buffer = 0; p.saltos = 1; p.cortado = false; p.sobre = null; p.nada = false;
     ev(J, 'salto', p.x, p.y, p.z);
-  } else if (saltoNuevo && !p.enSuelo && p.saltos < 2 && p.poder !== 'alas'){
+    if (p.poder === 'clon') nuevoClon(J);
+  } else if (saltoNuevo && !p.enSuelo && p.saltos < 2 && p.poder !== 'alas' && p.poder !== 'cohete'){
     p.vy = CFG.SALTO2*mSalto; p.saltos = 2; p.cortado = false; p.buffer = 0;
     ev(J, 'salto2', p.x, p.y, p.z);
+    if (p.poder === 'clon') nuevoClon(J);
   }
   if (!inp.salto && !p.cortado && p.vy > 5){ p.vy = 5; p.cortado = true; }
   if (!inp.salto) p.cortado = true;
@@ -915,14 +962,15 @@ function jugador(J, dt, inp){
   let g = CFG.GRAV;
   /* con la gorra alada todo el rato en el aire es "volar" (antes cambiaba de pose en cada cuadro
      al llegar al techo y Fernando parpadeaba); cerca del techo frena suave y se queda flotando */
-  p.vuela = p.poder === 'alas' && !p.enSuelo && !p.nada;
+  p.vuela = (p.poder === 'alas' || p.poder === 'cohete') && !p.enSuelo && !p.nada;
   if (p.vuela){
+    const cohete = p.poder === 'cohete';
     if (inp.salto){
       const falta = def.techo - p.y;
-      const meta = falta > 2 ? 7 : Math.max(0, falta*3);
+      const meta = falta > 2 ? (cohete ? 10 : 7) : Math.max(0, falta*3);
       p.vy += (meta - p.vy)*Math.min(1, dt*6);
       g = 0;
-    } else if (p.vy < -3.5){ p.vy = -3.5; g = 0; }
+    } else if (p.vy < (cohete ? -1.5 : -3.5)){ p.vy = cohete ? -1.5 : -3.5; g = 0; }
   }
   /* nadar: entra con un chapuzón, flota meciéndose y en la orilla sale solito */
   if (agua && !p.enSuelo && !p.nada && p.vy <= 0 && p.y <= flota + 0.3){
@@ -937,7 +985,7 @@ function jugador(J, dt, inp){
       g = 0;
       p.vy += ((flota + Math.sin(p.anim*2.2)*0.06 - p.y)*14 - p.vy*5)*dt;
       if (mag > 0){
-        const ox = p.x + dx*0.75, oz = p.z + dz*0.75, o = suelo(M, ox, oz, p.y + 2.4, 0.1);
+        const ox = p.x + dx*0.75, oz = p.z + dz*0.75, o = suelo(M, ox, oz, p.y + 3.4, 0.1);
         if (o.s && o.y > p.y + CFG.PASO){ p.vy = Math.sqrt(2*CFG.GRAV*(o.y - p.y + 0.6)); p.nada = false; p.saltos = 1; p.cortado = true; ev(J, 'chapuzon', p.x, agua.y, p.z, {}); }
       }
       const c = M.caja, mg = 10;
@@ -957,6 +1005,20 @@ function jugador(J, dt, inp){
       J.bolas.push({x:p.x + Math.sin(p.ang)*0.6, y:p.y + 0.8*p.escala, z:p.z + Math.cos(p.ang)*0.6,
                     vx:Math.sin(p.ang)*15 + p.vx*0.3, vz:Math.cos(p.ang)*15 + p.vz*0.3, vy:3, t:0, vivo:true});
       ev(J, 'fuego', p.x, p.y + 0.8, p.z);
+    } else if (p.poder === 'laser'){
+      if (p.cdFuego <= 0){ p.cdFuego = 0.25; disparoLaser(J); }
+    } else if (p.poder === 'fuerza'){
+      if (p.cdGiro <= 0){ p.cdGiro = 0.7; ondaFuerza(J, 6); }
+    } else if (p.poder === 'robot'){
+      if (p.cdFuego <= 0){
+        p.cdFuego = 0.35;
+        for (const lado of [1, -1]){
+          const ox = Math.cos(p.ang)*0.55*lado, oz = -Math.sin(p.ang)*0.55*lado;
+          J.bolas.push({x:p.x + Math.sin(p.ang)*0.8 + ox, y:p.y + 1.1*p.escala, z:p.z + Math.cos(p.ang)*0.8 + oz,
+                        vx:Math.sin(p.ang)*22, vz:Math.cos(p.ang)*22, vy:0, t:0, vivo:true, misil:true});
+        }
+        ev(J, 'misil', p.x, p.y + 1, p.z);
+      }
     } else if (p.cdGiro <= 0){
       p.giro = 0.45; p.cdGiro = CFG.GIRO_CD;
       if (!p.enSuelo && p.vy < 4) p.vy = 4;
@@ -1035,9 +1097,66 @@ function dar(J, poder){
   if (poder === 'hamburguesa') decir(J, 'hamb2');
 }
 
+/* ---------------- los súper poderes ---------------- */
+function nuevoClon(J){
+  const p = J.p;
+  if (J.clones.length >= MAX_CLONES) return;
+  J.clones.push({x:p.x, y:p.y, z:p.z, ang:p.ang, vel:0, suelo:p.enSuelo, vuela:false});
+  ev(J, 'clon', p.x, p.y, p.z, {n: J.clones.length});
+  if (!J.dijoClon){ J.dijoClon = true; decir(J, 'clonSale'); }
+}
+/* los clones van detrás de Fernando por su mismo camino; vencen a los gruñones y juntan monedas */
+function clones(J, dt){
+  const p = J.p, M = J.M;
+  J.rastro.push({x:p.x, y:p.y, z:p.z, ang:p.ang, suelo:p.enSuelo, vuela:p.vuela});
+  if (J.rastro.length > 120) J.rastro.shift();
+  if (p.poder !== 'clon' && J.clones.length){ for (const c of J.clones) ev(J, 'clonSeVa', c.x, c.y, c.z); J.clones = []; }
+  J.clones.forEach((c, i)=>{
+    const r = J.rastro[Math.max(0, J.rastro.length - 1 - (i + 1)*16)];
+    c.vel = Math.hypot(r.x - c.x, r.z - c.z)/dt;
+    if (c.vel > 40){ c.vel = 0; }
+    c.x = r.x; c.y = r.y; c.z = r.z; c.ang = r.ang; c.suelo = r.suelo; c.vuela = r.vuela;
+    for (const e of M.enemigos){
+      if (e.vivo && e.tipo !== 'jefe' && Math.hypot(e.x - c.x, e.z - c.z) < e.radio + 0.6 && e.y < c.y + 1.4 && e.y + e.alto > c.y) matar(J, e, 'golpe');
+    }
+    for (const m of M.monedas){
+      if (m.vivo && Math.hypot(m.x - c.x, m.z - c.z) < 1 && m.y > c.y - 0.6 && m.y < c.y + 2){ m.vivo = false; monedaGanada(J, 1, m.x, m.y, m.z); }
+    }
+  });
+}
+/* rayos láser por los ojos: derechito hacia donde mira, la mira es generosa (sube y baja sola) */
+function disparoLaser(J){
+  const p = J.p, M = J.M;
+  const ox = p.x, oy = p.y + 1.15*p.escala, oz = p.z, dx = Math.sin(p.ang), dz = Math.cos(p.ang);
+  let largo = 22, blanco = null;
+  for (const e of M.enemigos){
+    if (!e.vivo) continue;
+    const rx = e.x - ox, rz = e.z - oz, u = rx*dx + rz*dz;
+    if (u < 0 || u > largo) continue;
+    if (Math.abs(rx*dz - rz*dx) < e.radio + 0.7 && e.y - 2 < oy && e.y + e.alto + 2 > oy){ largo = u; blanco = e; }
+  }
+  for (let u = 0.6; u < largo; u += 0.5){ if (suelo(M, ox + dx*u, oz + dz*u, 300, 0).y > oy){ largo = u; blanco = null; break; } }
+  const fy = blanco ? blanco.y + blanco.alto*0.5 : oy;
+  if (blanco) matar(J, blanco, 'laser');
+  ev(J, 'laser', ox, oy, oz, {a:{x:ox + dx*largo, y:fy, z:oz + dz*largo}, pego: !!blanco});
+}
+/* súper fuerza: un golpe al suelo que tumba a todos los de alrededor */
+function ondaFuerza(J, r){
+  const p = J.p, M = J.M;
+  for (const e of M.enemigos){
+    if (e.vivo && Math.hypot(e.x - p.x, e.z - p.z) < r + e.radio && Math.abs(e.y - p.y) < 3) matar(J, e, 'onda');
+  }
+  for (const b of (M.pelotas || [])){
+    const dx = b.x - p.x, dz = b.z - p.z, d = Math.hypot(dx, dz);
+    if (d < r && d > 0.01){ b.vx = dx/d*18; b.vz = dz/d*18; b.vy = 7; }
+  }
+  if (!p.enSuelo && p.vy > -10) p.vy = -10;
+  ev(J, 'onda', p.x, p.y, p.z, {r});
+}
+
 function lastimar(J, e){
   const p = J.p;
-  if (p.invul > 0 || p.baile > 0) return;
+  if (p.invul > 0 || p.baile > 0 || p.poder === 'robot') return;
   const dx = p.x - e.x, dz = p.z - e.z, d = Math.hypot(dx, dz) || 1;
   p.vx = dx/d*5; p.vz = dz/d*5; p.vy = 6.5; p.enSuelo = false; p.sobre = null;
   p.invul = CFG.INVUL; p.golpeT = 0.45;
@@ -1146,7 +1265,7 @@ function enemigos(J, dt){
         p.vy = e.tipo === 'jefe' ? 16 : CFG.REBOTE; p.saltos = 1; p.cortado = true; p.enSuelo = false; p.sobre = null;
         if (e.tipo === 'jefe'){ const d = dp || 1; p.vx = dxp/d*7; p.vz = dzp/d*7; }
         ev(J, 'pisa', e.x, e.y + e.alto, e.z);
-      } else if (p.poder === 'hamburguesa' || p.poder === 'gigante' || p.giro > 0){
+      } else if (p.poder === 'hamburguesa' || p.poder === 'gigante' || p.poder === 'fuerza' || p.poder === 'robot' || p.giro > 0){
         matar(J, e, 'golpe');
         if (e.tipo === 'jefe'){ const d = dp || 1; p.vx = dxp/d*8; p.vz = dzp/d*8; p.vy = 7; }
       } else if (e.tipo !== 'jefe' || e.invul <= 0){
@@ -1165,12 +1284,12 @@ function bolas(J, dt){
     if (!b.vivo) continue;
     b.t += dt;
     if (b.t > 2.4){ b.vivo = false; continue; }
-    b.vy -= 30*dt;
+    if (!b.misil) b.vy -= 30*dt;
     const ox = b.x, oz = b.z;
     b.x += b.vx*dt; b.z += b.vz*dt; b.y += b.vy*dt;
     const yAnt = b.y - b.vy*dt;
     const g = suelo(M, b.x, b.z, Math.max(yAnt, b.y), 0);
-    if (b.y <= g.y){ b.y = g.y; b.vy = 8; }
+    if (b.y <= g.y){ if (b.misil){ b.vivo = false; ev(J, 'puf', b.x, b.y, b.z); continue; } b.y = g.y; b.vy = 8; }
     const o = {x:b.x, y:b.y, z:b.z};
     if (empujar(M, o, 0.25, 0.3)){ b.vivo = false; ev(J, 'puf', ox, b.y, oz); continue; }
     if (b.y < M.def.yMuerte){ b.vivo = false; continue; }
@@ -1199,7 +1318,7 @@ function pelotas(J, dt){
     if (b.cd <= 0 && d < alcance && b.y < p.y + CFG.ALTO*p.escala && b.y + b.r*2 > p.y - 0.2){
       const ux = d > 0.01 ? dx/d : Math.sin(p.ang), uz = d > 0.01 ? dz/d : Math.cos(p.ang);
       let kx = ux + Math.sin(p.ang), kz = uz + Math.cos(p.ang); const kl = Math.hypot(kx, kz) || 1; kx /= kl; kz /= kl;
-      const fuerza = 9 + Math.hypot(p.vx, p.vz)*1.1 + (p.giro > 0 ? 6 : 0) + (p.escala > 1.2 ? 5 : 0);
+      const fuerza = 9 + Math.hypot(p.vx, p.vz)*1.1 + (p.giro > 0 ? 6 : 0) + (p.escala > 1.2 ? 5 : 0) + (p.poder === 'fuerza' || p.poder === 'robot' ? 8 : 0);
       b.vx = kx*fuerza; b.vz = kz*fuerza; b.vy = p.enSuelo ? 3 : 5;
       b.x = p.x + kx*(alcance + 0.05); b.z = p.z + kz*(alcance + 0.05);
       b.cd = 0.25;
@@ -1313,6 +1432,9 @@ function cosas(J, dt){
         const saludo = MUNDOS[po.mundo].saludo;
         irA(J, po.mundo, null, ()=>{
           decir(J, 'entra');
+          /* cada vez que entra a un cuadro: ¡un súper poder nuevo! (van rotando) */
+          const sp = SUPER[J.prog.superN % SUPER.length]; J.prog.superN = (J.prog.superN + 1) % SUPER.length;
+          decir(J, 'superPortal'); dar(J, sp);
           if (estrellasDe(J.prog, id) === 0){
             if (saludo) for (const f of saludo) decir(J, f);
             else { decir(J, J.R() < 0.5 ? 'perro' : 'perro2'); decir(J, 'pista'); }
@@ -1330,6 +1452,8 @@ function cosas(J, dt){
   if (def.tubo && !J.trans){
     if (Math.hypot(def.tubo.x - p.x, def.tubo.z - p.z) < 1.1 && p.enSuelo && Math.abs(p.y - M.tuboY) < 0.1) irA(J, 0, J.mundo);
   }
+  /* si la última estrella fue en el castillo, la vuelta nueva empieza ahí mismo */
+  if (def.id === 'castillo' && J.prog.vueltaLista && !J.trans && p.baile <= 0 && J.fase === 'juego') irA(J, 0);
   /* los cuadros de los países están detrás: Tío Juan avisa una vez */
   if (def.id === 'castillo' && !J.prog.paisesDicho && J.fase === 'juego' && M.t > 4){ J.prog.paisesDicho = true; decir(J, 'paises'); }
   /* la pista del techo en el castillo */
@@ -1344,6 +1468,7 @@ function tomarEstrella(J, s){
   const clave = def.id + ':' + s.id;
   const nueva = !J.prog.estrellas[clave];
   J.prog.estrellas[clave] = true;
+  if (cuentaEstrellas(J.prog) >= CFG.ESTRELLAS_FIN) J.prog.vueltaLista = true;
   p.baile = 2.2; p.vx = p.vz = 0;
   ev(J, 'estrella', s.x, s.y, s.z, {nueva, total: cuentaEstrellas(J.prog), grande: !!s.grande, clave});
   if (s.grande){
@@ -1538,7 +1663,7 @@ function irConAmigo(J, nv, x, y, z){
   return true;
 }
 
-const API = {FRASES_PJ, SALUDOS, PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
+const API = {SUPER, mezclarEstrellas, nuevoEnemigo, FRASES_PJ, SALUDOS, PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
              topDe, dentro, suelo, empujar, rng, clamp, lerp, angDif, progresoNuevo, progresoLimpio, cuentaEstrellas, estrellasDe, dar};
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 else raiz.F3D = API;
