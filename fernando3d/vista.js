@@ -913,6 +913,7 @@ function animarClones(dt){
   });
 }
 const MAX_CLONES_VISTA = 4;
+const _v3 = new THREE.Vector3();
 const RAYOS = [0, 1].map(()=>{
   const m = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1, 10, 1, true), new THREE.MeshBasicMaterial({color:'#ff1a3a', transparent:true, opacity:0.95, depthWrite:false}));
   const nucleo = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 6, 1, true), new THREE.MeshBasicMaterial({color:'#fff0f0'})); m.add(nucleo);
@@ -920,11 +921,12 @@ const RAYOS = [0, 1].map(()=>{
 });
 let rayoT = 0;
 const _rA = new THREE.Vector3(), _rB = new THREE.Vector3(), _rY = new THREE.Vector3(0, 1, 0);
-function dispararRayo(e){
-  const ang = J.p.ang;
+function dispararRayo(e, ang, esc){
+  if (ang == null) ang = J.p.ang;
+  if (esc == null) esc = J.p.escala;
   RAYOS.forEach((r, i)=>{
     const lado = i ? 1 : -1;
-    _rA.set(e.x + Math.cos(ang)*0.1*lado*J.p.escala, e.y, e.z - Math.sin(ang)*0.1*lado*J.p.escala); _rB.set(e.a.x, e.a.y, e.a.z);
+    _rA.set(e.x + Math.cos(ang)*0.1*lado*esc, e.y, e.z - Math.sin(ang)*0.1*lado*esc); _rB.set(e.a.x, e.a.y, e.a.z);
     const len = Math.max(0.1, _rA.distanceTo(_rB));
     r.position.copy(_rA).add(_rB).multiplyScalar(0.5); r.scale.set(1, len, 1);
     r.quaternion.setFromUnitVectors(_rY, _rB.clone().sub(_rA).normalize());
@@ -1211,6 +1213,7 @@ const SON = {
   puno(){ ruido(0.15, 0.2, 700); tono(220, 60, 0.18, 'square', 0.1); },
   tioVuela(){ ruido(0.5, 0.12, 1800); },
   patada(){ tono(170, 60, 0.12, 'square', 0.1); ruido(0.08, 0.15, 700); },
+  choca(){ ruido(0.12, 0.3, 2600); const t = AC.currentTime; [76, 83].forEach((n, i)=>tono(nota(n), 0, 0.12, 'triangle', 0.08, t + 0.05 + i*0.07)); },
   clon(){ const t = AC.currentTime; [67, 71, 74, 79].forEach((n, i)=>tono(nota(n), 0, 0.08, 'triangle', 0.08, t + i*0.04)); },
   laser(){ tono(1600, 260, 0.18, 'square', 0.05); tono(1200, 200, 0.18, 'sawtooth', 0.03); },
   onda(){ ruido(0.5, 0.2, 160); tono(110, 40, 0.45, 'sine', 0.25); },
@@ -1331,19 +1334,22 @@ function procesarEventos(){
       case 'habla': hablar(e.texto, e.quien); break;
       case 'salto': sonar('salto'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#ffffff', vel:1.5, grav:2, vida:0.4, tam:0.3, plano:true}); break;
       case 'salto2': sonar('salto2'); anim.voltereta = 0.42; emitir(e.x, e.y + 0.4, e.z, 10, {colores:['#ffffff', '#ffe36e'], vel:2.5, grav:1, vida:0.5, tam:0.25}); break;
-      case 'clon': sonar('clon'); emitir(e.x, e.y + 0.9, e.z, 24, {colores:['#c08aff', '#ffffff'], vel:3.5, grav:0, vida:0.5, tam:0.35}); break;
+      case 'saltoAmigo': sonar('boing'); emitir(e.x, e.y, e.z, 16, {colores:['#ffe36e', '#ffffff'], vel:4, grav:2, vida:0.6, tam:0.35}); redEvento({tipo: 'fx', fx: 'pisado', x: e.x, y: e.y, z: e.z}); break;
+      case 'choca': sonar('choca'); emitir(e.x, e.y, e.z, 40, {colores:['#ffd23f', '#ffffff', '#ff9ad8', '#7ad0ff'], vel:5, vy:2, grav:2, vida:0.9, tam:0.4}); brindar('✋ ¡Choca esos cinco!', '#ffe36e'); break;
+      case 'clon': sonar('clon'); emitir(e.x, e.y + 0.9, e.z, 24, {colores:['#c08aff', '#ffffff'], vel:3.5, grav:0, vida:0.5, tam:0.35}); redEvento({tipo: 'fx', fx: 'clon', x: e.x, y: e.y, z: e.z}); break;
       case 'clonSeVa': emitir(e.x, e.y + 0.9, e.z, 14, {colores:['#c08aff', '#ffffff'], vel:2.5, grav:-1, vida:0.5, tam:0.35}); break;
       case 'laser':
         sonar('laser'); dispararRayo(e);
+        redEvento({tipo: 'fx', fx: 'laser', x: e.x, y: e.y, z: e.z, x2: e.a.x, y2: e.a.y, z2: e.a.z});
         if (e.pego) emitir(e.a.x, e.a.y, e.a.z, 18, {colores:['#ff3a5a', '#ffd0d8', '#ffffff'], vel:5, grav:3, vida:0.4, tam:0.3});
         break;
-      case 'onda': sonar('onda'); cam.temblor = 0.4; onda.t = 0.45; onda.r = e.r; onda.m.position.set(e.x, e.y + 0.12, e.z);
+      case 'onda': sonar('onda'); cam.temblor = 0.4; onda.t = 0.45; onda.r = e.r; onda.m.position.set(e.x, e.y + 0.12, e.z); redEvento({tipo: 'fx', fx: 'onda', x: e.x, y: e.y, z: e.z});
         emitir(e.x, e.y + 0.2, e.z, 30, {colores:['#ffffff', '#ffb0a0', '#e8d8c0'], vel:8, grav:2, vida:0.5, tam:0.45, plano:true}); break;
       case 'misil': sonar('misil'); break;
       case 'vuelta': sonar('estrella'); banner = {texto: '¡Vuelta ' + (e.vuelta + 1) + '!', emoji: '🔄', t: 0};
         emitir(e.x, e.y + 2, e.z, 80, {colores:['#ffd23f', '#ffffff', '#7ad0ff'], vel:7, grav:2, vida:1.4, tam:0.4}); break;
       case 'patada': sonar('patada'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#d8f0c0', vel:2, grav:3, vida:0.4, tam:0.3, plano:true}); break;
-      case 'gol': sonar('gol'); cam.temblor = 0.3; emitir(e.x, e.y + 1, e.z, 120, {colores:['#6ac8ff', '#ffffff', '#ffd23f'], vel:7, vy:5, grav:4, vida:1.6, tam:0.35}); banner = {texto: '¡GOOOL!', emoji: '⚽', t: 0}; break;
+      case 'gol': sonar('gol'); redEvento({tipo: 'fx', fx: 'gol', x: e.x, y: e.y, z: e.z}); cam.temblor = 0.3; emitir(e.x, e.y + 1, e.z, 120, {colores:['#6ac8ff', '#ffffff', '#ffd23f'], vel:7, vy:5, grav:4, vida:1.6, tam:0.35}); banner = {texto: '¡GOOOL!', emoji: '⚽', t: 0}; break;
       case 'pelotaVuelve': emitir(e.x, e.y, e.z, 10, {color:'#ffffff', vel:2, grav:0, vida:0.5, tam:0.4}); break;
       case 'chapuzon': sonar('chapuzon'); emitir(e.x, e.y + 0.1, e.z, e.fuerte ? 34 : 20, {colores:['#ffffff', '#bfeaff', '#7ad0ff'], vel: e.fuerte ? 6 : 4, vy: e.fuerte ? 6 : 4, grav:9, vida:0.8, tam:0.35}); break;
       case 'aterriza': emitir(e.x, e.y + 0.1, e.z, e.fuerte ? 16 : 8, {color:'#f0e8d8', vel:2.5, grav:2, vida:0.5, tam:0.4, plano:true}); if (e.fuerte) cam.temblor = 0.4; break;
@@ -1399,9 +1405,10 @@ addEventListener('keydown', e=>{
   primerToque();
   if (e.code === 'Escape') salir();
   if (e.code === 'KeyT') irConSiguiente();
+  if (e.code === 'KeyH' && !e.repeat) empezarHablar();
   if (e.code === 'KeyM'){ OPC.musica = !OPC.musica; if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0; guardar(); }
 });
-addEventListener('keyup', e=>teclas.delete(e.code));
+addEventListener('keyup', e=>{ teclas.delete(e.code); if (e.code === 'KeyH') terminarHablar(); });
 addEventListener('blur', ()=>teclas.clear());
 function primerToque(){
   audio();
@@ -1422,6 +1429,8 @@ function botonesTactiles(){
     sonido: {x: 82, y: 30, r: 22, etiqueta: '🔊', color: '#ffffff'},
     amigos: RED && RED.hay && RED.hay() ? {x: 134, y: 30, r: 22, etiqueta: '👥', color: '#ffffff'} : {x: -999, y: -999, r: 0},
     ircon: hayAmigosListos() && J.fase === 'juego' ? {x: W - 52, y: 152, r: 30, etiqueta: '🚀', color: '#ffd23f'} : {x: -999, y: -999, r: 0},
+    /* el walkie-talkie: grande y a la izquierda, sobre el lugar donde se mueve */
+    hablar: hayAmigosEnSala() && J.fase !== 'titulo' ? {x: r(74), y: Math.max(r(170), H - r(260)), r: r(48), etiqueta: '🎙️', color: '#ff3a6a'} : {x: -999, y: -999, r: 0},
   };
 }
 const toques = new Map();
@@ -1433,9 +1442,13 @@ hud.addEventListener('pointerdown', e=>{
   if (Math.hypot(e.clientX - B.amigos.x, e.clientY - B.amigos.y) < B.amigos.r*1.35){ audio(); abrirAmigos(); return; }
   primerToque();
   if (Math.hypot(e.clientX - B.ircon.x, e.clientY - B.ircon.y) < B.ircon.r*1.3){ irConSiguiente(); return; }
+  if (B.hablar.r && Math.hypot(e.clientX - B.hablar.x, e.clientY - B.hablar.y) < B.hablar.r*1.25){
+    toques.set(e.pointerId, {tipo: 'hablar'}); try{ hud.setPointerCapture(e.pointerId); }catch(er){}
+    empezarHablar(); return;
+  }
   for (const k in B){
     const b = B[k];
-    if (k === 'amigos' || k === 'ircon') continue;
+    if (k === 'amigos' || k === 'ircon' || k === 'hablar') continue;
     if (Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r*1.35){
       if (k === 'salir'){ salir(); return; }
       if (k === 'sonido'){ OPC.sonido = !OPC.sonido; OPC.musica = OPC.sonido; if (maestro) maestro.gain.value = OPC.sonido ? 0.55 : 0; if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0; if (!OPC.sonido) try{ speechSynthesis.cancel(); }catch(er){} guardar(); return; }
@@ -1462,6 +1475,7 @@ function soltar(e){
   if (t.tipo === 'joy') TACTIL.joy = null;
   if (t.tipo === 'boton') TACTIL.botones[t.k] = false;
   if (t.tipo === 'cam') TACTIL.cam = null;
+  if (t.tipo === 'hablar') terminarHablar();
   toques.delete(e.pointerId);
 }
 hud.addEventListener('pointerup', soltar);
@@ -1566,6 +1580,27 @@ function dibujarHud(dt){
     else emoji(b.etiqueta, b.x, b.y + 1, b.r*0.95);
   }
   if (B.ircon.r && !chico) texto('Ir con ' + (siguienteAmigo() || {}).nombre + ' (T)', W - 90, 152, 15, '#ffe36e', 'right');
+  if (B.hablar.r && J.fase !== 'titulo'){
+    const b = B.hablar, on = WALKIE.estado === 'hablando', pulso = on ? 1 + Math.sin(tHud*10)*0.08 : 1;
+    if (on){ ctx.fillStyle = 'rgba(255,58,106,0.35)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r*1.35*pulso, 0, TAU); ctx.fill(); }
+    ctx.fillStyle = on ? '#ff3a6a' : 'rgba(20,14,50,0.6)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r*pulso, 0, TAU); ctx.fill();
+    ctx.lineWidth = 5; ctx.strokeStyle = on ? '#ffffff' : '#ff3a6a'; ctx.stroke();
+    emoji(WALKIE.estado === 'abriendo' ? '⏳' : '🎙️', b.x, b.y + 2, b.r*0.95);
+    pastilla(b.x - b.r*1.1, b.y + b.r + 6, b.r*2.2, 26, on ? 'rgba(255,58,106,0.9)' : 'rgba(20,14,50,0.6)');
+    texto(on ? 'HABLANDO…' : (TACTIL.usado ? 'HABLA' : 'HABLA (H)'), b.x, b.y + b.r + 19, 14, '#ffffff', 'center');
+  }
+  /* quién está hablando por el walkie-talkie: un 🔊 encima de su muñeco y un aviso arriba */
+  const hablan = quienHabla();
+  if (hablan.length){
+    if (busMusica && OPC.musica && WALKIE.estado !== 'hablando') busMusica.gain.value = 0.1;
+    const txt = '🔊 ' + hablan.map(h=>h.nombre).join(' y ') + (hablan.length > 1 ? ' hablan' : ' está hablando');
+    pastilla(W/2 - 150, 58, 300, 32, 'rgba(255,58,106,0.85)'); texto(txt, W/2, 75, 16, '#ffffff', 'center');
+    for (const h of hablan){
+      if (!h.r || !h.r.listo || !h.r.obj || h.r.obj.nv !== J.mundo) continue;
+      _v3.set(h.r.act.x, h.r.act.y + 2.9, h.r.act.z).project(camara);
+      if (_v3.z < 1) emoji('🔊', (_v3.x + 1)/2*W, (1 - _v3.y)/2*H, 28 + Math.sin(tHud*12)*3);
+    }
+  } else if (busMusica && WALKIE.estado !== 'hablando' && busMusica.gain.value < 0.3 && OPC.musica) busMusica.gain.value = 0.32;
   if (RED && RED.activa && RED.activa()){
     const n = [...RED.remotos.values()].filter(r=>r.listo).length;
     const et = '👥 Sala ' + RED.sala + (n ? ' · ' + n + (n === 1 ? ' amigo' : ' amigos') : ' · esperando…');
@@ -1684,7 +1719,7 @@ function dibujarHud(dt){
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
       ctx.lineWidth = 4; ctx.strokeStyle = b.color; ctx.stroke();
       if (k === 'salto') texto('SALTA', b.x, b.y + 2, b.r*0.38, '#ffffff', 'center');
-      else if (k === 'poder') emoji(p.poder === 'fuego' ? '🔥' : '🌀', b.x, b.y + 2, b.r*0.85);
+      else if (k === 'poder') emoji(['fuego', 'laser', 'fuerza', 'robot'].includes(p.poder) ? F.PODERES[p.poder].emoji : '🌀', b.x, b.y + 2, b.r*0.85);
       else {
         emoji('🦸', b.x, b.y + 2, b.r*0.9);
         if (J.tio.cd > 0){ ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r, -Math.PI/2, -Math.PI/2 + TAU*(J.tio.cd/CFG.AYUDA_CD)); ctx.fill(); }
@@ -1786,11 +1821,141 @@ if (RED){
   RED.on.evento = (r, d)=>{
     if (d.tipo === 'premio' && d.que === 'estrella' && F.recibirEstrella(J, d.id)){
       brindar('⭐ ¡' + r.nombre + ' consiguió una estrella! ¡Es de todos!', '#ffe36e'); sonar('estrella'); guardar();
-    } else if (d.tipo === 'fx' && d.fx === 'estrella' && r.obj && r.obj.nv === J.mundo){
-      emitir(d.x, d.y, d.z, 60, {colores:['#ffd23f', '#ffffff', '#ff9ad8'], vel:7, grav:3, vida:1.2, tam:0.45});
+    } else if (d.tipo === 'fx' && r.obj && r.obj.nv === J.mundo){
+      if (d.fx === 'estrella') emitir(d.x, d.y, d.z, 60, {colores:['#ffd23f', '#ffffff', '#ff9ad8'], vel:7, grav:3, vida:1.2, tam:0.45});
+      else if (d.fx === 'pisado'){
+        /* un amigo me saltó encima (o a otro amigo) */
+        emitir(d.x, d.y, d.z, 14, {colores:['#ffe36e', '#ffffff'], vel:3, grav:1, vida:0.7, tam:0.35});
+        if (Math.hypot(d.x - J.p.x, d.z - J.p.z) < 2.5){ sonar('boing'); brindar('🤸 ¡' + r.nombre + ' rebotó en tu cabeza!', '#ffe36e'); }
+      }
+      else if (d.fx === 'onda'){ sonar('onda'); onda.t = 0.45; onda.r = 6; onda.m.position.set(d.x, d.y + 0.12, d.z); emitir(d.x, d.y + 0.2, d.z, 24, {colores:['#ffffff', '#ffb0a0'], vel:7, grav:2, vida:0.5, tam:0.45, plano:true}); }
+      else if (d.fx === 'laser' && d.x2 != null){ sonar('laser'); dispararRayo({x: d.x, y: d.y, z: d.z, a: {x: d.x2, y: d.y2, z: d.z2}}, r.act.ang, r.obj.escala || 1); }
+      else if (d.fx === 'clon') emitir(d.x, d.y + 0.9, d.z, 20, {colores:['#c08aff', '#ffffff'], vel:3, grav:0, vida:0.5, tam:0.35});
+      else if (d.fx === 'gol'){ sonar('gol'); emitir(d.x, d.y + 1, d.z, 80, {colores:['#6ac8ff', '#ffffff', '#ffd23f'], vel:7, vy:5, grav:4, vida:1.4, tam:0.35}); brindar('⚽ ¡Gol de ' + r.nombre + '!', '#ffe36e'); }
     }
   };
 }
+/* ============================================================
+   EL WALKIE-TALKIE
+   Se deja apretado el botón 🎙️ (o la tecla H), se habla y se suelta. La voz va a los amigos
+   de la sala en pedacitos de medio segundo, así se escucha mientras uno todavía está hablando.
+   Va como un radio de verdad: 8000 muestras por segundo, un byte cada una (μ-law), con su
+   pitido al empezar y al terminar. Lo que llega se oye aunque el juego esté en silencio.
+   ============================================================ */
+const VOZ_HZ = 8000, VOZ_PEDAZO = 4000, VOZ_MAX_S = 15;
+const WALKIE = {estado: 'listo', soltado: false, stream: null, fuente: null, proc: null, de: null, muestras: [], frac: 0, acc: 0, cuenta: 0,
+                n: 0, id: Math.floor(Math.random()*1000), t0: 0, ultUso: 0, rx: new Map(), salida: null};
+function hayAmigosEnSala(){ return !!(RED && RED.activa && RED.activa() && RED.remotos.size); }
+function aMuLaw(x){
+  let v = Math.max(-32635, Math.min(32635, Math.round(x*32767)));
+  const signo = v < 0 ? 0x80 : 0; if (signo) v = -v;
+  v += 132;
+  let exp = 7; for (let m = 0x4000; (v & m) === 0 && exp > 0; m >>= 1) exp--;
+  return ~(signo | (exp << 4) | ((v >> (exp + 3)) & 0x0f)) & 0xff;
+}
+function deMuLaw(u){
+  u = ~u & 0xff;
+  const exp = (u >> 4) & 7, v = ((((u & 0x0f) << 3) + 132) << exp) - 132;
+  return (u & 0x80 ? -v : v)/32768;
+}
+function salidaVoz(){
+  if (WALKIE.salida || !AC) return WALKIE.salida;
+  /* como radio: sin graves ni agudos de más, y un poquito más fuerte */
+  const alto = AC.createBiquadFilter(); alto.type = 'highpass'; alto.frequency.value = 280;
+  const bajo = AC.createBiquadFilter(); bajo.type = 'lowpass'; bajo.frequency.value = 3400;
+  const g = AC.createGain(); g.gain.value = 1.6;
+  alto.connect(bajo); bajo.connect(g); g.connect(AC.destination);
+  return (WALKIE.salida = alto);
+}
+function pipVoz(cuando, sube){ if (!AC) return; const g = AC.createGain(); g.gain.value = 1; g.connect(AC.destination); tono(sube ? 1400 : 1900, sube ? 1900 : 1200, 0.09, 'square', 0.05, cuando, g); }
+async function empezarHablar(){
+  if (WALKIE.estado !== 'listo' || !hayAmigosEnSala()) return;
+  audio(); if (!AC) return;
+  WALKIE.soltado = false; WALKIE.estado = 'abriendo';
+  try{
+    if (!WALKIE.stream || !WALKIE.stream.active)
+      WALKIE.stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true, autoGainControl: true}});
+  }catch(e){
+    WALKIE.estado = 'listo';
+    brindar('🎙️ Para hablar con tus amigos, dale permiso al micrófono', '#ffb0b0');
+    return;
+  }
+  if (WALKIE.de !== WALKIE.stream){
+    try{ if (WALKIE.fuente) WALKIE.fuente.disconnect(); }catch(e){}
+    WALKIE.fuente = AC.createMediaStreamSource(WALKIE.stream); WALKIE.de = WALKIE.stream;
+    if (!WALKIE.proc){
+      WALKIE.proc = AC.createScriptProcessor(4096, 1, 1);
+      const mudo = AC.createGain(); mudo.gain.value = 0; WALKIE.proc.connect(mudo); mudo.connect(AC.destination);
+      WALKIE.proc.onaudioprocess = grabarVoz;
+    }
+    WALKIE.fuente.connect(WALKIE.proc);
+  }
+  if (WALKIE.soltado){ WALKIE.estado = 'listo'; return; }        /* soltó el botón mientras pedía permiso */
+  WALKIE.id = (WALKIE.id + 1) % 1e6; WALKIE.n = 0; WALKIE.muestras = []; WALKIE.frac = 0; WALKIE.acc = 0; WALKIE.cuenta = 0;
+  WALKIE.t0 = performance.now(); WALKIE.estado = 'hablando';
+  pipVoz(AC.currentTime, true);
+  if (busMusica && OPC.musica) busMusica.gain.value = 0.08;
+}
+function grabarVoz(ev){
+  if (WALKIE.estado !== 'hablando') return;
+  const x = ev.inputBuffer.getChannelData(0), paso = AC.sampleRate/VOZ_HZ;
+  for (let i = 0; i < x.length; i++){
+    WALKIE.acc += x[i]; WALKIE.cuenta++; WALKIE.frac += 1;
+    if (WALKIE.frac >= paso){ WALKIE.frac -= paso; WALKIE.muestras.push(aMuLaw(Math.max(-1, Math.min(1, WALKIE.acc/WALKIE.cuenta*1.8)))); WALKIE.acc = 0; WALKIE.cuenta = 0; }
+  }
+  while (WALKIE.muestras.length >= VOZ_PEDAZO) mandarVoz(false);
+  if (performance.now() - WALKIE.t0 > VOZ_MAX_S*1000) terminarHablar();
+}
+function mandarVoz(fin){
+  const trozo = WALKIE.muestras.splice(0, VOZ_PEDAZO);
+  let bin = ''; for (let i = 0; i < trozo.length; i++) bin += String.fromCharCode(trozo[i]);
+  try{ RED.enviarVoz({i: WALKIE.id, n: Math.min(60, WALKIE.n++), d: btoa(bin), fin}); }catch(e){}
+}
+function terminarHablar(){
+  WALKIE.soltado = true;
+  if (WALKIE.estado !== 'hablando') return;
+  mandarVoz(true);
+  WALKIE.estado = 'listo'; WALKIE.ultUso = performance.now();
+  pipVoz(AC.currentTime, false);
+  if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0;
+}
+/* el micrófono se apaga solo si no se usa por un rato (así no queda la lucecita prendida) */
+setInterval(()=>{
+  if (WALKIE.estado === 'listo' && WALKIE.stream && performance.now() - WALKIE.ultUso > 25000){
+    try{ WALKIE.stream.getTracks().forEach(t=>t.stop()); }catch(e){}
+    try{ if (WALKIE.fuente) WALKIE.fuente.disconnect(); }catch(e){}
+    WALKIE.stream = null; WALKIE.fuente = null; WALKIE.de = null;
+  }
+}, 5000);
+/* lo que dicen los amigos: se pone en fila y se oye en orden */
+function oirVoz(r, v){
+  if (!AC) return;
+  const sal = salidaVoz(); if (!sal) return;
+  let q = WALKIE.rx.get(r.id);
+  const nueva = !q || q.i !== v.i;
+  if (nueva){ q = {i: v.i, prox: 0, hasta: 0, nombre: r.nombre}; WALKIE.rx.set(r.id, q); }
+  const ahora = AC.currentTime;
+  if (q.prox < ahora + 0.05){ q.prox = ahora + 0.18; if (nueva) pipVoz(q.prox - 0.13, true); }
+  if (v.d){
+    const bin = atob(v.d), n = bin.length;
+    /* se sube a 24000 por segundo (todos los navegadores lo aceptan) */
+    const buf = AC.createBuffer(1, n*3, 24000), out = buf.getChannelData(0);
+    let ant = 0;
+    for (let i = 0; i < n; i++){ const s1 = deMuLaw(bin.charCodeAt(i)); out[i*3] = ant + (s1 - ant)/3; out[i*3 + 1] = ant + (s1 - ant)*2/3; out[i*3 + 2] = s1; ant = s1; }
+    const src = AC.createBufferSource(); src.buffer = buf; src.connect(sal); src.start(q.prox);
+    q.prox += buf.duration;
+  }
+  q.hasta = q.prox; q.nombre = r.nombre;
+  if (v.fin) pipVoz(q.prox + 0.02, false);
+}
+function quienHabla(){
+  if (!AC) return [];
+  const t = AC.currentTime, l = [];
+  for (const [id, q] of WALKIE.rx){ if (t < q.hasta + 0.15){ const r = RED && RED.remotos.get(id); l.push({nombre: q.nombre, r}); } }
+  return l;
+}
+if (RED) RED.on.voz = (r, v)=>{ try{ oirVoz(r, v); }catch(e){ console.warn('voz: ' + (e && e.message)); } };
+
 /* los muñecos de los amigos */
 function crearMuneco(r){
   const P = F.PJS[r.pj] || F.PJS.fernando;
@@ -1971,7 +2136,11 @@ function teclaAmigos(e){
 }
 
 /* ---------------- el bucle ---------------- */
-let envio = 0;
+/* el estado se manda 20 veces por segundo con su propio reloj, sin importar cuántos cuadros
+   por segundo dibuje el aparato (en un teléfono lento los amigos igual lo ven moverse parejo) */
+setInterval(()=>{
+  if (RED && RED.activa && RED.activa() && J.fase !== 'titulo') try{ RED.enviarEstado(F.empaquetar(J, OPC.pj, F.PJS[OPC.pj].nombre, performance.now())); }catch(e){}
+}, 50);
 /* El juego avanza a 60 pasos por segundo; en pantallas de 90 o 120 Hz se dibuja entre paso y paso,
    así Fernando y Tío Juan se mueven suaves (antes Tío Juan titilaba en esas pantallas). */
 const IP = {p: {x: 0, y: 0, z: 0}, pAnt: {x: 0, y: 0, z: 0}, t: {x: 0, y: 0, z: 0}, tAnt: {x: 0, y: 0, z: 0}, tVel: 0, listo: false};
@@ -1997,6 +2166,9 @@ function bucle(ahora){
   const ctl = leerControles(dt);
   musica.tick();
   reloj.acc += dt;
+  /* dónde están los amigos de este mundo (para rebotar en su cabeza, empujarse y chocar los cinco) */
+  J.amigos = [];
+  if (RED && RED.activa && RED.activa() && !J.trans) for (const [id, r] of RED.remotos) if (r.listo && r.obj && r.obj.nv === J.mundo) J.amigos.push({id, x: r.act.x, y: r.act.y, z: r.act.z});
   let pasos = 0;
   while (reloj.acc >= PASO && pasos < 4){
     IP.pAnt.x = J.p.x; IP.pAnt.y = J.p.y; IP.pAnt.z = J.p.z;
@@ -2008,7 +2180,6 @@ function bucle(ahora){
   }
   if (pasos >= 4) reloj.acc = 0;
   interpolar(dt);
-  if (RED && RED.activa && RED.activa() && J.fase !== 'titulo' && (++envio % 4 === 0)) try{ RED.enviarEstado(F.empaquetar(J, OPC.pj, F.PJS[OPC.pj].nombre)); }catch(e){}
   if (cargaVista !== J.cargas) construirMundo();
   const t = J.t;
   uViento.value = t;
@@ -2039,7 +2210,7 @@ aplicarCalidad();
 construirMundo();
 cargarActivos();
 if (cargando) cargando.style.display = 'none';
-window.FER3D = {J: ()=>J, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
+window.FER3D = {J: ()=>J, walkie: WALKIE, hablar: empezarHablar, callar: terminarHablar, quienHabla, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
   RED, UI, REMOTOS, cambiarPj, irCon, abrirAmigos, opc: OPC, cancion};
 if (RED && RED.pendiente){
   /* vino con ?sala=ABCD (el enlace que mandó un amigo): se entra solo */

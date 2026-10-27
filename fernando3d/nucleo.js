@@ -97,6 +97,7 @@ const FRASES = {
   fuerza:     ['fer', '¡Súper fuerza! ¡Soy el pichunguito más fuerte!'],
   laser:      ['fer', '¡Rayos láser con los ojos! ¡Piu, piu!'],
   robot:      ['fer', '¡Modo robot activado! ¡Bip, bup!'],
+  choca:      ['fer', ['¡Choca esos cinco!', '¡Equipo pichunguito!', '¡Somos un equipo!']],
   superPortal:['tio', ['¡Toma un súper poder nuevo para este mundo!', '¡Un súper poder de regalo, pichunguito!']],
   vuelta:     ['tio', '¡Encontraste todas las estrellas! ¡Ahora se escondieron en otros lugares! ¡A buscarlas otra vez!'],
   vueltaFer:  ['fer', '¡Otra vez, otra vez!'],
@@ -854,6 +855,7 @@ function paso(J, dt, inp){
   const bloqueado = !!J.trans || J.p.baile > 0;
   jugador(J, dt, bloqueado ? {camA: inp.camA} : inp);
   clones(J, dt);
+  amigosCerca(J);
   enemigos(J, dt);
   bolas(J, dt);
   pelotas(J, dt);
@@ -1095,6 +1097,40 @@ function dar(J, poder){
   ev(J, 'poder', p.x, p.y, p.z, {poder});
   decir(J, poder);
   if (poder === 'hamburguesa') decir(J, 'hamb2');
+}
+
+/* ---------------- jugar con los amigos de la sala ----------------
+   La vista pone en J.amigos dónde está cada amigo que anda en este mismo mundo.
+   Saltar en su cabeza hace rebotar alto, no se atraviesan (se empujan suavecito) y
+   al chocar parados se dan los cinco. */
+function amigosCerca(J){
+  const p = J.p;
+  if (!J.cdChoca) J.cdChoca = {};
+  for (const a of J.amigos || []){
+    if (!a || !isFinite(a.x + a.y + a.z)) continue;
+    const dx = p.x - a.x, dz = p.z - a.z, d = Math.hypot(dx, dz), dy = p.y - a.y;
+    const r = CFG.RADIO*2*Math.max(1, p.escala*0.8);
+    if (p.vy < 0 && dy > 0.7 && dy < 1.9 && d < r + 0.2){
+      p.vy = 17; p.saltos = 1; p.cortado = true; p.enSuelo = false; p.sobre = null;
+      ev(J, 'saltoAmigo', a.x, a.y + 1.6, a.z, {id: a.id});
+      continue;
+    }
+    const toca = d < r + 0.15 && Math.abs(dy) < 1.2, antes = J.tocaAmigo && J.tocaAmigo[a.id];
+    (J.tocaAmigo || (J.tocaAmigo = {}))[a.id] = toca;
+    if (d < r && Math.abs(dy) < 1.2){
+      const ux = d > 0.01 ? dx/d : Math.sin(p.ang + 1.6), uz = d > 0.01 ? dz/d : Math.cos(p.ang + 1.6);
+      p.x += ux*(r - d); p.z += uz*(r - d);                  /* se corre hacia afuera (el otro hace lo mismo en su aparato) */
+      const vn = p.vx*ux + p.vz*uz; if (vn < 0){ p.vx -= vn*ux; p.vz -= vn*uz; }
+    }
+    if (toca && !antes){
+      /* se dan los cinco al encontrarse (no cada rato si se quedan juntos) */
+      if (p.enSuelo && J.t - (J.cdChoca[a.id] || -99) > 3){
+        J.cdChoca[a.id] = J.t;
+        ev(J, 'choca', (p.x + a.x)/2, Math.max(p.y, a.y) + 1.5, (p.z + a.z)/2, {id: a.id});
+        decir(J, 'choca');
+      }
+    }
+  }
 }
 
 /* ---------------- los súper poderes ---------------- */
@@ -1617,9 +1653,10 @@ function perros(J, dt){
    JUGAR CON AMIGOS (lo que viaja por la red; red.js lo manda)
    ============================================================ */
 const r2 = v=>Math.round(v*100)/100;
-function empaquetar(J, pj, nombre){
+function empaquetar(J, pj, nombre, ts){
   const p = J.p;
   return {t:'e', pj: PJS[pj] ? pj : 'fernando', n: String(nombre || '').slice(0, 14), nv: J.mundo,
+          ts: Math.round(ts != null ? ts : Date.now()), vx: r2(p.vx), vy: r2(p.vy), vz: r2(p.vz),
           x: r2(p.x), y: r2(p.y), z: r2(p.z), a: r2(p.ang), v: r2(Math.hypot(p.vx, p.vz)),
           s: p.enSuelo ? 1 : 0, vu: p.vuela ? 1 : 0, na: p.nada ? 1 : 0, p: p.poder || '', g: p.giro > 0 ? 1 : 0, b: (p.baile > 0 || J.fase === 'final') ? 1 : 0, e: r2(p.escala)};
 }
@@ -1632,7 +1669,9 @@ function desempaquetar(m){
   if (nv < 0 || [x, y, z, ang].some(Number.isNaN)) return null;
   const pj = PJS[m.pj] ? m.pj : 'fernando';
   const nombre = String(typeof m.n === 'string' ? m.n : '').replace(/[^\wáéíóúñÁÉÍÓÚÑ ]/g, '').slice(0, 14) || PJS[pj].nombre;
-  return {pj, nombre, nv, x, y, z, ang, mov: n(m.v, 0, 40) || 0, suelo: !!m.s, vuela: !!m.vu, nada: !!m.na,
+  const ts = Number.isFinite(m.ts) && m.ts >= 0 && m.ts < 1e13 ? m.ts : undefined;
+  return {pj, nombre, nv, x, y, z, ang, ts, vx: n(m.vx, -80, 80) || 0, vy: n(m.vy, -80, 80) || 0, vz: n(m.vz, -80, 80) || 0,
+          mov: n(m.v, 0, 40) || 0, suelo: !!m.s, vuela: !!m.vu, nada: !!m.na,
           poder: PODERES[m.p] ? m.p : '', giro: !!m.g, baile: !!m.b, escala: n(m.e, 1, 3) || 1};
 }
 /* una estrella que ganó un amigo: «mundo:estrella» tiene que existir; devuelve true si es nueva */

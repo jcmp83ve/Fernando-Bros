@@ -46,13 +46,65 @@ function sanearEvento(m){
   }
   if (m.tipo === 'fx'){
     if (typeof m.fx !== 'string' || !/^[a-z]{1,16}$/.test(m.fx) || ![m.x, m.y, m.z].every(Number.isFinite)) return null;
-    return {tipo: 'fx', fx: m.fx, x: numOk(m.x, -500, 500), y: numOk(m.y, -60, 300), z: numOk(m.z, -500, 500)};
+    const r = {tipo: 'fx', fx: m.fx, x: numOk(m.x, -500, 500), y: numOk(m.y, -60, 300), z: numOk(m.z, -500, 500)};
+    if ([m.x2, m.y2, m.z2].every(Number.isFinite)){ r.x2 = numOk(m.x2, -500, 500); r.y2 = numOk(m.y2, -60, 300); r.z2 = numOk(m.z2, -500, 500); }
+    if (typeof m.para === 'string' && m.para.length <= 64) r.para = m.para;
+    return r;
   }
   return null;
 }
 const envolver = a=>{ while (a > Math.PI) a -= 2*Math.PI; while (a < -Math.PI) a += 2*Math.PI; return a; };
 
-const PURO = {ALFABETO_SALA, VERSION_RED, MAX_JUGADORES, PJS_OK, codigoSala, normalizarCodigo, sanearNombre, sanearSaludo, sanearEvento, listaPremios};
+/* ---- el movimiento suave de los amigos ----
+   Cada estado trae la hora de quien lo mandó (ts, en ms). Se guardan los últimos y el muñeco se
+   dibuja un poquito en el pasado (el «colchón»), justo entre dos estados conocidos: así se ve
+   el recorrido de verdad aunque los mensajes lleguen a saltos. Si se acaban, sigue un ratito con
+   su velocidad y después espera. */
+const EXTRAPOLA_MS = 300;
+function guardarMuestra(buf, e, llegada){
+  if (!Number.isFinite(e.ts)) return;
+  if (buf.length && e.ts <= buf[buf.length - 1].ts){
+    if (e.ts < buf[buf.length - 1].ts - 2000) buf.length = 0;      /* el otro recargó la página: empieza de nuevo */
+    else return;                                                    /* llegó tarde o repetido */
+  }
+  buf.push({ts: e.ts, x: e.x, y: e.y, z: e.z, ang: e.ang, vx: e.vx || 0, vy: e.vy || 0, vz: e.vz || 0, llegada});
+  if (buf.length > 40) buf.shift();
+}
+/* la diferencia entre los relojes y el colchón según qué tan parejo llegan los mensajes */
+function relojRemoto(buf){
+  let off = Infinity, dif = 0, n = 0;
+  for (let i = 0; i < buf.length; i++){
+    off = Math.min(off, buf[i].llegada - buf[i].ts);
+    if (i){ dif += buf[i].ts - buf[i - 1].ts; n++; }
+  }
+  const cada = n ? dif/n : 66;
+  let tarde = 0;
+  for (const m of buf) tarde = Math.max(tarde, m.llegada - m.ts - off);
+  return {off, colchon: Math.min(600, Math.max(90, cada*1.6 + tarde + 20))};
+}
+function muestra(buf, t){
+  if (!buf.length) return null;
+  const ult = buf[buf.length - 1];
+  if (t >= ult.ts){
+    const dt = Math.min(EXTRAPOLA_MS, t - ult.ts)/1000;
+    return {x: ult.x + ult.vx*dt, y: ult.y + Math.max(-12, ult.vy)*dt*0.5, z: ult.z + ult.vz*dt, ang: ult.ang};
+  }
+  if (t <= buf[0].ts) return {x: buf[0].x, y: buf[0].y, z: buf[0].z, ang: buf[0].ang};
+  let i = buf.length - 1; while (i > 0 && buf[i - 1].ts > t) i--;
+  const a = buf[i - 1], b = buf[i], u = (t - a.ts)/Math.max(1, b.ts - a.ts);
+  return {x: a.x + (b.x - a.x)*u, y: a.y + (b.y - a.y)*u, z: a.z + (b.z - a.z)*u, ang: envolver(a.ang + envolver(b.ang - a.ang)*u)};
+}
+/* la voz del walkie-talkie: pedacitos de audio (8000 muestras por segundo, 1 byte cada una) en base64 */
+const VOZ_MAX = 8000;           /* lo que puede traer cada pedacito, en caracteres */
+function sanearVoz(m){
+  if (!m || typeof m !== 'object') return null;
+  if (!Number.isInteger(m.i) || m.i < 0 || m.i > 1e6 || !Number.isInteger(m.n) || m.n < 0 || m.n > 60) return null;
+  if (typeof m.d !== 'string' || m.d.length > VOZ_MAX || !/^[A-Za-z0-9+/=]*$/.test(m.d)) return null;
+  return {i: m.i, n: m.n, d: m.d, fin: !!m.f};
+}
+
+const PURO = {ALFABETO_SALA, VERSION_RED, MAX_JUGADORES, PJS_OK, codigoSala, normalizarCodigo, sanearNombre, sanearSaludo, sanearEvento, listaPremios,
+              guardarMuestra, relojRemoto, muestra, sanearVoz, EXTRAPOLA_MS};
 if (typeof module !== 'undefined' && module.exports){ module.exports = PURO; return; }
 
 /* ---------------- Trystero: la sala ---------------- */
@@ -81,7 +133,7 @@ const llamar = (f, ...a)=>{ try{ if (typeof f === 'function') return f(...a); }c
    públicos, como mensajitos. Se abre desde el principio, así los amigos se ven en un par de segundos; en cuanto
    el enlace directo se abre, se usa ese (es más rápido). ---- */
 const RELE_BROKERS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
-const RELE = {clientes: [], vistos: new Map(), sala: '', ultimoAqui: 0, id: '', seq: 0, nE: 0, avisados: new Set()};
+const RELE = {clientes: [], vistos: new Map(), sala: '', ultimoAqui: 0, id: '', seq: 0, ultE: 0, avisados: new Set()};
 function releId(){ if (!RELE.id){ try{ RELE.id = String(Trystero.mqtt.selfId || ''); }catch(e){} if (!RELE.id) RELE.id = 'r' + Math.random().toString(36).slice(2, 12); } return RELE.id; }
 function releTema(){ return 'fernando-bros/fer3d/v' + VERSION_RED + '/sala-' + RELE.sala; }
 function releAbrir(codigo){
@@ -112,7 +164,7 @@ function releAbiertos(){ let n = 0; for (const c of RELE.clientes) if (c.connect
 /* se publica por todos los brokers conectados (cada quien está suscrito a todos); el que recibe descarta los repetidos por el número de secuencia */
 function relePublicar(a, m){
   if (!RELE.sala) return;
-  if (m && m.t === 'e'){ RELE.nE++; if (RELE.nE % 3) return; }                /* el estado va a 5 por segundo por el relé, no a 15 */
+  if (m && m.t === 'e'){ const ahora = Date.now(); if (ahora - RELE.ultE < 140) return; RELE.ultE = ahora; }   /* el estado va a ~7 por segundo por el relé */
   const carga = JSON.stringify({a: a || '', s: ++RELE.seq, m}), tema = releTema() + '/' + releId();
   for (const c of RELE.clientes){ if (!c.connected) continue; try{ c.publish(tema, carga, {qos: 0}); }catch(e){} }
 }
@@ -254,7 +306,16 @@ function recibir(id, m){
     if (!cabe(id)) return;
     let r = RED.remotos.get(id);
     if (!r) r = crearRemoto(id, e);
+    if (r.nvBuf !== e.nv){ r.buf = []; r.nvBuf = e.nv; }
+    guardarMuestra(r.buf || (r.buf = []), e, Date.now());
     r.obj = e; r.pj = e.pj; r.nombre = e.nombre; r.mov = e.mov; r.t = Date.now();
+    return;
+  }
+  if (m.t === 'voz'){
+    const r = RED.remotos.get(id); if (!r) return;
+    const v = sanearVoz(m); if (!v) return;
+    r.t = Date.now();
+    llamar(RED.on.voz, r, v);
     return;
   }
   if (m.t === 'ev'){
@@ -307,6 +368,8 @@ const enlace = ()=>location.origin + location.pathname + '?sala=' + RED.sala;
 function enviarEstado(p){ if (!activa() || !I.pares.size || !p || typeof p !== 'object') return; enviar(p); }
 /* eventos sueltos: {tipo:'premio', que:'estrella', id} o {tipo:'fx', fx, x, y, z}; se revisan antes de mandarlos */
 function enviarEvento(d){ if (!activa() || !I.pares.size) return; const e = sanearEvento(d); if (e) enviar(Object.assign({t: 'ev'}, e)); }
+/* un pedacito de voz del walkie-talkie, para todos los de la sala */
+function enviarVoz(v){ if (!activa() || !I.pares.size) return; const s = sanearVoz({i: v.i, n: v.n, d: v.d, f: v.fin}); if (s) enviar({t: 'voz', i: s.i, n: s.n, d: s.d, f: s.fin ? 1 : 0}); }
 /* cada cuadro: los muñecos de los amigos se deslizan hacia su última posición conocida (igual de suave a 30 o 60 cuadros) */
 function paso(){
   const ahora = Date.now(), dt = I.ultPaso ? Math.min(0.25, Math.max(0, (ahora - I.ultPaso)/1000)) : 1/60;
@@ -318,16 +381,27 @@ function paso(){
     if (o.nv < 0) continue;
     /* el primer estado, un cambio de nivel o un salto enorme (reapareció): se pone ahí de una vez */
     if (!r.listo || r.nv !== o.nv || Math.hypot(o.x - a.x, o.y - a.y, o.z - a.z) > 15){ a.x = o.x; a.y = o.y; a.z = o.z; a.ang = o.ang; r.listo = true; r.nv = o.nv; continue; }
-    a.x += (o.x - a.x)*k; a.y += (o.y - a.y)*k; a.z += (o.z - a.z)*k; a.ang = envolver(a.ang + envolver(o.ang - a.ang)*k);
     r.mov = o.mov;
+    const buf = r.buf;
+    if (buf && buf.length >= 2){
+      /* el colchón cambia despacito para que no se note */
+      const rel = relojRemoto(buf);
+      r.colchon = r.colchon ? r.colchon + (rel.colchon - r.colchon)*Math.min(1, dt*2) : rel.colchon;
+      const q = muestra(buf, ahora - rel.off - r.colchon);
+      /* un último suavizado muy cortito, solo para tapar los cambios de colchón */
+      const kk = 1 - Math.pow(1 - 0.5, dt*60);
+      a.x += (q.x - a.x)*kk; a.y += (q.y - a.y)*kk; a.z += (q.z - a.z)*kk; a.ang = envolver(a.ang + envolver(q.ang - a.ang)*kk);
+      continue;
+    }
+    a.x += (o.x - a.x)*k; a.y += (o.y - a.y)*k; a.z += (o.z - a.z)*k; a.ang = envolver(a.ang + envolver(o.ang - a.ang)*k);
   }
 }
 
 const RED = {
   estado: 'off', sala: '', error: '', aviso: '', pendiente: '', anfitrion: false,
-  hay, activa, crear, unirse, salir, enlace, enviarEstado, enviarEvento, paso, diagnostico,
+  hay, activa, crear, unirse, salir, enlace, enviarEstado, enviarEvento, enviarVoz, paso, diagnostico,
   remotos: new Map(),
-  on: {llega: null, seVa: null, evento: null, aviso: null},
+  on: {llega: null, seVa: null, evento: null, aviso: null, voz: null},
   saludo: ()=>({pj: 'fernando', n: '', estrellas: []}),
   alSaludo: ()=>{},
   RELES, CONFIG, MAX_JUGADORES, normalizarCodigo, codigoSala,
