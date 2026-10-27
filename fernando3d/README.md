@@ -47,6 +47,25 @@ Además, sin poder, el botón de poder hace un **giro** que vence enemigos y ayu
 puño de superhéroe (también le pega a los jefes); si no hay, le trae un regalo con un poder.
 Cada 50 monedas también hay un poder de premio.
 
+
+### ⚡ Los súper poderes
+
+Cada vez que Fernando entra a un cuadro, Tío Juan le regala un **súper poder nuevo** (van
+rotando). También hay cajas con cada uno cerca del inicio del castillo.
+
+| Súper poder | Qué hace |
+|---|---|
+| 👯 **Caja de Clones** | Cada salto saca otro Fernando (hasta 4) que lo sigue por el mismo camino, vence a los gruñones y junta monedas |
+| 🚀 **Súper Vuelo** | Vuela con una mochila cohete, casi tres veces más rápido que la gorra alada |
+| 💪 **Súper Fuerza** | Vence a los gruñones con solo tocarlos; con **X** da un golpe al suelo que tumba a todos alrededor y patea la pelota lejísimos |
+| 👀 **Ojos Láser** | Con **X** lanza rayos rojos por los ojos que vencen al primero que encuentran |
+| 🤖 **Fernando Robot** | Se vuelve un robot grande al que nadie lastima; con **X** lanza dos misiles |
+
+### 🔄 Las vueltas
+
+Cuando Fernando tiene **todas las estrellas**, al volver al castillo empieza otra vuelta: las
+estrellas se vacían y se esconden en otros lugares (la del monumento y las monedas rojas de cada
+mundo se cambian de lugar entre ellas). El marcador muestra en qué vuelta va.
 ## 👥 Jugar con amigos (en línea, gratis)
 
 Hasta **cuatro personas**, cada una en su aparato, juegan a la vez. Igual que en la Aventura 3D y
