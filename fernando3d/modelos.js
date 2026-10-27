@@ -769,8 +769,9 @@ function columnaLuz(color){
   return m;
 }
 
-const COLOR_PODER = {alas:'#7ad0ff', fuego:'#ff6a2a', hamburguesa:'#ffb43a', gigante:'#ff4a6a', iman:'#ff5ab0', tenis:'#4ae08a'};
-const EMOJI_PODER = {alas:'🪽', fuego:'🔥', hamburguesa:'🍔', gigante:'🍄', iman:'🧲', tenis:'👟'};
+const COLOR_PODER = {alas:'#7ad0ff', fuego:'#ff6a2a', hamburguesa:'#ffb43a', gigante:'#ff4a6a', iman:'#ff5ab0', tenis:'#4ae08a',
+                     clon:'#b07aff', cohete:'#3ad0ff', fuerza:'#ff3a3a', laser:'#ff2a6a', robot:'#a8c0d8'};
+const EMOJI_PODER = {alas:'🪽', fuego:'🔥', hamburguesa:'🍔', gigante:'🍄', iman:'🧲', tenis:'👟', clon:'👯', cohete:'🚀', fuerza:'💪', laser:'👀', robot:'🤖'};
 const TEX_REGALO = {};
 function texRegalo(poder){
   if (TEX_REGALO[poder]) return TEX_REGALO[poder];
@@ -1086,6 +1087,60 @@ function faroDeco(x, z){
   return g;
 }
 
+/* ============================================================
+   LOS SÚPER PODERES (lo que se le pone a Fernando)
+   ============================================================ */
+/* Fernando robot: armadura plateada con visor, antena y el emblema rojo */
+function crearRobot(color){
+  const g = new THREE.Group();
+  const plata = std('#c8d4e0', {metalness:0.85, roughness:0.25}), oscuro = std('#4a5664', {metalness:0.7, roughness:0.35});
+  const rojo = std(color || '#e8262a', {metalness:0.4, roughness:0.35});
+  const luz = std('#5ae8ff', {emissive:'#2ad8ff', emissiveIntensity:1.2, roughness:0.2});
+  const caja = (m, sx, sy, sz, x, y, z)=>{ const c = new THREE.Mesh(GEO.cubo, m); c.scale.set(sx, sy, sz); c.position.set(x, y, z); c.castShadow = true; return c; };
+  const pierna = lado=>{ const p = new THREE.Group(); p.position.set(0.18*lado, 0.82, 0);
+    p.add(caja(plata, 0.24, 0.42, 0.26, 0, -0.22, 0)); p.add(caja(oscuro, 0.2, 0.12, 0.22, 0, -0.47, 0)); p.add(caja(plata, 0.26, 0.32, 0.28, 0, -0.66, 0));
+    p.add(caja(rojo, 0.3, 0.14, 0.4, 0, -0.8, 0.05)); return p; };
+  const piernaI = pierna(1), piernaD = pierna(-1); g.add(piernaI, piernaD);
+  const torso = caja(plata, 0.78, 0.68, 0.48, 0, 1.18, 0); g.add(torso);
+  g.add(caja(oscuro, 0.6, 0.12, 0.5, 0, 0.86, 0));
+  const pecho = new THREE.Mesh(new THREE.CircleGeometry(0.16, 20), luz); pecho.position.set(0, 1.24, 0.25); g.add(pecho);
+  const emb = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), new THREE.MeshBasicMaterial({map: etiqueta('F', '#ffffff', '#e8262a', 64, 64), transparent:true}));
+  emb.position.set(0, 1.0, 0.245); g.add(emb);
+  const brazo = lado=>{ const b = new THREE.Group(); b.position.set(0.5*lado, 1.42, 0);
+    b.add(bola(rojo, 0.15, 0, 0, 0)); b.add(caja(plata, 0.18, 0.5, 0.2, 0, -0.3, 0)); b.add(bola(oscuro, 0.14, 0, -0.62, 0)); return b; };
+  const brazoI = brazo(1), brazoD = brazo(-1); g.add(brazoI, brazoD);
+  const cabeza = new THREE.Group(); cabeza.position.y = 1.78; g.add(cabeza);
+  cabeza.add(caja(plata, 0.52, 0.44, 0.46, 0, 0, 0));
+  cabeza.add(caja(luz, 0.42, 0.12, 0.05, 0, 0.04, 0.235));
+  cabeza.add(caja(rojo, 0.56, 0.08, 0.5, 0, 0.24, 0));
+  const ant = palo(oscuro, 0.02, 0.02, 0.3); ant.position.set(0.15, 0.38, 0); cabeza.add(ant);
+  const bombillo = bola(std('#ff2a2a', {emissive:'#ff0000', emissiveIntensity:1}), 0.06, 0.15, 0.55, 0); cabeza.add(bombillo);
+  for (const lado of [1, -1]){ const o = palo(oscuro, 0.08, 0.08, 0.06); o.rotation.z = Math.PI/2; o.position.set(0.28*lado, 0, 0); cabeza.add(o); }
+  return {g, piernaI, piernaD, brazoI, brazoD, cabeza, bombillo};
+}
+/* la mochila cohete del súper vuelo */
+function mochilaCohete(){
+  const g = new THREE.Group();
+  const rojo = std('#e8262a', {metalness:0.4, roughness:0.3}), plata = std('#d8dce4', {metalness:0.8, roughness:0.25});
+  const fuego = std('#ffb21a', {emissive:'#ff7a00', emissiveIntensity:1.4, transparent:true, opacity:0.9});
+  const placa = new THREE.Mesh(GEO.cubo, plata); placa.scale.set(0.34, 0.3, 0.12); g.add(placa);
+  const llamas = [];
+  for (const lado of [1, -1]){
+    const t = palo(rojo, 0.1, 0.1, 0.5, 12); t.position.set(0.14*lado, 0, -0.08); g.add(t);
+    const n = new THREE.Mesh(GEO.cono, rojo); n.scale.set(0.1, 0.18, 0.1); n.position.set(0.14*lado, 0.34, -0.08); g.add(n);
+    const f = new THREE.Mesh(GEO.cono, fuego); f.scale.set(0.09, 0.35, 0.09); f.rotation.x = Math.PI; f.position.set(0.14*lado, -0.42, -0.08); g.add(f); llamas.push(f);
+  }
+  g.userData.llamas = llamas;
+  return g;
+}
+/* los ojos que brillan rojo con el láser */
+function ojosLaser(){
+  const g = new THREE.Group(), m = std('#ff2a4a', {emissive:'#ff0030', emissiveIntensity:1.6});
+  for (const lado of [1, -1]){ const o = bola(m, 0.055, 0.1*lado, 0, 0); g.add(o); const h = halo('#ff3a5a', 0.5, 0.8); h.position.copy(o.position); g.add(h); }
+  return g;
+}
+
+Object.assign(MOD, {crearRobot, mochilaCohete, ojosLaser});
 Object.assign(MOD, {mejorarTextura, rng, tex, lienzo, std, matSuelo, piezaSuelo, GEO, bola, palo, halo, columnaLuz, PINTAR, manchas, ojo, sonrisa, md,
   crearFernando, crearTio, ondearCapa, crearPerro, crearEnemigo, crearMoneda, crearEstrella, crearRegalo, crearPortal,
   crearResorte, crearTubo, crearAbu, crearSanti, COLOR_PODER, EMOJI_PODER, TEX_HALO,

@@ -435,6 +435,8 @@ function animarHQ(h, est, dt, t){
     if (pod === 'hamburguesa'){ mt.emissive.copy(arcoiris(t)); mt.emissiveIntensity = 0.45; }
     else if (pod === 'fuego'){ mt.emissive.set('#ff6a1a'); mt.emissiveIntensity = 0.18 + Math.sin(t*8)*0.08; }
     else if (pod === 'tenis'){ mt.emissive.set('#3aff8a'); mt.emissiveIntensity = 0.1; }
+    else if (pod === 'fuerza'){ mt.emissive.set('#ff2a2a'); mt.emissiveIntensity = 0.22 + Math.sin(t*10)*0.1; }
+    else if (pod === 'clon'){ mt.emissive.set('#8a4aff'); mt.emissiveIntensity = 0.12; }
     else mt.emissiveIntensity = 0;
   }
   /* la inclinación de volar se va poniendo de a poco (nada de cambios de golpe) */
@@ -862,6 +864,75 @@ function moverCamara(dt, ctl){
   agua.position.x = Math.round(camara.position.x/50)*50; agua.position.z = Math.round(camara.position.z/50)*50;
 }
 
+/* ---------------- los súper poderes que se ven ---------------- */
+function vestirSuper(f){
+  if (f.sup) return f.sup;
+  const piv = new THREE.Group(); f.g.add(piv);
+  const robot = MOD.crearRobot(); robot.g.visible = false; f.g.add(robot.g);
+  const mochila = MOD.mochilaCohete(); mochila.position.set(0, 0.95, -0.3); mochila.visible = false; piv.add(mochila);
+  const ojos = MOD.ojosLaser(); ojos.visible = false; piv.add(ojos);
+  return (f.sup = {piv, robot, mochila, ojos});
+}
+function animarSuper(f, poder, t, fase, k, suelo, vuela){
+  const s = vestirSuper(f), robot = poder === 'robot';
+  s.robot.g.visible = robot;
+  if (f.hq) f.hq.cont.visible = !robot; else f.cuerpo.visible = !robot;
+  if (robot){
+    const w = Math.sin(fase), rb = s.robot;
+    rb.piernaI.rotation.x = w*0.7*k; rb.piernaD.rotation.x = -w*0.7*k;
+    rb.brazoI.rotation.x = suelo ? -w*0.6*k : -2.4; rb.brazoD.rotation.x = suelo ? w*0.6*k : -2.4;
+    rb.g.rotation.x = vuela ? 0.9 : 0;
+    rb.bombillo.visible = Math.floor(t*3) % 2 === 0;
+  }
+  /* la mochila y los ojos se inclinan con el cuerpo (al volar va acostado) */
+  s.piv.rotation.x = f.hq ? (f.hq.incl || 0) : f.cuerpo.rotation.x;
+  s.mochila.visible = poder === 'cohete';
+  if (s.mochila.visible) s.mochila.userData.llamas.forEach((l, i)=>{ l.scale.set(0.09, (0.35 + Math.sin(t*40 + i*2)*0.08)*(vuela ? 1.8 : 0.5), 0.09); });
+  s.ojos.visible = poder === 'laser';
+  s.ojos.position.set(0, f.hq ? 1.5 : 1.36, 0.3);
+}
+/* los clones de la caja de clones: se ven como Fernando con un brillo morado */
+const CLONES = [];
+function animarClones(dt){
+  const lista = J.clones || [];
+  while (CLONES.length < MAX_CLONES_VISTA && CLONES.length < lista.length){
+    const m = modeloPj(OPC.pj);
+    m.g.traverse(o=>{ if (o.isMesh && o.material && o.material.emissive){ o.material = o.material.clone(); o.material.emissive.set('#7a3aff'); o.material.emissiveIntensity = 0.35; } });
+    escena.add(m.g); CLONES.push({m, fase: 0});
+  }
+  CLONES.forEach((c, i)=>{
+    const d = lista[i]; c.m.g.visible = !!d && !J.trans;
+    if (!d) return;
+    const f = c.m;
+    f.g.position.set(d.x, d.y, d.z); f.g.rotation.y = d.ang; f.g.scale.setScalar(J.p.escala);
+    c.fase += dt*(4 + d.vel*1.6);
+    const k = d.suelo ? Math.min(1, d.vel/4) : 0, w = Math.sin(c.fase);
+    f.cuerpo.rotation.set(d.vuela ? 0.9 : 0, 0, 0); f.cuerpo.position.y = d.suelo ? Math.abs(w)*0.06*k : 0;
+    f.piernaI.rotation.x = w*0.9*k; f.piernaD.rotation.x = -w*0.9*k;
+    f.brazoI.rotation.x = d.suelo ? -w*0.8*k : -2.6; f.brazoD.rotation.x = d.suelo ? w*0.8*k : -2.6;
+  });
+}
+const MAX_CLONES_VISTA = 4;
+const RAYOS = [0, 1].map(()=>{
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 1, 10, 1, true), new THREE.MeshBasicMaterial({color:'#ff1a3a', transparent:true, opacity:0.95, depthWrite:false}));
+  const nucleo = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 6, 1, true), new THREE.MeshBasicMaterial({color:'#fff0f0'})); m.add(nucleo);
+  m.visible = false; escena.add(m); return m;
+});
+let rayoT = 0;
+const _rA = new THREE.Vector3(), _rB = new THREE.Vector3(), _rY = new THREE.Vector3(0, 1, 0);
+function dispararRayo(e){
+  const ang = J.p.ang;
+  RAYOS.forEach((r, i)=>{
+    const lado = i ? 1 : -1;
+    _rA.set(e.x + Math.cos(ang)*0.1*lado*J.p.escala, e.y, e.z - Math.sin(ang)*0.1*lado*J.p.escala); _rB.set(e.a.x, e.a.y, e.a.z);
+    const len = Math.max(0.1, _rA.distanceTo(_rB));
+    r.position.copy(_rA).add(_rB).multiplyScalar(0.5); r.scale.set(1, len, 1);
+    r.quaternion.setFromUnitVectors(_rY, _rB.clone().sub(_rA).normalize());
+  });
+  rayoT = 0.15;
+}
+const onda = {t: 0, r: 5, m: (()=>{ const m = new THREE.Mesh(new THREE.RingGeometry(0.85, 1, 48), new THREE.MeshBasicMaterial({color:'#fff0e0', transparent:true, blending: THREE.AdditiveBlending, depthWrite:false, side: THREE.DoubleSide})); m.rotation.x = -Math.PI/2; m.visible = false; escena.add(m); return m; })()};
+
 /* ---------------- animar a todos ---------------- */
 const anim = {fase: 0, voltereta: 0, tioFase: 0, tioAnt: new THREE.Vector3(), tPoderVisto: 0};
 function arcoiris(t){ return new THREE.Color().setHSL((t*0.8) % 1, 0.9, 0.55); }
@@ -910,6 +981,10 @@ function animarFernando(dt, t){
     animarHQ(f.hq, {suelo: p.enSuelo, vel, baile: p.baile > 0 || J.fase === 'final', vuela: p.vuela, nada: p.nada, giro: p.giro > 0, giroA: anim.giroA || 0, poder: p.tPoder < 3 && Math.floor(t*8) % 2 === 0 ? '' : p.poder}, dt, t);
     if (anim.voltereta > 0) f.hq.cont.rotation.x = (1 - anim.voltereta/0.42)*TAU;
   }
+  animarSuper(f, p.tPoder < 2 && Math.floor(t*8) % 2 === 0 && p.poder !== 'robot' ? '' : p.poder, t, anim.fase, pasoK, p.enSuelo, p.vuela);
+  if (p.poder === 'robot' && p.tPoder < 2 && Math.floor(t*8) % 2 === 0) emitir(p.x, p.y + 1.2*p.escala, p.z, 1, {color:'#5ae8ff', vel:2, grav:0, vida:0.3, tam:0.3});
+  if (p.poder === 'cohete' && p.vuela){ const bx = p.x - Math.sin(p.ang)*0.5, bz = p.z - Math.cos(p.ang)*0.5; emitir(bx, p.y + 0.4, bz, 2, {colores:['#ffb21a', '#ff5a1a', '#ffffff'], vel:1.2, grav:-1, vida:0.4, tam:0.4}); }
+  if (p.poder === 'fuerza' && Math.random() < 0.25) emitir(p.x, p.y + 0.8, p.z, 1, {colores:['#ff3a3a', '#ffb0a0'], vel:1.5, grav:-1, vida:0.4, tam:0.25, esparce:0.8});
   /* parpadea si lo golpearon */
   f.g.visible = !(p.invul > 0 && p.golpeT <= 0 && J.fase === 'juego' && Math.floor(t*14) % 2 === 0 && p.invul < CFG.INVUL - 0.05);
   /* poderes */
@@ -1064,7 +1139,17 @@ function animarCosas(dt, t){
   if (MUNDO.fuente && Math.random() < 0.7) emitir(MUNDO.fuente.x, MUNDO.fuente.y, MUNDO.fuente.z, 2, {color:'#9ae0ff', vel:1.2, vy:5, grav:9, vida:0.9, tam:0.25});
   /* bolas de fuego */
   let i = 0;
-  for (const b of J.bolas){ if (!b.vivo) continue; const m = bolaMesh(i++); m.visible = true; m.position.set(b.x, b.y, b.z); emitir(b.x, b.y, b.z, 1, {colores:['#ffb030', '#ff5a1a'], vel:0.4, grav:-1, vida:0.35, tam:0.35}); }
+  for (const b of J.bolas){
+    if (!b.vivo) continue; const m = bolaMesh(i++); m.visible = true; m.position.set(b.x, b.y, b.z);
+    m.children[0].material.color.set(b.misil ? '#dfe6ee' : '#ffd27a'); m.children[1].visible = !b.misil;
+    emitir(b.x, b.y, b.z, 1, b.misil ? {colores:['#c8ccd4', '#ffb030'], vel:0.3, grav:-0.5, vida:0.4, tam:0.3} : {colores:['#ffb030', '#ff5a1a'], vel:0.4, grav:-1, vida:0.35, tam:0.35});
+  }
+  /* los rayos láser y la onda de la súper fuerza */
+  rayoT = Math.max(0, rayoT - dt);
+  for (const r of RAYOS){ r.visible = rayoT > 0; r.material.opacity = Math.min(1, rayoT/0.12); }
+  onda.t = Math.max(0, onda.t - dt); onda.m.visible = onda.t > 0;
+  if (onda.t > 0){ const u = 1 - onda.t/0.45; onda.m.scale.setScalar(0.5 + u*onda.r); onda.m.material.opacity = onda.t/0.45; }
+  animarClones(dt);
   for (; i < bolasM.length; i++) bolasM[i].visible = false;
   /* la flecha guía */
   const gu = J.guia, p = J.p;
@@ -1126,6 +1211,11 @@ const SON = {
   puno(){ ruido(0.15, 0.2, 700); tono(220, 60, 0.18, 'square', 0.1); },
   tioVuela(){ ruido(0.5, 0.12, 1800); },
   patada(){ tono(170, 60, 0.12, 'square', 0.1); ruido(0.08, 0.15, 700); },
+  clon(){ const t = AC.currentTime; [67, 71, 74, 79].forEach((n, i)=>tono(nota(n), 0, 0.08, 'triangle', 0.08, t + i*0.04)); },
+  laser(){ tono(1600, 260, 0.18, 'square', 0.05); tono(1200, 200, 0.18, 'sawtooth', 0.03); },
+  onda(){ ruido(0.5, 0.2, 160); tono(110, 40, 0.45, 'sine', 0.25); },
+  misil(){ ruido(0.25, 0.12, 1800); tono(400, 900, 0.15, 'square', 0.04); },
+  robot(){ const t = AC.currentTime; [48, 55, 60, 67, 72].forEach((n, i)=>tono(nota(n), 0, 0.09, 'square', 0.06, t + i*0.06)); },
   gol(){ const t = AC.currentTime; ruido(1.6, 0.1, 1400); [72, 76, 79, 84, 79, 84].forEach((n, i)=>{ tono(nota(n), 0, 0.22, 'square', 0.07, t + i*0.12); tono(nota(n - 12), 0, 0.22, 'triangle', 0.08, t + i*0.12); }); },
   trueno(){ ruido(1.6, 0.05, 90); },
   chapuzon(){ ruido(0.45, 0.16, 900); tono(500, 140, 0.25, 'sine', 0.08); },
@@ -1241,6 +1331,17 @@ function procesarEventos(){
       case 'habla': hablar(e.texto, e.quien); break;
       case 'salto': sonar('salto'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#ffffff', vel:1.5, grav:2, vida:0.4, tam:0.3, plano:true}); break;
       case 'salto2': sonar('salto2'); anim.voltereta = 0.42; emitir(e.x, e.y + 0.4, e.z, 10, {colores:['#ffffff', '#ffe36e'], vel:2.5, grav:1, vida:0.5, tam:0.25}); break;
+      case 'clon': sonar('clon'); emitir(e.x, e.y + 0.9, e.z, 24, {colores:['#c08aff', '#ffffff'], vel:3.5, grav:0, vida:0.5, tam:0.35}); break;
+      case 'clonSeVa': emitir(e.x, e.y + 0.9, e.z, 14, {colores:['#c08aff', '#ffffff'], vel:2.5, grav:-1, vida:0.5, tam:0.35}); break;
+      case 'laser':
+        sonar('laser'); dispararRayo(e);
+        if (e.pego) emitir(e.a.x, e.a.y, e.a.z, 18, {colores:['#ff3a5a', '#ffd0d8', '#ffffff'], vel:5, grav:3, vida:0.4, tam:0.3});
+        break;
+      case 'onda': sonar('onda'); cam.temblor = 0.4; onda.t = 0.45; onda.r = e.r; onda.m.position.set(e.x, e.y + 0.12, e.z);
+        emitir(e.x, e.y + 0.2, e.z, 30, {colores:['#ffffff', '#ffb0a0', '#e8d8c0'], vel:8, grav:2, vida:0.5, tam:0.45, plano:true}); break;
+      case 'misil': sonar('misil'); break;
+      case 'vuelta': sonar('estrella'); banner = {texto: '¡Vuelta ' + (e.vuelta + 1) + '!', emoji: '🔄', t: 0};
+        emitir(e.x, e.y + 2, e.z, 80, {colores:['#ffd23f', '#ffffff', '#7ad0ff'], vel:7, grav:2, vida:1.4, tam:0.4}); break;
       case 'patada': sonar('patada'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#d8f0c0', vel:2, grav:3, vida:0.4, tam:0.3, plano:true}); break;
       case 'gol': sonar('gol'); cam.temblor = 0.3; emitir(e.x, e.y + 1, e.z, 120, {colores:['#6ac8ff', '#ffffff', '#ffd23f'], vel:7, vy:5, grav:4, vida:1.6, tam:0.35}); banner = {texto: '¡GOOOL!', emoji: '⚽', t: 0}; break;
       case 'pelotaVuelve': emitir(e.x, e.y, e.z, 10, {color:'#ffffff', vel:2, grav:0, vida:0.5, tam:0.4}); break;
@@ -1261,7 +1362,7 @@ function procesarEventos(){
       case 'pisa': sonar('pisa'); emitir(e.x, e.y, e.z, 14, {colores:['#ffffff', '#ffe36e'], vel:4, grav:4, vida:0.5, tam:0.3}); break;
       case 'muere': if (e.como !== 'pisa') sonar('pisa'); emitir(e.x, e.y, e.z, 18, {colores:['#ffffff', '#c8c8c8', '#ffe36e'], vel:4, grav:3, vida:0.6, tam:0.4}); break;
       case 'golpe': sonar('golpe'); cam.temblor = 0.5; emitir(e.x, e.y + 0.8, e.z, 14, {colores:['#ff6a6a', '#ffffff'], vel:4, grav:4, vida:0.5, tam:0.3}); break;
-      case 'poder': sonar('poder'); emitir(e.x, e.y + 1, e.z, 50, {colores:['#ffffff', MOD.COLOR_PODER[e.poder]], vel:6, grav:1, vida:1, tam:0.4}); break;
+      case 'poder': if (e.poder === 'robot') sonar('robot'); else sonar('poder'); emitir(e.x, e.y + 1, e.z, 50, {colores:['#ffffff', MOD.COLOR_PODER[e.poder]], vel:6, grav:1, vida:1, tam:0.4}); break;
       case 'caja': sonar('caja'); emitir(e.x, e.y, e.z, 40, {colores:['#ffffff', MOD.COLOR_PODER[e.poder], '#ffd23f'], vel:6, grav:5, vida:0.9, tam:0.35}); break;
       case 'fuego': sonar('fuego'); break;
       case 'giro': sonar('giro'); emitir(e.x, e.y + 0.7, e.z, 16, {color:'#ffffff', vel:4, grav:0, vida:0.3, tam:0.3, plano:true}); break;
@@ -1480,6 +1581,7 @@ function dibujarHud(dt){
   pastilla(x0 + 126, 12, 112, 38);
   ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.ellipse(x0 + 148, 31, 9, 13, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#a86a00'; ctx.lineWidth = 2; ctx.stroke();
   texto('× ' + J.prog.monedas, x0 + 164, 32, 22, '#ffffff');
+  if (J.prog.vuelta){ pastilla(x0 + 246, 12, 74, 38); texto('🔄 ' + (J.prog.vuelta + 1), x0 + 258, 32, 22, '#ffe36e'); }
   /* monedas rojas */
   const estR = M.estrellas.find(s=>s.tipo === 'rojas');
   if (M.rojas.length && estR && !estR.visible){
@@ -1725,6 +1827,7 @@ function animarRemotos(dt, t){
       else { f.brazoI.rotation.x = f.brazoD.rotation.x = -2.6; f.brazoI.rotation.z = 0.6; f.brazoD.rotation.z = -0.6; f.piernaI.rotation.x = -0.7; f.piernaD.rotation.x = 0.35; }
     }
     if (e.giro) f.cuerpo.rotation.y = t*25;
+    animarSuper(f, e.poder, t, o.fase, k, e.suelo, e.vuela);
     if (e.baile){ f.cuerpo.position.y = Math.abs(Math.sin(t*7))*0.35; f.brazoI.rotation.x = f.brazoD.rotation.x = -2.8; }
     f.alas.visible = e.poder === 'alas';
     if (f.alas.visible) f.alas.children.forEach(w=>{ w.rotation.y = Math.sin(t*(e.vuela ? 22 : 6))*0.5*w.userData.lado; });

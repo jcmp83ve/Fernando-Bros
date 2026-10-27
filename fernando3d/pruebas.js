@@ -211,7 +211,7 @@ function elegir(J){
 
 function jugarMundo(n, opciones){
   opciones = opciones || {};
-  const J = L.crearJuego({semilla: 11 + n, prog: {intro:true, estrellas:{}}});
+  const J = L.crearJuego({semilla: 11 + n, prog: {intro:true, estrellas:{}, vuelta: opciones.vuelta || 0}});
   L.empezar(J);
   L.cargarMundo(J, n, null);
   const M = J.M;
@@ -371,6 +371,108 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   for (let f = 0; f < 60*6; f++) L.paso(J, 1/60, {});
   const lejos = Math.max(...J.perros.map(g=>Math.hypot(g.x - J.p.x, g.z - J.p.z) + Math.abs(g.y - J.p.y)));
   if (lejos > 5) mal('después de aterrizar los perritos quedaron lejos (' + lejos.toFixed(1) + ' m)'); else bien('después de aterrizar, Penny y Sheldon están con Fernando');
+}
+
+/* 4d) las vueltas: con todas las estrellas, al volver al castillo empieza otra vuelta; la estrella del
+   monumento y las monedas rojas se cambian de lugar entre ellas (los mismos lugares que el robot ya
+   alcanzó, así que todo se sigue pudiendo alcanzar) */
+{
+  const clave = (x, z)=>Math.round(x*10) + ',' + Math.round(z*10);
+  let ok = true, movidas = 0, total = 0;
+  for (let n = 1; n < L.MUNDOS.length; n++){
+    const J0 = L.crearJuego({prog:{intro:true}}); L.cargarMundo(J0, n, null);
+    const antes = J0.M.estrellas.filter(s=>s.tipo === 'libre').map(s=>clave(s.x, s.z)).concat(J0.M.rojas.map(r=>clave(r.x, r.z))).sort().join('|');
+    for (const vuelta of [1, 2, 3]){
+      const J1 = L.crearJuego({prog:{intro:true, vuelta}}); L.cargarMundo(J1, n, null);
+      const libre = J1.M.estrellas.find(s=>s.tipo === 'libre'), orig = J0.M.estrellas.find(s=>s.tipo === 'libre');
+      const despues = J1.M.estrellas.filter(s=>s.tipo === 'libre').map(s=>clave(s.x, s.z)).concat(J1.M.rojas.map(r=>clave(r.x, r.z))).sort().join('|');
+      if (!libre) continue;
+      total++;
+      if (despues !== antes){ ok = false; mal(L.MUNDOS[n].id + ' vuelta ' + (vuelta + 1) + ': las cosas quedaron en lugares nuevos sin probar'); }
+      if (clave(libre.x, libre.z) !== clave(orig.x, orig.z)) movidas++;
+      for (const r of J1.M.rojas.concat([libre])){ const g = L.suelo(J1.M, r.x, r.z, r.y, 0.3); if (!g.s || r.y - g.y > 6) { ok = false; mal(L.MUNDOS[n].id + ': algo quedó flotando en la vuelta ' + (vuelta + 1)); } }
+    }
+  }
+  if (ok && movidas === total) bien('en las vueltas nuevas la estrella del monumento siempre cambia de lugar (' + movidas + ' de ' + total + ') y todo queda donde se alcanza');
+  else if (ok) mal('en ' + (total - movidas) + ' vueltas la estrella quedó en el mismo lugar');
+  /* el reinicio: con todas las estrellas, al volver al castillo empieza la vuelta 2 */
+  const J = L.crearJuego({prog:{intro:true}}); L.empezar(J);
+  for (const m of L.MUNDOS) for (const e of m.estrellas) J.prog.estrellas[m.id + ':' + e.id] = true;
+  delete J.prog.estrellas['pradera:torre'];
+  L.cargarMundo(J, 1, null);
+  for (let i = 0; i < 30; i++) L.paso(J, 1/60, {});
+  const s = J.M.estrellas.find(e=>e.id === 'torre'); J.p.x = s.x; J.p.z = s.z; J.p.y = s.y - 1; J.p.vy = 0; J.p.enSuelo = false;
+  for (let i = 0; i < 10; i++) L.paso(J, 1/60, {});
+  const lista = J.prog.vueltaLista;
+  L.cargarMundo(J, 0, 1);
+  if (lista && J.prog.vuelta === 1 && L.cuentaEstrellas(J.prog) === 0 && J.dichos.includes('vuelta')) bien('con las 29 estrellas, al volver al castillo empieza la vuelta 2 (las estrellas se esconden otra vez)');
+  else mal('no empezó la vuelta 2 (lista: ' + lista + ', vuelta: ' + J.prog.vuelta + ', estrellas: ' + L.cuentaEstrellas(J.prog) + ')');
+}
+
+/* 4e) los súper poderes */
+{
+  const base = (n)=>{ const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); L.cargarMundo(J, n == null ? 1 : n, null); for (let i = 0; i < 30; i++) L.paso(J, 1/60, {}); J.M.enemigos.length = 0; return J; };
+  const poner = (J, tipo, dx, dz)=>{ const e = L.nuevoEnemigo(J, tipo || 'grunon', J.p.x + dx, J.p.z + dz, {}); e.vel = 0; J.M.enemigos.push(e); return e; };
+  /* clones: cada salto saca otro Fernando que lo sigue */
+  {
+    const J = base(); L.dar(J, 'clon');
+    for (let k = 0; k < 6; k++){ for (let i = 0; i < 40; i++) L.paso(J, 1/60, {salto: i < 8, y: 1, camA: 0}); }
+    const n = J.clones.length;
+    const e = poner(J, 'grunon', 0, 0); e.y = J.clones[n - 1].y; e.x = J.clones[n - 1].x; e.z = J.clones[n - 1].z;
+    L.paso(J, 1/60, {});
+    if (n === 4 && !e.vivo) bien('caja de clones: al saltar aparecen ' + n + ' Fernandos que lo siguen y vencen a los gruñones');
+    else mal('los clones no funcionan (clones: ' + n + ', gruñón vivo: ' + e.vivo + ')');
+    J.p.tPoder = 0.01; L.paso(J, 1/60, {}); L.paso(J, 1/60, {});
+    if (J.clones.length) mal('los clones no se van cuando se acaba el poder'); else bien('los clones se van cuando se acaba el poder');
+  }
+  /* súper vuelo: mucho más rápido que la gorra alada */
+  {
+    const vel = (poder)=>{ const J = base(); L.dar(J, poder); let vmax = 0;
+      for (let i = 0; i < 240; i++){ L.paso(J, 1/60, {salto: true, y: 1, camA: 0}); vmax = Math.max(vmax, Math.hypot(J.p.vx, J.p.vz)); } return vmax; };
+    const va = vel('alas'), vc = vel('cohete');
+    if (vc > va*2) bien('súper vuelo: ' + vc.toFixed(1) + ' m/s (la gorra alada va a ' + va.toFixed(1) + ')'); else mal('el súper vuelo no es más rápido (' + vc.toFixed(1) + ' vs ' + va.toFixed(1) + ')');
+  }
+  /* súper fuerza: el golpe al suelo tumba a todos alrededor */
+  {
+    const J = base(); L.dar(J, 'fuerza');
+    const es = [poner(J, 'grunon', 3, 0), poner(J, 'grunon', -3, 1), poner(J, 'grunon', 0, -4)];
+    L.paso(J, 1/60, {poder: true});
+    if (es.every(e=>!e.vivo)) bien('súper fuerza: un golpe tumba a los ' + es.length + ' gruñones de alrededor'); else mal('la súper fuerza no tumbó a todos');
+  }
+  /* ojos láser: el rayo vence al de enfrente */
+  {
+    const J = base(); L.dar(J, 'laser');
+    const e = poner(J, 'grunon', Math.sin(J.p.ang)*10, Math.cos(J.p.ang)*10);
+    J.eventos.length = 0; L.paso(J, 1/60, {poder: true});
+    if (!e.vivo && J.eventos.some(x=>x.tipo === 'laser')) bien('ojos láser: el rayo vence al gruñón de enfrente a 10 m'); else mal('el láser no le pegó al gruñón');
+  }
+  /* robot: no lo lastiman y sus misiles vencen */
+  {
+    const J = base(); L.dar(J, 'robot');
+    for (let i = 0; i < 30; i++) L.paso(J, 1/60, {});
+    const e = poner(J, 'grunon', Math.sin(J.p.ang)*8, Math.cos(J.p.ang)*8);
+    L.paso(J, 1/60, {poder: true});
+    for (let i = 0; i < 40; i++) L.paso(J, 1/60, {});
+    const golpe = poner(J, 'grunon', 0.3, 0); const inv0 = J.p.invul;
+    L.paso(J, 1/60, {});
+    if (!e.vivo && J.p.escala > 1.2 && J.p.invul === inv0) bien('Fernando robot: más grande, los gruñones no lo lastiman y sus misiles los vencen');
+    else mal('el robot no funciona (misil: ' + !e.vivo + ', escala: ' + J.p.escala.toFixed(2) + ')');
+  }
+  /* al entrar a cada cuadro: un súper poder nuevo, y van rotando */
+  {
+    const J = L.crearJuego({prog:{intro:true}}); L.empezar(J);
+    for (let i = 0; i < 10; i++) L.paso(J, 1/60, {});
+    const vistos = [];
+    for (let k = 0; k < 5; k++){
+      if (J.mundo !== 0){ L.irA(J, 0, J.mundo); for (let i = 0; i < 90; i++) L.paso(J, 1/60, {}); }
+      const po = J.M.portales.find(p=>p.mundo === 1);
+      J.p.x = po.x; J.p.z = po.z; J.p.y = po.y;
+      for (let i = 0; i < 90 && (J.mundo !== 1 || J.trans); i++) L.paso(J, 1/60, {});
+      vistos.push(J.p.poder);
+    }
+    if (new Set(vistos).size === 5 && vistos.every(v=>L.SUPER.includes(v))) bien('al entrar a cada cuadro le toca un súper poder nuevo: ' + vistos.join(', '));
+    else mal('los súper poderes de los cuadros no rotan: ' + vistos.join(', '));
+  }
 }
 
 /* 4c) Argentina: patear la pelota hasta el arco es gol y aparece la estrella */
