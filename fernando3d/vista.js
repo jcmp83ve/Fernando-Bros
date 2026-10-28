@@ -1405,7 +1405,7 @@ addEventListener('keydown', e=>{
   primerToque();
   if (e.code === 'Escape') salir();
   if (e.code === 'KeyT') irConSiguiente();
-  if (e.code === 'KeyH' && !e.repeat) empezarHablar();
+  if (e.code === 'KeyH' && !e.repeat){ if (hayAmigosEnSala()) empezarHablar(); else brindar('🎙️ Para hablar, primero entra a una sala con tus amigos (botón 👥)', '#ffe36e'); }
   if (e.code === 'KeyM'){ OPC.musica = !OPC.musica; if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0; guardar(); }
 });
 addEventListener('keyup', e=>{ teclas.delete(e.code); if (e.code === 'KeyH') terminarHablar(); });
@@ -1430,7 +1430,8 @@ function botonesTactiles(){
     amigos: RED && RED.hay && RED.hay() ? {x: 134, y: 30, r: 22, etiqueta: '👥', color: '#ffffff'} : {x: -999, y: -999, r: 0},
     ircon: hayAmigosListos() && J.fase === 'juego' ? {x: W - 52, y: 152, r: 30, etiqueta: '🚀', color: '#ffd23f'} : {x: -999, y: -999, r: 0},
     /* el walkie-talkie: grande y a la izquierda, sobre el lugar donde se mueve */
-    hablar: hayAmigosEnSala() && J.fase !== 'titulo' ? {x: r(74), y: Math.max(r(170), H - r(260)), r: r(48), etiqueta: '🎙️', color: '#ff3a6a'} : {x: -999, y: -999, r: 0},
+    /* siempre está mientras se juega; sin amigos conectados se ve apagadito y explica qué hacer */
+    hablar: J.fase !== 'titulo' && !UI.abierto ? {x: r(74), y: Math.max(r(170), H - r(260)), r: r(48), etiqueta: '🎙️', color: '#ff3a6a'} : {x: -999, y: -999, r: 0},
   };
 }
 const toques = new Map();
@@ -1443,6 +1444,12 @@ hud.addEventListener('pointerdown', e=>{
   primerToque();
   if (Math.hypot(e.clientX - B.ircon.x, e.clientY - B.ircon.y) < B.ircon.r*1.3){ irConSiguiente(); return; }
   if (B.hablar.r && Math.hypot(e.clientX - B.hablar.x, e.clientY - B.hablar.y) < B.hablar.r*1.25){
+    if (!hayAmigosEnSala()){
+      audio();
+      if (RED && RED.activa && RED.activa()) brindar('🎙️ Cuando entre un amigo a la sala ' + RED.sala + ' podrán hablar', '#ffe36e');
+      else { brindar('🎙️ Para hablar, primero entra a una sala con tus amigos', '#ffe36e'); abrirAmigos(); }
+      return;
+    }
     toques.set(e.pointerId, {tipo: 'hablar'}); try{ hud.setPointerCapture(e.pointerId); }catch(er){}
     empezarHablar(); return;
   }
@@ -1581,13 +1588,15 @@ function dibujarHud(dt){
   }
   if (B.ircon.r && !chico) texto('Ir con ' + (siguienteAmigo() || {}).nombre + ' (T)', W - 90, 152, 15, '#ffe36e', 'right');
   if (B.hablar.r && J.fase !== 'titulo'){
-    const b = B.hablar, on = WALKIE.estado === 'hablando', pulso = on ? 1 + Math.sin(tHud*10)*0.08 : 1;
+    const b = B.hablar, on = WALKIE.estado === 'hablando', pulso = on ? 1 + Math.sin(tHud*10)*0.08 : 1, listo = hayAmigosEnSala();
+    if (!listo) ctx.globalAlpha = 0.75;
     if (on){ ctx.fillStyle = 'rgba(255,58,106,0.35)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r*1.35*pulso, 0, TAU); ctx.fill(); }
     ctx.fillStyle = on ? '#ff3a6a' : 'rgba(20,14,50,0.6)'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r*pulso, 0, TAU); ctx.fill();
     ctx.lineWidth = 5; ctx.strokeStyle = on ? '#ffffff' : '#ff3a6a'; ctx.stroke();
     emoji(WALKIE.estado === 'abriendo' ? '⏳' : '🎙️', b.x, b.y + 2, b.r*0.95);
     pastilla(b.x - b.r*1.1, b.y + b.r + 6, b.r*2.2, 26, on ? 'rgba(255,58,106,0.9)' : 'rgba(20,14,50,0.6)');
     texto(on ? 'HABLANDO…' : (TACTIL.usado ? 'HABLA' : 'HABLA (H)'), b.x, b.y + b.r + 19, 14, '#ffffff', 'center');
+    ctx.globalAlpha = 1;
   }
   /* quién está hablando por el walkie-talkie: un 🔊 encima de su muñeco y un aviso arriba */
   const hablan = quienHabla();
