@@ -1265,9 +1265,11 @@ const musica = (function(){
         if (!cancion.el){
           cancion.el = new Audio(); cancion.el.loop = true; cancion.el.preload = 'auto';
           cancion.el.addEventListener('error', ()=>{ cancion.fallo = true; });
+          /* por el audio del juego: en iPhone el volumen de un <audio> no se puede cambiar */
+          try{ const src = AC.createMediaElementSource(cancion.el); cancion.g = AC.createGain(); cancion.g.gain.value = 0.5; src.connect(cancion.g); cancion.g.connect(AC.destination); }catch(e){ cancion.g = null; }
         }
         if (cancion.src !== archivo){ cancion.src = archivo; cancion.el.src = archivo; }
-        cancion.el.volume = 0.5;
+        cancion.el.volume = cancion.g ? 1 : 0.5*DUCK.nivel;
         if (cancion.el.paused) cancion.el.play().catch(()=>{});
         return;
       }
@@ -1599,9 +1601,9 @@ function dibujarHud(dt){
     ctx.globalAlpha = 1;
   }
   /* quién está hablando por el walkie-talkie: un 🔊 encima de su muñeco y un aviso arriba */
+  bajarJuego();
   const hablan = quienHabla();
   if (hablan.length){
-    if (busMusica && OPC.musica && WALKIE.estado !== 'hablando') busMusica.gain.value = 0.1;
     const txt = '🔊 ' + hablan.map(h=>h.nombre).join(' y ') + (hablan.length > 1 ? ' hablan' : ' está hablando');
     pastilla(W/2 - 150, 58, 300, 32, 'rgba(255,58,106,0.85)'); texto(txt, W/2, 75, 16, '#ffffff', 'center');
     for (const h of hablan){
@@ -1609,7 +1611,7 @@ function dibujarHud(dt){
       _v3.set(h.r.act.x, h.r.act.y + 2.9, h.r.act.z).project(camara);
       if (_v3.z < 1) emoji('🔊', (_v3.x + 1)/2*W, (1 - _v3.y)/2*H, 28 + Math.sin(tHud*12)*3);
     }
-  } else if (busMusica && WALKIE.estado !== 'hablando' && busMusica.gain.value < 0.3 && OPC.musica) busMusica.gain.value = 0.32;
+  }
   if (RED && RED.activa && RED.activa()){
     const n = [...RED.remotos.values()].filter(r=>r.listo).length;
     const et = '👥 Sala ' + RED.sala + (n ? ' · ' + n + (n === 1 ? ' amigo' : ' amigos') : ' · esperando…');
@@ -1903,7 +1905,6 @@ async function empezarHablar(){
   WALKIE.id = (WALKIE.id + 1) % 1e6; WALKIE.n = 0; WALKIE.muestras = []; WALKIE.frac = 0; WALKIE.acc = 0; WALKIE.cuenta = 0;
   WALKIE.t0 = performance.now(); WALKIE.estado = 'hablando';
   pipVoz(AC.currentTime, true);
-  if (busMusica && OPC.musica) busMusica.gain.value = 0.08;
 }
 function grabarVoz(ev){
   if (WALKIE.estado !== 'hablando') return;
@@ -1926,7 +1927,6 @@ function terminarHablar(){
   mandarVoz(true);
   WALKIE.estado = 'listo'; WALKIE.ultUso = performance.now();
   pipVoz(AC.currentTime, false);
-  if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0;
 }
 /* el micrófono se apaga solo si no se usa por un rato (así no queda la lucecita prendida) */
 setInterval(()=>{
@@ -1956,6 +1956,24 @@ function oirVoz(r, v){
   }
   q.hasta = q.prox; q.nombre = r.nombre;
   if (v.fin) pipVoz(q.prox + 0.02, false);
+}
+/* mientras alguien habla por el walkie-talkie (uno mismo o un amigo) todo el juego baja al 15 %:
+   música, sonidos y la canción del castillo; si un personaje empieza a hablar, se pausa y sigue después */
+const DUCK = {nivel: 1, t: 0, vozPausada: null, ttsPausado: false};
+function bajarJuego(){
+  const ahora = performance.now(), dt = DUCK.t ? Math.min(0.1, (ahora - DUCK.t)/1000) : 0.016; DUCK.t = ahora;
+  const walkie = WALKIE.estado === 'hablando' || quienHabla().length > 0;
+  DUCK.nivel += ((walkie ? 0.15 : 1) - DUCK.nivel)*Math.min(1, dt*(walkie ? 12 : 3));
+  if (maestro) maestro.gain.value = (OPC.sonido ? 0.55 : 0)*DUCK.nivel;
+  if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0;
+  if (cancion.g) cancion.g.gain.value = 0.5*DUCK.nivel; else if (cancion.el) cancion.el.volume = 0.5*DUCK.nivel;
+  if (walkie){
+    if (vozSonando && !vozSonando.paused){ try{ vozSonando.pause(); }catch(e){} DUCK.vozPausada = vozSonando; }
+    try{ if (speechSynthesis.speaking && !speechSynthesis.paused){ speechSynthesis.pause(); DUCK.ttsPausado = true; } }catch(e){}
+  } else {
+    if (DUCK.vozPausada){ const v = DUCK.vozPausada; DUCK.vozPausada = null; if (v === vozSonando) v.play().catch(()=>{}); }
+    if (DUCK.ttsPausado){ DUCK.ttsPausado = false; try{ speechSynthesis.resume(); }catch(e){} }
+  }
 }
 function quienHabla(){
   if (!AC) return [];
@@ -2219,7 +2237,7 @@ aplicarCalidad();
 construirMundo();
 cargarActivos();
 if (cargando) cargando.style.display = 'none';
-window.FER3D = {J: ()=>J, walkie: WALKIE, hablar: empezarHablar, callar: terminarHablar, quienHabla, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
+window.FER3D = {J: ()=>J, walkie: WALKIE, duck: DUCK, hablar: empezarHablar, callar: terminarHablar, quienHabla, camara, escena, renderer, empezar: primerToque, cal: CAL, calidad(n){ CAL.nivel = n; CAL.bajadas = 9; aplicarCalidad(); }, sol, BLOOM, cam,
   RED, UI, REMOTOS, cambiarPj, irCon, abrirAmigos, opc: OPC, cancion};
 if (RED && RED.pendiente){
   /* vino con ?sala=ABCD (el enlace que mandó un amigo): se entra solo */

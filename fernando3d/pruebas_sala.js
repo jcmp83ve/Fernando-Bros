@@ -92,9 +92,11 @@ const remoto = pg=>pg.evaluate(()=>{ const r = [...F3D_RED.remotos.values()][0];
     /* el walkie-talkie: el anfitrión habla 1,6 s (micrófono de prueba) y al invitado le llega */
     if (await H.evaluate(()=>typeof FER3D.hablar === 'function')){
     await H.evaluate(()=>FER3D.hablar());
+    if (await espera(H, ()=>FER3D.duck.nivel < 0.5, 8000, 'al hablar, el juego del que habla baja el volumen')) bien('al hablar por el walkie-talkie, el sonido del juego baja');
     await H.waitForTimeout(1600);
     await H.evaluate(()=>FER3D.callar());
     if (await espera(G, ()=>{ const q = [...FER3D.walkie.rx.values()][0]; return q && q.hasta > 0.8; }, 15000, 'al invitado le llegó la voz del anfitrión'))
+      if (await espera(G, ()=>FER3D.duck.nivel < 0.5, 8000, 'mientras escucha, el juego del invitado baja el volumen')) bien('mientras escucha al amigo, el sonido del juego también baja');
       bien('walkie-talkie: al invitado le llegó la voz de Fernando (' + (await G.evaluate(()=>{ const q = [...FER3D.walkie.rx.values()][0]; return q.hasta.toFixed(1); })) + ' s de audio en fila)');
     }
     const visible = await G.evaluate(()=>{ const o = [...FER3D.REMOTOS.values()][0]; return !!(o && o.m.g.visible); });

@@ -97,7 +97,9 @@ Sin cuentas ni pagos. Si la parte de red no carga, el juego se juega solo igual.
   clones y los goles del amigo también se ven.
 - **🎙️ Walkie-talkie**: el botón grande de la izquierda (o la tecla **H**). Se deja apretado,
   se habla y se suelta; la voz llega mientras uno todavía habla, con su pitido de radio. Sobre el
-  amigo que habla aparece un 🔊. La primera vez el navegador pide permiso para el micrófono.
+  amigo que habla aparece un 🔊 y todo el sonido del juego baja mientras alguien habla (si un
+  personaje estaba hablando, se pausa y sigue después). La primera vez el navegador pide permiso
+  para el micrófono.
 
 ## Hecho para un niño de seis años
 
