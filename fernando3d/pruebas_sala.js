@@ -83,7 +83,7 @@ const remoto = pg=>pg.evaluate(()=>{ const r = [...F3D_RED.remotos.values()][0];
     const r1 = await remoto(H);
     if (r1 && r1.pj === 'lucca') bien('el anfitrión ve a', r1.nombre, 'con su gorra verde'); else mal('el anfitrión no ve a Lucca: ' + JSON.stringify(r1));
     /* el anfitrión se mueve */
-    await H.evaluate(()=>{ const J = FER3D.J(); J.p.x += 6; J.p.z -= 4; });
+    await H.evaluate(()=>{ const J = FER3D.J(); J.p.x = 6; J.p.z = 10; J.p.vx = J.p.vz = 0;   /* fijo: al aparecer en el mismo lugar se empujan un poquito */ });
     await espera(G, ()=>{ const r = [...F3D_RED.remotos.values()][0]; return r && Math.abs(r.obj.x - 6) < 0.5; }, 15000, 'el invitado ve moverse al anfitrión');
     bien('el invitado ve moverse al anfitrión:', JSON.stringify(await remoto(G)));
     const fl = await fluidez(H, G);
