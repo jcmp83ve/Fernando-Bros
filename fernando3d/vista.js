@@ -559,6 +559,7 @@ function construirMundo(){
     W0.amigos.push({a, g});
   }
   escena.add(grupo);
+  prepararMinimapa(M);
   /* los enemigos y las cajas se crean al vuelo (puede haber nuevos) */
   sincronizarEnemigos(); sincronizarCajas();
   cargaVista = J.cargas;
@@ -876,6 +877,83 @@ function moverCamara(dt, ctl){
   sol.target.position.set(p.x, p.y, p.z);
   matAgua.uniforms.camPos.value.copy(camara.position);
   agua.position.x = Math.round(camara.position.x/50)*50; agua.position.z = Math.round(camara.position.z/50)*50;
+}
+
+/* ---------------- el minimapa (en los mundos grandes, como el Reino Pichunite) ----------------
+   La isla se pinta una sola vez al cargar el mundo; encima, cada cuadro: Fernando (flecha), las
+   estrellas que faltan, las monedas rojas, las zonas pendientes, el jefe y los amigos.
+   El norte va siempre arriba (hacia donde se mira al entrar). Tocándolo se agranda. */
+const MINI = {lienzo: null, cx: 0, cz: 0, esc: 1, grande: false, mundo: -1};
+const COLOR_MAPA = {pasto:'#6ac84a', arena:'#e8d090', nube:'#ffffff', madera:'#a8743a', cajaMadera:'#c8883a', tronco:'#7a4a22', hojas:'#3aa83a',
+  piedraF:'#a8a094', torreT:'#8aa8d8', casaF1:'#ff9a3a', casaF2:'#5ad8a0', casaF3:'#b07aff', reloj:'#d8c8a8', bus:'#3a8aff', barco:'#8a4a1a', resorte:'#ff5ab0'};
+function prepararMinimapa(M){
+  MINI.lienzo = null; MINI.grande = false;
+  if (!M.def.minimapa) return;
+  const c = M.caja, ext = Math.max(c.x1 - c.x0, c.z1 - c.z0) + 16;
+  MINI.cx = (c.x0 + c.x1)/2; MINI.cz = (c.z0 + c.z1)/2; MINI.esc = 256/ext;
+  const lz = document.createElement('canvas'); lz.width = lz.height = 256;
+  const x = lz.getContext('2d');
+  x.fillStyle = '#3a8ad8'; x.fillRect(0, 0, 256, 256);
+  const aMapa = (wx, wz)=>[128 + (wx - MINI.cx)*MINI.esc, 128 + (wz - MINI.cz)*MINI.esc];
+  const piezas = M.solidos.filter(s=>!s.tubo).slice().sort((a, b)=>a.y1 - b.y1);
+  for (const s of piezas){
+    const base = COLOR_MAPA[s.mat] || '#b8b0a0';
+    /* lo más alto se ve un poquito más claro */
+    x.fillStyle = base; x.globalAlpha = 1;
+    const [px, pz] = aMapa(s.x, s.z);
+    if (s.t === 'cil'){ x.beginPath(); x.arc(px, pz, Math.max(1.5, s.r*MINI.esc), 0, TAU); x.fill(); }
+    else x.fillRect(px - s.sx*MINI.esc, pz - s.sz*MINI.esc, s.sx*2*MINI.esc, s.sz*2*MINI.esc);
+    if (s.y1 > 1){ x.fillStyle = 'rgba(255,255,255,' + Math.min(0.35, s.y1*0.03) + ')'; if (s.t === 'cil'){ x.beginPath(); x.arc(px, pz, Math.max(1.5, s.r*MINI.esc), 0, TAU); x.fill(); } else x.fillRect(px - s.sx*MINI.esc, pz - s.sz*MINI.esc, s.sx*2*MINI.esc, s.sz*2*MINI.esc); }
+  }
+  for (const p of M.def.pisos || []){ const [px, pz] = aMapa(p.x, p.z); x.fillStyle = 'rgba(255,240,200,0.45)'; x.fillRect(px - p.sx*MINI.esc, pz - p.sz*MINI.esc, p.sx*2*MINI.esc, p.sz*2*MINI.esc); }
+  MINI.lienzo = lz; MINI.mundo = J.mundo;
+}
+function miniRect(){
+  const chico = Math.min(W, H) < 500;
+  if (MINI.grande){ const r = Math.min(W, H)*0.42; return {x: W/2, y: H/2, r}; }
+  const r = chico ? 58 : 72;
+  return {x: W - r - 14, y: 132 + r, r};
+}
+function tocaMinimapa(px, py){
+  if (!MINI.lienzo || J.fase !== 'juego') return false;
+  const m = miniRect();
+  if (Math.hypot(px - m.x, py - m.y) < m.r || MINI.grande){ MINI.grande = !MINI.grande; return true; }
+  return false;
+}
+function dibujarMinimapa(){
+  if (!MINI.lienzo || MINI.mundo !== J.mundo || J.fase !== 'juego') return;
+  const M = J.M, p = J.p, m = miniRect(), k = m.r*2/256;
+  const aPant = (wx, wz)=>[m.x + (wx - MINI.cx)*MINI.esc*k, m.y + (wz - MINI.cz)*MINI.esc*k];
+  if (MINI.grande){ ctx.fillStyle = 'rgba(10,8,30,0.55)'; ctx.fillRect(0, 0, W, H); }
+  ctx.save();
+  ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, TAU); ctx.clip();
+  ctx.drawImage(MINI.lienzo, m.x - m.r, m.y - m.r, m.r*2, m.r*2);
+  const ic = MINI.grande ? 1.6 : 1;
+  /* lo que falta: estrellas, monedas rojas, zonas y el jefe */
+  for (const s of M.estrellas){
+    if (s.tomada || s.ya) continue;
+    const [x, y] = aPant(s.x, s.z);
+    if (s.visible) estrellita(x, y, 6*ic, '#ffd23f', 0);
+    else if (s.tipo === 'zona'){ const em = {tiro:'🎯', llama:'🦙'}[s.zona] || '⚔️'; emoji(em, x, y, 13*ic); }
+  }
+  for (const r of M.rojas){ if (!r.vivo) continue; const [x, y] = aPant(r.x, r.z); ctx.fillStyle = '#ff3a4a'; ctx.beginPath(); ctx.arc(x, y, 2.6*ic, 0, TAU); ctx.fill(); }
+  if (M.jefe && M.jefe.vivo){ const [x, y] = aPant(M.jefe.x, M.jefe.z); emoji('👑', x, y, 14*ic); }
+  /* los amigos de este mundo */
+  if (RED && RED.remotos) for (const r of RED.remotos.values()){
+    if (!r.listo || !r.obj || r.obj.nv !== J.mundo) continue;
+    const [x, y] = aPant(r.act.x, r.act.z), P = F.PJS[r.pj] || F.PJS.fernando;
+    ctx.fillStyle = P.gorra; ctx.beginPath(); ctx.arc(x, y, 4*ic, 0, TAU); ctx.fill(); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5; ctx.stroke();
+  }
+  /* a dónde lleva la flecha amarilla */
+  if (J.guia){ const [x, y] = aPant(J.guia.x, J.guia.z); ctx.strokeStyle = '#ffe36e'; ctx.lineWidth = 2; ctx.globalAlpha = 0.5 + Math.sin(tHud*6)*0.4; ctx.beginPath(); ctx.arc(x, y, (7 + Math.sin(tHud*6)*2)*ic, 0, TAU); ctx.stroke(); ctx.globalAlpha = 1; }
+  /* Fernando: una flecha que apunta a donde mira */
+  const [fx, fy] = aPant(p.x, p.z), a = Math.atan2(Math.sin(p.ang), Math.cos(p.ang)), t = 7*ic;
+  const dx = Math.sin(a), dy = Math.cos(a);
+  ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#e8262a'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(fx + dx*t*1.3, fy + dy*t*1.3); ctx.lineTo(fx - dy*t*0.8 - dx*t*0.7, fy + dx*t*0.8 - dy*t*0.7); ctx.lineTo(fx - dx*t*0.3, fy - dy*t*0.3); ctx.lineTo(fx + dy*t*0.8 - dx*t*0.7, fy - dx*t*0.8 - dy*t*0.7); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  ctx.lineWidth = 4; ctx.strokeStyle = '#ffd23f'; ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, TAU); ctx.stroke();
+  if (MINI.grande){ texto('Toca para cerrar el mapa', m.x, m.y + m.r + 24, 16, '#ffffff', 'center'); texto('★ ' + M.estrellas.filter(s=>s.tomada || s.ya).length + ' de ' + M.estrellas.length + ' estrellas de este mundo', m.x, m.y - m.r - 18, 18, '#ffe36e', 'center'); }
 }
 
 /* ---------------- los súper poderes que se ven ---------------- */
@@ -1299,8 +1377,31 @@ const TEMAS_MUS = {
   jefe:     {bpm: 168, mel:[69,72,76,72, 69,72,77,72, 69,72,76,72, 68,71,76,71, 69,72,76,79, 77,76,74,72, 71,72,74,71, 69,0,69,0], baj:[45,45,52,45, 45,45,53,45, 45,45,52,45, 44,44,52,44]},
   final:    {bpm: 150, mel:[72,0,76,79, 84,0,79,84, 88,86,84,79, 81,0,0,0, 77,81,84,81, 79,84,88,84, 86,84,83,86, 84,0,0,0], baj:[48,55,52,55, 53,57,48,55, 53,57,48,52, 55,55,48,48]},
 };
-const CANCIONES = {castillo: 'musica_castillo.mp3'};
-const cancion = {el: null, src: '', fallo: false};
+/* la canción de Fernando suena en el castillo y también en el Reino Pichunite */
+const CANCIONES = {castillo: 'musica_castillo.mp3', reino: 'musica_castillo.mp3'};
+const cancion = {el: null, src: '', fallo: false, despierta: false};
+function crearCancion(){
+  if (cancion.el || !AC) return cancion.el;
+  cancion.el = new Audio(); cancion.el.loop = true; cancion.el.preload = 'auto';
+  cancion.el.addEventListener('error', ()=>{ cancion.fallo = true; });
+  /* por el audio del juego: en iPhone el volumen de un <audio> no se puede cambiar */
+  try{ const src = AC.createMediaElementSource(cancion.el); cancion.g = AC.createGain(); cancion.g.gain.value = 0.5; src.connect(cancion.g); cancion.g.connect(AC.destination); }catch(e){ cancion.g = null; }
+  return cancion.el;
+}
+/* En iPhone una canción solo puede empezar a sonar dentro de un toque de la pantalla. Por eso, en
+   los primeros toques se la «despierta» (se le da play ahí mismo); desde ese momento el juego la
+   puede prender y apagar cuando quiera. */
+function despertarCancion(){
+  if (cancion.despierta || cancion.fallo || !AC) return;
+  const el = crearCancion(); if (!el) return;
+  const archivo = CANCIONES[musica.nombre()] || CANCIONES.castillo;
+  if (!cancion.src){ cancion.src = archivo; el.src = archivo; }
+  try{
+    const pr = el.play();
+    const listo = ()=>{ cancion.despierta = true; if (!CANCIONES[musica.nombre()] || !OPC.musica || !OPC.sonido) el.pause(); };
+    if (pr && pr.then) pr.then(listo).catch(()=>{}); else listo();
+  }catch(e){}
+}
 const musica = (function(){
   let actual = null, paso = 0, prox = 0;
   return {
@@ -1314,12 +1415,7 @@ const musica = (function(){
       if (!AC || !actual || !OPC.musica) return;
       if (usarArchivo){
         if (!OPC.sonido || document.hidden) return;
-        if (!cancion.el){
-          cancion.el = new Audio(); cancion.el.loop = true; cancion.el.preload = 'auto';
-          cancion.el.addEventListener('error', ()=>{ cancion.fallo = true; });
-          /* por el audio del juego: en iPhone el volumen de un <audio> no se puede cambiar */
-          try{ const src = AC.createMediaElementSource(cancion.el); cancion.g = AC.createGain(); cancion.g.gain.value = 0.5; src.connect(cancion.g); cancion.g.connect(AC.destination); }catch(e){ cancion.g = null; }
-        }
+        crearCancion();
         if (cancion.src !== archivo){ cancion.src = archivo; cancion.el.src = archivo; }
         cancion.el.volume = cancion.g ? 1 : 0.5*DUCK.nivel;
         if (cancion.el.paused) cancion.el.play().catch(()=>{});
@@ -1470,13 +1566,17 @@ addEventListener('keydown', e=>{
   primerToque();
   if (e.code === 'Escape') salir();
   if (e.code === 'KeyT') irConSiguiente();
+  if (e.code === 'Tab' && MINI.lienzo) MINI.grande = !MINI.grande;
   if (e.code === 'KeyH' && !e.repeat){ if (hayAmigosEnSala()) empezarHablar(); else brindar('🎙️ Para hablar, primero entra a una sala con tus amigos (botón 👥)', '#ffe36e'); }
   if (e.code === 'KeyM'){ OPC.musica = !OPC.musica; if (busMusica) busMusica.gain.value = OPC.musica ? 0.32 : 0; guardar(); }
 });
 addEventListener('keyup', e=>{ teclas.delete(e.code); if (e.code === 'KeyH') terminarHablar(); });
 addEventListener('blur', ()=>teclas.clear());
+/* en algunos iPhone el sonido solo se puede soltar al levantar el dedo (o en un clic) */
+for (const ev of ['touchend', 'click']) addEventListener(ev, ()=>{ if (tocado){ audio(); despertarCancion(); } }, {passive: true});
 function primerToque(){
   audio();
+  despertarCancion();
   if (!tocado){ tocado = true; }
   if (J.fase === 'titulo'){ F.empezar(J); musica.tema(TEMAS[J.M.def.tema].musica); }
 }
@@ -1493,7 +1593,7 @@ function botonesTactiles(){
     salir: window.SIN_SALIR ? {x: -999, y: -999, r: 0} : {x: 30, y: 30, r: 22, etiqueta: '✕', color: '#ffffff'},
     sonido: {x: 82, y: 30, r: 22, etiqueta: '🔊', color: '#ffffff'},
     amigos: RED && RED.hay && RED.hay() ? {x: 134, y: 30, r: 22, etiqueta: '👥', color: '#ffffff'} : {x: -999, y: -999, r: 0},
-    ircon: hayAmigosListos() && J.fase === 'juego' ? {x: W - 52, y: 152, r: 30, etiqueta: '🚀', color: '#ffd23f'} : {x: -999, y: -999, r: 0},
+    ircon: hayAmigosListos() && J.fase === 'juego' ? {x: W - 52, y: MINI.lienzo ? 330 : 152, r: 30, etiqueta: '🚀', color: '#ffd23f'} : {x: -999, y: -999, r: 0},
     /* el walkie-talkie: grande y a la izquierda, sobre el lugar donde se mueve */
     /* siempre está mientras se juega; sin amigos conectados se ve apagadito y explica qué hacer */
     hablar: J.fase !== 'titulo' && !UI.abierto ? {x: r(74), y: Math.max(r(170), H - r(260)), r: r(48), etiqueta: '🎙️', color: '#ff3a6a'} : {x: -999, y: -999, r: 0},
@@ -1508,6 +1608,7 @@ hud.addEventListener('pointerdown', e=>{
   if (Math.hypot(e.clientX - B.amigos.x, e.clientY - B.amigos.y) < B.amigos.r*1.35){ audio(); abrirAmigos(); return; }
   primerToque();
   if (Math.hypot(e.clientX - B.ircon.x, e.clientY - B.ircon.y) < B.ircon.r*1.3){ irConSiguiente(); return; }
+  if (tocaMinimapa(e.clientX, e.clientY)) return;
   if (B.hablar.r && Math.hypot(e.clientX - B.hablar.x, e.clientY - B.hablar.y) < B.hablar.r*1.25){
     if (!hayAmigosEnSala()){
       audio();
@@ -1651,7 +1752,7 @@ function dibujarHud(dt){
     else if (k === 'sonido') emoji(OPC.sonido ? '🔊' : '🔇', b.x, b.y + 1, 20);
     else emoji(b.etiqueta, b.x, b.y + 1, b.r*0.95);
   }
-  if (B.ircon.r && !chico) texto('Ir con ' + (siguienteAmigo() || {}).nombre + ' (T)', W - 90, 152, 15, '#ffe36e', 'right');
+  if (B.ircon.r && !chico) texto('Ir con ' + (siguienteAmigo() || {}).nombre + ' (T)', W - 90, B.ircon.y, 15, '#ffe36e', 'right');
   if (B.hablar.r && J.fase !== 'titulo'){
     const b = B.hablar, on = WALKIE.estado === 'hablando', pulso = on ? 1 + Math.sin(tHud*10)*0.08 : 1, listo = hayAmigosEnSala();
     if (!listo) ctx.globalAlpha = 0.75;
@@ -1791,6 +1892,7 @@ function dibujarHud(dt){
       ctx.globalAlpha = 1;
     }
   }
+  if (!MINI.grande) dibujarMinimapa();
   /* botones táctiles */
   if (TACTIL.usado && J.fase === 'juego'){
     for (const k of ['salto', 'poder', 'ayuda']){
@@ -1819,7 +1921,7 @@ function dibujarHud(dt){
   } else if (J.fase === 'juego' && tHud < 40 && !TACTIL.usado){
     ctx.globalAlpha = clamp((40 - tHud)/5, 0, 0.85);
     pastilla(12, H - 46, 660, 34, 'rgba(20,14,50,0.55)');
-    texto('Flechas: correr · Espacio: saltar · X: poder · C: ¡Tío Juan! · Q/E: cámara', 26, H - 29, 16, '#ffffff');
+    texto('Flechas: correr · Espacio: saltar · X: poder · C: ¡Tío Juan! · Q/E: cámara' + (MINI.lienzo ? ' · Tab: mapa' : ''), 26, H - 29, 16, '#ffffff');
     ctx.globalAlpha = 1;
   }
   /* el círculo que se cierra al cambiar de mundo (como en los juegos clásicos) */
@@ -1830,6 +1932,7 @@ function dibujarHud(dt){
     ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(W/2, H/2, Math.max(0, r), 0, TAU, true); ctx.fill();
     if (t < 0.6) estrellita(W/2, H/2, Math.max(0, r*0.25), '#ffd23f', t*6);
   }
+  if (MINI.grande) dibujarMinimapa();          /* el mapa grande va encima de los botones */
   dibujarBrindis(dt);
   dibujarAmigos();
 }
