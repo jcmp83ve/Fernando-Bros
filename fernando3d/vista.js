@@ -129,6 +129,7 @@ const TEMAS = {
   italia:   {top:'#3a8cff', hor:'#ffe0c0', bot:'#e8c8a0', sol:'#fff0d0', nubes:0.35, niebla:['#ffe8d0', 80, 330], hemi:['#fff0e0', '#7a8a4a', 0.72], solI:2.4, musica:'italia', montes:'#8aa060'},
   china:    {top:'#5a9ad8', hor:'#f0e0e8', bot:'#c8c0d0', sol:'#fff0e8', nubes:0.6, niebla:['#ecdde6', 60, 280], hemi:['#f8eef4', '#6a8a5a', 0.75], solI:2.1, musica:'china', montes:'#7aa08a'},
   argentina:{top:'#3a9aff', hor:'#d8f0ff', bot:'#9ad0f0', sol:'#fff6d8', nubes:0.5, niebla:['#d8f0ff', 80, 330], hemi:['#e8f4ff', '#4a8a3a', 0.72], solI:2.4, musica:'argentina', montes:'#5a9a6a'},
+  reino:    {top:'#2a7aff', hor:'#c8f0ff', bot:'#8ad0f0', sol:'#fff6e0', nubes:0.65, niebla:['#c8f0ff', 90, 380], hemi:['#e8f6ff', '#5a9a3a', 0.75], solI:2.5, musica:'reino', montes:'#6aa86a'},
   lava:     {top:'#12040a', hor:'#a03010', bot:'#3a0a04', sol:'#ff9a5a', nubes:0.35, niebla:['#6a1c0c', 35, 170], hemi:['#ff9a6a', '#3a0a04', 0.55], solI:1.6, musica:'lava', montes:'#2a1418'},
 };
 function colorV(hex){ const c = new THREE.Color(hex); return new THREE.Vector3(c.r, c.g, c.b); }
@@ -293,7 +294,7 @@ function prepararAmbiente(tema){
   const t = {nieve:['nieve', '#ffffff', 0.22, 0.9], lava:['brasa', '#ff7a2a', 0.2, 1], playa:['brillo', '#fff6c0', 0.12, 0.5], nubes:['brillo', '#ffd0f0', 0.16, 0.7],
              pradera:['polen', '#fff6a0', 0.1, 0.6], castillo:['polen', '#fff6a0', 0.1, 0.6],
              maracaibo:['polen', '#fff6a0', 0.1, 0.6], usa:['brillo', '#ffffff', 0.1, 0.4], italia:['polen', '#fff6c0', 0.1, 0.5],
-             china:['nieve', '#ffb0d0', 0.2, 0.9], argentina:['nieve', '#cfeeff', 0.16, 0.8]}[tema] || ['polen', '#fff6a0', 0.1, 0.6];
+             china:['nieve', '#ffb0d0', 0.2, 0.9], argentina:['nieve', '#cfeeff', 0.16, 0.8], reino:['brillo', '#e0c0ff', 0.14, 0.6]}[tema] || ['polen', '#fff6a0', 0.1, 0.6];
   AMB.tipo = t[0]; AMB.mat.color.set(t[1]); AMB.mat.size = t[2]; AMB.mat.opacity = t[3];
 }
 function moverAmbiente(dt, t){
@@ -341,6 +342,17 @@ const flecha = new THREE.Group();
 escena.add(flecha);
 /* bolas de fuego */
 const bolasM = [];
+/* cómo se ve lo que sale de cada arma de juguete */
+const ASPECTO_ARMA = {
+  agua:     {color:'#7ad8ff', tam:0.16, estela:0.8, colores:['#bfeaff', '#7ad8ff'], grav:3},
+  burbujas: {color:'#e8f6ff', tam:0.55, estela:0.15, colores:['#ffffff', '#ffb0e0'], grav:-0.5, transp:true},
+  dardos:   {color:'#ff8a1a', tam:0.12, estela:0.4, colores:['#ffffff', '#ff8a1a'], grav:0},
+  confeti:  {color:'#ff5ab0', tam:0.3, estela:1, colores:['#ff5ab0', '#ffd23f', '#5ad8ff', '#7ae05a'], grav:2},
+  globos:   {color:'#ff3a3a', tam:0.32, estela:0.1, colores:['#ffffff'], grav:0},
+};
+const FUEGOS = [];
+function fuegoMesh(i){ if (!FUEGOS[i]){ FUEGOS[i] = MOD.fuegoMalo ? MOD.fuegoMalo() : new THREE.Group(); escena.add(FUEGOS[i]); } return FUEGOS[i]; }
+const burbujaEscudo = {t: 0, m: (()=>{ const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({color:'#5ab8ff', transparent:true, opacity:0.4, depthWrite:false})); m.visible = false; escena.add(m); return m; })()};
 function bolaMesh(i){
   if (!bolasM[i]){
     const g = new THREE.Group();
@@ -477,7 +489,7 @@ function construirMundo(){
   if (MUNDO){ escena.remove(MUNDO.grupo); limpiar(MUNDO.grupo); }
   const M = J.M, def = M.def, T = TEMAS[def.tema];
   const grupo = new THREE.Group();
-  const W0 = {grupo, solidos: [], monedas: [], rojas: [], estrellas: [], pelotas: [], animPais: [], rayo: null, cajas: new Map(), enemigos: new Map(), portales: [], amigos: [], resortes: [], giran: [], antorchas: [], globos: [], ocluyen: [], tubo: null};
+  const W0 = {grupo, solidos: [], monedas: [], rojas: [], estrellas: [], pelotas: [], pociones: [], animPais: [], rayo: null, cajas: new Map(), enemigos: new Map(), portales: [], amigos: [], resortes: [], giran: [], antorchas: [], globos: [], ocluyen: [], tubo: null};
   MUNDO = W0;
   prepararCielo(def.tema);
   prepararAmbiente(def.tema);
@@ -509,6 +521,8 @@ function construirMundo(){
   }
   /* los pisos pintados: calles, plazas y la cancha */
   if (MOD.piso) for (const p of (def.pisos || [])) grupo.add(MOD.piso(p));
+  /* las pociones de escudo */
+  W0.pociones = MOD.pocion ? (M.pociones || []).map(q=>{ const g = MOD.pocion(); g.position.set(q.x, q.y - 0.4, q.z); grupo.add(g); return {q, g}; }) : [];
   /* la pelota de fútbol */
   W0.pelotas = (M.pelotas || []).map(b=>{ const g = MOD.pelota(); grupo.add(g); return {b, g, giro: b.giro}; });
   /* pasto que se mueve con el viento */
@@ -871,7 +885,13 @@ function vestirSuper(f){
   const robot = MOD.crearRobot(); robot.g.visible = false; f.g.add(robot.g);
   const mochila = MOD.mochilaCohete(); mochila.position.set(0, 0.95, -0.3); mochila.visible = false; piv.add(mochila);
   const ojos = MOD.ojosLaser(); ojos.visible = false; piv.add(ojos);
-  return (f.sup = {piv, robot, mochila, ojos});
+  const mano = new THREE.Group(); mano.position.set(-0.36, 0.82, 0.22); piv.add(mano);
+  const plomero = MOD.trajePlomero ? MOD.trajePlomero() : new THREE.Group(); plomero.visible = false; piv.add(plomero);
+  const planeador = new THREE.Group(); planeador.visible = false; f.g.add(planeador);
+  const tela = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 1.4, 16, 1, true, -Math.PI/2.4, Math.PI/1.2), new THREE.MeshStandardMaterial({map: MOD.lienzo(128, 32, (x, w, h)=>{ ['#ff5ab0', '#ffd23f', '#5ad8ff', '#7ae05a', '#b07aff'].forEach((c, i)=>{ x.fillStyle = c; x.fillRect(i*w/5, 0, w/5 + 1, h); }); }, false), side: THREE.DoubleSide, roughness:0.6}));
+  tela.rotation.z = Math.PI/2; tela.position.y = 3.2; planeador.add(tela);
+  for (const lado of [1, -1]){ const c = MOD.palo(MOD.std('#ffffff'), 0.015, 0.015, 2.2); c.position.set(0.7*lado, 2.1, 0); c.rotation.z = 0.35*lado; planeador.add(c); }
+  return (f.sup = {piv, robot, mochila, ojos, mano, arma: '', plomero, planeador});
 }
 function animarSuper(f, poder, t, fase, k, suelo, vuela){
   const s = vestirSuper(f), robot = poder === 'robot';
@@ -890,7 +910,15 @@ function animarSuper(f, poder, t, fase, k, suelo, vuela){
   if (s.mochila.visible) s.mochila.userData.llamas.forEach((l, i)=>{ l.scale.set(0.09, (0.35 + Math.sin(t*40 + i*2)*0.08)*(vuela ? 1.8 : 0.5), 0.09); });
   s.ojos.visible = poder === 'laser';
   s.ojos.position.set(0, f.hq ? 1.5 : 1.36, 0.3);
+  /* el arma de juguete en la mano */
+  const arma = F.PODERES[poder] && F.PODERES[poder].arma ? poder : '';
+  if (s.arma !== arma){ while (s.mano.children.length) s.mano.remove(s.mano.children[0]); if (arma && MOD.armaJuguete) s.mano.add(MOD.armaJuguete(arma)); s.arma = arma; }
+  s.mano.visible = !!arma && !robot;
+  /* el Súper Plomero: bigote, guantes y su gorra */
+  s.plomero.visible = poder === 'plomero';
+  s.plomero.position.y = f.hq ? 0.22 : 0;
 }
+function animarPlaneo(f, planeo, t){ const s = vestirSuper(f); s.planeador.visible = !!planeo; if (planeo) s.planeador.rotation.z = Math.sin(t*1.5)*0.08; }
 /* los clones de la caja de clones: se ven como Fernando con un brillo morado */
 const CLONES = [];
 function animarClones(dt){
@@ -984,6 +1012,7 @@ function animarFernando(dt, t){
     if (anim.voltereta > 0) f.hq.cont.rotation.x = (1 - anim.voltereta/0.42)*TAU;
   }
   animarSuper(f, p.tPoder < 2 && Math.floor(t*8) % 2 === 0 && p.poder !== 'robot' ? '' : p.poder, t, anim.fase, pasoK, p.enSuelo, p.vuela);
+  animarPlaneo(f, p.planeo, t);
   if (p.poder === 'robot' && p.tPoder < 2 && Math.floor(t*8) % 2 === 0) emitir(p.x, p.y + 1.2*p.escala, p.z, 1, {color:'#5ae8ff', vel:2, grav:0, vida:0.3, tam:0.3});
   if (p.poder === 'cohete' && p.vuela){ const bx = p.x - Math.sin(p.ang)*0.5, bz = p.z - Math.cos(p.ang)*0.5; emitir(bx, p.y + 0.4, bz, 2, {colores:['#ffb21a', '#ff5a1a', '#ffffff'], vel:1.2, grav:-1, vida:0.4, tam:0.4}); }
   if (p.poder === 'fuerza' && Math.random() < 0.25) emitir(p.x, p.y + 0.8, p.z, 1, {colores:['#ff3a3a', '#ffb0a0'], vel:1.5, grav:-1, vida:0.4, tam:0.25, esparce:0.8});
@@ -1092,6 +1121,7 @@ function animarEnemigos(dt, t){
 function animarCosas(dt, t){
   const M = J.M;
   for (const o of MUNDO.monedas){ o.me.visible = o.m.vivo; if (o.m.vivo){ o.me.position.set(o.m.x, o.m.y + Math.sin(t*2 + o.m.x)*0.08, o.m.z); o.me.rotation.y = t*3; } }
+  for (const o of MUNDO.pociones){ o.g.visible = o.q.vivo; if (o.q.vivo){ o.g.position.y = o.q.y - 0.4 + Math.sin(t*2.5 + o.q.x)*0.12; o.g.rotation.y = t*1.5; } }
   for (const o of MUNDO.rojas){ o.me.visible = o.m.vivo; if (o.m.vivo){ o.me.position.set(o.m.x, o.m.y + Math.sin(t*2 + o.m.z)*0.1, o.m.z); o.me.rotation.y = t*3.4; } }
   for (const o of MUNDO.estrellas){
     o.g.visible = o.s.visible && !o.s.tomada;
@@ -1143,9 +1173,19 @@ function animarCosas(dt, t){
   let i = 0;
   for (const b of J.bolas){
     if (!b.vivo) continue; const m = bolaMesh(i++); m.visible = true; m.position.set(b.x, b.y, b.z);
-    m.children[0].material.color.set(b.misil ? '#dfe6ee' : '#ffd27a'); m.children[1].visible = !b.misil;
-    emitir(b.x, b.y, b.z, 1, b.misil ? {colores:['#c8ccd4', '#ffb030'], vel:0.3, grav:-0.5, vida:0.4, tam:0.3} : {colores:['#ffb030', '#ff5a1a'], vel:0.4, grav:-1, vida:0.35, tam:0.35});
+    const A = b.arma && ASPECTO_ARMA[b.arma];
+    m.children[0].material.color.set(A ? A.color : b.misil ? '#dfe6ee' : '#ffd27a'); m.children[1].visible = !b.misil && !A;
+    m.children[0].scale.setScalar(A ? A.tam : 0.22);
+    m.children[0].material.transparent = !!(A && A.transp); m.children[0].material.opacity = A && A.transp ? 0.55 : 1;
+    if (A){ if (Math.random() < A.estela) emitir(b.x, b.y, b.z, 1, {colores: A.colores, vel:0.4, grav: A.grav, vida:0.35, tam:0.22}); }
+    else emitir(b.x, b.y, b.z, 1, b.misil ? {colores:['#c8ccd4', '#ffb030'], vel:0.3, grav:-0.5, vida:0.4, tam:0.3} : {colores:['#ffb030', '#ff5a1a'], vel:0.4, grav:-1, vida:0.35, tam:0.35});
   }
+  /* las bolas de fuego del Rey Tortugón */
+  let fi = 0;
+  for (const f of J.fuegosMalos || []){ if (!f.vivo) continue; const m = fuegoMesh(fi++); m.visible = true; m.position.set(f.x, f.y, f.z); if (Math.random() < 0.6) emitir(f.x, f.y, f.z, 1, {colores:['#ff7a1a', '#ffd23f'], vel:0.6, grav:-1, vida:0.4, tam:0.4}); }
+  for (; fi < FUEGOS.length; fi++) FUEGOS[fi].visible = false;
+  burbujaEscudo.t = Math.max(0, burbujaEscudo.t - dt); burbujaEscudo.m.visible = burbujaEscudo.t > 0;
+  if (burbujaEscudo.t > 0){ burbujaEscudo.m.position.set(J.p.x, J.p.y + 0.9*J.p.escala, J.p.z); burbujaEscudo.m.scale.setScalar(1.3*J.p.escala*(1 + (0.45 - burbujaEscudo.t))); burbujaEscudo.m.material.opacity = burbujaEscudo.t/0.45*0.5; }
   /* los rayos láser y la onda de la súper fuerza */
   rayoT = Math.max(0, rayoT - dt);
   for (const r of RAYOS){ r.visible = rayoT > 0; r.material.opacity = Math.min(1, rayoT/0.12); }
@@ -1213,6 +1253,17 @@ const SON = {
   puno(){ ruido(0.15, 0.2, 700); tono(220, 60, 0.18, 'square', 0.1); },
   tioVuela(){ ruido(0.5, 0.12, 1800); },
   patada(){ tono(170, 60, 0.12, 'square', 0.1); ruido(0.08, 0.15, 700); },
+  agua(){ ruido(0.08, 0.06, 2600); },
+  burbujas(){ tono(500, 900, 0.12, 'sine', 0.06); },
+  dardos(){ tono(900, 300, 0.06, 'square', 0.04); ruido(0.04, 0.05, 2000); },
+  confeti(){ ruido(0.2, 0.15, 500); tono(200, 90, 0.2, 'triangle', 0.1); },
+  globos(){ tono(300, 500, 0.1, 'sine', 0.06); },
+  explota(){ ruido(0.5, 0.25, 700); const t = AC.currentTime; [84, 88, 91].forEach((n, i)=>tono(nota(n), 0, 0.12, 'triangle', 0.05, t + 0.05 + i*0.05)); },
+  pocion(){ const t = AC.currentTime; [72, 79, 84, 91].forEach((n, i)=>tono(nota(n), 0, 0.14, 'sine', 0.08, t + i*0.06)); },
+  escudo(){ tono(1200, 600, 0.25, 'triangle', 0.1); ruido(0.1, 0.1, 3000); },
+  salto3(){ const t = AC.currentTime; [72, 76, 79, 84, 88].forEach((n, i)=>tono(nota(n), 0, 0.08, 'square', 0.06, t + i*0.04)); },
+  fuegoMalo(){ ruido(0.4, 0.15, 400); tono(150, 60, 0.4, 'sawtooth', 0.08); },
+  pinata(){ ruido(0.3, 0.2, 1500); const t = AC.currentTime; [72, 76, 79, 84, 88, 91].forEach((n, i)=>tono(nota(n), 0, 0.1, 'square', 0.06, t + i*0.05)); },
   choca(){ ruido(0.12, 0.3, 2600); const t = AC.currentTime; [76, 83].forEach((n, i)=>tono(nota(n), 0, 0.12, 'triangle', 0.08, t + 0.05 + i*0.07)); },
   clon(){ const t = AC.currentTime; [67, 71, 74, 79].forEach((n, i)=>tono(nota(n), 0, 0.08, 'triangle', 0.08, t + i*0.04)); },
   laser(){ tono(1600, 260, 0.18, 'square', 0.05); tono(1200, 200, 0.18, 'sawtooth', 0.03); },
@@ -1244,6 +1295,7 @@ const TEMAS_MUS = {
   italia:   {bpm: 150, mel:[69,0,69,71, 72,0,71,69, 68,0,68,69, 71,0,0,0, 72,0,72,74, 76,0,74,72, 71,0,72,71, 69,0,0,0], baj:[45,52,45,52, 44,52,44,52, 45,52,45,52, 40,47,45,45]},
   china:    {bpm: 104, mel:[74,0,76,79, 81,0,79,76, 74,0,72,69, 72,0,0,0, 74,0,76,79, 84,0,81,79, 76,0,74,72, 74,0,0,0], baj:[50,57,50,57, 48,55,48,55, 45,52,45,52, 50,57,50,50], onda:'triangle'},
   argentina:{bpm: 140, mel:[72,74,76,0, 72,74,76,0, 76,77,79,0, 79,77,76,74, 72,74,76,0, 72,74,76,0, 79,77,76,74, 72,0,0,0], baj:[48,55,48,55, 48,55,48,55, 53,60,53,60, 55,55,48,48]},
+  reino:    {bpm: 144, mel:[69,0,72,76, 74,0,72,69, 67,0,69,72, 74,0,0,0, 76,0,79,76, 74,72,74,76, 72,69,67,69, 69,0,0,0], baj:[45,45,52,45, 41,41,48,41, 43,43,50,43, 45,52,45,45]},
   jefe:     {bpm: 168, mel:[69,72,76,72, 69,72,77,72, 69,72,76,72, 68,71,76,71, 69,72,76,79, 77,76,74,72, 71,72,74,71, 69,0,69,0], baj:[45,45,52,45, 45,45,53,45, 45,45,52,45, 44,44,52,44]},
   final:    {bpm: 150, mel:[72,0,76,79, 84,0,79,84, 88,86,84,79, 81,0,0,0, 77,81,84,81, 79,84,88,84, 86,84,83,86, 84,0,0,0], baj:[48,55,52,55, 53,57,48,55, 53,57,48,52, 55,55,48,48]},
 };
@@ -1334,6 +1386,15 @@ function procesarEventos(){
       case 'habla': hablar(e.texto, e.quien); break;
       case 'salto': sonar('salto'); emitir(e.x, e.y + 0.1, e.z, 6, {color:'#ffffff', vel:1.5, grav:2, vida:0.4, tam:0.3, plano:true}); break;
       case 'salto2': sonar('salto2'); anim.voltereta = 0.42; emitir(e.x, e.y + 0.4, e.z, 10, {colores:['#ffffff', '#ffe36e'], vel:2.5, grav:1, vida:0.5, tam:0.25}); break;
+      case 'disparo': sonar(e.arma); break;
+      case 'explota': sonar('explota'); cam.temblor = Math.max(cam.temblor, 0.2);
+        emitir(e.x, e.y, e.z, 70, {colores: e.arma === 'globos' ? ['#7ad0ff', '#ffffff', '#3a8aff'] : ['#ff5ab0', '#ffd23f', '#5ad8ff', '#7ae05a', '#b07aff'], vel: e.r*2.2, vy:3, grav:4, vida:1, tam:0.35}); break;
+      case 'pocion': sonar('pocion'); emitir(e.x, e.y, e.z, 30, {colores:['#5ab8ff', '#ffffff'], vel:3, vy:2, grav:-1, vida:0.8, tam:0.35}); break;
+      case 'escudoGolpe': sonar('escudo'); burbujaEscudo.t = 0.45; emitir(e.x, e.y, e.z, 24, {colores:['#5ab8ff', '#ffffff'], vel:5, grav:0, vida:0.5, tam:0.3}); break;
+      case 'salto3': sonar('salto3'); anim.voltereta = 0.6; emitir(e.x, e.y + 0.3, e.z, 20, {colores:['#ffd23f', '#ffffff', '#e8262a'], vel:3, grav:1, vida:0.6, tam:0.3}); break;
+      case 'fuegoMalo': sonar('fuegoMalo'); break;
+      case 'autobus': banner = {texto: '¡Salta del autobús!', emoji: '🚌', t: 0}; break;
+      case 'aterrizaPlaneo': emitir(e.x, e.y + 0.2, e.z, 16, {color:'#e8f0e0', vel:3, grav:2, vida:0.5, tam:0.4, plano:true}); break;
       case 'saltoAmigo': sonar('boing'); emitir(e.x, e.y, e.z, 16, {colores:['#ffe36e', '#ffffff'], vel:4, grav:2, vida:0.6, tam:0.35}); redEvento({tipo: 'fx', fx: 'pisado', x: e.x, y: e.y, z: e.z}); break;
       case 'choca': sonar('choca'); emitir(e.x, e.y, e.z, 40, {colores:['#ffd23f', '#ffffff', '#ff9ad8', '#7ad0ff'], vel:5, vy:2, grav:2, vida:0.9, tam:0.4}); brindar('✋ ¡Choca esos cinco!', '#ffe36e'); break;
       case 'clon': sonar('clon'); emitir(e.x, e.y + 0.9, e.z, 24, {colores:['#c08aff', '#ffffff'], vel:3.5, grav:0, vida:0.5, tam:0.35}); redEvento({tipo: 'fx', fx: 'clon', x: e.x, y: e.y, z: e.z}); break;
@@ -1366,7 +1427,9 @@ function procesarEventos(){
       case 'llevar': sonar('rescate'); cam.listo = false; emitir(e.x, e.y + 1, e.z, 40, {colores:['#5aa8ff', '#ffffff', '#ffd23f'], vel:5, grav:1, vida:0.9, tam:0.45}); break;
       case 'aparece': sonar('aparece'); emitir(e.x, e.y, e.z, 50, {colores:['#ffd23f', '#ffffff'], vel:5, grav:0, vida:1.2, tam:0.4}); break;
       case 'pisa': sonar('pisa'); emitir(e.x, e.y, e.z, 14, {colores:['#ffffff', '#ffe36e'], vel:4, grav:4, vida:0.5, tam:0.3}); break;
-      case 'muere': if (e.como !== 'pisa') sonar('pisa'); emitir(e.x, e.y, e.z, 18, {colores:['#ffffff', '#c8c8c8', '#ffe36e'], vel:4, grav:3, vida:0.6, tam:0.4}); break;
+      case 'muere':
+        if (e.tipo === 'llama'){ sonar('pinata'); emitir(e.x, e.y + 1, e.z, 90, {colores:['#c070ff', '#ff70c0', '#ffe23a', '#5ad8ff', '#ffd23f'], vel:7, vy:5, grav:5, vida:1.5, tam:0.4}); }
+        if (e.tipo === 'diana') emitir(e.x, e.y + 0.8, e.z, 18, {colores:['#e8262a', '#ffffff', '#c8883a'], vel:4, grav:6, vida:0.8, tam:0.3}); if (e.como !== 'pisa') sonar('pisa'); emitir(e.x, e.y, e.z, 18, {colores:['#ffffff', '#c8c8c8', '#ffe36e'], vel:4, grav:3, vida:0.6, tam:0.4}); break;
       case 'golpe': sonar('golpe'); cam.temblor = 0.5; emitir(e.x, e.y + 0.8, e.z, 14, {colores:['#ff6a6a', '#ffffff'], vel:4, grav:4, vida:0.5, tam:0.3}); break;
       case 'poder': if (e.poder === 'robot') sonar('robot'); else sonar('poder'); emitir(e.x, e.y + 1, e.z, 50, {colores:['#ffffff', MOD.COLOR_PODER[e.poder]], vel:6, grav:1, vida:1, tam:0.4}); break;
       case 'caja': sonar('caja'); emitir(e.x, e.y, e.z, 40, {colores:['#ffffff', MOD.COLOR_PODER[e.poder], '#ffd23f'], vel:6, grav:5, vida:0.9, tam:0.35}); break;
@@ -1617,6 +1680,12 @@ function dibujarHud(dt){
   ctx.fillStyle = '#ffd23f'; ctx.beginPath(); ctx.ellipse(x0 + 148, 31, 9, 13, 0, 0, TAU); ctx.fill(); ctx.strokeStyle = '#a86a00'; ctx.lineWidth = 2; ctx.stroke();
   texto('× ' + J.prog.monedas, x0 + 164, 32, 22, '#ffffff');
   if (J.prog.vuelta){ pastilla(x0 + 246, 12, 74, 38); texto('🔄 ' + (J.prog.vuelta + 1), x0 + 258, 32, 22, '#ffe36e'); }
+  if (J.escudo > 0){
+    const ye = 98;
+    pastilla(x0, ye, 150, 30); emoji('🛡️', x0 + 18, ye + 15, 20);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(x0 + 36, ye + 10, 100, 10);
+    ctx.fillStyle = '#5ab8ff'; ctx.fillRect(x0 + 36, ye + 10, J.escudo, 10);
+  }
   /* monedas rojas */
   const estR = M.estrellas.find(s=>s.tipo === 'rojas');
   if (M.rojas.length && estR && !estR.visible){
@@ -1719,7 +1788,7 @@ function dibujarHud(dt){
       ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, TAU); ctx.fill();
       ctx.lineWidth = 4; ctx.strokeStyle = b.color; ctx.stroke();
       if (k === 'salto') texto('SALTA', b.x, b.y + 2, b.r*0.38, '#ffffff', 'center');
-      else if (k === 'poder') emoji(['fuego', 'laser', 'fuerza', 'robot'].includes(p.poder) ? F.PODERES[p.poder].emoji : '🌀', b.x, b.y + 2, b.r*0.85);
+      else if (k === 'poder') emoji(p.poder && (['fuego', 'laser', 'fuerza', 'robot', 'plomero'].includes(p.poder) || F.PODERES[p.poder].arma) ? F.PODERES[p.poder].emoji : '🌀', b.x, b.y + 2, b.r*0.85);
       else {
         emoji('🦸', b.x, b.y + 2, b.r*0.9);
         if (J.tio.cd > 0){ ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r, -Math.PI/2, -Math.PI/2 + TAU*(J.tio.cd/CFG.AYUDA_CD)); ctx.fill(); }

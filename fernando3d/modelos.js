@@ -547,6 +547,12 @@ function crearPerro(color, nombre){
 function cejasEnojadas(mat, g, y, z, sep, s){
   for (const lado of [1, -1]){ const c = new THREE.Mesh(GEO.cubo, mat); c.scale.set(0.16*s, 0.04*s, 0.04*s); c.position.set(sep*lado, y, z); c.rotation.z = 0.45*lado; g.add(c); }
 }
+function lienzoDiana(){
+  return TEX.diana || (TEX.diana = lienzo(128, 128, (x, w, h)=>{
+    const cs = ['#e8262a', '#ffffff', '#e8262a', '#ffffff', '#ffd23f'];
+    cs.forEach((c, i)=>{ x.fillStyle = c; x.beginPath(); x.arc(w/2, h/2, w/2 - i*12, 0, TAU); x.fill(); });
+  }, false));
+}
 function crearEnemigo(piel){
   const g = new THREE.Group(), cuerpo = new THREE.Group(); g.add(cuerpo);
   const pies = [], alas = [];
@@ -610,6 +616,67 @@ function crearEnemigo(piel){
     const som = palo(carbon, 0.22, 0.22, 0.3); som.position.y = 1.95; cuerpo.add(som);
     const ala = palo(carbon, 0.33, 0.33, 0.04); ala.position.y = 1.81; cuerpo.add(ala);
     cejasEnojadas(carbon, cuerpo, 1.8, 0.26, 0.1, 0.7);
+  } else if (piel === 'monstruo'){
+    /* el monstruo del reino: peludito morado, un ojo grande y cuernitos */
+    const mor = std('#8a4ad8', {roughness:0.9}), cla = std('#c8a0ff', {roughness:0.9});
+    cuerpo.add(bola(mor, 0.55, 0, 0.6, 0, 1, 1.05, 0.95));
+    cuerpo.add(bola(cla, 0.36, 0, 0.5, 0.25, 1, 0.9, 0.7));
+    const o = ojo(0.24); o.position.set(0, 0.9, 0.42); cuerpo.add(o);
+    for (const lado of [1, -1]){
+      const cu = new THREE.Mesh(GEO.cono, std('#ffe8a0')); cu.scale.set(0.09, 0.3, 0.09); cu.position.set(0.28*lado, 1.18, 0); cu.rotation.z = -0.4*lado; cuerpo.add(cu);
+      const pi = bola(mor, 0.17, 0.24*lado, 0.1, 0.08, 1, 0.6, 1.3); cuerpo.add(pi); pies.push(pi);
+      const br = bola(mor, 0.14, 0.55*lado, 0.65, 0.05, 1, 1.4, 1); cuerpo.add(br); alas.push(br);
+    }
+    const boca = sonrisa(std('#3a1a4a'), 0.16, 0.035); boca.rotation.z = 0; boca.position.set(0, 0.62, 0.5); cuerpo.add(boca);
+    for (const lado of [1, -1]){ const d = new THREE.Mesh(GEO.cono, M_BLANCO); d.scale.set(0.04, 0.08, 0.04); d.rotation.x = Math.PI; d.position.set(0.07*lado, 0.56, 0.52); cuerpo.add(d); }
+    cejasEnojadas(std('#3a1a4a'), cuerpo, 1.15, 0.45, 0.12, 1);
+  } else if (piel === 'slime'){
+    /* el monstruo gelatina del pantano */
+    const ge = std('#5aff6a', {roughness:0.15, metalness:0, transparent:true, opacity:0.82, emissive:'#1a8a2a', emissiveIntensity:0.2});
+    const b = bola(ge, 0.62, 0, 0.45, 0, 1, 0.75, 1); cuerpo.add(b);
+    cuerpo.add(bola(std('#2ac83a', {roughness:0.3}), 0.18, 0, 0.42, 0, 1, 1, 1));
+    for (const lado of [1, -1]){ const o = ojo(0.13); o.position.set(0.2*lado, 0.66, 0.44); cuerpo.add(o); }
+    cejasEnojadas(std('#0a4a1a'), cuerpo, 0.84, 0.5, 0.2, 0.8);
+    pies.push(b);
+  } else if (piel === 'llama'){
+    /* la llama piñata de los regalos */
+    const mor = std('#c070ff', {roughness:0.7}), ros = std('#ff70c0', {roughness:0.7}), ama = std('#ffe23a', {roughness:0.7});
+    cuerpo.add(bola(mor, 0.5, 0, 0.9, 0, 0.9, 0.75, 1.25));
+    for (let k = 0; k < 4; k++){ const f = palo([ros, ama, std('#5ad8ff'), mor][k], 0.42 - k*0.02, 0.42 - k*0.02, 0.12, 16); f.rotation.x = Math.PI/2; f.position.set(0, 0.9, -0.35 + k*0.24); cuerpo.add(f); }
+    const cuello = palo(mor, 0.16, 0.2, 0.8); cuello.position.set(0, 1.45, 0.45); cuello.rotation.x = 0.2; cuerpo.add(cuello);
+    const cab = bola(mor, 0.25, 0, 1.9, 0.6, 0.9, 0.9, 1.3); cuerpo.add(cab);
+    for (const lado of [1, -1]){
+      const o = ojo(0.08); o.position.set(0.13*lado, 1.98, 0.82); cuerpo.add(o);
+      const or = new THREE.Mesh(GEO.cono, ros); or.scale.set(0.06, 0.22, 0.06); or.position.set(0.12*lado, 2.18, 0.5); cuerpo.add(or);
+      for (const z of [0.3, -0.3]){ const pa = palo(mor, 0.07, 0.06, 0.6); pa.position.set(0.25*lado, 0.3, z); cuerpo.add(pa); pies.push(pa); }
+    }
+    const sil = palo(std('#8a5a2a'), 0.3, 0.3, 0.06, 16); sil.position.set(0, 1.28, 0); cuerpo.add(sil);
+  } else if (piel === 'diana'){
+    /* la diana del campo de tiro */
+    const disco = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.12, 32), [std('#ffffff'), std('#ffffff', {map: lienzoDiana()}), std('#ffffff')]);
+    disco.rotation.x = Math.PI/2; disco.position.y = 0.75; cuerpo.add(disco);
+    const poste = palo(std('#8a5a2a'), 0.06, 0.08, 0.8); poste.position.y = 0.2; cuerpo.add(poste);
+  } else if (piel === 'tortugon'){
+    /* el Rey Tortugón: tortuga-dragón con caparazón de púas, cuernos y pelo rojo */
+    const verde = std('#e0b03a', {roughness:0.5}), panza = std('#fff0b0', {roughness:0.6}), capa = std('#2a9a3a', {roughness:0.45});
+    const pu = std('#ffffff', {roughness:0.3}), pelo = std('#e8401a', {roughness:0.8});
+    cuerpo.add(bola(panza, 0.5, 0, 0.62, 0.12, 1, 1.05, 0.8));
+    const capa1 = bola(capa, 0.62, 0, 0.7, -0.18, 1, 1, 0.85); cuerpo.add(capa1);
+    const borde = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.07, 8, 24), pu); borde.rotation.y = Math.PI/2; borde.rotation.x = Math.PI/2; borde.position.set(0, 0.7, -0.05); cuerpo.add(borde);
+    for (let k = 0; k < 7; k++){ const a = (k/6 - 0.5)*2.2; const p = new THREE.Mesh(GEO.cono, pu); p.scale.set(0.09, 0.22, 0.09); p.position.set(Math.sin(a)*0.45, 0.75 + Math.cos(a)*0.35, -0.55); p.rotation.set(-1.2, 0, -a*0.6); cuerpo.add(p); }
+    const cab = bola(verde, 0.36, 0, 1.25, 0.32, 1.05, 0.95, 1.1); cuerpo.add(cab);
+    cuerpo.add(bola(panza, 0.22, 0, 1.12, 0.62, 1.2, 0.7, 0.8));
+    for (const lado of [1, -1]){
+      const o = ojo(0.1); o.position.set(0.15*lado, 1.38, 0.62); cuerpo.add(o);
+      const cu = new THREE.Mesh(GEO.cono, pu); cu.scale.set(0.07, 0.3, 0.07); cu.position.set(0.24*lado, 1.62, 0.25); cu.rotation.z = -0.5*lado; cuerpo.add(cu);
+      const br = bola(verde, 0.15, 0.55*lado, 0.85, 0.15, 1, 1.4, 1); cuerpo.add(br); alas.push(br);
+      const pul = new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.05, 6, 12), std('#2a2a2a')); pul.position.set(0.58*lado, 0.66, 0.15); pul.rotation.y = Math.PI/2; cuerpo.add(pul);
+      for (const k of [0, 1, 2]){ const pe = new THREE.Mesh(GEO.cono, pu); pe.scale.set(0.03, 0.08, 0.03); pe.position.set(0.58*lado + Math.cos(k*2.1)*0.15, 0.66 + Math.sin(k*2.1)*0.15, 0.15); pe.rotation.z = k*2.1 - Math.PI/2; cuerpo.add(pe); }
+      const pi = bola(verde, 0.2, 0.25*lado, 0.1, 0.08, 1, 0.55, 1.3); cuerpo.add(pi); pies.push(pi);
+    }
+    for (let k = 0; k < 6; k++){ const pe = bola(pelo, 0.12, (k - 2.5)*0.07, 1.55 - Math.abs(k - 2.5)*0.02, 0.05 - k*0.03, 1, 1.5, 1); cuerpo.add(pe); }
+    for (const lado of [1, -1]){ const d = new THREE.Mesh(GEO.cono, M_BLANCO); d.scale.set(0.04, 0.09, 0.04); d.rotation.x = Math.PI; d.position.set(0.1*lado, 1.05, 0.72); cuerpo.add(d); }
+    cejasEnojadas(pelo, cuerpo, 1.5, 0.62, 0.15, 1.1);
   } else if (piel === 'iguana' || piel === 'dragoncito' || piel === 'dragon'){
     /* la iguana del Lago y los dragones chinos: cuerpo largo, cresta y cola */
     const dr = piel !== 'iguana';
@@ -634,6 +701,17 @@ function crearEnemigo(piel){
       const papada = bola(std('#ff9a2a'), 0.1, 0, 0.42, 0.62, 0.6, 1.3, 1); cuerpo.add(papada);
     }
     cejasEnojadas(std('#1a3a12'), cuerpo, 0.9, 0.7, 0.15, 0.8);
+  } else if (piel === 'ojo'){
+    /* el ojo volador con alitas de murciélago */
+    const bl = std('#ffffff', {roughness:0.3});
+    cuerpo.add(bola(bl, 0.45, 0, 0, 0));
+    const iris = bola(std('#ff3a6a', {roughness:0.2}), 0.22, 0, 0, 0.36, 1, 1, 0.4); cuerpo.add(iris);
+    cuerpo.add(bola(M_NEGRO, 0.11, 0, 0, 0.45, 1, 1, 0.4));
+    for (let k = 0; k < 4; k++){ const v = palo(std('#ff6a8a'), 0.012, 0.012, 0.3); v.position.set(Math.cos(k*1.6)*0.32, Math.sin(k*1.6)*0.32, 0.2); v.rotation.z = k*1.6; cuerpo.add(v); }
+    for (const lado of [1, -1]){
+      const ala = new THREE.Group(); ala.position.set(0.42*lado, 0.1, -0.05);
+      ala.add(bola(std('#5a2a8a', {roughness:0.6}), 0.32, 0.25*lado, 0, 0, 1, 0.12, 0.6)); cuerpo.add(ala); alas.push(ala);
+    }
   } else if (piel === 'abeja' || piel === 'gaviota' || piel === 'pajaro' || piel === 'murcielago' || piel === 'zancudo' || piel === 'paloma'){
     const col = {abeja:'#ffd21a', gaviota:'#ffffff', pajaro:'#3a8aff', murcielago:'#6a3aa0', zancudo:'#5a5048', paloma:'#a8acb8'}[piel];
     const mc = std(col, {roughness:0.45});
@@ -770,8 +848,10 @@ function columnaLuz(color){
 }
 
 const COLOR_PODER = {alas:'#7ad0ff', fuego:'#ff6a2a', hamburguesa:'#ffb43a', gigante:'#ff4a6a', iman:'#ff5ab0', tenis:'#4ae08a',
-                     clon:'#b07aff', cohete:'#3ad0ff', fuerza:'#ff3a3a', laser:'#ff2a6a', robot:'#a8c0d8'};
-const EMOJI_PODER = {alas:'🪽', fuego:'🔥', hamburguesa:'🍔', gigante:'🍄', iman:'🧲', tenis:'👟', clon:'👯', cohete:'🚀', fuerza:'💪', laser:'👀', robot:'🤖'};
+                     clon:'#b07aff', cohete:'#3ad0ff', fuerza:'#ff3a3a', laser:'#ff2a6a', robot:'#a8c0d8',
+                     agua:'#3ac8ff', burbujas:'#9ae0ff', dardos:'#ff8a1a', confeti:'#ff5ab0', globos:'#ff3a3a', plomero:'#e8262a'};
+const EMOJI_PODER = {alas:'🪽', fuego:'🔥', hamburguesa:'🍔', gigante:'🍄', iman:'🧲', tenis:'👟', clon:'👯', cohete:'🚀', fuerza:'💪', laser:'👀', robot:'🤖',
+                     agua:'💦', burbujas:'🫧', dardos:'🎯', confeti:'🎉', globos:'🎈', plomero:'🔧'};
 const TEX_REGALO = {};
 function texRegalo(poder){
   if (TEX_REGALO[poder]) return TEX_REGALO[poder];
@@ -786,6 +866,8 @@ function texRegalo(poder){
   }, false));
 }
 function crearRegalo(poder){
+  /* las armas salen de cofres (reino.js) */
+  if (MOD.crearCofre && MOD.esArma && MOD.esArma(poder)) return MOD.crearCofre(poder);
   const g = new THREE.Group();
   const col = COLOR_PODER[poder];
   const mat = std('#ffffff', {map: texRegalo(poder), roughness:0.35, emissive: col, emissiveIntensity:0.12});

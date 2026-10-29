@@ -962,7 +962,7 @@ function nuevoEnemigo(J, tipo, x, z, o){
              x, z, y: tipo === 'abeja' ? ((o && o.y) || 2.5) : g.y, hx:x, hz:z, hy: tipo === 'abeja' ? ((o && o.y) || 2.5) : g.y,
              ang: J.R()*6.28, vivo:true, muere:0, t: J.R()*10, radio:0.75, alto:1.1, vel:1.3, vida:1, invul:0,
              wx:x, wz:z, tw:0, huye:0, salto:0, vy:0, zona: (o && o.zona) || ''};
-  if (tipo === 'diana'){ e.y = e.hy = g.y + ((o && o.dy) || 0); e.radio = 0.7; e.alto = 1.4; }
+  if (tipo === 'diana'){ e.piel = 'diana'; e.y = e.hy = g.y + ((o && o.dy) || 0); e.radio = 0.7; e.alto = 1.4; }
   if (tipo === 'llama'){ e.radio = 0.8; e.alto = 1.6; e.vel = 1.4; }
   return e;
 }

@@ -21,6 +21,27 @@ con **Tío Juan** volando a su lado y sus perritos **Penny** y **Sheldon** sigui
 
 En la pradera está **Abu** y en las nubes está **Santi**, el hermanito.
 
+### 🛡️ El Reino Pichunite (20 estrellas)
+
+Un cuadro grande en el jardín del castillo (a la derecha, cerca del castillo). Fernando llega
+**planeando desde el autobús volador** a una isla de aventuras al estilo de los juegos de
+batalla, con letreros en cada zona: Pueblo Pichunguito, Torres Torcidas, Montaña Mirador,
+Bosque de los Monstruos, Campo de Tiro, Pantano Pegajoso, Plaza de la Llama y la Fortaleza del
+Tortugón. La tormenta morada del borde marca hasta dónde se puede ir.
+
+- **Cofres con armas de juguete** (con **X**, o dejándolo apretado): 💦 pistola de agua,
+  🫧 lanza-burbujas, 🎯 rifle de dardos de espuma, 🎉 cañón de confeti (explota y vence a varios)
+  y 🎈 globos de agua. Apuntan solas al monstruo que está más o menos enfrente.
+- **Pociones de escudo** 🛡️: el escudo aguanta los golpes (se ve la barra azul arriba).
+- **Caja Súper Plomero** 🔧: bigote, guantes, **triple salto** y bolas de fuego.
+- **Monstruos**: peluditos morados de un ojo, gelatinas del pantano y ojos voladores.
+- **El Rey Tortugón**: dragón-tortuga con caparazón de púas que escupe bolas de fuego.
+- Las estrellas: 14 en lugares altos o escondidos (el techo del pueblo, las Torres Torcidas, la
+  montaña, las islas flotantes, el castillo de cajas, el árbol gigante, la torre del reloj, la
+  torre de vigía, la pirámide, la cofa del barco pirata, el autobús, el trampolín, la isla
+  secreta y una escondida), 4 de zonas (vencer a los monstruos del bosque y del pantano, darle a
+  todas las dianas y romper la llama piñata), las 8 monedas rojas y el Rey Tortugón.
+
 ### Los países (cuadros detrás del inicio, abiertos desde el principio)
 
 | País | Estrellas |

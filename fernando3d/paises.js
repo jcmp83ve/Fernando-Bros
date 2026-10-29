@@ -702,6 +702,8 @@ MOD.decorarPais = function(id, grupo, M, R, poner){
   }
   return null;
 };
+/* para el Reino Pichunite (reino.js) */
+Object.assign(MOD, {letrasCartel, cartelPais: cartel, banderaPais: bandera, ondearBandera: ondear, cajaDeco: caja});
 /* adornos que se reparten por el pasto */
 MOD.decoPais = {palmeras: MOD.palmera, cipreses: cipres, bambu: bambu, cerezos: cerezo};
 })();
