@@ -25,7 +25,8 @@ En la pradera está **Abu** y en las nubes está **Santi**, el hermanito.
 
 Un cuadro grande en el jardín del castillo (a la derecha, cerca del castillo). Fernando llega
 **planeando desde el autobús volador** a una isla de aventuras al estilo de los juegos de
-batalla, con letreros en cada zona: Pueblo Pichunguito, Torres Torcidas, Montaña Mirador,
+batalla, con **minimapa** arriba a la derecha (tocándolo, o con Tab, se agranda: muestra las
+estrellas que faltan, las monedas rojas, las zonas, el jefe y los amigos) y letreros en cada zona: Pueblo Pichunguito, Torres Torcidas, Montaña Mirador,
 Bosque de los Monstruos, Campo de Tiro, Pantano Pegajoso, Plaza de la Llama y la Fortaleza del
 Tortugón. La tormenta morada del borde marca hasta dónde se puede ir.
 

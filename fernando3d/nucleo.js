@@ -644,7 +644,7 @@ MUNDOS.push({
   id:'reino', nombre:'El Reino Pichunite', corto:'PICHUNITE', emoji:'🛡️', tema:'reino', color:'#b05aff',
   inicio:{x:0, z:50, ang:Math.PI}, yMuerte:-8, agua:{y:-0.6, tipo:'mar'}, techo:44,
   tubo:{x:5, z:50},
-  saludo:['reino1', 'reino2'], autobus:true,
+  saludo:['reino1', 'reino2'], autobus:true, minimapa:true,
   pisos:[{x:23, z:45, sx:7, sz:6, mat:'pantano'}, {x:30, z:24, sx:8, sz:8, mat:'tiro'}, {x:0, z:2, sx:6, sz:6, mat:'plaza'}],
   zonas:[{id:'bosque', nombre:'BOSQUE DE LOS MONSTRUOS', x:-30, z:24}, {id:'tiro', nombre:'CAMPO DE TIRO', x:30, z:24}, {id:'pantano', nombre:'PANTANO PEGAJOSO', x:23, z:45},
          {id:'pueblo', nombre:'PUEBLO PICHUNGUITO', x:-28, z:-2}, {id:'torres', nombre:'TORRES TORCIDAS', x:-5, z:-21}, {id:'montana', nombre:'MONTAÑA MIRADOR', x:32, z:-2},
