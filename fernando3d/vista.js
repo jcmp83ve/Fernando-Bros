@@ -1377,8 +1377,31 @@ const TEMAS_MUS = {
   jefe:     {bpm: 168, mel:[69,72,76,72, 69,72,77,72, 69,72,76,72, 68,71,76,71, 69,72,76,79, 77,76,74,72, 71,72,74,71, 69,0,69,0], baj:[45,45,52,45, 45,45,53,45, 45,45,52,45, 44,44,52,44]},
   final:    {bpm: 150, mel:[72,0,76,79, 84,0,79,84, 88,86,84,79, 81,0,0,0, 77,81,84,81, 79,84,88,84, 86,84,83,86, 84,0,0,0], baj:[48,55,52,55, 53,57,48,55, 53,57,48,52, 55,55,48,48]},
 };
-const CANCIONES = {castillo: 'musica_castillo.mp3'};
-const cancion = {el: null, src: '', fallo: false};
+/* la canción de Fernando suena en el castillo y también en el Reino Pichunite */
+const CANCIONES = {castillo: 'musica_castillo.mp3', reino: 'musica_castillo.mp3'};
+const cancion = {el: null, src: '', fallo: false, despierta: false};
+function crearCancion(){
+  if (cancion.el || !AC) return cancion.el;
+  cancion.el = new Audio(); cancion.el.loop = true; cancion.el.preload = 'auto';
+  cancion.el.addEventListener('error', ()=>{ cancion.fallo = true; });
+  /* por el audio del juego: en iPhone el volumen de un <audio> no se puede cambiar */
+  try{ const src = AC.createMediaElementSource(cancion.el); cancion.g = AC.createGain(); cancion.g.gain.value = 0.5; src.connect(cancion.g); cancion.g.connect(AC.destination); }catch(e){ cancion.g = null; }
+  return cancion.el;
+}
+/* En iPhone una canción solo puede empezar a sonar dentro de un toque de la pantalla. Por eso, en
+   los primeros toques se la «despierta» (se le da play ahí mismo); desde ese momento el juego la
+   puede prender y apagar cuando quiera. */
+function despertarCancion(){
+  if (cancion.despierta || cancion.fallo || !AC) return;
+  const el = crearCancion(); if (!el) return;
+  const archivo = CANCIONES[musica.nombre()] || CANCIONES.castillo;
+  if (!cancion.src){ cancion.src = archivo; el.src = archivo; }
+  try{
+    const pr = el.play();
+    const listo = ()=>{ cancion.despierta = true; if (!CANCIONES[musica.nombre()] || !OPC.musica || !OPC.sonido) el.pause(); };
+    if (pr && pr.then) pr.then(listo).catch(()=>{}); else listo();
+  }catch(e){}
+}
 const musica = (function(){
   let actual = null, paso = 0, prox = 0;
   return {
@@ -1392,12 +1415,7 @@ const musica = (function(){
       if (!AC || !actual || !OPC.musica) return;
       if (usarArchivo){
         if (!OPC.sonido || document.hidden) return;
-        if (!cancion.el){
-          cancion.el = new Audio(); cancion.el.loop = true; cancion.el.preload = 'auto';
-          cancion.el.addEventListener('error', ()=>{ cancion.fallo = true; });
-          /* por el audio del juego: en iPhone el volumen de un <audio> no se puede cambiar */
-          try{ const src = AC.createMediaElementSource(cancion.el); cancion.g = AC.createGain(); cancion.g.gain.value = 0.5; src.connect(cancion.g); cancion.g.connect(AC.destination); }catch(e){ cancion.g = null; }
-        }
+        crearCancion();
         if (cancion.src !== archivo){ cancion.src = archivo; cancion.el.src = archivo; }
         cancion.el.volume = cancion.g ? 1 : 0.5*DUCK.nivel;
         if (cancion.el.paused) cancion.el.play().catch(()=>{});
@@ -1554,8 +1572,11 @@ addEventListener('keydown', e=>{
 });
 addEventListener('keyup', e=>{ teclas.delete(e.code); if (e.code === 'KeyH') terminarHablar(); });
 addEventListener('blur', ()=>teclas.clear());
+/* en algunos iPhone el sonido solo se puede soltar al levantar el dedo (o en un clic) */
+for (const ev of ['touchend', 'click']) addEventListener(ev, ()=>{ if (tocado){ audio(); despertarCancion(); } }, {passive: true});
 function primerToque(){
   audio();
+  despertarCancion();
   if (!tocado){ tocado = true; }
   if (J.fase === 'titulo'){ F.empezar(J); musica.tema(TEMAS[J.M.def.tema].musica); }
 }
