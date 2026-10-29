@@ -34,6 +34,21 @@ const PODERES = {
   fuerza:      {nombre:'Súper Fuerza',     emoji:'💪', dur:20, color:'#ff3a3a'},
   laser:       {nombre:'Ojos Láser',       emoji:'👀', dur:22, color:'#ff2a6a'},
   robot:       {nombre:'Fernando Robot',   emoji:'🤖', dur:20, color:'#a8c0d8'},
+  /* las armas de juguete (cofres del Reino Pichunite) */
+  agua:        {nombre:'Pistola de Agua',  emoji:'💦', dur:40, color:'#3ac8ff', arma:true},
+  burbujas:    {nombre:'Lanza-Burbujas',   emoji:'🫧', dur:40, color:'#9ae0ff', arma:true},
+  dardos:      {nombre:'Rifle de Dardos',  emoji:'🎯', dur:40, color:'#ff8a1a', arma:true},
+  confeti:     {nombre:'Cañón de Confeti', emoji:'🎉', dur:40, color:'#ff5ab0', arma:true},
+  globos:      {nombre:'Globos de Agua',   emoji:'🎈', dur:40, color:'#ff3a3a', arma:true},
+  plomero:     {nombre:'Súper Plomero',    emoji:'🔧', dur:25, color:'#e8262a'},
+};
+/* cómo dispara cada arma: velocidad, gravedad, cada cuánto, tamaño y si explota (radio) */
+const ARMAS = {
+  agua:     {vel:20, g:14, cd:0.12, r:0.3, explota:0},
+  burbujas: {vel:9, g:-1, cd:0.3, r:0.7, explota:0, vida:3},
+  dardos:   {vel:32, g:0, cd:0.2, r:0.25, explota:0},
+  confeti:  {vel:18, g:6, cd:0.8, r:0.4, explota:4},
+  globos:   {vel:12, g:22, cd:0.55, r:0.35, explota:3.2, vy:8},
 };
 const LISTA_PODERES = Object.keys(PODERES);
 const SUPER = ['clon', 'cohete', 'fuerza', 'laser', 'robot'];
@@ -98,6 +113,19 @@ const FRASES = {
   laser:      ['fer', '¡Rayos láser con los ojos! ¡Piu, piu!'],
   robot:      ['fer', '¡Modo robot activado! ¡Bip, bup!'],
   choca:      ['fer', ['¡Choca esos cinco!', '¡Equipo pichunguito!', '¡Somos un equipo!']],
+  agua:       ['fer', '¡Pistola de agua! ¡Splash, splash!'],
+  burbujas:   ['fer', '¡Lanza-burbujas! ¡Burbujas para los monstruos!'],
+  dardos:     ['fer', '¡Rifle de dardos de espuma! ¡Piu, piu!'],
+  confeti:    ['fer', '¡Cañón de confeti! ¡Bum de colores!'],
+  globos:     ['fer', '¡Globos de agua! ¡Splash!'],
+  plomero:    ['fer', '¡Súper Plomero! ¡Ya-juu! ¡Triple salto!'],
+  pocion:     ['tio', '¡Poción de escudo! ¡Ahora el escudo te protege!'],
+  escudoRoto: ['fer', '¡Mi escudo me salvó!'],
+  reino1:     ['tio', '¡Bienvenido al Reino Pichunite! ¡Salta del autobús volador! ¡Hay veinte estrellas escondidas!'],
+  reino2:     ['fer', '¡Vamos a la aventura! ¡Busquen los cofres!'],
+  zonaLista:  ['tio', '¡Venciste a todos los monstruos de aquí! ¡Apareció una estrella!'],
+  dianasListas:['tio', '¡Le diste a todas las dianas! ¡Qué puntería, pichunguito!'],
+  pinata:     ['fer', '¡Rompí la llama piñata! ¡Una estrella!'],
   superPortal:['tio', ['¡Toma un súper poder nuevo para este mundo!', '¡Un súper poder de regalo, pichunguito!']],
   vuelta:     ['tio', '¡Encontraste todas las estrellas! ¡Ahora se escondieron en otros lugares! ¡A buscarlas otra vez!'],
   vueltaFer:  ['fer', '¡Otra vez, otra vez!'],
@@ -205,6 +233,8 @@ MUNDOS.push({
     {mundo:8,  x:0,   z:39, necesita:0},
     {mundo:9,  x:15,  z:36, necesita:0},
     {mundo:10, x:30,  z:28, necesita:0},
+    /* el Reino Pichunite */
+    {mundo:11, x:36,  z:-22, necesita:0},
   ],
   amigos:[],
   deco:{arboles:46, flores:120, rocas:10},
@@ -603,6 +633,112 @@ MUNDOS.push({
   deco:{arboles:16, rocas:4},
 });
 
+/* ---------- 11) El Reino Pichunite: isla grande de aventuras, 20 estrellas ----------
+   Se llega planeando desde el autobús volador. Hay cofres con armas de juguete, pociones
+   de escudo, monstruos, la llama piñata, el campo de tiro y el Rey Tortugón. */
+const arbolG = {x:-18, z:-24}, relojT = {x:-40, z:-22};
+const espiralArbol = [], espiralReloj = [];
+for (let k = 0; k < 6; k++){ const a = k*60*Math.PI/180; espiralArbol.push(P(arbolG.x + Math.sin(a)*3.2, 1.8*(k + 1), arbolG.z + Math.cos(a)*3.2, 1.4, 'hojas')); }
+for (let k = 0; k < 6; k++){ const a = k*60*Math.PI/180 + 0.5; espiralReloj.push(P(relojT.x + Math.sin(a)*4, 1.8*(k + 1), relojT.z + Math.cos(a)*4, 1.4, 'madera')); }
+MUNDOS.push({
+  id:'reino', nombre:'El Reino Pichunite', corto:'PICHUNITE', emoji:'🛡️', tema:'reino', color:'#b05aff',
+  inicio:{x:0, z:50, ang:Math.PI}, yMuerte:-8, agua:{y:-0.6, tipo:'mar'}, techo:44,
+  tubo:{x:5, z:50},
+  saludo:['reino1', 'reino2'], autobus:true,
+  pisos:[{x:23, z:45, sx:7, sz:6, mat:'pantano'}, {x:30, z:24, sx:8, sz:8, mat:'tiro'}, {x:0, z:2, sx:6, sz:6, mat:'plaza'}],
+  zonas:[{id:'bosque', nombre:'BOSQUE DE LOS MONSTRUOS', x:-30, z:24}, {id:'tiro', nombre:'CAMPO DE TIRO', x:30, z:24}, {id:'pantano', nombre:'PANTANO PEGAJOSO', x:23, z:45},
+         {id:'pueblo', nombre:'PUEBLO PICHUNGUITO', x:-28, z:-2}, {id:'torres', nombre:'TORRES TORCIDAS', x:-5, z:-21}, {id:'montana', nombre:'MONTAÑA MIRADOR', x:32, z:-2},
+         {id:'fortaleza', nombre:'FORTALEZA DEL TORTUGÓN', x:0, z:-63}, {id:'plaza', nombre:'PLAZA DE LA LLAMA', x:0, z:9}],
+  solidos:[
+    C(0, 0, 62, 0, 'pasto'),
+    /* Pueblo Pichunguito: casas de colores, de techo en techo */
+    B(-24, -4, 2.5, 2.5, 2.2, 'casaF1'), B(-29, -4, 2.5, 2.5, 4.4, 'casaF2'), B(-29, -9.5, 2.5, 2.5, 6.6, 'casaF3'), B(-20, -14, 2, 2, 2.2, 'casaF2'),
+    /* las Torres Torcidas */
+    B(0, -24, 2.5, 2.5, 2.2, 'torreT'), B(0, -29, 2.5, 2.5, 4.4, 'torreT'), B(0, -34, 2.5, 2.5, 6.6, 'torreT'), B(0, -39, 2.5, 2.5, 8.8, 'torreT'), B(0, -44, 2.5, 2.5, 11, 'torreT'),
+    /* Montaña Mirador */
+    C(32, -14, 10, 2.2, 'pasto'), C(32, -14, 7, 4.4, 'pasto'), C(32, -14, 4.5, 6.6, 'pasto'), C(32, -14, 2.5, 8.8, 'piedraF'),
+    /* islas flotantes */
+    P(20, 1.8, -34, 2, 'nube'), P(24, 3.6, -37, 2, 'nube'), P(28, 5.4, -40, 2, 'nube'), P(32, 7.2, -43, 2, 'nube'),
+    /* el castillo de cajas */
+    B(12, 8, 1.5, 1.5, 1.5, 'cajaMadera'), B(15, 8, 1.5, 1.5, 3, 'cajaMadera'), B(15, 11, 1.5, 1.5, 4.5, 'cajaMadera'), B(12, 11, 1.5, 1.5, 6, 'cajaMadera'),
+    /* el árbol gigante y la torre del reloj (escaleras que dan vueltas) */
+    C(arbolG.x, arbolG.z, 1.5, 12, 'tronco'), ...espiralArbol,
+    C(relojT.x, relojT.z, 2, 11, 'reloj'), ...espiralReloj,
+    /* la torre de vigía */
+    B(-48, 8, 2, 2, 2.2, 'madera'), B(-48, 12, 2, 2, 4.4, 'madera'), B(-52, 12, 2, 2, 6.6, 'madera'),
+    /* la pirámide */
+    B(44, 6, 6, 6, 1.5, 'piedraF'), B(44, 6, 4, 4, 3, 'piedraF'), B(44, 6, 2, 2, 4.5, 'piedraF'),
+    /* el barco pirata con su cofa */
+    B(52, 38, 3, 6, 1.6, 'barco'), P(52, 3.8, 38, 1.2, 'madera'),
+    /* el autobús volador que se estrelló */
+    B(-10, 18, 4, 1.6, 2.2, 'bus'),
+    /* la isla secreta */
+    P(-64.5, 0.5, 0, 1.4, 'madera'), P(-68.5, 0.9, 0, 1.4, 'madera'), C(-76, 0, 5, 1.2, 'arena'),
+    /* la Fortaleza del Tortugón */
+    P(0, 0.5, -66.5, 1.6, 'piedraF'), C(0, -76, 10, 0.6, 'piedraF'),
+    resorte(-12, 34),
+  ],
+  monedas:[...anillo(0, 0.9, 40, 3, 8), ...fila(0, 0.9, 46, 0, 0.9, 20, 8), ...anillo(0, 0.9, 2, 5, 10),
+           [-24, 3.4, -4], [-29, 7.8, -9.5], [-20, 3.4, -14], [0, 3.4, -24], [0, 5.6, -29], [0, 7.8, -34],
+           ...anillo(32, 3.4, -14, 8.5, 12), ...anillo(32, 5.6, -14, 5.7, 8), ...anillo(32, 7.8, -14, 3.5, 6),
+           [20, 3, -34], [28, 6.6, -40], [12, 2.7, 8], [15, 5.7, 11],
+           ...espiralArbol.filter((s, i)=>i % 2 === 0).map(s=>[s.x, s.y1 + 1, s.z]), ...espiralReloj.filter((s, i)=>i % 2 === 1).map(s=>[s.x, s.y1 + 1, s.z]),
+           [-48, 3.4, 8], [-52, 7.8, 12], [44, 2.7, 1], [44, 4.2, 9], [52, 2.8, 34],
+           ...fila(-58, 0.9, 0, -50, 0.9, 0, 4), [-76, 2.4, 3], ...anillo(0, 1.8, -76, 6, 10), ...anillo(-12, 3.5, 34, 1.6, 6),
+           ...fila(-34, 0.9, 18, -26, 0.9, 30, 5), ...fila(24, 0.9, 30, 36, 0.9, 30, 5), ...fila(18, 0.9, 40, 28, 0.9, 50, 4),
+           ...fila(-6, 0.9, -46, 6, 0.9, -54, 5), [-10, 3.4, 16], [-10, 3.4, 20]],
+  rojas:[[0, 10, -39], [-29, 5.6, -4], [15, 4.2, 8], [24, 4.8, -37], [38, 5.6, -14], [47, 4.2, 6], [52, 2.8, 42], [-48, 5.6, 12]],
+  estrellas:[
+    {id:'pueblo',    tipo:'libre', x:-29, y:7.9, z:-9.5, nombre:'El techo más alto del pueblo'},
+    {id:'torres',    tipo:'libre', x:0, y:12.3, z:-44, nombre:'Arriba de las Torres Torcidas'},
+    {id:'montana',   tipo:'libre', x:32, y:10.1, z:-14, nombre:'La cima de la Montaña Mirador'},
+    {id:'islas',     tipo:'libre', x:32, y:8.5, z:-43, nombre:'Las islas flotantes'},
+    {id:'cajas',     tipo:'libre', x:12, y:7.3, z:11, nombre:'El castillo de cajas'},
+    {id:'arbol',     tipo:'libre', x:arbolG.x, y:13.3, z:arbolG.z, nombre:'Arriba del árbol gigante'},
+    {id:'reloj',     tipo:'libre', x:relojT.x, y:12.3, z:relojT.z, nombre:'La torre del reloj'},
+    {id:'vigia',     tipo:'libre', x:-52, y:7.9, z:12, nombre:'La torre de vigía'},
+    {id:'piramide',  tipo:'libre', x:44, y:5.8, z:6, nombre:'La punta de la pirámide'},
+    {id:'barco',     tipo:'libre', x:52, y:5.1, z:38, nombre:'La cofa del barco pirata'},
+    {id:'bus',       tipo:'libre', x:-10, y:3.5, z:18, nombre:'El techo del autobús volador'},
+    {id:'trampolin', tipo:'libre', x:-12, y:5.4, z:34, nombre:'Arriba del trampolín'},
+    {id:'secreta',   tipo:'libre', x:-76, y:2.5, z:0, nombre:'La isla secreta'},
+    {id:'escondida', tipo:'libre', x:0, y:1.3, z:-58, nombre:'Escondida detrás de las torres'},
+    {id:'bosque',    tipo:'zona', zona:'bosque', x:-30, y:1.4, z:24, nombre:'Vence a los monstruos del bosque'},
+    {id:'pantano',   tipo:'zona', zona:'pantano', x:23, y:1.4, z:45, nombre:'Vence a los monstruos del pantano'},
+    {id:'tiro',      tipo:'zona', zona:'tiro', x:30, y:1.4, z:24, nombre:'Dale a todas las dianas'},
+    {id:'llama',     tipo:'zona', zona:'llama', x:0, y:1.4, z:6, nombre:'Rompe la llama piñata'},
+    {id:'rojas',     tipo:'rojas', x:0, y:1.4, z:40, nombre:'Las 8 monedas rojas del reino'},
+    {id:'jefe',      tipo:'jefe', x:0, y:2.5, z:-76, nombre:'El Rey Tortugón'},
+  ],
+  frasesZona:{bosque:'zonaLista', pantano:'zonaLista', tiro:'dianasListas', llama:'pinata'},
+  enemigos:[
+    /* el bosque de los monstruos */
+    {tipo:'grunon', piel:'monstruo', zona:'bosque', x:-34, z:20}, {tipo:'grunon', piel:'monstruo', zona:'bosque', x:-26, z:20},
+    {tipo:'grunon', piel:'monstruo', zona:'bosque', x:-30, z:28}, {tipo:'grunon', piel:'monstruo', zona:'bosque', x:-36, z:28}, {tipo:'grunon', piel:'monstruo', zona:'bosque', x:-24, z:27},
+    /* el pantano pegajoso */
+    {tipo:'grunon', piel:'slime', zona:'pantano', x:20, z:42}, {tipo:'grunon', piel:'slime', zona:'pantano', x:26, z:44}, {tipo:'grunon', piel:'slime', zona:'pantano', x:22, z:48},
+    /* el campo de tiro: dianas */
+    {tipo:'diana', zona:'tiro', x:26, z:19, dy:0.6}, {tipo:'diana', zona:'tiro', x:30, z:17, dy:0.6}, {tipo:'diana', zona:'tiro', x:34, z:19, dy:0.6},
+    {tipo:'diana', zona:'tiro', x:26, z:29, dy:0.6}, {tipo:'diana', zona:'tiro', x:30, z:31, dy:0.6}, {tipo:'diana', zona:'tiro', x:34, z:29, dy:0.6},
+    /* la llama piñata */
+    {tipo:'llama', piel:'llama', zona:'llama', x:0, z:0},
+    /* monstruos sueltos por todo el reino */
+    {tipo:'grunon', piel:'monstruo', x:10, z:-10}, {tipo:'grunon', piel:'monstruo', x:-10, z:-10}, {tipo:'grunon', piel:'monstruo', x:20, z:2},
+    {tipo:'grunon', piel:'slime', x:40, z:30}, {tipo:'grunon', piel:'monstruo', x:-40, z:-34}, {tipo:'grunon', piel:'slime', x:10, z:-46},
+    {tipo:'grunon', piel:'monstruo', x:-44, z:30}, {tipo:'grunon', piel:'slime', x:-8, z:28}, {tipo:'grunon', piel:'monstruo', x:46, z:-30},
+    {tipo:'abeja', piel:'ojo', x:0, z:-20, y:3.2}, {tipo:'abeja', piel:'ojo', x:20, z:20, y:3.2}, {tipo:'abeja', piel:'ojo', x:-20, z:0, y:3.2},
+    {tipo:'abeja', piel:'ojo', x:30, z:-32, y:4}, {tipo:'abeja', piel:'ojo', x:-32, z:-28, y:4},
+  ],
+  jefe:{x:0, z:-76, r:8.5, piel:'tortugon', nombre:'Rey Tortugón', vida:3, vel:2.9, fuego:true,
+        hola:'¡Graaar! ¡Soy el Rey Tortugón! ¡Este reino es mío!', cae:'¡Nooo! ¡Mi caparazón! ¡Me ganó un pichunguito!'},
+  cajas:[{x:4, z:44, poder:'agua'}, {x:-4, z:44, poder:'burbujas'}, {x:8, z:30, poder:'dardos'}, {x:-30, z:14, poder:'confeti'},
+         {x:28, z:13, poder:'globos'}, {x:0, z:12, poder:'plomero'}, {x:-20, z:-20, poder:'alas'}, {x:20, z:-20, poder:'cohete'},
+         {x:40, z:-36, poder:'robot'}, {x:-40, z:0, poder:'laser'}, {x:-6, z:-50, poder:'plomero'}, {x:14, z:-56, poder:'dardos'}],
+  pociones:[[2, 0.9, 36], [-16, 0.9, -8], [16, 0.9, -6], [-36, 0.9, 16], [36, 0.9, 14], [0, 0.9, -50], [44, 0.9, -6], [-50, 0.9, -12], [10, 0.9, 52]],
+  amigos:[],
+  deco:{arboles:40, rocas:10},
+});
+
 /* el total de estrellas sale de los mundos */
 CFG.ESTRELLAS_FIN = MUNDOS.reduce((n, m)=>n + m.estrellas.length, 0);
 
@@ -696,7 +832,7 @@ function crearJuego(op){
     prog: progresoLimpio(op.prog),
     fase: 'titulo',      // titulo · juego · final
     mundo: 0, M: null, cargas: 0,
-    p: null, tio: null, perros: [], clones: [], rastro: [],
+    p: null, tio: null, perros: [], clones: [], rastro: [], escudo: 0, fuegosMalos: [],
     bolas: [], eventos: [], dialogos: [], dichos: [],
     trans: null, guia: null, tGuia: 0,
     monedasMundo: 0, rojasMundo: 0, cdBloqueo: 0, cdRescateDicho: 0, tTodas: -1, tFinal: 0,
@@ -766,7 +902,8 @@ function cargarMundo(J, n, desde){
   }
   if (J.prog.vuelta > 0) mezclarEstrellas(M, n, J.prog.vuelta);
   J.M = M; J.mundo = n; J.cargas++;
-  J.clones = []; J.rastro = [];
+  J.clones = []; J.rastro = []; J.fuegosMalos = [];
+  M.pociones = (def.pociones || []).map(q=>({x:q[0], y:q[1], z:q[2], vivo:true}));
   J.bolas = []; J.monedasMundo = 0; J.rojasMundo = 0; J.tTodas = -1; J.guia = null;
   for (const e of def.enemigos) M.enemigos.push(nuevoEnemigo(J, e.tipo, e.x, e.z, e));
   if (def.jefe){
@@ -824,7 +961,9 @@ function nuevoEnemigo(J, tipo, x, z, o){
   const e = {id: J.sigId++, tipo, piel: (o && o.piel) || (tipo === 'abeja' ? 'abeja' : 'grunon'),
              x, z, y: tipo === 'abeja' ? ((o && o.y) || 2.5) : g.y, hx:x, hz:z, hy: tipo === 'abeja' ? ((o && o.y) || 2.5) : g.y,
              ang: J.R()*6.28, vivo:true, muere:0, t: J.R()*10, radio:0.75, alto:1.1, vel:1.3, vida:1, invul:0,
-             wx:x, wz:z, tw:0, huye:0, salto:0, vy:0};
+             wx:x, wz:z, tw:0, huye:0, salto:0, vy:0, zona: (o && o.zona) || ''};
+  if (tipo === 'diana'){ e.y = e.hy = g.y + ((o && o.dy) || 0); e.radio = 0.7; e.alto = 1.4; }
+  if (tipo === 'llama'){ e.radio = 0.8; e.alto = 1.6; e.vel = 1.4; }
   return e;
 }
 
@@ -858,6 +997,7 @@ function paso(J, dt, inp){
   amigosCerca(J);
   enemigos(J, dt);
   bolas(J, dt);
+  fuegosMalos(J, dt);
   pelotas(J, dt);
   cosas(J, dt);
   tio(J, dt, bloqueado ? {} : inp);
@@ -906,7 +1046,7 @@ function jugador(J, dt, inp){
     p.tPoder -= dt;
     if (p.tPoder <= 0){ ev(J, 'finPoder', p.x, p.y, p.z, {poder:p.poder}); p.poder = null; }
   }
-  const objEsc = p.poder === 'gigante' ? 2.4 : p.poder === 'robot' ? 1.35 : 1;
+  const objEsc = p.poder === 'gigante' ? 2.4 : p.poder === 'robot' ? 1.35 : p.poder === 'plomero' ? 1.12 : 1;
   p.escala += (objEsc - p.escala)*Math.min(1, dt*6);
 
   /* lo lleva la plataforma que se mueve */
@@ -929,11 +1069,13 @@ function jugador(J, dt, inp){
   const agua = def.agua && def.agua.tipo !== 'lava' ? def.agua : null;
   const flota = agua ? agua.y - 0.95*p.escala : -1e9;
   const superVuelo = p.poder === 'cohete' && p.vuela;
+  if (p.planeo && (p.enSuelo || p.nada)){ p.planeo = false; ev(J, 'aterrizaPlaneo', p.x, p.y, p.z); }
   let vmax = CFG.VEL*(p.poder === 'hamburguesa' ? 1.8 : p.poder === 'gigante' ? 1.25 : p.poder === 'robot' ? 1.15 : p.poder === 'fuerza' ? 1.1 : 1)*(p.nada ? 0.7 : 1)*(superVuelo ? 2.6 : 1);
   if (p.golpeT > 0) mag *= 0.3;
   const tvx = dx*vmax*mag, tvz = dz*vmax*mag;
   const hielo = p.enSuelo && p.sobre && p.sobre.hielo;
-  const acel = (p.enSuelo ? (hielo ? 9 : 48) : p.nada ? 18 : superVuelo ? 36 : 22)*dt;
+  if (p.planeo) vmax *= 1.4;
+  const acel = (p.enSuelo ? (hielo ? 9 : 48) : p.nada ? 18 : superVuelo || p.planeo ? 36 : 22)*dt;
   if (p.golpeT <= 0){
     p.vx += clamp(tvx - p.vx, -acel, acel);
     p.vz += clamp(tvz - p.vz, -acel, acel);
@@ -949,7 +1091,14 @@ function jugador(J, dt, inp){
   p.coyote = p.enSuelo || p.nada ? CFG.COYOTE : Math.max(0, p.coyote - dt);
   const mSalto = p.poder === 'tenis' ? 1.4 : p.poder === 'gigante' || p.poder === 'fuerza' ? 1.15 : p.poder === 'robot' ? 1.2 : 1;
   if (p.buffer > 0 && p.coyote > 0){
-    p.vy = CFG.SALTO*mSalto; p.enSuelo = false; p.coyote = 0; p.buffer = 0; p.saltos = 1; p.cortado = false; p.sobre = null; p.nada = false;
+    /* el Súper Plomero: saltando justo al caer, el segundo salto es más alto y el tercero altísimo */
+    let mTriple = 1;
+    if (p.poder === 'plomero'){
+      p.cadena = (J.t - (p.tAterrizo || -9) < 0.35 && p.enSuelo) ? Math.min(3, (p.cadena || 0) + 1) : 1;
+      mTriple = [1, 1.22, 1.6][p.cadena - 1];
+      if (p.cadena === 3){ ev(J, 'salto3', p.x, p.y, p.z); p.cadena = 0; }
+    }
+    p.vy = CFG.SALTO*mSalto*mTriple; p.enSuelo = false; p.coyote = 0; p.buffer = 0; p.saltos = 1; p.cortado = false; p.sobre = null; p.nada = false;
     ev(J, 'salto', p.x, p.y, p.z);
     if (p.poder === 'clon') nuevoClon(J);
   } else if (saltoNuevo && !p.enSuelo && p.saltos < 2 && p.poder !== 'alas' && p.poder !== 'cohete'){
@@ -999,14 +1148,17 @@ function jugador(J, dt, inp){
   }
   p.vy -= g*dt;
   if (p.vy < -32) p.vy = -32;
+  if (p.planeo && p.vy < -4.5) p.vy = -4.5;
 
   /* poder: girar o lanzar fuego */
   if (inp.poder && !p.antPoder){
-    if (p.poder === 'fuego' && p.cdFuego <= 0){
+    if ((p.poder === 'fuego' || p.poder === 'plomero') && p.cdFuego <= 0){
       p.cdFuego = 0.22;
       J.bolas.push({x:p.x + Math.sin(p.ang)*0.6, y:p.y + 0.8*p.escala, z:p.z + Math.cos(p.ang)*0.6,
                     vx:Math.sin(p.ang)*15 + p.vx*0.3, vz:Math.cos(p.ang)*15 + p.vz*0.3, vy:3, t:0, vivo:true});
       ev(J, 'fuego', p.x, p.y + 0.8, p.z);
+    } else if (ARMAS[p.poder]){
+      /* las armas se disparan abajo (también dejando el botón apretado) */
     } else if (p.poder === 'laser'){
       if (p.cdFuego <= 0){ p.cdFuego = 0.25; disparoLaser(J); }
     } else if (p.poder === 'fuerza'){
@@ -1027,6 +1179,8 @@ function jugador(J, dt, inp){
       ev(J, 'giro', p.x, p.y, p.z);
     }
   }
+
+  if (ARMAS[p.poder] && inp.poder && p.cdFuego <= 0) dispararArma(J);
 
   /* mover (dos pasitos para no atravesar nada) */
   const sub = 2, h = dt/sub, R = CFG.RADIO, alto = CFG.ALTO;
@@ -1072,6 +1226,7 @@ function jugador(J, dt, inp){
 function aterrizar(J, gr){
   const p = J.p;
   const caida = p.vy;
+  p.tAterrizo = J.t;
   p.y = gr.y; p.vy = 0; p.enSuelo = true; p.sobre = gr.s; p.saltos = 0;
   if (gr.s && gr.s.resorte){
     p.vy = CFG.RESORTE*(p.poder === 'tenis' ? 1.15 : 1); p.enSuelo = false; p.saltos = 1; p.cortado = true; p.sobre = null;
@@ -1131,6 +1286,50 @@ function amigosCerca(J){
       }
     }
   }
+}
+
+/* ---------------- las armas de juguete ----------------
+   Apuntan solas al monstruo más cercano que esté más o menos enfrente (un niño de seis años
+   no tiene que apuntar fino); si no hay, disparan derecho. */
+function dispararArma(J){
+  const p = J.p, M = J.M, A = ARMAS[p.poder];
+  p.cdFuego = A.cd;
+  const ox = p.x + Math.sin(p.ang)*0.7, oy = p.y + 1.0*p.escala, oz = p.z + Math.cos(p.ang)*0.7;
+  let blanco = null, mejor = 1e9;
+  for (const e of M.enemigos){
+    if (!e.vivo) continue;
+    const dx = e.x - ox, dz = e.z - oz, d = Math.hypot(dx, dz);
+    if (d > 26 || d < 0.5) continue;
+    const da = Math.abs(angDif(p.ang, Math.atan2(dx, dz)));
+    if (da > 0.55) continue;
+    const pts = d + da*12; if (pts < mejor){ mejor = pts; blanco = e; }
+  }
+  let ang = p.ang, vy = A.vy || 0;
+  if (blanco){
+    const dx = blanco.x - ox, dz = blanco.z - oz, d = Math.hypot(dx, dz), dy = blanco.y + blanco.alto*0.5 - oy;
+    ang = Math.atan2(dx, dz);
+    const t = d/A.vel; vy = dy/t + 0.5*A.g*t;
+  }
+  J.bolas.push({x: ox, y: oy, z: oz, vx: Math.sin(ang)*A.vel, vz: Math.cos(ang)*A.vel, vy, t: 0, vivo: true, arma: p.poder});
+  ev(J, 'disparo', ox, oy, oz, {arma: p.poder});
+}
+function explotar(J, x, y, z, r, arma){
+  for (const e of J.M.enemigos) if (e.vivo && Math.hypot(e.x - x, e.z - z) < r + e.radio && Math.abs(e.y + e.alto*0.5 - y) < r + 1) matar(J, e, arma);
+  ev(J, 'explota', x, y, z, {r, arma});
+}
+/* las bolas de fuego del Rey Tortugón: el escudo o saltarlas */
+function fuegosMalos(J, dt){
+  const M = J.M, p = J.p;
+  for (const f of J.fuegosMalos){
+    if (!f.vivo) continue;
+    f.t += dt; f.vy -= 6*dt;
+    f.x += f.vx*dt; f.y += f.vy*dt; f.z += f.vz*dt;
+    if (f.t > 3.5 || f.y < suelo(M, f.x, f.z, f.y + 0.3, 0).y){ f.vivo = false; ev(J, 'puf', f.x, f.y, f.z); continue; }
+    if (Math.hypot(f.x - p.x, f.z - p.z) < 0.8*Math.max(1, p.escala) && f.y > p.y - 0.3 && f.y < p.y + CFG.ALTO*p.escala + 0.3){
+      f.vivo = false; ev(J, 'puf', f.x, f.y, f.z); lastimar(J, {x: f.x - f.vx, z: f.z - f.vz});
+    }
+  }
+  if (J.fuegosMalos.length > 24) J.fuegosMalos = J.fuegosMalos.filter(f=>f.vivo);
 }
 
 /* ---------------- los súper poderes ---------------- */
@@ -1193,6 +1392,13 @@ function ondaFuerza(J, r){
 function lastimar(J, e){
   const p = J.p;
   if (p.invul > 0 || p.baile > 0 || p.poder === 'robot') return;
+  /* el escudo aguanta el golpe */
+  if (J.escudo > 0){
+    J.escudo = Math.max(0, J.escudo - 50); p.invul = 1.2;
+    ev(J, 'escudoGolpe', p.x, p.y + 1, p.z, {queda: J.escudo});
+    if (J.escudo <= 0) decir(J, 'escudoRoto');
+    return;
+  }
   const dx = p.x - e.x, dz = p.z - e.z, d = Math.hypot(dx, dz) || 1;
   p.vx = dx/d*5; p.vz = dz/d*5; p.vy = 6.5; p.enSuelo = false; p.sobre = null;
   p.invul = CFG.INVUL; p.golpeT = 0.45;
@@ -1232,8 +1438,17 @@ function matar(J, e, como){
     return;
   }
   e.vivo = false; e.muere = 0.001;
-  ev(J, 'muere', e.x, e.y + 0.5, e.z, {como});
-  monedaGanada(J, 1, e.x, e.y + 1, e.z);
+  ev(J, 'muere', e.x, e.y + 0.5, e.z, {como, tipo: e.tipo, piel: e.piel});
+  monedaGanada(J, e.tipo === 'llama' ? 10 : 1, e.x, e.y + 1, e.z);
+  /* la zona quedó limpia: aparece su estrella */
+  if (e.zona && !J.M.enemigos.some(o=>o.vivo && o.zona === e.zona)){
+    const est = J.M.estrellas.find(s=>s.tipo === 'zona' && s.zona === e.zona);
+    if (est && !est.visible && !est.tomada){
+      est.visible = true; ev(J, 'aparece', est.x, est.y, est.z);
+      decir(J, (J.M.def.frasesZona || {})[e.zona] || 'zonaLista');
+      return;
+    }
+  }
   if (J.R() < 0.35) decir(J, 'toma');
 }
 
@@ -1244,7 +1459,9 @@ function enemigos(J, dt){
     if (!e.vivo){ if (e.muere > 0) e.muere += dt; continue; }
     e.t += dt; e.invul = Math.max(0, e.invul - dt);
     const dxp = p.x - e.x, dzp = p.z - e.z, dp = Math.hypot(dxp, dzp);
-    if (e.tipo === 'abeja'){
+    if (e.tipo === 'diana'){
+      e.ang = Math.atan2(p.x - e.x, p.z - e.z);
+    } else if (e.tipo === 'abeja'){
       e.x = e.hx + Math.sin(e.t*0.8)*3; e.z = e.hz + Math.cos(e.t*0.8)*3; e.y = e.hy + Math.sin(e.t*2.2)*0.5;
       e.ang = e.t*0.8 + Math.PI/2;
     } else {
@@ -1261,12 +1478,24 @@ function enemigos(J, dt){
         /* no sale de su arena */
         const ax = tx - e.cx, az = tz - e.cz, ad = Math.hypot(ax, az), lim = e.rArena - e.radio - 0.3;
         if (ad > lim){ tx = e.cx + ax/ad*lim; tz = e.cz + az/ad*lim; }
+        /* el Rey Tortugón escupe bolas de fuego */
+        if (e.def.fuego && e.huye <= 0 && dp < 20){
+          e.cdFuego = (e.cdFuego == null ? 2 : e.cdFuego) - dt;
+          if (e.cdFuego <= 0){
+            e.cdFuego = 3.2;
+            const a0 = Math.atan2(dxp, dzp);
+            for (const da of [-0.3, 0, 0.3]) J.fuegosMalos.push({x: e.x + Math.sin(a0)*2, y: e.y + 2.2, z: e.z + Math.cos(a0)*2, vx: Math.sin(a0 + da)*9, vz: Math.cos(a0 + da)*9, vy: 2, t: 0, vivo: true});
+            ev(J, 'fuegoMalo', e.x, e.y + 2.2, e.z);
+          }
+        }
         /* a veces da un saltote */
         e.salto -= dt;
         if (e.salto <= -3.5 && e.huye <= 0){ e.salto = 0.6; e.vy = 9; ev(J, 'jefeSalta', e.x, e.y, e.z); }
       } else {
-        const persigue = dp < 8 && Math.abs(p.y - e.y) < 2.5 && p.invul <= 0;
+        const persigue = e.tipo !== 'llama' && dp < 8 && Math.abs(p.y - e.y) < 2.5 && p.invul <= 0;
+        const huye = e.tipo === 'llama' && dp < 6;
         if (persigue){ tx = p.x; tz = p.z; vel = e.piel === 'pinguino' ? 3 : 2.5; }
+        else if (huye){ tx = e.x - dxp; tz = e.z - dzp; vel = 3; }
         else {
           e.tw -= dt;
           if (e.tw <= 0 || Math.hypot(e.wx - e.x, e.wz - e.z) < 0.5){
@@ -1304,6 +1533,8 @@ function enemigos(J, dt){
       } else if (p.poder === 'hamburguesa' || p.poder === 'gigante' || p.poder === 'fuerza' || p.poder === 'robot' || p.giro > 0){
         matar(J, e, 'golpe');
         if (e.tipo === 'jefe'){ const d = dp || 1; p.vx = dxp/d*8; p.vz = dzp/d*8; p.vy = 7; }
+      } else if (e.tipo === 'diana' || e.tipo === 'llama'){
+        matar(J, e, 'golpe');                      /* las dianas y la llama piñata se rompen con solo tocarlas */
       } else if (e.tipo !== 'jefe' || e.invul <= 0){
         lastimar(J, e);
       }
@@ -1320,19 +1551,29 @@ function bolas(J, dt){
     if (!b.vivo) continue;
     b.t += dt;
     if (b.t > 2.4){ b.vivo = false; continue; }
-    if (!b.misil) b.vy -= 30*dt;
+    const A = b.arma ? ARMAS[b.arma] : null;
+    if (A){ b.vy -= A.g*dt; if (b.t > (A.vida || 2.2)){ b.vivo = false; ev(J, 'puf', b.x, b.y, b.z, {arma: b.arma}); continue; } }
+    else if (!b.misil) b.vy -= 30*dt;
     const ox = b.x, oz = b.z;
     b.x += b.vx*dt; b.z += b.vz*dt; b.y += b.vy*dt;
     const yAnt = b.y - b.vy*dt;
     const g = suelo(M, b.x, b.z, Math.max(yAnt, b.y), 0);
-    if (b.y <= g.y){ if (b.misil){ b.vivo = false; ev(J, 'puf', b.x, b.y, b.z); continue; } b.y = g.y; b.vy = 8; }
+    if (b.y <= g.y){
+      if (A){ b.vivo = false; if (A.explota) explotar(J, b.x, g.y + 0.3, b.z, A.explota, b.arma); else ev(J, 'puf', b.x, g.y, b.z, {arma: b.arma}); continue; }
+      if (b.misil){ b.vivo = false; ev(J, 'puf', b.x, b.y, b.z); continue; }
+      b.y = g.y; b.vy = 8;
+    }
     const o = {x:b.x, y:b.y, z:b.z};
-    if (empujar(M, o, 0.25, 0.3)){ b.vivo = false; ev(J, 'puf', ox, b.y, oz); continue; }
+    if (empujar(M, o, A ? A.r*0.6 : 0.25, 0.3)){ b.vivo = false; if (A && A.explota) explotar(J, ox, b.y, oz, A.explota, b.arma); else ev(J, 'puf', ox, b.y, oz, {arma: b.arma}); continue; }
     if (b.y < M.def.yMuerte){ b.vivo = false; continue; }
+    const rb = A ? A.r : 0.45;
     for (const e of M.enemigos){
       if (!e.vivo) continue;
-      if (Math.hypot(e.x - b.x, e.z - b.z) < e.radio + 0.45 && b.y > e.y - 0.4 && b.y < e.y + e.alto + 0.4){
-        matar(J, e, 'fuego'); b.vivo = false; ev(J, 'puf', b.x, b.y, b.z); break;
+      if (Math.hypot(e.x - b.x, e.z - b.z) < e.radio + rb && b.y > e.y - 0.4 - rb && b.y < e.y + e.alto + 0.4 + rb){
+        b.vivo = false;
+        if (A && A.explota) explotar(J, b.x, b.y, b.z, A.explota, b.arma);
+        else { matar(J, e, b.arma || 'fuego'); ev(J, 'puf', b.x, b.y, b.z, {arma: b.arma}); }
+        break;
       }
     }
   }
@@ -1437,6 +1678,14 @@ function cosas(J, dt){
     if (!s.visible || s.tomada) continue;
     if (toca(p, s, 1.4, 1.2)) tomarEstrella(J, s);
   }
+  /* las pociones de escudo */
+  for (const q of M.pociones){
+    if (q.vivo && J.escudo < 100 && toca(p, q, 1.0)){
+      q.vivo = false; J.escudo = Math.min(100, J.escudo + 50);
+      ev(J, 'pocion', q.x, q.y, q.z, {escudo: J.escudo});
+      if (!J.dijoPocion){ J.dijoPocion = true; decir(J, 'pocion'); }
+    }
+  }
   for (const c of M.cajas){
     if (c.abierta > 0){
       c.abierta -= dt;
@@ -1471,6 +1720,7 @@ function cosas(J, dt){
           /* cada vez que entra a un cuadro: ¡un súper poder nuevo! (van rotando) */
           const sp = SUPER[J.prog.superN % SUPER.length]; J.prog.superN = (J.prog.superN + 1) % SUPER.length;
           decir(J, 'superPortal'); dar(J, sp);
+          if (MUNDOS[po.mundo].autobus){ J.p.y += 32; J.p.vy = 0; J.p.enSuelo = false; J.p.planeo = true; ev(J, 'autobus', J.p.x, J.p.y, J.p.z); }
           if (estrellasDe(J.prog, id) === 0){
             if (saludo) for (const f of saludo) decir(J, f);
             else { decir(J, J.R() < 0.5 ? 'perro' : 'perro2'); decir(J, 'pista'); }
@@ -1538,6 +1788,12 @@ function buscarGuia(J){
   if (mejor) return mejor;
   const rojasEst = M.estrellas.find(s=>s.tipo === 'rojas');
   if (rojasEst && !rojasEst.ya) for (const m of M.rojas) if (m.vivo) prueba(m.x, m.y, m.z, 'roja');
+  if (mejor) return mejor;
+  for (const e of M.enemigos){
+    if (!e.vivo || !e.zona) continue;
+    const ez = M.estrellas.find(s=>s.tipo === 'zona' && s.zona === e.zona);
+    if (ez && !ez.ya && !ez.visible) prueba(e.x, e.y + 1.5, e.z, 'zona');
+  }
   if (mejor) return mejor;
   const golEst = M.estrellas.find(s=>s.tipo === 'gol');
   if (golEst && !golEst.visible && !golEst.ya) for (const b of M.pelotas) prueba(b.x, b.y + 1.2, b.z, 'pelota');
@@ -1702,7 +1958,7 @@ function irConAmigo(J, nv, x, y, z){
   return true;
 }
 
-const API = {SUPER, mezclarEstrellas, nuevoEnemigo, FRASES_PJ, SALUDOS, PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
+const API = {matar, ARMAS, SUPER, mezclarEstrellas, nuevoEnemigo, FRASES_PJ, SALUDOS, PJS, MAX_JUGADORES, empaquetar, desempaquetar, recibirEstrella, irConAmigo, CFG, PODERES, LISTA_PODERES, QUIEN, FRASES, MUNDOS, crearJuego, empezar, paso, cargarMundo, irA,
              topDe, dentro, suelo, empujar, rng, clamp, lerp, angDif, progresoNuevo, progresoLimpio, cuentaEstrellas, estrellasDe, dar};
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 else raiz.F3D = API;

@@ -200,6 +200,8 @@ function elegir(J){
   const lista = [];
   for (const s of M.estrellas) if (s.visible && !s.tomada) lista.push({x:s.x, y:s.y, z:s.z, tipo:'estrella', ref:s});
   if (!lista.length) for (const m of M.rojas) if (m.vivo) lista.push({x:m.x, y:m.y, z:m.z, tipo:'roja', ref:m});
+  /* las zonas: vencer a sus monstruos, romper las dianas y la llama piñata */
+  if (!lista.length) for (const e of M.enemigos) if (e.vivo && e.zona) lista.push({x:e.x, y:e.y + 0.6, z:e.z, tipo:'zona', ref:e});
   if (!lista.length && M.jefe && M.jefe.vivo) lista.push({x:M.jefe.x, y:M.jefe.y, z:M.jefe.z, tipo:'jefe', ref:M.jefe});
   if (!lista.length) return null;
   lista.sort((a, b)=>Math.hypot(a.x - p.x, a.z - p.z) - Math.hypot(b.x - p.x, b.z - p.z));
@@ -222,7 +224,7 @@ function jugarMundo(n, opciones){
   let tomadas = 0;
   for (; f < LIM; f++){
     if (J.mundo !== n) break;
-    if (f % 15 === 0 || !mem.obj || (mem.obj.ref && (mem.obj.ref.vivo === false || mem.obj.ref.tomada))){
+    if (f % 15 === 0 || !mem.obj || (mem.obj.ref && (mem.obj.ref.vivo === false || mem.obj.ref.tomada)) || (mem.obj.tipo === 'zona' && f % 5 === 0)){
       const o = elegir(J); if (!o) break;
       if (!mem.obj || mem.obj.ref !== o.ref) mem.ruta = null;
       mem.obj = o;
@@ -499,6 +501,83 @@ for (let n = 0; n < L.MUNDOS.length; n++){
   if (rebote) bien('al caer en la cabeza de un amigo rebota bien alto'); else mal('no rebotó en la cabeza del amigo');
   if (minD > L.CFG.RADIO*0.9) bien('no se atraviesan: se quedan a ' + minD.toFixed(2) + ' m'); else mal('se atravesó con el amigo (' + minD.toFixed(2) + ' m)');
   if (chocas === 1) bien('al encontrarse se dan los cinco una vez (no cada rato si se quedan juntos)'); else mal('chocaron los cinco ' + chocas + ' veces');
+}
+
+/* 4g) el Reino Pichunite: armas de juguete, escudo, Súper Plomero, zonas, fuego del jefe y el autobús */
+{
+  const nR = L.MUNDOS.findIndex(m=>m.id === 'reino');
+  const base = ()=>{ const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); L.cargarMundo(J, nR, null); for (let i = 0; i < 30; i++) L.paso(J, 1/60, {}); return J; };
+  /* cada arma vence a un monstruo que está enfrente (apuntan solas aunque esté un poco al lado) */
+  const vencidas = [];
+  for (const arma of Object.keys(L.ARMAS)){
+    const J = base(); J.M.enemigos.length = 0; L.dar(J, arma);
+    const e = L.nuevoEnemigo(J, 'grunon', J.p.x + Math.sin(J.p.ang + 0.3)*9, J.p.z + Math.cos(J.p.ang + 0.3)*9, {piel:'monstruo'}); e.vel = 0; J.M.enemigos.push(e);
+    for (let i = 0; i < 150 && e.vivo; i++) L.paso(J, 1/60, {poder: true});
+    if (!e.vivo) vencidas.push(arma);
+  }
+  if (vencidas.length === Object.keys(L.ARMAS).length) bien('las 5 armas de juguete vencen al monstruo apuntando solas: ' + vencidas.join(', '));
+  else mal('armas que no le pegaron: ' + Object.keys(L.ARMAS).filter(a=>!vencidas.includes(a)).join(', '));
+  /* el cañón de confeti explota y vence a varios juntos */
+  {
+    const J = base(); J.M.enemigos.length = 0; L.dar(J, 'confeti');
+    const es = [0, 1.5, -1.5].map(d=>{ const e = L.nuevoEnemigo(J, 'grunon', J.p.x + Math.sin(J.p.ang)*10 + Math.cos(J.p.ang)*d, J.p.z + Math.cos(J.p.ang)*10 - Math.sin(J.p.ang)*d, {}); e.vel = 0; J.M.enemigos.push(e); return e; });
+    L.paso(J, 1/60, {poder: true}); for (let i = 0; i < 90; i++) L.paso(J, 1/60, {});
+    if (es.every(e=>!e.vivo)) bien('el cañón de confeti explota y vence a los 3 monstruos juntos'); else mal('el confeti no explotó bien (' + es.filter(e=>!e.vivo).length + ' de 3)');
+  }
+  /* el escudo: la poción lo carga y aguanta el golpe sin empujón */
+  {
+    const J = base(); J.M.enemigos.length = 0;
+    const q = J.M.pociones[0]; J.p.x = q.x; J.p.z = q.z; J.p.y = 0; L.paso(J, 1/60, {});
+    const conEscudo = J.escudo;
+    const e = L.nuevoEnemigo(J, 'grunon', J.p.x + 0.6, J.p.z, {}); e.vel = 0; J.M.enemigos.push(e); J.eventos.length = 0;
+    L.paso(J, 1/60, {});
+    if (conEscudo === 50 && J.escudo === 0 && J.eventos.some(x=>x.tipo === 'escudoGolpe') && J.p.golpeT <= 0) bien('la poción da escudo y el escudo aguanta el golpe del monstruo');
+    else mal('el escudo no funciona (poción: ' + conEscudo + ', después: ' + J.escudo + ')');
+  }
+  /* el Súper Plomero: triple salto (el tercero es el más alto) */
+  {
+    const J = base(); J.M.enemigos.length = 0; L.dar(J, 'plomero');
+    for (let i = 0; i < 60; i++) L.paso(J, 1/60, {});       /* parado un ratito: empieza la cadena de cero */
+    const alturas = [];
+    for (let k = 0; k < 3; k++){
+      const y0 = J.p.y; let maxY = y0;
+      L.paso(J, 1/60, {salto: true});
+      for (let i = 0; i < 200 && !(J.p.enSuelo && i > 5); i++){ L.paso(J, 1/60, {salto: true}); maxY = Math.max(maxY, J.p.y); }
+      alturas.push(maxY - y0);
+      L.paso(J, 1/60, {});
+    }
+    if (alturas[2] > alturas[0]*1.8 && alturas[1] > alturas[0]) bien('Súper Plomero: triple salto (' + alturas.map(a=>a.toFixed(1)).join(' → ') + ' m)');
+    else mal('el triple salto no sube (' + alturas.map(a=>a.toFixed(1)).join(', ') + ')');
+  }
+  /* las zonas: al vencer a todos los monstruos del bosque aparece su estrella */
+  {
+    const J = base();
+    const est = J.M.estrellas.find(s=>s.zona === 'bosque'), bosque = J.M.enemigos.filter(e=>e.zona === 'bosque');
+    if (est.visible) mal('la estrella del bosque se ve antes de tiempo');
+    for (const e of bosque.slice(0, -1)) L.matar(J, e, 'golpe');
+    const antes = est.visible; L.matar(J, bosque[bosque.length - 1], 'golpe');
+    if (!antes && est.visible) bien('al vencer a los ' + bosque.length + ' monstruos del bosque aparece su estrella'); else mal('la estrella de la zona no apareció bien');
+    const llama = J.M.enemigos.find(e=>e.tipo === 'llama'); J.p.x = llama.x; J.p.z = llama.z; J.p.y = llama.y; L.paso(J, 1/60, {});
+    if (!llama.vivo && J.M.estrellas.find(s=>s.zona === 'llama').visible) bien('la llama piñata se rompe al tocarla y suelta su estrella'); else mal('la llama piñata no se rompió');
+  }
+  /* el Rey Tortugón escupe fuego */
+  {
+    const J = base(); const jf = J.M.jefe;
+    J.p.x = jf.x; J.p.z = jf.z + 7; J.p.y = jf.y;
+    let fuegos = 0; for (let i = 0; i < 60*6; i++){ J.eventos.length = 0; L.paso(J, 1/60, {}); fuegos += J.eventos.filter(e=>e.tipo === 'fuegoMalo').length; }
+    if (fuegos >= 1) bien('el Rey Tortugón escupe bolas de fuego (' + fuegos + ' veces en 6 s)'); else mal('el Rey Tortugón no escupió fuego');
+  }
+  /* entrar por el cuadro: llega planeando desde el autobús */
+  {
+    const J = L.crearJuego({prog:{intro:true}}); L.empezar(J); for (let i = 0; i < 10; i++) L.paso(J, 1/60, {});
+    const po = J.M.portales.find(p=>p.mundo === nR); J.p.x = po.x; J.p.z = po.z; J.p.y = po.y;
+    for (let i = 0; i < 90 && (J.mundo !== nR || J.trans); i++) L.paso(J, 1/60, {});
+    const alto = J.p.y, planea = J.p.planeo;
+    let t = 0; for (; t < 60*20 && !J.p.enSuelo; t++) L.paso(J, 1/60, {});
+    L.paso(J, 1/60, {});
+    if (planea && alto > 25 && t > 60*4 && J.p.enSuelo && !J.p.planeo) bien('al entrar al reino baja planeando desde el autobús (' + (t/60).toFixed(1) + ' s) y aterriza');
+    else mal('no bajó planeando (altura ' + alto.toFixed(1) + ', planeo ' + planea + ', ' + (t/60).toFixed(1) + ' s)');
+  }
 }
 
 /* 4c) Argentina: patear la pelota hasta el arco es gol y aparece la estrella */
